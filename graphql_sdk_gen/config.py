@@ -3,12 +3,22 @@ from pathlib import Path
 
 import toml
 
-from graphql_sdk_gen.exceptions import ConfigFileNotFound, MissingConfiguration
+from graphql_sdk_gen.exceptions import (
+    ConfigFileNotFound,
+    InvalidConfiguration,
+    MissingConfiguration,
+)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Settings:
     schema_path: str
+
+    def __post_init__(self):
+        if not Path(self.schema_path).exists():
+            raise InvalidConfiguration(
+                f"Provided path {self.schema_path} doesn't exist."
+            )
 
 
 def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
@@ -19,7 +29,7 @@ def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
             raise ConfigFileNotFound(f"Config file {file_name} not found.")
         else:
             directory = directory.parent
-    return file_path
+    return file_path.resolve()
 
 
 def parse_config_file(

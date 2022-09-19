@@ -4,3 +4,7 @@ class ConfigFileNotFound(Exception):
 
 class MissingConfiguration(Exception):
     """Configuration not present."""
+
+
+class InvalidConfiguration(Exception):
+    """Configuration not valid."""
