@@ -19,9 +19,9 @@ jobs:
     - name: Install dependencies
       run: poetry install
     - name: Pytest
-      run: pytest
+      run: poetry run pytest
     - name: Linters
       run: |
-        pylint graphql_sdk_gen tests
-        mypy graphql_sdk_gen --ignore-missing-imports
-        black --check .
+        poetry run pylint graphql_sdk_gen tests
+        poetry run mypy graphql_sdk_gen --ignore-missing-imports
+        poetry run black --check .
