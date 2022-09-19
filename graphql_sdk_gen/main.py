@@ -9,3 +9,4 @@ from .schema import get_graphql_schema
 def main():
     print(settings)
     schema = get_graphql_schema()
+    print(schema)

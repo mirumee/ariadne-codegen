@@ -27,15 +27,16 @@ def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
     while not (file_path := directory.joinpath(file_name)).exists():
         if directory == directory.parent:
             raise ConfigFileNotFound(f"Config file {file_name} not found.")
-        else:
-            directory = directory.parent
+        directory = directory.parent
     return file_path.resolve()
 
 
 def parse_config_file(
     file_path: Path, section_key: str = "graphql-sdk-gen"
 ) -> Settings:
-    """Parse configuration from toml file. Raise exception if section or key was not found."""
+    """
+    Parse configuration from toml file. Raise exception if section or key was not found.
+    """
     config = toml.load(file_path)
     if section_key not in config:
         raise MissingConfiguration(f"File {file_path} has no [{section_key}] section.")

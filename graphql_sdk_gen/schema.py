@@ -16,7 +16,10 @@ def get_graphql_schema() -> GraphQLSchema:
 
 
 def load_schema_from_path(path: Path) -> str:
-    """Get schema from given path. If path is a directory, collect schemas from multiple files."""
+    """
+    Get schema from given path.
+    If path is a directory, collect schemas from multiple files.
+    """
     if path.is_dir():
         schema_list = [read_graphql_file(f) for f in sorted(walk_graphql_files(path))]
         return "\n".join(schema_list)
