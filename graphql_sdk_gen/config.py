@@ -3,7 +3,7 @@ from pathlib import Path
 
 import toml
 
-from graphql_sdk_gen.exceptions import (
+from .exceptions import (
     ConfigFileNotFound,
     InvalidConfiguration,
     MissingConfiguration,

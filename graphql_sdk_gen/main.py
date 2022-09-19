@@ -1,7 +1,7 @@
 import click
 
-from graphql_sdk_gen.config import settings
-from graphql_sdk_gen.schema import get_graphql_schema
+from .config import settings
+from .schema import get_graphql_schema
 
 
 @click.command()

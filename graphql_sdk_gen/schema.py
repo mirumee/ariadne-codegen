@@ -3,7 +3,7 @@ from typing import Generator
 
 from graphql import GraphQLSchema, assert_valid_schema, build_ast_schema, parse
 
-from graphql_sdk_gen.config import settings
+from .config import settings
 
 
 def get_graphql_schema() -> GraphQLSchema:
