@@ -3,25 +3,23 @@ name: Tests
 on: [push]
 
 jobs:
-  build:
+  pytest:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
-    - name: Install poetry
-      run: pipx install poetry
-    - name: Install dependencies
-      run: poetry install
-    - name: Pytest
-      run: poetry run pytest
-    - name: Linters
-      run: |
-        poetry run pylint graphql_sdk_gen tests
-        poetry run mypy graphql_sdk_gen --ignore-missing-imports
-        poetry run black --check .
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'poetry'
+      - name: Install dependencies
+        run: poetry install
+      - name: Pytest
+        run: poetry run pytest
+      - name: Linters
+        run: |
+          poetry run pylint graphql_sdk_gen tests
+          poetry run mypy graphql_sdk_gen --ignore-missing-imports
+          poetry run black --check .
