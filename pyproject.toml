@@ -24,6 +24,9 @@ graphql-sdk-gen = "graphql_sdk_gen.main:main"
 max-line-length = 88
 disable = ["missing-docstring"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
