@@ -2,24 +2,31 @@ name: Tests
 
 on: [push]
 
+name: Tests
+
 jobs:
-  pytest:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Install poetry
-        run: pipx install poetry
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          cache: 'poetry'
-      - name: Install dependencies
-        run: poetry install
-      - name: Pytest
-        run: poetry run pytest
-      - name: Linters
-        run: |
-          poetry run pylint graphql_sdk_gen tests
-          poetry run mypy graphql_sdk_gen --ignore-missing-imports
-          poetry run black --check .
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10"
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+    - name: Pytest
+      run: |
+        source .venv/bin/activate
+        pytest
+    - name: Linters
+      run: |
+        source .venv/bin/activate
+        pylint graphql_sdk_gen tests
+        mypy graphql_sdk_gen --ignore-missing-imports
+        black --check .
