@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Tuple
 
 from graphql import (
+    DefinitionNode,
     GraphQLSchema,
     GraphQLSyntaxError,
     assert_valid_schema,
@@ -13,16 +14,23 @@ from .config import settings
 from .exceptions import InvalidGraphqlSyntax
 
 
+def get_graphql_queries() -> Tuple[DefinitionNode, ...]:
+    """Get graphql queries definitions build from path provided by settings."""
+    queries_str = load_graphql_files_from_path(Path(settings.queries_path))
+    queries_ast = parse(queries_str)
+    return queries_ast.definitions
+
+
 def get_graphql_schema() -> GraphQLSchema:
     """Get graphql schema build from path provided by settings."""
-    schema_str = load_schema_from_path(Path(settings.schema_path))
+    schema_str = load_graphql_files_from_path(Path(settings.schema_path))
     graphql_ast = parse(schema_str)
     schema: GraphQLSchema = build_ast_schema(graphql_ast)
     assert_valid_schema(schema)
     return schema
 
 
-def load_schema_from_path(path: Path) -> str:
+def load_graphql_files_from_path(path: Path) -> str:
     """
     Get schema from given path.
     If path is a directory, collect schemas from multiple files.

@@ -3,6 +3,7 @@ from graphql_sdk_gen.config import Settings, get_config_file_path, parse_config_
 from graphql_sdk_gen.exceptions import ConfigFileNotFound, MissingConfiguration
 
 SCHEMA_FILENAME = "schema.graphql"
+QUERIES_DIR = "queries"
 
 
 @pytest.fixture(scope="session")
@@ -10,7 +11,15 @@ def config_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
     schema_path = file_.parent.joinpath(SCHEMA_FILENAME)
     schema_path.touch()
-    config = f'[graphql-sdk-gen]\nschema_path = "{schema_path.as_posix()}"'
+    queries_path = file_.parent.joinpath(QUERIES_DIR)
+    queries_path.mkdir()
+    config = "\n".join(
+        [
+            "[graphql-sdk-gen]",
+            f'schema_path = "{schema_path.as_posix()}"',
+            f'queries_path = "{queries_path.as_posix()}"',
+        ]
+    )
     file_.write_text(config, encoding="utf-8")
     return file_
 
