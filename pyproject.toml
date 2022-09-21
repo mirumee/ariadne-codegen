@@ -35,3 +35,4 @@ build-backend = "poetry.core.masonry.api"
 
 [graphql-sdk-gen]
 schema_path = "."
+queries_path = "."
