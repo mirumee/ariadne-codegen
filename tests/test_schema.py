@@ -1,6 +1,7 @@
 import pytest
 from graphql import GraphQLSchema, GraphQLSyntaxError
 from graphql_sdk_gen.config import Settings
+from graphql_sdk_gen.exceptions import InvalidGraphqlSyntax
 from graphql_sdk_gen.schema import (
     get_graphql_schema,
     load_schema_from_path,
@@ -82,6 +83,14 @@ def path_fixture(request):
 
 def test__read_graphql_file__returns_content_of_file(single_file_schema):
     assert read_graphql_file(single_file_schema) == FIRST_SCHEMA
+
+
+def test__read_graphql_file__raises_exception_if_file_contains_incorrect_graphql_schema(
+    incorrect_schema_file,
+):
+    with pytest.raises(InvalidGraphqlSyntax) as exc:
+        read_graphql_file(incorrect_schema_file)
+    assert str(incorrect_schema_file) in str(exc)
 
 
 def test__walk_graphql_files__returns_graphql_files_from_directory(schemas_directory):

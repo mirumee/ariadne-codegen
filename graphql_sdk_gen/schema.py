@@ -1,9 +1,16 @@
 from pathlib import Path
 from typing import Generator
 
-from graphql import GraphQLSchema, assert_valid_schema, build_ast_schema, parse
+from graphql import (
+    GraphQLSchema,
+    GraphQLSyntaxError,
+    assert_valid_schema,
+    build_ast_schema,
+    parse,
+)
 
 from .config import settings
+from .exceptions import InvalidGraphqlSyntax
 
 
 def get_graphql_schema() -> GraphQLSchema:
@@ -37,4 +44,9 @@ def walk_graphql_files(path: Path) -> Generator[Path, None, None]:
 def read_graphql_file(path: Path) -> str:
     """Return content of file."""
     with open(path, "r", encoding="utf-8") as graphql_file:
-        return graphql_file.read()
+        schema = graphql_file.read()
+    try:
+        parse(schema)
+    except GraphQLSyntaxError as exc:
+        raise InvalidGraphqlSyntax(f"Invalid graphql syntax in file {path}") from exc
+    return schema

@@ -8,3 +8,7 @@ class MissingConfiguration(Exception):
 
 class InvalidConfiguration(Exception):
     """Configuration not valid."""
+
+
+class InvalidGraphqlSyntax(Exception):
+    """Invalid graphql syntax."""
