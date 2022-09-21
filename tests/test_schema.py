@@ -1,5 +1,5 @@
 import pytest
-from graphql import GraphQLSchema, GraphQLSyntaxError
+from graphql import GraphQLSchema
 from graphql_sdk_gen.config import Settings
 from graphql_sdk_gen.exceptions import InvalidGraphqlSyntax
 from graphql_sdk_gen.schema import (
@@ -145,5 +145,5 @@ def test__get_graphql_schema__raises_exception_with_incorrect_schema(
         "graphql_sdk_gen.schema.settings",
         Settings(schema_path=incorrect_schema_file.as_posix()),
     )
-    with pytest.raises(GraphQLSyntaxError):
+    with pytest.raises(InvalidGraphqlSyntax):
         get_graphql_schema()
