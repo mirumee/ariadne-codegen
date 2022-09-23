@@ -28,3 +28,4 @@ jobs:
         pylint graphql_sdk_gen tests
         mypy graphql_sdk_gen --ignore-missing-imports
         black --check .
+        isort . --check-only

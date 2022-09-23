@@ -18,6 +18,7 @@ pylint = "^2.15.3"
 mypy = "^0.971"
 types-toml = "^0.10.8"
 pytest-mock = "^3.8.2"
+isort = "^5.10.1"
 
 [tool.poetry.scripts]
 graphql-sdk-gen = "graphql_sdk_gen.main:main"
@@ -32,6 +33,9 @@ testpaths = ["tests"]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
 
 [graphql-sdk-gen]
 schema_path = "."

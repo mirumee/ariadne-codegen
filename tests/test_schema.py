@@ -1,5 +1,6 @@
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode
+
 from graphql_sdk_gen.config import Settings
 from graphql_sdk_gen.exceptions import InvalidGraphqlSyntax
 from graphql_sdk_gen.schema import (

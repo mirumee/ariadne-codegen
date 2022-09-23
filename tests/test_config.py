@@ -1,4 +1,5 @@
 import pytest
+
 from graphql_sdk_gen.config import Settings, get_config_file_path, parse_config_file
 from graphql_sdk_gen.exceptions import ConfigFileNotFound, MissingConfiguration
 

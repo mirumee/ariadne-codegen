@@ -3,11 +3,7 @@ from pathlib import Path
 
 import toml
 
-from .exceptions import (
-    ConfigFileNotFound,
-    InvalidConfiguration,
-    MissingConfiguration,
-)
+from .exceptions import ConfigFileNotFound, InvalidConfiguration, MissingConfiguration
 
 
 @dataclass(frozen=True)

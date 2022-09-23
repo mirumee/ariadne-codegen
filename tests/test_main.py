@@ -1,4 +1,5 @@
 from click.testing import CliRunner
+
 from graphql_sdk_gen.main import main
 
 
