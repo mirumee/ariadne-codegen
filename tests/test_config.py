@@ -7,7 +7,7 @@ SCHEMA_FILENAME = "schema.graphql"
 QUERIES_DIR = "queries"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def config_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
     schema_path = file_.parent.joinpath(SCHEMA_FILENAME)
@@ -25,7 +25,7 @@ def config_file(tmp_path_factory):
     return file_
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def config_file_invalid_section(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
     config = '[invalid-section]\nschema_path = "."'
@@ -33,7 +33,7 @@ def config_file_invalid_section(tmp_path_factory):
     return file_
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def config_file_without_field(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
     config = '[graphql-sdk-gen]\ninvalid_field = "."'

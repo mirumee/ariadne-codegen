@@ -84,21 +84,21 @@ FIRST_QUERY_FILENAME = "query1.graphql"
 SECOND_QUERY_FILENAME = "query2.graphql"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def single_file_schema(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("schema").joinpath("schema.graphql")
     file_.write_text(FIRST_SCHEMA, encoding="utf-8")
     return file_
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def incorrect_schema_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("schema").joinpath("schema.graphql")
     file_.write_text(INCORRECT_SCHEMA, encoding="utf-8")
     return file_
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def schemas_directory(tmp_path_factory):
     schemas_dir = tmp_path_factory.mktemp("schemas")
     first_file = schemas_dir.joinpath(FIRST_FILENAME)
@@ -108,7 +108,7 @@ def schemas_directory(tmp_path_factory):
     return schemas_dir
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def schemas_nested_directories(tmp_path_factory):
     schemas_dir = tmp_path_factory.mktemp("schemas")
     nested_dir = schemas_dir.joinpath("nested")
@@ -125,21 +125,21 @@ def path_fixture(request):
     return request.getfixturevalue(request.param)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def single_file_query(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("queries").joinpath(FIRST_QUERY_FILENAME)
     file_.write_text(FIRST_QUERY, encoding="utf-8")
     return file_
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def incorrect_file_query(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("queries").joinpath(FIRST_QUERY_FILENAME)
     file_.write_text(INCORRECT_QUERY, encoding="utf-8")
     return file_
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def queries_directory(tmp_path_factory):
     schemas_dir = tmp_path_factory.mktemp("queries")
     first_file = schemas_dir.joinpath(FIRST_QUERY_FILENAME)
