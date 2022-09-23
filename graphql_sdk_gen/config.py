@@ -12,12 +12,12 @@ class Settings:
     queries_path: str
 
     def __post_init__(self):
-        def _assert_path_exists(path: str):
-            if not Path(path).exists():
-                raise InvalidConfiguration(f"Provided path {path} doesn't exist.")
-
-        _assert_path_exists(self.schema_path)
-        _assert_path_exists(self.queries_path)
+        self._assert_path_exists(self.schema_path)
+        self._assert_path_exists(self.queries_path)
+    
+    def _assert_path_exists(self, path: str):
+        if not Path(path).exists():
+            raise InvalidConfiguration(f"Provided path {path} doesn't exist.")
 
 
 def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
