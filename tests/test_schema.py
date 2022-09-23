@@ -149,11 +149,11 @@ def queries_directory(tmp_path_factory):
     return schemas_dir
 
 
-def test__read_graphql_file__returns_content_of_file(single_file_schema):
+def test_read_graphql_file_returns_content_of_file(single_file_schema):
     assert read_graphql_file(single_file_schema) == FIRST_SCHEMA
 
 
-def test__read_graphql_file__raises_exception_if_file_contains_incorrect_graphql_schema(
+def test_read_graphql_file_with_invalid_file_raises_invalid_graphql_syntax_exception(
     incorrect_schema_file,
 ):
     with pytest.raises(InvalidGraphqlSyntax) as exc:
@@ -161,13 +161,13 @@ def test__read_graphql_file__raises_exception_if_file_contains_incorrect_graphql
     assert str(incorrect_schema_file) in str(exc)
 
 
-def test__walk_graphql_files__returns_graphql_files_from_directory(schemas_directory):
+def test_walk_graphql_files_returns_graphql_files_from_directory(schemas_directory):
     assert sorted(f.name for f in walk_graphql_files(schemas_directory)) == sorted(
         [FIRST_FILENAME, SECOND_FILENAME]
     )
 
 
-def test__walk_graphql_files__returns_graphql_files_from_nested_directory(
+def test_walk_graphql_files_returns_graphql_files_from_nested_directory(
     schemas_nested_directories,
 ):
     assert sorted(
@@ -175,13 +175,13 @@ def test__walk_graphql_files__returns_graphql_files_from_nested_directory(
     ) == sorted([FIRST_FILENAME, SECOND_FILENAME])
 
 
-def test__load_graphql_files_from_path__returns_schema_from_single_file(
+def test_load_graphql_files_from_path_returns_schema_from_single_file(
     single_file_schema,
 ):
     assert load_graphql_files_from_path(single_file_schema) == FIRST_SCHEMA
 
 
-def test__load_graphql_files_from_path__returns_schema_from_directory(
+def test_load_graphql_files_from_path_returns_schema_from_directory(
     schemas_directory,
 ):
     assert load_graphql_files_from_path(schemas_directory) == "\n".join(
@@ -189,7 +189,7 @@ def test__load_graphql_files_from_path__returns_schema_from_directory(
     )
 
 
-def test__load_graphql_files_from_path__returns_schema_from_nested_directory(
+def test_load_graphql_files_from_path_returns_schema_from_nested_directory(
     schemas_nested_directories,
 ):
     assert load_graphql_files_from_path(schemas_nested_directories) == "\n".join(
@@ -202,7 +202,7 @@ def test__load_graphql_files_from_path__returns_schema_from_nested_directory(
     ["single_file_schema", "schemas_directory", "schemas_nested_directories"],
     indirect=True,
 )
-def test__get_graphql_schema__returns_graphql_schema(
+def test_get_graphql_schema_returns_graphql_schema(
     mocker, path_fixture, single_file_query
 ):
     mocker.patch(
@@ -215,7 +215,7 @@ def test__get_graphql_schema__returns_graphql_schema(
     assert isinstance(get_graphql_schema(), GraphQLSchema)
 
 
-def test__get_graphql_schema__raises_exception_with_incorrect_schema(
+def test_get_graphql_schema_with_invalid_schema_raises_invalid_graphql_syntax_exception(
     mocker, incorrect_schema_file, single_file_query
 ):
     mocker.patch(
@@ -229,7 +229,7 @@ def test__get_graphql_schema__raises_exception_with_incorrect_schema(
         get_graphql_schema()
 
 
-def test__get_graphql_queries__returns_schema_definitions_from_single_file(
+def test_get_graphql_queries_returns_schema_definitions_from_single_file(
     mocker, single_file_schema, single_file_query
 ):
     mocker.patch(
@@ -246,7 +246,7 @@ def test__get_graphql_queries__returns_schema_definitions_from_single_file(
     assert queries[0].name.value == "getUsers"
 
 
-def test__get_graphql_queries__returns_schema_definitions_from_directory(
+def test_get_graphql_queries_returns_schema_definitions_from_directory(
     mocker, single_file_schema, queries_directory
 ):
     mocker.patch(
@@ -266,7 +266,7 @@ def test__get_graphql_queries__returns_schema_definitions_from_directory(
     assert queries[1].name.value == "getUsers2"
 
 
-def test__get_graphql_queries__raises_exception_with_incorrect_syntax(
+def test_get_graphql_queries_with_invalid_file_raises_invalid_graphql_syntax_exception(
     mocker, single_file_schema, incorrect_file_query
 ):
     mocker.patch(

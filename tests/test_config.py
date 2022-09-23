@@ -45,31 +45,33 @@ def mock_cwd(mocker, path):
     mocker.patch("graphql_sdk_gen.config.Path.cwd", return_value=path)
 
 
-def test__get_config_file_path__finds_file_in_cwd(config_file, mocker):
+def test_get_config_file_path_finds_file_in_cwd(config_file, mocker):
     mock_cwd(mocker, config_file.parent)
     assert get_config_file_path("pyproject.toml") == config_file
 
 
-def test__get_config_file_path__finds_file_in_parent_directory(config_file, mocker):
+def test_get_config_file_path_finds_file_in_parent_directory(config_file, mocker):
     nested_dir = config_file.parent.joinpath("nested")
     mock_cwd(mocker, nested_dir)
     assert get_config_file_path("pyproject.toml") == config_file
 
 
-def test__get_config_file_path__raises_exception_if_file_not_found(config_file, mocker):
+def test_get_config_file_path_raises_config_file_not_found_exception_if_file_not_found(
+    config_file, mocker
+):
     mock_cwd(mocker, config_file.parent)
     with pytest.raises(ConfigFileNotFound):
         get_config_file_path("invalid.toml")
 
 
-def test__parse_config_file__returns_settings_object(config_file, mocker):
+def test_parse_config_file_returns_settings_object(config_file, mocker):
     mock_cwd(mocker, config_file.parent)
     settings = parse_config_file(config_file)
     assert isinstance(settings, Settings)
     assert settings.schema_path.endswith(SCHEMA_FILENAME)
 
 
-def test__parse_config_file__without_section_raises_exception(
+def test_parse_config_file_without_section_raises_missing_configuration_exception(
     config_file_invalid_section, mocker
 ):
     mock_cwd(mocker, config_file_invalid_section.parent)
@@ -77,7 +79,7 @@ def test__parse_config_file__without_section_raises_exception(
         parse_config_file(config_file_invalid_section)
 
 
-def test__parse_config_file__without_required_field_raises_exception(
+def test_parse_config_file_without_needed_field_raises_missing_configuration_exception(
     config_file_without_field, mocker
 ):
     mock_cwd(mocker, config_file_without_field.parent)
