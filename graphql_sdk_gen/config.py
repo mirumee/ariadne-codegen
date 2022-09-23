@@ -14,7 +14,7 @@ class Settings:
     def __post_init__(self):
         self._assert_path_exists(self.schema_path)
         self._assert_path_exists(self.queries_path)
-    
+
     def _assert_path_exists(self, path: str):
         if not Path(path).exists():
             raise InvalidConfiguration(f"Provided path {path} doesn't exist.")
