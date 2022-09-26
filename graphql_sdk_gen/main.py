@@ -3,7 +3,7 @@ import sys
 import click
 
 from .config import settings
-from .generator.package import PackageGenerator
+from .generators.package import PackageGenerator
 from .schema import get_graphql_queries, get_graphql_schema
 
 
