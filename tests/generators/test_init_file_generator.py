@@ -8,7 +8,7 @@ def test_add_import_adds_correct_objects_to_list():
     class_name = "TestClass"
     generator = InitFileGenerator()
 
-    generator.add_import(modules=[class_name], from_=from_, level=1)
+    generator.add_import(names=[class_name], from_=from_, level=1)
 
     import_ = generator.imports[0]
     assert len(generator.imports) == 1

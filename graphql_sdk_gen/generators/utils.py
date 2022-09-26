@@ -9,7 +9,6 @@ def ast_to_str(ast_obj: AST) -> str:
     return format_str(isort.code(unparse(ast_obj)), mode=Mode())
 
 
-def generate_import_from(modules: list[str], from_: str, level: int = 0) -> ImportFrom:
+def generate_import_from(names: list[str], from_: str, level: int = 0) -> ImportFrom:
     """Generate import from statement."""
-    names = [alias(m) for m in modules]
-    return ImportFrom(module=from_, names=names, level=level)
+    return ImportFrom(module=from_, names=[alias(n) for n in names], level=level)

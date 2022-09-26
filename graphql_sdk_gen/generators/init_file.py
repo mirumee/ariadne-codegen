@@ -7,11 +7,9 @@ class InitFileGenerator:
     def __init__(self) -> None:
         self.imports: list = []
 
-    def add_import(self, modules: list[str], from_: str, level: int = 0) -> None:
+    def add_import(self, names: list[str], from_: str, level: int = 0) -> None:
         """Add import to be included in init file."""
-        self.imports.append(
-            generate_import_from(modules=modules, from_=from_, level=level)
-        )
+        self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
     def generate(self) -> Module:
         """Generate init with imports and public api of package."""

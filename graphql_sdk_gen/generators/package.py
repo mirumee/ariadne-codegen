@@ -25,7 +25,7 @@ class PackageGenerator:
         client_file_path.write_text(ast_to_str(client_module))
 
         self.init_generator.add_import(
-            modules=[self.client_generator.name], from_="client", level=1
+            names=[self.client_generator.name], from_="client", level=1
         )
 
     def generate(self):
