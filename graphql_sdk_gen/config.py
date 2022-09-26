@@ -1,4 +1,5 @@
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
+from keyword import iskeyword
 from pathlib import Path
 
 import toml
@@ -10,14 +11,25 @@ from .exceptions import ConfigFileNotFound, InvalidConfiguration, MissingConfigu
 class Settings:
     schema_path: str
     queries_path: str
+    target_package_name: str = "graphql_client"
+    target_package_loc: str = field(default_factory=lambda: Path.cwd().as_posix())
 
     def __post_init__(self):
         self._assert_path_exists(self.schema_path)
         self._assert_path_exists(self.queries_path)
+        self._assert_string_is_valid_package_name(self.target_package_name)
+        self._assert_path_is_valid_directory(self.target_package_loc)
 
     def _assert_path_exists(self, path: str):
         if not Path(path).exists():
             raise InvalidConfiguration(f"Provided path {path} doesn't exist.")
+
+    def _assert_path_is_valid_directory(self, path: str):
+        if not Path(path).is_dir():
+            raise InvalidConfiguration(f"Provided path {path} isn't a directory.")
+
+    def _assert_string_is_valid_package_name(self, name: str) -> bool:
+        return name.isidentifier() and not iskeyword(name)
 
 
 def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
