@@ -12,13 +12,13 @@ class Settings:
     schema_path: str
     queries_path: str
     target_package_name: str = "graphql_client"
-    target_package_loc: str = field(default_factory=lambda: Path.cwd().as_posix())
+    target_package_path: str = field(default_factory=lambda: Path.cwd().as_posix())
 
     def __post_init__(self):
         self._assert_path_exists(self.schema_path)
         self._assert_path_exists(self.queries_path)
         self._assert_string_is_valid_package_name(self.target_package_name)
-        self._assert_path_is_valid_directory(self.target_package_loc)
+        self._assert_path_is_valid_directory(self.target_package_path)
 
     def _assert_path_exists(self, path: str):
         if not Path(path).exists():

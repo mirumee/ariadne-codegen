@@ -16,7 +16,7 @@ def main():
 
     package_generator = PackageGenerator(
         package_name=settings.target_package_name,
-        target_path=settings.target_package_loc,
+        target_path=settings.target_package_path,
     )
     package_generator.generate()
 
