@@ -1,4 +1,4 @@
-from ast import Assign, ClassDef, Constant, Import, ImportFrom, List, Name, Pass, alias
+import ast
 
 import pytest
 
@@ -11,7 +11,7 @@ def test_generate_import_from_returns_correct_object():
 
     import_ = generate_import_from([object1, object2], from_, level=1)
 
-    assert isinstance(import_, ImportFrom)
+    assert isinstance(import_, ast.ImportFrom)
     assert import_.module == from_
     assert [n.name for n in import_.names] == [object1, object2]
     assert import_.level == 1
@@ -21,20 +21,20 @@ def test_generate_import_from_returns_correct_object():
     ["ast_object", "expected_result"],
     [
         (
-            ImportFrom(module="xyz", names=[alias(name="Xyz")], level=1),
+            ast.ImportFrom(module="xyz", names=[ast.alias(name="Xyz")], level=1),
             "from .xyz import Xyz\n",
         ),
-        (Import(names=[alias(name="xyz")]), "import xyz\n"),
+        (ast.Import(names=[ast.alias(name="xyz")]), "import xyz\n"),
         (
-            ClassDef(
-                name="Xyz", bases=[], keywords=[], body=[Pass()], decorator_list=[]
+            ast.ClassDef(
+                name="Xyz", bases=[], keywords=[], body=[ast.Pass()], decorator_list=[]
             ),
             "class Xyz:\n    pass\n",
         ),
         (
-            Assign(
-                targets=[Name(id="__all__")],
-                value=List(elts=[Constant(value="Xyz")]),
+            ast.Assign(
+                targets=[ast.Name(id="__all__")],
+                value=ast.List(elts=[ast.Constant(value="Xyz")]),
                 lineno=1,
             ),
             '__all__ = ["Xyz"]\n',

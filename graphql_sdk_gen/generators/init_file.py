@@ -1,4 +1,4 @@
-from ast import Assign, Constant, List, Module, Name
+import ast
 
 from .utils import generate_import_from
 
@@ -11,9 +11,9 @@ class InitFileGenerator:
         """Add import to be included in init file."""
         self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
-    def generate(self) -> Module:
+    def generate(self) -> ast.Module:
         """Generate init with imports and public api of package."""
-        module = Module(body=self.imports, type_ignores=[])
+        module = ast.Module(body=self.imports, type_ignores=[])
         if self.imports:
             constants_names: list[str] = []
             for import_ in self.imports:
@@ -21,13 +21,15 @@ class InitFileGenerator:
             constants_names.sort()
 
             module.body.append(
-                Assign(
+                ast.Assign(
                     targets=[
-                        Name(
+                        ast.Name(
                             id="__all__",
                         )
                     ],
-                    value=List(elts=[Constant(value=n) for n in constants_names]),
+                    value=ast.List(
+                        elts=[ast.Constant(value=n) for n in constants_names]
+                    ),
                     lineno=len(self.imports) + 1,
                 )
             )
