@@ -6,10 +6,10 @@ from .utils import ast_to_str
 
 
 class PackageGenerator:
-    def __init__(self, module_name: str, target_path: str) -> None:
-        self.module_name = module_name
+    def __init__(self, package_name: str, target_path: str) -> None:
+        self.package_name = package_name
         self.target_path = target_path
-        self.module_path = Path(target_path) / module_name
+        self.module_path = Path(target_path) / package_name
 
         self.init_generator = InitFileGenerator()
         self.client_generator = ClientGenerator()

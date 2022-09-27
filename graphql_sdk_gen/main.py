@@ -15,7 +15,7 @@ def main():
     sys.stdout.write(f"{settings}\n{schema}\n{queries}")
 
     package_generator = PackageGenerator(
-        module_name=settings.target_package_name,
+        package_name=settings.target_package_name,
         target_path=settings.target_package_loc,
     )
     package_generator.generate()
