@@ -12,3 +12,7 @@ class InvalidConfiguration(Exception):
 
 class InvalidGraphqlSyntax(Exception):
     """Invalid graphql syntax."""
+
+
+class NotSupported(Exception):
+    """Not supported."""

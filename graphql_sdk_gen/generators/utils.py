@@ -16,3 +16,8 @@ def generate_import_from(
     return ast.ImportFrom(
         module=from_, names=[ast.alias(n) for n in names], level=level
     )
+
+
+def to_snake_case(name: str) -> str:
+    result =  "".join([f"_{c.lower()}" if c.isupper() else c for c in name])
+    return result [1:] if result.startswith("_") else result
