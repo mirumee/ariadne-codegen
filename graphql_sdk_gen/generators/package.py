@@ -1,13 +1,22 @@
+import ast
+from dataclasses import dataclass
 from pathlib import Path
 
-from graphql import OperationDefinitionNode, GraphQLSchema
+from graphql import GraphQLSchema, OperationDefinitionNode
 
-from .client import ClientGenerator
-from .init_file import InitFileGenerator
-from .utils import ast_to_str, to_snake_case
 from .arguments import ArgumentsGenerator
 from .base_types import BaseTypesGenerator
+from .client import ClientGenerator
+from .init_file import InitFileGenerator
 from .query_types import QueryTypesGenerator
+from .utils import ast_to_str, to_snake_case
+
+
+@dataclass
+class QueryTypesModule:
+    file_name: str
+    public_names: list[str]
+    module: ast.Module
 
 
 class PackageGenerator:
@@ -23,9 +32,8 @@ class PackageGenerator:
         self.client_generator = ClientGenerator()
         self.arguments_generator = ArgumentsGenerator()
         self.base_types_generator = BaseTypesGenerator(schema)
-        self.query_types_generator = QueryTypesGenerator(
-            schema, self.base_types_generator.types_definitions
-        )
+
+        self.query_types_files: dict[str, ast.Module] = {}
 
     def _create_init_file(self):
         init_file_path = self.package_path / "__init__.py"
@@ -52,26 +60,45 @@ class PackageGenerator:
         )
 
     def _create_types_files(self):
-        types_module, types_filename = self.base_types_generator.generate()
-        types_file_path = self.package_path / types_filename
+        types_module = self.base_types_generator.generate()
+        types_file_path = self.package_path / "types.py"
         types_file_path.write_text(ast_to_str(types_module))
+
+    def _create_query_types_files(self):
+        for file_name, module in self.query_types_files.items():
+            file_path = self.package_path / file_name
+            file_path.write_text(ast_to_str(module))
 
     def generate(self):
         """Generate package with graphql client."""
         if not self.package_path.exists():
             self.package_path.mkdir()
         self._create_client_file()
-        self._create_init_file()
         self._create_types_files()
+        self._create_query_types_files()
+        self._create_init_file()
 
     def add_query(self, definition: OperationDefinitionNode):
-        if not self.package_path.exists():
-            self.package_path.mkdir()
         if not (name := definition.name):
             raise Exception
+
+        query_name = name.value
         method_name = to_snake_case(name.value)
+        module_name = method_name
+        file_name = f"{module_name}.py"
+
+        query_types_generator = QueryTypesGenerator(
+            self.schema,
+            self.base_types_generator.fields_definitions,
+            self.base_types_generator.fields_types,
+            definition,
+            "types"
+        )
+        self.query_types_files[file_name] = query_types_generator.generate()
+        self.init_generator.add_import(
+            query_types_generator.public_names, module_name, 1
+        )
+
         arguments = self.arguments_generator.generate(definition.variable_definitions)
-        types_module = self.query_types_generator.generate(definition)
-        types_file_path = self.package_path / f"{method_name}.py"
-        types_file_path.write_text(ast_to_str(types_module))
-        self.client_generator.add_async_method(method_name, name.value, arguments)
+        self.client_generator.add_async_method(method_name, query_name, arguments)
+        self.client_generator.add_import([query_name], module_name, 1)

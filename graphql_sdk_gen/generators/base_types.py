@@ -4,17 +4,18 @@ from typing import Union
 from graphql import (
     GraphQLEnumType,
     GraphQLInputObjectType,
-    GraphQLInterfaceType,
-    GraphQLList,
-    GraphQLNonNull,
     GraphQLObjectType,
-    GraphQLScalarType,
     GraphQLSchema,
-    GraphQLUnionType,
 )
+from enum import Enum
 
-from .constants import LIST, OPTIONAL, SIMPLE_TYPE_MAP
-from .utils import generate_import_from
+from .utils import generate_import_from, parse_field_type
+
+
+class FieldType(str, Enum):
+    ENUM = "ENUM"
+    INPUT = "INPUT"
+    OBJECT = "OBJECT"
 
 
 class BaseTypesGenerator:
@@ -30,16 +31,33 @@ class BaseTypesGenerator:
             and definition not in {schema.query_type, schema.mutation_type}
         }
         self.types_definitions: dict = {}
+        self.fields_definitions: dict[
+            str, dict[str, Union[ast.AnnAssign, ast.Assign]]
+        ] = {}
+        self.fields_types: dict[str, FieldType] = {}
         for name, definition in self.types_from_schema.items():
             self.types_definitions[name] = self._parse_type_definition(definition)
 
     def _parse_type_definition(self, definition) -> ast.ClassDef:
         if isinstance(definition, GraphQLEnumType):
-            return self._parse_enum_definition(definition)
-        if isinstance(definition, (GraphQLObjectType, GraphQLInputObjectType)):
-            return self._parse_object_or_input_definition(definition)
+            class_def = self._parse_enum_definition(definition)
+            self.fields_types[class_def.name] = FieldType.ENUM
+        elif isinstance(definition, GraphQLInputObjectType):
+            class_def = self._parse_object_or_input_definition(definition)
+            self.fields_types[class_def.name] = FieldType.INPUT
+        elif isinstance(definition, GraphQLObjectType):
+            class_def = self._parse_object_or_input_definition(definition)
+            interfaces = self._parse_interfaces(definition)
+            if interfaces:
+                class_def.bases = interfaces
+            self.fields_types[class_def.name] = FieldType.OBJECT
         else:
             raise Exception
+
+        return class_def
+
+    def _parse_interfaces(self, definition) -> list[ast.Name]:
+        return [ast.Name(id=interface.name) for interface in definition.interfaces]
 
     def _parse_enum_definition(self, definition: GraphQLEnumType) -> ast.ClassDef:
         class_def = ast.ClassDef(
@@ -49,16 +67,17 @@ class BaseTypesGenerator:
             body=[],
             decorator_list=[],
         )
+        self.fields_definitions[definition.name] = {}
         for lineno, (val_name, val_def) in enumerate(
             definition.values.items(), start=1
         ):
-            class_def.body.append(
-                ast.Assign(
-                    targets=[ast.Name(id=val_name)],
-                    value=ast.Constant(value=val_def.value),
-                    lineno=lineno,
-                )
+            field_def = ast.Assign(
+                targets=[ast.Name(id=val_name)],
+                value=ast.Constant(value=val_def.value),
+                lineno=lineno,
             )
+            class_def.body.append(field_def)
+            self.fields_definitions[definition.name][val_name] = field_def
         return class_def
 
     def _parse_object_or_input_definition(
@@ -71,62 +90,19 @@ class BaseTypesGenerator:
             body=[],
             decorator_list=[],
         )
+        self.fields_definitions[definition.name] = {}
         for lineno, (name, field) in enumerate(definition.fields.items(), start=1):
-            class_def.body.append(
-                ast.AnnAssign(
-                    target=ast.Name(id=name),
-                    annotation=self._parse_field_type(field.type),
-                    simple=1,
-                    lineno=lineno,
-                )
+            field_def = ast.AnnAssign(
+                target=ast.Name(id=name),
+                annotation=parse_field_type(field.type),
+                simple=1,
+                lineno=lineno,
             )
+            class_def.body.append(field_def)
+            self.fields_definitions[definition.name][name] = field_def
         return class_def
 
-    def _parse_field_type(
-        self, type_, nullable: bool = True
-    ) -> Union[ast.Name, ast.Subscript]:
-        if isinstance(type_, GraphQLScalarType):
-            return self._gen_name(SIMPLE_TYPE_MAP.get(type_.name, "Any"), nullable)
-        elif isinstance(
-            type_,
-            (
-                GraphQLObjectType,
-                GraphQLInputObjectType,
-                GraphQLEnumType,
-                GraphQLInterfaceType,
-            ),
-        ):
-            return self._gen_name(type_.name, nullable)
-        elif isinstance(type_, GraphQLUnionType):
-            subtypes = [self._parse_field_type(subtype) for subtype in type_.types]
-            return self._gen_union(subtypes, nullable)
-        elif isinstance(type_, GraphQLList):
-            return self._gen_list(
-                self._parse_field_type(type_.of_type, nullable), nullable
-            )
-        elif isinstance(type_, GraphQLNonNull):
-            return self._parse_field_type(type_.of_type, False)
-        else:
-            raise Exception
-
-    def _nullable(self, slice_: Union[ast.Name, ast.Subscript]) -> ast.Subscript:
-        return ast.Subscript(value=ast.Name(id=OPTIONAL), slice=slice_)
-
-    def _gen_name(self, name, nullable: bool = True) -> Union[ast.Name, ast.Subscript]:
-        result = ast.Name(id=name)
-        return result if not nullable else self._nullable(result)
-
-    def _gen_list(self, slice_: Union[ast.Name, ast.Subscript], nullable: bool = True):
-        result = ast.Subscript(value=ast.Name(id=LIST), slice=slice_)
-        return result if not nullable else self._nullable(result)
-
-    def _gen_union(
-        self, types: list[Union[ast.Name, ast.Subscript]], nullable: bool = True
-    ) -> ast.Subscript:
-        result = ast.Subscript(value=ast.Name(id="Union"), slice=ast.Tuple(elts=types))
-        return result if not nullable else self._nullable(result)
-
-    def generate(self) -> tuple[ast.Module, str]:
+    def generate(self) -> ast.Module:
         imports = [
             generate_import_from(["Enum"], "enum"),
             generate_import_from(["Optional", "Any", "Union"], "typing"),
@@ -139,4 +115,4 @@ class BaseTypesGenerator:
             if class_def and class_def.body:
                 class_def.lineno = lineno
                 module.body.append(class_def)
-        return module, "types.py"
+        return module

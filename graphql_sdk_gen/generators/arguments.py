@@ -62,7 +62,7 @@ class ArgumentsGenerator:
         return mapping[type(node)](node, nullable)
 
     def generate(
-        self, variable_definitions: list[VariableDefinitionNode]
+        self, variable_definitions: tuple[VariableDefinitionNode]
     ) -> ast.arguments:
         arguments = ast.arguments(
             posonlyargs=[],
