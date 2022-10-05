@@ -9,75 +9,55 @@ from graphql import (
     VariableDefinitionNode,
 )
 
-from ..exceptions import NotSupported
-from .constants import LIST, OPTIONAL, SIMPLE_TYPE_MAP
+from ..exceptions import ParsingError
+from .codegen import (
+    generate_annotation_name,
+    generate_arg,
+    generate_arguments,
+    generate_list_annotation,
+)
+from .constants import SIMPLE_TYPE_MAP
 
 
 class ArgumentsGenerator:
     def __init__(self) -> None:
-        self.non_scalar_types: list = []
-
-    def _parse_named_type_node(
-        self, node: NamedTypeNode, nullable: bool = True
-    ) -> Union[ast.Name, ast.Subscript]:
-        name = node.name.value
-        if name in SIMPLE_TYPE_MAP:
-            name = SIMPLE_TYPE_MAP[name]
-        else:
-            self.non_scalar_types.append(name)
-        result = ast.Name(id=name)
-        if nullable:
-            return self._nullable(result)
-        return result
-
-    def _parse_not_null_type_node(
-        self, node: NonNullTypeNode, _
-    ) -> Union[ast.Name, ast.Subscript, None]:
-        return self._parse_type_node(node.type, False)
-
-    def _parse_list_type_node(
-        self, node: ListTypeNode, nullable: bool = True
-    ) -> ast.Subscript:
-        result = ast.Subscript(
-            value=ast.Name(id=LIST), slice=self._parse_type_node(node.type, nullable)
-        )
-        if nullable:
-            return self._nullable(result)
-        return result
-
-    def _nullable(self, slice_: Union[ast.Name, ast.Subscript]) -> ast.Subscript:
-        return ast.Subscript(value=ast.Name(id=OPTIONAL), slice=slice_)
+        self.used_types: list[str] = []
 
     def _parse_type_node(
         self,
         node: Union[NamedTypeNode, ListTypeNode, NonNullTypeNode, TypeNode],
         nullable: bool = True,
-    ) -> Union[None, ast.Name, ast.Subscript]:
-        mapping = {
-            NamedTypeNode: self._parse_named_type_node,
-            ListTypeNode: self._parse_list_type_node,
-            NonNullTypeNode: self._parse_not_null_type_node,
-            TypeNode: lambda node: None,
-        }
-        return mapping[type(node)](node, nullable)
+    ) -> Union[ast.Name, ast.Subscript]:
+        if isinstance(node, NamedTypeNode):
+            return self._parse_named_type_node(node, nullable)
+        if isinstance(node, ListTypeNode):
+            return generate_list_annotation(
+                self._parse_type_node(node.type, nullable), nullable
+            )
+        if isinstance(node, NonNullTypeNode):
+            return self._parse_type_node(node.type, False)
+
+        raise ParsingError("Invalid argument type.")
+
+    def _parse_named_type_node(
+        self, node: NamedTypeNode, nullable: bool = True
+    ) -> Union[ast.Name, ast.Subscript]:
+        name = node.name.value
+
+        if name in SIMPLE_TYPE_MAP:
+            name = SIMPLE_TYPE_MAP[name]
+        else:
+            self.used_types.append(name)
+
+        return generate_annotation_name(name, nullable)
 
     def generate(
-        self, variable_definitions: tuple[VariableDefinitionNode]
+        self, variable_definitions: tuple[VariableDefinitionNode, ...]
     ) -> ast.arguments:
-        arguments = ast.arguments(
-            posonlyargs=[],
-            args=[
-                ast.arg(arg="self"),
-            ],
-            kwonlyargs=[],
-            kw_defaults=[],
-            defaults=[],
-        )
+        """Generate arguments from given variable definitions."""
+        arguments = generate_arguments([generate_arg("self")])
         for variable_definition in variable_definitions:
             name = variable_definition.variable.name.value
             annotation = self._parse_type_node(variable_definition.type)
-            arguments.args.append(ast.arg(arg=name, annotation=annotation))
-            if variable_definition.default_value:
-                raise NotSupported("Default values for query params are not supported.")
-
+            arguments.args.append(generate_arg(name, annotation))
         return arguments

@@ -1,22 +1,15 @@
 import ast
-from dataclasses import dataclass
 from pathlib import Path
 
 from graphql import GraphQLSchema, OperationDefinitionNode
 
+from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
-from .base_types import BaseTypesGenerator
 from .client import ClientGenerator
 from .init_file import InitFileGenerator
 from .query_types import QueryTypesGenerator
-from .utils import ast_to_str, to_snake_case
-
-
-@dataclass
-class QueryTypesModule:
-    file_name: str
-    public_names: list[str]
-    module: ast.Module
+from .schema_types import SchemaTypesGenerator
+from .utils import ast_to_str, str_to_snake_case
 
 
 class PackageGenerator:
@@ -31,7 +24,8 @@ class PackageGenerator:
         self.init_generator = InitFileGenerator()
         self.client_generator = ClientGenerator()
         self.arguments_generator = ArgumentsGenerator()
-        self.base_types_generator = BaseTypesGenerator(schema)
+        self.schema_types_generator = SchemaTypesGenerator(schema)
+        self.schema_types_module_name = "schema_types"
 
         self.query_types_files: dict[str, ast.Module] = {}
 
@@ -42,16 +36,17 @@ class PackageGenerator:
 
     def _create_client_file(self):
         client_file_path = self.package_path / "client.py"
-        self.client_generator.add_import(names=["Optional"], from_="typing")
 
         base_types = []
-        for type_ in self.arguments_generator.non_scalar_types:
-            if type_ in self.base_types_generator.types_definitions:
+        for type_ in self.arguments_generator.used_types:
+            if type_ in self.schema_types_generator.public_names:
                 base_types.append(type_)
             else:
-                raise Exception
+                raise ParsingError("Argument type not found in schema.")
 
-        self.client_generator.add_import(names=base_types, from_="types", level=1)
+        self.client_generator.add_import(
+            names=base_types, from_=self.schema_types_module_name, level=1
+        )
         client_module = self.client_generator.generate()
         client_file_path.write_text(ast_to_str(client_module))
 
@@ -59,10 +54,13 @@ class PackageGenerator:
             names=[self.client_generator.name], from_="client", level=1
         )
 
-    def _create_types_files(self):
-        types_module = self.base_types_generator.generate()
-        types_file_path = self.package_path / "types.py"
+    def _create_schema_types_file(self):
+        types_module = self.schema_types_generator.generate()
+        types_file_path = self.package_path / f"{self.schema_types_module_name}.py"
         types_file_path.write_text(ast_to_str(types_module))
+        self.init_generator.add_import(
+            self.schema_types_generator.public_names, self.schema_types_module_name, 1
+        )
 
     def _create_query_types_files(self):
         for file_name, module in self.query_types_files.items():
@@ -74,7 +72,7 @@ class PackageGenerator:
         if not self.package_path.exists():
             self.package_path.mkdir()
         self._create_client_file()
-        self._create_types_files()
+        self._create_schema_types_file()
         self._create_query_types_files()
         self._create_init_file()
 
@@ -83,16 +81,16 @@ class PackageGenerator:
             raise Exception
 
         query_name = name.value
-        method_name = to_snake_case(name.value)
+        method_name = str_to_snake_case(name.value)
         module_name = method_name
         file_name = f"{module_name}.py"
 
         query_types_generator = QueryTypesGenerator(
             self.schema,
-            self.base_types_generator.fields_definitions,
-            self.base_types_generator.fields_types,
+            self.schema_types_generator.fields,
+            self.schema_types_generator.class_types,
             definition,
-            "types"
+            self.schema_types_module_name,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
         self.init_generator.add_import(

@@ -11,12 +11,12 @@ from .schema import get_graphql_queries, get_graphql_schema
 @click.version_option()
 def main():
     schema = get_graphql_schema()
-    queries = get_graphql_queries(schema)
+    queries = get_graphql_queries()
     sys.stdout.write(f"{settings}\n{schema}\n{queries}")
     package_generator = PackageGenerator(
         package_name=settings.target_package_name,
         target_path=settings.target_package_path,
-        schema=schema
+        schema=schema,
     )
     for query in queries:
         package_generator.add_query(query)

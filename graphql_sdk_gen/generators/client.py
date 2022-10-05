@@ -1,13 +1,19 @@
 import ast
-from .utils import generate_import_from
+
+from .codegen import (
+    generate_async_method_definition,
+    generate_class_def,
+    generate_import_from,
+    generate_name,
+)
+from .constants import OPTIONAL
+
 
 class ClientGenerator:
     def __init__(self, name: str = "Client") -> None:
         self.name = name
-        self.class_def = ast.ClassDef(
-            name=name, bases=[], keywords=[], body=[], decorator_list=[]
-        )
-        self.imports: list = []
+        self.class_def = generate_class_def(name=name)
+        self.imports: list = [generate_import_from([OPTIONAL], "typing")]
 
     def generate(self) -> ast.Module:
         """Generate module with class definistion of grahql client."""
@@ -20,16 +26,13 @@ class ClientGenerator:
         """Add import to be included in init file."""
         self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
-    def add_async_method(
-        self, name: str, return_type: str, arguments: ast.arguments
-    ):
+    def add_async_method(self, name: str, return_type: str, arguments: ast.arguments):
+        """Add definition of async method."""
         self.class_def.body.append(
-            ast.AsyncFunctionDef(
+            generate_async_method_definition(
                 name=name,
-                args=arguments,
-                body=[ast.Pass()],
-                decorator_list=[],
-                returns=ast.Name(id=return_type),
+                arguments=arguments,
+                return_type=generate_name(return_type),
                 lineno=len(self.class_def.body) + 1,
             )
         )

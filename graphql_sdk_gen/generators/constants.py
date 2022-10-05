@@ -1,4 +1,5 @@
-from typing import Final, Dict
+from enum import Enum
+from typing import Dict, Final
 
 SIMPLE_TYPE_MAP: Final[Dict[str, str]] = {
     "String": "str",
@@ -9,3 +10,10 @@ SIMPLE_TYPE_MAP: Final[Dict[str, str]] = {
 }
 OPTIONAL: Final[str] = "Optional"
 LIST: Final[str] = "list"
+
+
+class ClassType(str, Enum):
+    ENUM = "ENUM"
+    INPUT = "INPUT"
+    OBJECT = "OBJECT"
+    INTERFACE = "INTERFACE"

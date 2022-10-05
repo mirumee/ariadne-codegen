@@ -1,6 +1,6 @@
 import ast
 
-from .utils import generate_import_from
+from .codegen import generate_import_from
 
 
 class InitFileGenerator:

@@ -16,3 +16,7 @@ class InvalidGraphqlSyntax(Exception):
 
 class NotSupported(Exception):
     """Not supported."""
+
+
+class ParsingError(Exception):
+    """Parsing error."""
