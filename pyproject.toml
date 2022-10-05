@@ -28,7 +28,9 @@ max-line-length = 88
 disable = [
     "missing-docstring",
     "redefined-outer-name",
-    "too-few-public-methods"
+    "too-few-public-methods",
+    "too-many-instance-attributes",
+    "too-many-arguments",
 ]
 
 [tool.pytest.ini_options]
