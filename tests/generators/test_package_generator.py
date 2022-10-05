@@ -1,9 +1,11 @@
+from graphql import GraphQLSchema
+
 from graphql_sdk_gen.generators.package import PackageGenerator
 
 
 def test_generate_creates_directory_and_files(tmp_path):
     package_name = "test_graphql_cleint"
-    generator = PackageGenerator(package_name, tmp_path.as_posix())
+    generator = PackageGenerator(package_name, tmp_path.as_posix(), GraphQLSchema())
 
     generator.generate()
 
@@ -20,7 +22,7 @@ def test_generate_creates_directory_and_files(tmp_path):
 
 def test_generate_creates_files_with_correct_content(tmp_path):
     package_name = "test_graphql_cleint"
-    generator = PackageGenerator(package_name, tmp_path.as_posix())
+    generator = PackageGenerator(package_name, tmp_path.as_posix(), GraphQLSchema())
 
     generator.generate()
 
