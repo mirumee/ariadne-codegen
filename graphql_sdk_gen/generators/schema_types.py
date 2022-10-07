@@ -19,7 +19,7 @@ from .codegen import (
     generate_import_from,
     parse_field_type,
 )
-from .constants import OPTIONAL, ClassType
+from .constants import ANY, OPTIONAL, UNION, ClassType
 
 
 class SchemaTypesGenerator:
@@ -34,7 +34,7 @@ class SchemaTypesGenerator:
 
         self.imports = [
             generate_import_from(["Enum"], "enum"),
-            generate_import_from([OPTIONAL, "Any", "Union"], "typing"),
+            generate_import_from([OPTIONAL, ANY, UNION], "typing"),
             generate_import_from(["BaseModel"], "pydantic"),
         ]
 

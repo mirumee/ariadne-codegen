@@ -10,6 +10,8 @@ SIMPLE_TYPE_MAP: Final[Dict[str, str]] = {
 }
 OPTIONAL: Final[str] = "Optional"
 LIST: Final[str] = "list"
+UNION: Final[str] = "Union"
+ANY: Final[str] = "Any"
 
 
 class ClassType(str, Enum):

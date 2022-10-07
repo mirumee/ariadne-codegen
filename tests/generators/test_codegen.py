@@ -32,7 +32,7 @@ from graphql_sdk_gen.generators.codegen import (
     generate_union_annotation,
     parse_field_type,
 )
-from graphql_sdk_gen.generators.constants import LIST, OPTIONAL
+from graphql_sdk_gen.generators.constants import ANY, LIST, OPTIONAL, UNION
 
 
 def test_generate_import_from_returns_correct_object():
@@ -215,7 +215,7 @@ def test_generate_union_annotation_returns_union_annotation():
 
     assert isinstance(result, ast.Subscript)
     assert isinstance(result.value, ast.Name)
-    assert result.value.id == "Union"
+    assert result.value.id == UNION
     assert isinstance(result.slice, ast.Tuple)
     assert result.slice.elts == types
 
@@ -233,7 +233,7 @@ def test_generate_union_annotation_returns_optional_union_annotation():
     assert result.value.id == OPTIONAL
     assert isinstance(result.slice, ast.Subscript)
     assert isinstance(result.slice.value, ast.Name)
-    assert result.slice.value.id == "Union"
+    assert result.slice.value.id == UNION
     assert isinstance(result.slice.slice, ast.Tuple)
     assert result.slice.slice.elts == types
 
@@ -246,7 +246,7 @@ def test_generate_union_annotation_returns_optional_union_annotation():
         ("Int", "int"),
         ("Boolean", "bool"),
         ("Float", "float"),
-        ("Unknown", "Any"),
+        ("Unknown", ANY),
     ],
 )
 def test_parse_field_type_given_scalar_type_returns_name_object(
@@ -268,7 +268,7 @@ def test_parse_field_type_given_scalar_type_returns_name_object(
         ("Int", "int"),
         ("Boolean", "bool"),
         ("Float", "float"),
-        ("Unknown", "Any"),
+        ("Unknown", ANY),
     ],
 )
 def test_parse_field_type_given_scalar_type_returns_optional_annotation(
@@ -360,7 +360,7 @@ def test_parse_field_type_given_union_type_returns_union_annotation():
 
     assert isinstance(result, ast.Subscript)
     assert isinstance(result.value, ast.Name)
-    assert result.value.id == "Union"
+    assert result.value.id == UNION
     assert isinstance(result.slice, ast.Tuple)
 
 
@@ -382,7 +382,7 @@ def test_parse_field_type_given_union_type_returns_optional_union_annotation():
     assert result.value.id == OPTIONAL
     assert isinstance(result.slice, ast.Subscript)
     assert isinstance(result.slice.value, ast.Name)
-    assert result.slice.value.id == "Union"
+    assert result.slice.value.id == UNION
     assert isinstance(result.slice.slice, ast.Tuple)
 
 

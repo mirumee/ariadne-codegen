@@ -13,7 +13,7 @@ from graphql import (
 )
 
 from ..exceptions import ParsingError
-from .constants import LIST, OPTIONAL, SIMPLE_TYPE_MAP
+from .constants import ANY, LIST, OPTIONAL, SIMPLE_TYPE_MAP, UNION
 
 
 def generate_import_from(
@@ -131,7 +131,7 @@ def generate_union_annotation(
     types: list[Union[ast.Name, ast.Subscript]], nullable: bool = True
 ) -> ast.Subscript:
     """Generate union annotation."""
-    result = ast.Subscript(value=ast.Name(id="Union"), slice=ast.Tuple(elts=types))
+    result = ast.Subscript(value=ast.Name(id=UNION), slice=ast.Tuple(elts=types))
     return result if not nullable else generate_nullable_annotation(result)
 
 
@@ -150,9 +150,7 @@ def parse_field_type(
 ) -> Union[ast.Name, ast.Subscript]:
     """Parse graphql type and return generated annotation."""
     if isinstance(type_, GraphQLScalarType):
-        return generate_annotation_name(
-            SIMPLE_TYPE_MAP.get(type_.name, "Any"), nullable
-        )
+        return generate_annotation_name(SIMPLE_TYPE_MAP.get(type_.name, ANY), nullable)
     if isinstance(
         type_,
         (
