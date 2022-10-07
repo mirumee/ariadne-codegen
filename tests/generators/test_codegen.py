@@ -1,6 +1,7 @@
 import ast
-
 from typing import Union
+
+import pytest
 from graphql import (
     GraphQLEnumType,
     GraphQLEnumValue,
@@ -14,8 +15,6 @@ from graphql import (
     GraphQLScalarType,
     GraphQLUnionType,
 )
-
-import pytest
 
 from graphql_sdk_gen.generators.codegen import (
     generate_ann_assign,
