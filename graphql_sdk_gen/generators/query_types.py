@@ -108,13 +108,16 @@ class QueryTypesGenerator:
             ClassType.INTERFACE,
         ):
             return self._add_prefix_to_annotation(annotation, self.query_name)
+
         if field_type == ClassType.ENUM:
             self.used_enums.append(field_type_name)
+
         return annotation
 
     def _walk_annotation(self, annotation):
         if isinstance(annotation, ast.Name):
             return annotation.id.replace('"', "")
+
         return self._walk_annotation(annotation.slice)
 
     def _add_prefix_to_annotation(self, annotation, prefix):
@@ -124,11 +127,13 @@ class QueryTypesGenerator:
             else:
                 result = prefix + annotation.id
             return ast.Name(id=result)
+
         if isinstance(annotation, ast.Subscript):
             return ast.Subscript(
                 value=annotation.value,
                 slice=self._add_prefix_to_annotation(annotation.slice, prefix),
             )
+
         raise ParsingError("Invalid annotation type.")
 
     def generate(self) -> ast.Module:

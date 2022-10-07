@@ -151,6 +151,7 @@ def parse_field_type(
     """Parse graphql type and return generated annotation."""
     if isinstance(type_, GraphQLScalarType):
         return generate_annotation_name(SIMPLE_TYPE_MAP.get(type_.name, ANY), nullable)
+
     if isinstance(
         type_,
         (
@@ -161,13 +162,17 @@ def parse_field_type(
         ),
     ):
         return generate_annotation_name('"' + type_.name + '"', nullable)
+
     if isinstance(type_, GraphQLUnionType):
         subtypes = [parse_field_type(subtype) for subtype in type_.types]
         return generate_union_annotation(subtypes, nullable)
+
     if isinstance(type_, GraphQLList):
         return generate_list_annotation(
             parse_field_type(type_.of_type, nullable), nullable
         )
+
     if isinstance(type_, GraphQLNonNull):
         return parse_field_type(type_.of_type, False)
+
     raise ParsingError("Invalid field type.")

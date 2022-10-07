@@ -30,10 +30,12 @@ class ArgumentsGenerator:
     ) -> Union[ast.Name, ast.Subscript]:
         if isinstance(node, NamedTypeNode):
             return self._parse_named_type_node(node, nullable)
+
         if isinstance(node, ListTypeNode):
             return generate_list_annotation(
                 self._parse_type_node(node.type, nullable), nullable
             )
+
         if isinstance(node, NonNullTypeNode):
             return self._parse_type_node(node.type, False)
 

@@ -66,18 +66,22 @@ class SchemaTypesGenerator:
         if isinstance(definition, GraphQLEnumType):
             class_def = self._parse_enum_definition(definition)
             self.class_types[class_def.name] = ClassType.ENUM
+
         elif isinstance(definition, GraphQLInputObjectType):
             class_def = self._parse_object_input_or_interface_definition(definition)
             self.class_types[class_def.name] = ClassType.INPUT
+
         elif isinstance(definition, GraphQLInterfaceType):
             class_def = self._parse_object_input_or_interface_definition(definition)
             self.class_types[class_def.name] = ClassType.INTERFACE
+
         elif isinstance(definition, GraphQLObjectType):
             class_def = self._parse_object_input_or_interface_definition(definition)
             if definition.interfaces:
                 interfaces_names = self._parse_interfaces(definition)
                 class_def.bases.extend(interfaces_names)
             self.class_types[class_def.name] = ClassType.OBJECT
+
         else:
             raise NotSupported("Not supported type.")
 
