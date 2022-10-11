@@ -1,6 +1,6 @@
 import ast
 
-from graphql import parse
+from graphql import OperationDefinitionNode, parse
 
 from graphql_sdk_gen.generators.arguments import ArgumentsGenerator
 from graphql_sdk_gen.generators.constants import OPTIONAL
@@ -9,6 +9,7 @@ from graphql_sdk_gen.generators.constants import OPTIONAL
 def _get_variable_definitions_from_query_str(query: str):
     document_node = parse(query)
     operation_definition = document_node.definitions[0]
+    assert isinstance(operation_definition, OperationDefinitionNode)
     return operation_definition.variable_definitions
 
 

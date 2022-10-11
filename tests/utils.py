@@ -10,14 +10,14 @@ def compare_ast(
         return False
 
     if isinstance(node1, ast.AST):
-        for k, v in vars(node1).items():
+        for k, var in vars(node1).items():
             if k in {"lineno", "end_lineno", "col_offset", "end_col_offset", "ctx"}:
                 continue
-            if not compare_ast(v, getattr(node2, k)):
+            if not compare_ast(var, getattr(node2, k)):
                 return False
         return True
 
-    elif isinstance(node1, list) and isinstance(node2, list):
+    if isinstance(node1, list) and isinstance(node2, list):
         return all(compare_ast(n1, n2) for n1, n2 in zip_longest(node1, node2))
-    else:
-        return node1 == node2
+
+    return node1 == node2
