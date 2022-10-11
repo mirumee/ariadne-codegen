@@ -17,6 +17,7 @@ from .codegen import (
     generate_class_def,
     generate_constant,
     generate_import_from,
+    generate_name,
     parse_field_type,
 )
 from .constants import ANY, OPTIONAL, UNION, ClassType
@@ -79,7 +80,7 @@ class SchemaTypesGenerator:
             class_def = self._parse_object_input_or_interface_definition(definition)
             if definition.interfaces:
                 interfaces_names = self._parse_interfaces(definition)
-                class_def.bases.extend(interfaces_names)
+                class_def.bases = [generate_name(name) for name in interfaces_names]
             self.class_types[class_def.name] = ClassType.OBJECT
 
         else:
@@ -87,12 +88,12 @@ class SchemaTypesGenerator:
 
         self.class_defs.append(class_def)
 
-    def _parse_interfaces(self, definition: GraphQLObjectType) -> list[ast.Name]:
+    def _parse_interfaces(self, definition: GraphQLObjectType) -> list[str]:
         result = []
         for interface in definition.interfaces:
             if interface.name not in self.public_names:
                 self._parse_type_definition(interface)
-            result.append(ast.Name(id=interface.name))
+            result.append(interface.name)
         return result
 
     def _parse_enum_definition(self, definition: GraphQLEnumType) -> ast.ClassDef:
