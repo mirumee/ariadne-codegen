@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from graphql import GraphQLSchema, build_ast_schema, parse
 
 from graphql_sdk_gen.generators.package import PackageGenerator
@@ -80,20 +82,20 @@ def test_generate_creates_files_with_types(tmp_path):
         package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
     )
     expected_schema_types = """
-class CustomType(BaseModel):
-    id: str
-    field1: Optional[list[Optional[str]]]
-    field2: Optional["CustomType2"]
-    field3: "CustomEnum"
+    class CustomType(BaseModel):
+        id: str
+        field1: Optional[list[Optional[str]]]
+        field2: Optional["CustomType2"]
+        field3: "CustomEnum"
 
 
-class CustomType2(BaseModel):
-    fieldb: Optional[int]
+    class CustomType2(BaseModel):
+        fieldb: Optional[int]
 
 
-class CustomEnum(str, Enum):
-    VAL1 = "VAL1"
-    VAL2 = "VAL2"
+    class CustomEnum(str, Enum):
+        VAL1 = "VAL1"
+        VAL2 = "VAL2"
     """
 
     generator.generate()
@@ -103,7 +105,7 @@ class CustomEnum(str, Enum):
     )
     with types_file_path.open() as type_file:
         types_content = type_file.read()
-        assert expected_schema_types.rstrip() in types_content
+        assert dedent(expected_schema_types) in types_content
 
 
 def test_generate_creates_file_with_query_types_and_adds_method_to_client(tmp_path):
@@ -123,18 +125,18 @@ def test_generate_creates_file_with_query_types_and_adds_method_to_client(tmp_pa
     }
     """
     expected_query_types = """
-class CustomQueryCustomType2(BaseModel):
-    fieldb: Optional[int]
+    class CustomQueryCustomType2(BaseModel):
+        fieldb: Optional[int]
 
 
-class CustomQueryCustomType(BaseModel):
-    field1: Optional[list[Optional[str]]]
-    field2: Optional["CustomQueryCustomType2"]
-    field3: "CustomEnum"
+    class CustomQueryCustomType(BaseModel):
+        field1: Optional[list[Optional[str]]]
+        field2: Optional["CustomQueryCustomType2"]
+        field3: "CustomEnum"
 
 
-class CustomQuery(BaseModel):
-    query1: Optional["CustomQueryCustomType"]
+    class CustomQuery(BaseModel):
+        query1: Optional["CustomQueryCustomType"]
     """
 
     generator.add_query(parse(query_str).definitions[0])
@@ -143,7 +145,7 @@ class CustomQuery(BaseModel):
     query_types_file_path = tmp_path / package_name / "custom_query.py"
     with query_types_file_path.open() as query_types_file:
         query_types_content = query_types_file.read()
-        assert expected_query_types.rstrip() in query_types_content
+        assert dedent(expected_query_types) in query_types_content
         assert (
             f"from .{generator.schema_types_module_name} import CustomEnum"
             in query_types_content
