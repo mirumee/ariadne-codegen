@@ -1,4 +1,4 @@
-from textwrap import dedent
+from textwrap import dedent, indent
 
 from graphql import GraphQLSchema, build_ast_schema, parse
 
@@ -68,12 +68,13 @@ def test_generate_creates_files_with_correct_content(tmp_path):
     with init_file_path.open() as init_file:
         init_content = init_file.read()
         assert "from .client import Client" in init_content
-        assert '__all__ = ["Client"]' in init_content
+        assert "from .base_client import BaseClient" in init_content
+        assert '__all__ = ["BaseClient", "Client"]' in init_content
 
     client_file_path = package_path / "client.py"
     with client_file_path.open() as client_file:
         client_content = client_file.read()
-        assert "class Client:" in client_content
+        assert "class Client(BaseClient):" in client_content
 
 
 def test_generate_creates_files_with_types(tmp_path):
@@ -108,7 +109,7 @@ def test_generate_creates_files_with_types(tmp_path):
         assert dedent(expected_schema_types) in types_content
 
 
-def test_generate_creates_file_with_query_types_and_adds_method_to_client(tmp_path):
+def test_generate_creates_file_with_query_types(tmp_path):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
         package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
@@ -151,16 +152,6 @@ def test_generate_creates_file_with_query_types_and_adds_method_to_client(tmp_pa
             in query_types_content
         )
 
-    client_file_path = tmp_path / package_name / "client.py"
-    with client_file_path.open() as client_file:
-        client_content = client_file.read()
-        expected_method_def = (
-            "async def custom_query(self, id: str, param: Optional[str])"
-            " -> CustomQuery:"
-        )
-        assert expected_method_def in client_content
-        assert "from .custom_query import CustomQuery" in client_content
-
 
 def test_generate_creates_multiple_query_types_files(tmp_path):
     package_name = "test_graphql_client"
@@ -192,3 +183,76 @@ def test_generate_creates_multiple_query_types_files(tmp_path):
     query2_file_path = package_path / "custom_query2.py"
     assert query2_file_path.exists()
     assert query2_file_path.is_file()
+
+
+def test_generate_copies_base_client_file(tmp_path):
+    base_client_file_content = """
+    class TestBaseClient:
+        pass
+    """
+    package_name = "test_graphql_client"
+    base_client_file_path = tmp_path / "test_base_client.py"
+    base_client_file_path.write_text(dedent(base_client_file_content))
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        base_client_name="TestBaseClient",
+        base_client_file_path=base_client_file_path.as_posix(),
+    )
+
+    generator.generate()
+
+    copied_file_path = tmp_path / package_name / "test_base_client.py"
+    assert copied_file_path.exists()
+    assert copied_file_path.is_file()
+    with copied_file_path.open() as copied_file:
+        copied_content = copied_file.read()
+        assert dedent(copied_content) == dedent(base_client_file_content)
+
+
+def test_generate_creates_client_with_correctly_implemented_method(tmp_path):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+    )
+    query_str = """
+    query CustomQuery($id: ID!, $param: String) {
+        query1(id: $id) {
+            field1
+            field2 {
+                fieldb
+            }
+            field3
+        }
+    }
+    """
+
+    generator.add_query(parse(query_str).definitions[0])
+    generator.generate()
+
+    client_file_path = tmp_path / package_name / "client.py"
+    with client_file_path.open() as client_file:
+        client_content = client_file.read()
+
+        expected_method_def = """
+        async def custom_query(self, id: str, param: Optional[str]) -> CustomQuery:
+            query = (
+                "query CustomQuery($id: ID!, $param: String) {\\n"
+                "  query1(id: $id) {\\n"
+                "    field1\\n"
+                "    field2 {\\n"
+                "      fieldb\\n"
+                "    }\\n"
+                "    field3\\n"
+                "  }\\n"
+                "}\\n"
+            )
+            variables: dict = {"id": id, "param": param}
+            response = await self.execute(query=query, variables=variables)
+            return CustomQuery.parse_obj(response.json().get("data", {}))
+        """
+        print("\n".join(client_content.splitlines()[7:]))
+        print(indent(dedent(expected_method_def), "    "))
+        assert indent(dedent(expected_method_def), "    ") in client_content
+        assert "from .custom_query import CustomQuery" in client_content
