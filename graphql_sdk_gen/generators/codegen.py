@@ -108,7 +108,9 @@ def generate_constant(value: Any) -> ast.Constant:
     return ast.Constant(value=value)
 
 
-def generate_assign(targets: list[str], value: ast.expr, lineno: int = 1) -> ast.Assign:
+def generate_assign(
+    targets: list[str], value: Union[ast.expr, list[ast.expr]], lineno: int = 1
+) -> ast.Assign:
     """Generate assign object."""
     return ast.Assign(
         targets=[ast.Name(t) for t in targets], value=value, lineno=lineno

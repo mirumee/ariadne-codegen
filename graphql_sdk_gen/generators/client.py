@@ -56,7 +56,11 @@ class ClientGenerator:
         self, query_str: str, argument_names: list[str], return_type: str
     ) -> list[ast.stmt]:
         return [
-            generate_assign(["query"], generate_constant(query_str), lineno=1),
+            generate_assign(
+                ["query"],
+                [generate_constant(l + "\n") for l in query_str.splitlines()],
+                lineno=1,
+            ),
             generate_ann_assign(
                 "variables",
                 generate_name("dict"),
@@ -98,6 +102,3 @@ class ClientGenerator:
                 )
             ),
         ]
-
-
-#
