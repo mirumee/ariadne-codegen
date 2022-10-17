@@ -1,7 +1,7 @@
 import ast
 from pathlib import Path
 
-from graphql import GraphQLSchema, OperationDefinitionNode
+from graphql import GraphQLSchema, OperationDefinitionNode, print_ast
 
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
@@ -21,8 +21,12 @@ class PackageGenerator:
         self.schema = schema
         self.package_path = Path(target_path) / package_name
 
+        self.client_name = "Client"
+        self.base_client_name = "BaseClient"
+        self.base_client_file_path = Path(__file__).parent / "base_client.py"
+
         self.init_generator = InitFileGenerator()
-        self.client_generator = ClientGenerator()
+        self.client_generator = ClientGenerator(self.client_name, self.base_client_name)
         self.arguments_generator = ArgumentsGenerator()
         self.schema_types_generator = SchemaTypesGenerator(schema)
         self.schema_types_module_name = "schema_types"
@@ -47,6 +51,11 @@ class PackageGenerator:
         self.client_generator.add_import(
             names=base_types, from_=self.schema_types_module_name, level=1
         )
+        self.client_generator.add_import(
+            names=[self.base_client_name],
+            from_=self.base_client_file_path.stem,
+            level=1,
+        )
         client_module = self.client_generator.generate()
         client_file_path.write_text(ast_to_str(client_module))
 
@@ -67,6 +76,15 @@ class PackageGenerator:
             file_path = self.package_path / file_name
             file_path.write_text(ast_to_str(module))
 
+    def _copy_base_client_file(self):
+        self.init_generator.add_import(
+            names=[self.base_client_name],
+            from_=self.base_client_file_path.stem,
+            level=1,
+        )
+        target_base_client_path = self.package_path / self.base_client_file_path.name
+        target_base_client_path.write_text(self.base_client_file_path.read_text())
+
     def generate(self):
         """Generate package with graphql client."""
         if not self.package_path.exists():
@@ -74,6 +92,7 @@ class PackageGenerator:
         self._create_client_file()
         self._create_schema_types_file()
         self._create_query_types_files()
+        self._copy_base_client_file()
         self._create_init_file()
 
     def add_query(self, definition: OperationDefinitionNode):
