@@ -1,6 +1,7 @@
 import ast
 
 from .codegen import (
+    generate_ann_assign,
     generate_assign,
     generate_async_method_definition,
     generate_attribute,
@@ -18,7 +19,7 @@ from .constants import OPTIONAL
 
 
 class ClientGenerator:
-    def __init__(self, name, base_client) -> None:
+    def __init__(self, name: str, base_client: str) -> None:
         self.name = name
         self.class_def = generate_class_def(name=name, base_names=[base_client])
         self.imports: list = [generate_import_from([OPTIONAL], "typing")]
@@ -56,8 +57,9 @@ class ClientGenerator:
     ) -> list[ast.stmt]:
         return [
             generate_assign(["query"], generate_constant(query_str), lineno=1),
-            generate_assign(
-                ["variables"],
+            generate_ann_assign(
+                "variables",
+                generate_name("dict"),
                 generate_dict(
                     [generate_constant(n) for n in argument_names],
                     [generate_name(n) for n in argument_names],

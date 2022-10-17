@@ -1,5 +1,6 @@
 import ast
 from pathlib import Path
+from typing import Optional
 
 from graphql import GraphQLSchema, OperationDefinitionNode, print_ast
 
@@ -14,22 +15,47 @@ from .utils import ast_to_str, str_to_snake_case
 
 class PackageGenerator:
     def __init__(
-        self, package_name: str, target_path: str, schema: GraphQLSchema
+        self,
+        package_name: str,
+        target_path: str,
+        schema: GraphQLSchema,
+        client_name: str = "Client",
+        base_client_name: str = "BaseClient",
+        base_client_file_path: Optional[str] = None,
+        schema_types_module_name: str = "schema_types",
+        init_generator: Optional[InitFileGenerator] = None,
+        client_generator: Optional[ClientGenerator] = None,
+        arguments_generator: Optional[ArgumentsGenerator] = None,
+        schema_types_generator: Optional[SchemaTypesGenerator] = None,
     ) -> None:
         self.package_name = package_name
         self.target_path = target_path
         self.schema = schema
         self.package_path = Path(target_path) / package_name
 
-        self.client_name = "Client"
-        self.base_client_name = "BaseClient"
-        self.base_client_file_path = Path(__file__).parent / "base_client.py"
+        self.client_name = client_name
+        self.base_client_name = base_client_name
+        self.base_client_file_path = (
+            Path(base_client_file_path)
+            if base_client_file_path
+            else Path(__file__).parent / "base_client.py"
+        )
+        self.schema_types_module_name = schema_types_module_name
 
-        self.init_generator = InitFileGenerator()
-        self.client_generator = ClientGenerator(self.client_name, self.base_client_name)
-        self.arguments_generator = ArgumentsGenerator()
-        self.schema_types_generator = SchemaTypesGenerator(schema)
-        self.schema_types_module_name = "schema_types"
+        self.init_generator = init_generator if init_generator else InitFileGenerator()
+        self.client_generator = (
+            client_generator
+            if client_generator
+            else ClientGenerator(self.client_name, self.base_client_name)
+        )
+        self.arguments_generator = (
+            arguments_generator if arguments_generator else ArgumentsGenerator()
+        )
+        self.schema_types_generator = (
+            schema_types_generator
+            if schema_types_generator
+            else SchemaTypesGenerator(schema)
+        )
 
         self.query_types_files: dict[str, ast.Module] = {}
 

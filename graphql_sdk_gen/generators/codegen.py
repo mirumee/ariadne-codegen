@@ -116,13 +116,17 @@ def generate_assign(targets: list[str], value: ast.expr, lineno: int = 1) -> ast
 
 
 def generate_ann_assign(
-    target: str, annotation: Union[ast.Name, ast.Subscript], lineno: int = 1
+    target: str,
+    annotation: Union[ast.Name, ast.Subscript],
+    value: Optional[ast.expr] = None,
+    lineno: int = 1,
 ) -> ast.AnnAssign:
     """Generate ann assign object."""
     return ast.AnnAssign(
         target=ast.Name(id=target),
         annotation=annotation,
         simple=1,
+        value=value,
         lineno=lineno,
     )
 
