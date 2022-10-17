@@ -75,6 +75,7 @@ def test_generate_creates_files_with_correct_content(tmp_path):
     with client_file_path.open() as client_file:
         client_content = client_file.read()
         assert "class Client(BaseClient):" in client_content
+        assert "from .base_client import BaseClient" in client_content
 
 
 def test_generate_creates_files_with_types(tmp_path):
@@ -252,7 +253,5 @@ def test_generate_creates_client_with_correctly_implemented_method(tmp_path):
             response = await self.execute(query=query, variables=variables)
             return CustomQuery.parse_obj(response.json().get("data", {}))
         """
-        print("\n".join(client_content.splitlines()[7:]))
-        print(indent(dedent(expected_method_def), "    "))
         assert indent(dedent(expected_method_def), "    ") in client_content
         assert "from .custom_query import CustomQuery" in client_content
