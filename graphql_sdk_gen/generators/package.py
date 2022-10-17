@@ -117,5 +117,7 @@ class PackageGenerator:
         )
 
         arguments = self.arguments_generator.generate(definition.variable_definitions)
-        self.client_generator.add_async_method(method_name, query_name, arguments)
+        self.client_generator.add_async_method(
+            method_name, query_name, arguments, print_ast(definition)
+        )
         self.client_generator.add_import([query_name], module_name, 1)
