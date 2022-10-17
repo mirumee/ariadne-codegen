@@ -33,6 +33,7 @@ disable = [
     "too-many-instance-attributes",
     "too-many-arguments",
     "duplicate-code",
+    "no-name-in-module",
 ]
 
 [tool.pytest.ini_options]
@@ -47,4 +48,4 @@ profile = "black"
 
 [graphql-sdk-gen]
 schema_path = "."
-queries_path = ".
+queries_path = "."
