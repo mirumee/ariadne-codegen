@@ -144,10 +144,12 @@ def generate_union_annotation(
 def generate_dict(
     keys: Optional[list[ast.expr]] = None, values: Optional[list[ast.expr]] = None
 ) -> ast.Dict:
+    """Generate dict object."""
     return ast.Dict(keys=keys if keys else [], values=values if values else [])
 
 
 def generate_await(value: ast.expr) -> ast.Await:
+    """Generate await object."""
     return ast.Await(value=value)
 
 
@@ -156,20 +158,24 @@ def generate_call(
     args: Optional[list[ast.expr]] = None,
     keywords: Optional[list[ast.keyword]] = None,
 ) -> ast.Call:
+    """Generate call object."""
     return ast.Call(
         func=func, args=args if args else [], keywords=keywords if keywords else []
     )
 
 
 def generate_attribute(value: ast.expr, attr: str) -> ast.Attribute:
+    """Generate attribute object."""
     return ast.Attribute(value=value, attr=attr)
 
 
 def generate_keyword(arg: str, value: ast.expr) -> ast.keyword:
+    """Generate keyword object."""
     return ast.keyword(arg=arg, value=value)
 
 
 def generate_return(value: Optional[ast.expr] = None) -> ast.Return:
+    """Generate return object."""
     return ast.Return(value=value)
 
 
