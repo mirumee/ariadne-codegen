@@ -54,7 +54,7 @@ class QueryTypesGenerator:
             field_type = self.schema.query_type.fields[field.name.value]
 
             field_def = generate_ann_assign(
-                field.name.value, parse_field_type(field_type.type), lineno
+                field.name.value, parse_field_type(field_type.type), lineno=lineno
             )
             field_type_name = self._walk_annotation(field_def.annotation)
             field_def.annotation = self._procces_annotation(

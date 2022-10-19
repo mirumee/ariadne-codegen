@@ -108,7 +108,9 @@ def generate_constant(value: Any) -> ast.Constant:
     return ast.Constant(value=value)
 
 
-def generate_assign(targets: list[str], value: ast.expr, lineno: int = 1) -> ast.Assign:
+def generate_assign(
+    targets: list[str], value: Union[ast.expr, list[ast.expr]], lineno: int = 1
+) -> ast.Assign:
     """Generate assign object."""
     return ast.Assign(
         targets=[ast.Name(t) for t in targets], value=value, lineno=lineno
@@ -116,13 +118,17 @@ def generate_assign(targets: list[str], value: ast.expr, lineno: int = 1) -> ast
 
 
 def generate_ann_assign(
-    target: str, annotation: Union[ast.Name, ast.Subscript], lineno: int = 1
+    target: str,
+    annotation: Union[ast.Name, ast.Subscript],
+    value: Optional[ast.expr] = None,
+    lineno: int = 1,
 ) -> ast.AnnAssign:
     """Generate ann assign object."""
     return ast.AnnAssign(
         target=ast.Name(id=target),
         annotation=annotation,
         simple=1,
+        value=value,
         lineno=lineno,
     )
 
@@ -133,6 +139,44 @@ def generate_union_annotation(
     """Generate union annotation."""
     result = ast.Subscript(value=ast.Name(id=UNION), slice=ast.Tuple(elts=types))
     return result if not nullable else generate_nullable_annotation(result)
+
+
+def generate_dict(
+    keys: Optional[list[ast.expr]] = None, values: Optional[list[ast.expr]] = None
+) -> ast.Dict:
+    """Generate dict object."""
+    return ast.Dict(keys=keys if keys else [], values=values if values else [])
+
+
+def generate_await(value: ast.expr) -> ast.Await:
+    """Generate await object."""
+    return ast.Await(value=value)
+
+
+def generate_call(
+    func: ast.expr,
+    args: Optional[list[ast.expr]] = None,
+    keywords: Optional[list[ast.keyword]] = None,
+) -> ast.Call:
+    """Generate call object."""
+    return ast.Call(
+        func=func, args=args if args else [], keywords=keywords if keywords else []
+    )
+
+
+def generate_attribute(value: ast.expr, attr: str) -> ast.Attribute:
+    """Generate attribute object."""
+    return ast.Attribute(value=value, attr=attr)
+
+
+def generate_keyword(arg: str, value: ast.expr) -> ast.keyword:
+    """Generate keyword object."""
+    return ast.keyword(arg=arg, value=value)
+
+
+def generate_return(value: Optional[ast.expr] = None) -> ast.Return:
+    """Generate return object."""
+    return ast.Return(value=value)
 
 
 def parse_field_type(

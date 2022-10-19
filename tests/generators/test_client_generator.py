@@ -3,6 +3,8 @@ from typing import Optional
 
 from graphql_sdk_gen.generators.client import ClientGenerator
 
+from ..utils import compare_ast
+
 
 def _get_class_def(module: ast.Module) -> Optional[ast.ClassDef]:
     for expr in module.body:
@@ -13,7 +15,7 @@ def _get_class_def(module: ast.Module) -> Optional[ast.ClassDef]:
 
 def test_generate_returns_module_with_correct_class_name():
     name = "ClientXyz"
-    generator = ClientGenerator(name)
+    generator = ClientGenerator(name, "BaseClient")
 
     module = generator.generate()
     class_def = _get_class_def(module)
@@ -23,7 +25,7 @@ def test_generate_returns_module_with_correct_class_name():
 
 
 def test_add_import_adds_import_to_generated_module():
-    generator = ClientGenerator()
+    generator = ClientGenerator("Client", "BaseClient")
     name = "Xyz"
     from_ = "xyz"
     number_of_existing_imports = len(generator.imports)
@@ -38,18 +40,18 @@ def test_add_import_adds_import_to_generated_module():
 
 
 def test_add_async_method_adds_method_definition():
-    generator = ClientGenerator()
+    generator = ClientGenerator("Client", "BaseClient")
     method_name = "list_xyz"
     return_type = "ListXyz"
     arguments = ast.arguments(
         posonlyargs=[],
-        args=[ast.arg(name="self")],
+        args=[ast.arg(arg="self")],
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[],
     )
 
-    generator.add_async_method(method_name, return_type, arguments)
+    generator.add_async_method(method_name, return_type, arguments, "")
     module = generator.generate()
 
     class_def = _get_class_def(module)
@@ -61,3 +63,84 @@ def test_add_async_method_adds_method_definition():
     assert isinstance(method_def.returns, ast.Name)
     assert method_def.returns.id == return_type
     assert method_def.args == arguments
+
+
+def test_add_async_method_generates_correct_method_body():
+    generator = ClientGenerator("Client", "BaseClient")
+    method_name = "list_xyz"
+    return_type = "ListXyz"
+    arguments = ast.arguments(
+        posonlyargs=[],
+        args=[
+            ast.arg(arg="self"),
+            ast.arg(arg="arg1", annotation=ast.Name(id="int")),
+        ],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[],
+    )
+    query_str = """
+    query ListXyz($arg1: Int!) {
+        xyz(arg1: $arg1) {
+            id
+            name
+        }
+    }
+    """
+    expected_method_body = [
+        ast.Assign(
+            targets=[ast.Name(id="query")],
+            value=[ast.Constant(value=l + "\n") for l in query_str.splitlines()],
+        ),
+        ast.AnnAssign(
+            target=ast.Name(id="variables"),
+            annotation=ast.Name(id="dict"),
+            value=ast.Dict(
+                keys=[ast.Constant(value="arg1")], values=[ast.Name(id="arg1")]
+            ),
+            simple=1,
+        ),
+        ast.Assign(
+            targets=[ast.Name(id="response")],
+            value=ast.Await(
+                value=ast.Call(
+                    func=ast.Attribute(value=ast.Name(id="self"), attr="execute"),
+                    args=[],
+                    keywords=[
+                        ast.keyword(arg="query", value=ast.Name(id="query")),
+                        ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                    ],
+                )
+            ),
+        ),
+        ast.Return(
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="ListXyz"), attr="parse_obj"),
+                args=[
+                    ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Call(
+                                func=ast.Attribute(
+                                    value=ast.Name(id="response"), attr="json"
+                                ),
+                                args=[],
+                                keywords=[],
+                            ),
+                            attr="get",
+                        ),
+                        args=[ast.Constant(value="data"), ast.Dict(keys=[], values=[])],
+                        keywords=[],
+                    )
+                ],
+                keywords=[],
+            )
+        ),
+    ]
+    generator.add_async_method(method_name, return_type, arguments, query_str)
+    module = generator.generate()
+
+    class_def = _get_class_def(module)
+    assert class_def
+    method_def = class_def.body[0]
+    assert isinstance(method_def, ast.AsyncFunctionDef)
+    assert compare_ast(method_def.body, expected_method_body)

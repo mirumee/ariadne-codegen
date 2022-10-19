@@ -120,7 +120,9 @@ class SchemaTypesGenerator:
 
         self.fields[definition.name] = {}
         for lineno, (name, field) in enumerate(definition.fields.items(), start=1):
-            field_def = generate_ann_assign(name, parse_field_type(field.type), lineno)
+            field_def = generate_ann_assign(
+                name, parse_field_type(field.type), lineno=lineno
+            )
             class_def.body.append(field_def)
             self.fields[definition.name][name] = field_def
         return class_def
