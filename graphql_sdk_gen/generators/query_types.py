@@ -1,7 +1,7 @@
 import ast
 from typing import Union
 
-from graphql import GraphQLField, GraphQLSchema, OperationDefinitionNode
+from graphql import GraphQLField, GraphQLSchema, OperationDefinitionNode, OperationType
 
 from ..exceptions import NotSupported, ParsingError
 from .codegen import (
@@ -71,12 +71,16 @@ class QueryTypesGenerator:
         self.class_defs.append(class_def)
 
     def _get_field_type_from_schema(self, name: str) -> GraphQLField:
-        if self.schema.query_type and (
-            field_type := self.schema.query_type.fields.get(name)
+        if (
+            self.query.operation == OperationType.QUERY
+            and self.schema.query_type
+            and (field_type := self.schema.query_type.fields.get(name))
         ):
             return field_type
-        if self.schema.mutation_type and (
-            field_type := self.schema.mutation_type.fields.get(name)
+        if (
+            self.query.operation == OperationType.MUTATION
+            and self.schema.mutation_type
+            and (field_type := self.schema.mutation_type.fields.get(name))
         ):
             return field_type
         raise ParsingError(f"Definition of {name} not found in schema.")
