@@ -63,16 +63,18 @@ class QueryTypesGenerator:
             class_def.body.append(field_def)
 
             if field.selection_set:
-                self.class_defs.extend(
-                    self._generate_dependency_type_class(
-                        field_type_name,
-                        field.selection_set,
-                    )
+                dependencies_defs = self._generate_dependency_type_class(
+                    field_type_name,
+                    field.selection_set,
                 )
+                if dependencies_defs:
+                    self.class_defs.extend(dependencies_defs)
         self.class_defs.append(class_def)
 
     def _generate_dependency_type_class(self, type_name, selection_set):
         class_def = generate_class_def(self.query_name + type_name, ["BaseModel"])
+        if class_def.name in self.public_names:
+            return None
         self.public_names.append(class_def.name)
 
         extra_defs = []
@@ -93,12 +95,12 @@ class QueryTypesGenerator:
             class_def.body.append(field_def)
 
             if field.selection_set:
-                extra_defs.extend(
-                    self._generate_dependency_type_class(
-                        field_type_name,
-                        field.selection_set,
-                    )
+                dependencies_defs = self._generate_dependency_type_class(
+                    field_type_name,
+                    field.selection_set,
                 )
+                if dependencies_defs:
+                    extra_defs.extend(dependencies_defs)
 
         return extra_defs + [class_def]
 
