@@ -28,16 +28,16 @@ class SchemaTypesGenerator:
         self.schema = schema
         self.types_to_parse = self._filter_schema_types()
 
-        self.public_names: list[str] = []
-        self.class_defs: list[ast.ClassDef] = []
         self.fields: dict[str, dict[str, Union[ast.AnnAssign, ast.Assign]]] = {}
         self.class_types: dict[str, ClassType] = {}
 
-        self.imports = [
-            generate_import_from(["Enum"], "enum"),
-            generate_import_from([OPTIONAL, ANY, UNION], "typing"),
-            generate_import_from(["BaseModel"], "pydantic"),
-        ]
+        self.enums: list[str] = []
+        self.input_types: list[str] = []
+        self.schema_types: list[str] = []
+
+        self.enums_classes: list[ast.ClassDef] = []
+        self.input_types_classes: list[ast.ClassDef] = []
+        self.schema_types_classes: list[ast.ClassDef] = []
 
         for definition in self.types_to_parse:
             self._parse_type_definition(definition)
@@ -59,40 +59,48 @@ class SchemaTypesGenerator:
             and definition not in {self.schema.query_type, self.schema.mutation_type}
         ]
 
+    def _is_name_already_parsed(self, name: str) -> bool:
+        return (
+            name in self.enums or name in self.input_types or name in self.schema_types
+        )
+
     def _parse_type_definition(self, definition: GraphQLNamedType):
-        if definition.name in self.public_names:
+        if self._is_name_already_parsed(definition.name):
             return
-        self.public_names.append(definition.name)
 
         if isinstance(definition, GraphQLEnumType):
+            self.enums.append(definition.name)
             class_def = self._parse_enum_definition(definition)
             self.class_types[class_def.name] = ClassType.ENUM
+            self.enums_classes.append(class_def)
 
         elif isinstance(definition, GraphQLInputObjectType):
+            self.input_types.append(definition.name)
             class_def = self._parse_object_input_or_interface_definition(definition)
             self.class_types[class_def.name] = ClassType.INPUT
+            self.input_types_classes.append(class_def)
 
         elif isinstance(definition, GraphQLInterfaceType):
+            self.schema_types.append(definition.name)
             class_def = self._parse_object_input_or_interface_definition(definition)
             self.class_types[class_def.name] = ClassType.INTERFACE
+            self.schema_types_classes.append(class_def)
 
         elif isinstance(definition, GraphQLObjectType):
+            self.schema_types.append(definition.name)
             class_def = self._parse_object_input_or_interface_definition(definition)
             if definition.interfaces:
                 interfaces_names = self._parse_interfaces(definition)
                 class_def.bases = [generate_name(name) for name in interfaces_names]
             self.class_types[class_def.name] = ClassType.OBJECT
-
+            self.schema_types_classes.append(class_def)
         else:
             raise NotSupported("Not supported type.")
-
-        self.class_defs.append(class_def)
 
     def _parse_interfaces(self, definition: GraphQLObjectType) -> list[str]:
         result = []
         for interface in definition.interfaces:
-            if interface.name not in self.public_names:
-                self._parse_type_definition(interface)
+            self._parse_type_definition(interface)
             result.append(interface.name)
         return result
 
@@ -127,11 +135,39 @@ class SchemaTypesGenerator:
             self.fields[definition.name][name] = field_def
         return class_def
 
-    def generate(self) -> ast.Module:
-        module = ast.Module(body=self.imports, type_ignores=[])
-        for lineno, class_def in enumerate(
-            self.class_defs, start=len(self.imports) + 1
-        ):
+    def _generate_module(
+        self,
+        imports: list[ast.ImportFrom],
+        class_defs: list[ast.ClassDef],
+    ) -> ast.Module:
+        module = ast.Module(
+            body=imports,
+            type_ignores=[],
+        )
+        for lineno, class_def in enumerate(class_defs, start=len(module.body) + 1):
             class_def.lineno = lineno
             module.body.append(class_def)
         return module
+
+    def generate(self) -> tuple[ast.Module, ast.Module, ast.Module]:
+        return (
+            self._generate_module(
+                [generate_import_from(["Enum"], "enum")], self.enums_classes
+            ),
+            self._generate_module(
+                [
+                    generate_import_from([OPTIONAL, ANY, UNION], "typing"),
+                    generate_import_from(["BaseModel"], "pydantic"),
+                    generate_import_from(self.enums, "enums", 1),
+                ],
+                self.input_types_classes,
+            ),
+            self._generate_module(
+                [
+                    generate_import_from([OPTIONAL, ANY, UNION], "typing"),
+                    generate_import_from(["BaseModel"], "pydantic"),
+                    generate_import_from(self.enums, "enums", 1),
+                ],
+                self.schema_types_classes,
+            ),
+        )
