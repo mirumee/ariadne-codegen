@@ -66,7 +66,7 @@ class PackageGenerator:
     def _create_init_file(self):
         init_file_path = self.package_path / "__init__.py"
         init_module = self.init_generator.generate()
-        init_file_path.write_text(ast_to_str(init_module))
+        init_file_path.write_text(ast_to_str(init_module, False))
 
     def _create_client_file(self):
         client_file_path = self.package_path / "client.py"
@@ -158,7 +158,7 @@ class PackageGenerator:
             self.schema_types_generator.fields,
             self.schema_types_generator.class_types,
             definition,
-            self.schema_types_module_name,
+            self.enums_module_name,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
         self.init_generator.add_import(

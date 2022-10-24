@@ -5,14 +5,14 @@ from autoflake import fix_code
 from black import Mode, format_str
 
 
-def ast_to_str(ast_obj: ast.AST) -> str:
+def ast_to_str(ast_obj: ast.AST, remove_unused_imports: bool = True) -> str:
     """Convert ast object into string."""
     code = ast.unparse(ast_obj)
-    code_without_unused_imports = fix_code(
-        code, remove_all_unused_imports=True, additional_imports=["typing"]
-    )
-    code_with_sorted_imports = isort.code(code_without_unused_imports)
-    return format_str(code_with_sorted_imports, mode=Mode())
+    if remove_unused_imports:
+        code = fix_code(
+            code, remove_all_unused_imports=True, additional_imports=["typing"]
+        )
+    return format_str(isort.code(code), mode=Mode())
 
 
 def str_to_snake_case(name: str) -> str:

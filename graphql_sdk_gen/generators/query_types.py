@@ -22,14 +22,14 @@ class QueryTypesGenerator:
         fields: dict[str, dict[str, Union[ast.AnnAssign, ast.Assign]]],
         class_types: dict[str, ClassType],
         query: OperationDefinitionNode,
-        schema_types_module_name: str,
+        enums_module_name: str,
     ) -> None:
         self.schema = schema
         self.fields = fields
         self.class_types = class_types
 
         self.query = query
-        self.schema_types_module_name = schema_types_module_name
+        self.enums_module_name = enums_module_name
 
         if not self.query.name:
             raise NotSupported("Queries without name are not supported.")
@@ -158,7 +158,7 @@ class QueryTypesGenerator:
     def generate(self) -> ast.Module:
         if self.used_enums:
             self.imports.append(
-                generate_import_from(self.used_enums, self.schema_types_module_name, 1)
+                generate_import_from(self.used_enums, self.enums_module_name, 1)
             )
         return ast.Module(
             body=self.imports
