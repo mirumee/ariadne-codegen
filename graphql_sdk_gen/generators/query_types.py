@@ -8,6 +8,7 @@ from .codegen import (
     generate_ann_assign,
     generate_class_def,
     generate_import_from,
+    generate_method_call,
     parse_field_type,
 )
 from .constants import OPTIONAL
@@ -35,7 +36,7 @@ class QueryTypesGenerator:
 
         self.query_name = self.query.name.value
 
-        self.imports = [
+        self.imports: list[ast.stmt] = [
             generate_import_from([OPTIONAL], "typing"),
             generate_import_from(["BaseModel"], "pydantic"),
         ]
@@ -157,4 +158,12 @@ class QueryTypesGenerator:
             self.imports.append(
                 generate_import_from(self.used_enums, self.schema_types_module_name, 1)
             )
-        return ast.Module(body=self.imports + self.class_defs, type_ignores=[])
+        return ast.Module(
+            body=self.imports
+            + self.class_defs
+            + [
+                generate_method_call(class_def.name, "update_forward_refs")
+                for class_def in self.class_defs
+            ],
+            type_ignores=[],
+        )

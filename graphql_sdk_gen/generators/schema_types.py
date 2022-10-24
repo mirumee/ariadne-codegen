@@ -17,6 +17,7 @@ from .codegen import (
     generate_class_def,
     generate_constant,
     generate_import_from,
+    generate_method_call,
     generate_name,
     parse_field_type,
 )
@@ -139,6 +140,7 @@ class SchemaTypesGenerator:
         self,
         imports: list[ast.ImportFrom],
         class_defs: list[ast.ClassDef],
+        include_update_forward_refs_calls: bool = True,
     ) -> ast.Module:
         module = ast.Module(
             body=imports,
@@ -147,12 +149,19 @@ class SchemaTypesGenerator:
         for lineno, class_def in enumerate(class_defs, start=len(module.body) + 1):
             class_def.lineno = lineno
             module.body.append(class_def)
+        if include_update_forward_refs_calls:
+            module.body.extend(
+                [
+                    generate_method_call(c.name, "update_forward_refs")
+                    for c in class_defs
+                ]
+            )
         return module
 
     def generate(self) -> tuple[ast.Module, ast.Module, ast.Module]:
         return (
             self._generate_module(
-                [generate_import_from(["Enum"], "enum")], self.enums_classes
+                [generate_import_from(["Enum"], "enum")], self.enums_classes, False
             ),
             self._generate_module(
                 [
@@ -161,6 +170,7 @@ class SchemaTypesGenerator:
                     generate_import_from(self.enums, "enums", 1),
                 ],
                 self.input_types_classes,
+                True,
             ),
             self._generate_module(
                 [
@@ -169,5 +179,6 @@ class SchemaTypesGenerator:
                     generate_import_from(self.enums, "enums", 1),
                 ],
                 self.schema_types_classes,
+                True,
             ),
         )
