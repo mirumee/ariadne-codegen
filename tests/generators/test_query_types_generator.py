@@ -20,6 +20,8 @@ type Query {
   ): CustomType
 
   query2: [CustomType!]
+
+  query3: CustomType3!
 }
 
 type Mutation {
@@ -41,6 +43,11 @@ type CustomType2 {
     fieldb: Int
 }
 
+type CustomType3 {
+    field1: CustomType1!
+    field2: CustomType1!
+}
+
 enum CustomEnum {
     VAL1
     VAL2
@@ -51,6 +58,7 @@ CLASS_TYPES = {
     "CustomType": ClassType.OBJECT,
     "CustomType1": ClassType.OBJECT,
     "CustomType2": ClassType.OBJECT,
+    "CustomType3": ClassType.OBJECT,
     "CustomEnum": ClassType.ENUM,
 }
 
@@ -94,6 +102,18 @@ FIELDS: dict[str, dict[str, ast.AnnAssign | ast.Assign]] = {
             ),
             simple=1,
         )
+    },
+    "CustomType3": {
+        "field1": ast.AnnAssign(
+            target=ast.Name(id="field1"),
+            annotation=ast.Name(id='"CustomType1"'),
+            simple=1,
+        ),
+        "field2": ast.AnnAssign(
+            target=ast.Name(id="field1"),
+            annotation=ast.Name(id='"CustomType1"'),
+            simple=1,
+        ),
     },
 }
 
@@ -301,6 +321,41 @@ def test_generator_generates_types_from_mutation():
     assert len(generator.class_defs) == len(expected_class_defs)
     assert compare_ast(generator.class_defs, expected_class_defs)
     assert set(generator.public_names) == {c.name for c in expected_class_defs}
+
+
+def test_generator_generates_only_not_duplicated_types_definitions():
+    query_str = """
+    query CustomQuery {
+        query3 {
+            field1 {
+                fielda
+            }
+            field2 {
+                fielda
+            }
+        }
+    }
+    """
+    operation_definition = parse(query_str).definitions[0]
+    assert isinstance(operation_definition, OperationDefinitionNode)
+
+    generator = QueryTypesGenerator(
+        build_ast_schema(parse(SCHEMA_STR)),
+        FIELDS,
+        CLASS_TYPES,
+        operation_definition,
+        "schema_types",
+    )
+
+    expected_class_names = [
+        "CustomQuery",
+        "CustomQueryCustomType3",
+        "CustomQueryCustomType1",
+    ]
+    generated_class_names = [class_def.name for class_def in generator.class_defs]
+
+    assert len(generated_class_names) == len(expected_class_names)
+    assert sorted(generated_class_names) == sorted(expected_class_names)
 
 
 def test_generate_adds_enum_imports_to_generated_module():
