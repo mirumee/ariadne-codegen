@@ -11,7 +11,7 @@ from ..utils import compare_ast
 SCHEMA_STR = """
 schema {
   query: Query
-
+  mutation: Mutation
 }
 
 type Query {
@@ -22,6 +22,10 @@ type Query {
   query2: [CustomType!]
 
   query3: CustomType3!
+}
+
+type Mutation {
+    mutation1(num: Int!): CustomType!
 }
 
 type CustomType {
@@ -260,6 +264,59 @@ def test_generator_generates_types_from_query(query_str, expected_class_defs):
         operation_definition,
         "schema_types",
     )
+
+    assert len(generator.class_defs) == len(expected_class_defs)
+    assert compare_ast(generator.class_defs, expected_class_defs)
+    assert set(generator.public_names) == {c.name for c in expected_class_defs}
+
+
+def test_generator_generates_types_from_mutation():
+    mutation_str = """
+        mutation CustomMutation($num: Int!) {
+            mutation1(num: $num) {
+                id
+            }
+        }
+    """
+    operation_definition = parse(mutation_str).definitions[0]
+    assert isinstance(operation_definition, OperationDefinitionNode)
+
+    generator = QueryTypesGenerator(
+        build_ast_schema(parse(SCHEMA_STR)),
+        FIELDS,
+        CLASS_TYPES,
+        operation_definition,
+        "schema_types",
+    )
+
+    expected_class_defs = [
+        ast.ClassDef(
+            name="CustomMutationCustomType",
+            bases=[ast.Name(id="BaseModel")],
+            decorator_list=[],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="id"),
+                    annotation=ast.Name(id="str"),
+                    simple=1,
+                )
+            ],
+        ),
+        ast.ClassDef(
+            name="CustomMutation",
+            bases=[ast.Name(id="BaseModel")],
+            decorator_list=[],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="mutation1"),
+                    annotation=ast.Name(id='"CustomMutationCustomType"'),
+                    simple=1,
+                )
+            ],
+        ),
+    ]
 
     assert len(generator.class_defs) == len(expected_class_defs)
     assert compare_ast(generator.class_defs, expected_class_defs)

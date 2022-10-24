@@ -1,7 +1,7 @@
 import ast
 from typing import Union
 
-from graphql import GraphQLSchema, OperationDefinitionNode
+from graphql import GraphQLField, GraphQLSchema, OperationDefinitionNode, OperationType
 
 from ..exceptions import NotSupported, ParsingError
 from .codegen import (
@@ -51,8 +51,7 @@ class QueryTypesGenerator:
         self.public_names.append(class_def.name)
 
         for lineno, field in enumerate(self.query.selection_set.selections, start=1):
-            field_type = self.schema.query_type.fields[field.name.value]
-
+            field_type = self._get_field_type_from_schema(field.name.value)
             field_def = generate_ann_assign(
                 field.name.value, parse_field_type(field_type.type), lineno=lineno
             )
@@ -70,6 +69,21 @@ class QueryTypesGenerator:
                 if dependencies_defs:
                     self.class_defs.extend(dependencies_defs)
         self.class_defs.append(class_def)
+
+    def _get_field_type_from_schema(self, name: str) -> GraphQLField:
+        if (
+            self.query.operation == OperationType.QUERY
+            and self.schema.query_type
+            and (field_type := self.schema.query_type.fields.get(name))
+        ):
+            return field_type
+        if (
+            self.query.operation == OperationType.MUTATION
+            and self.schema.mutation_type
+            and (field_type := self.schema.mutation_type.fields.get(name))
+        ):
+            return field_type
+        raise ParsingError(f"Definition for {name} not found in schema.")
 
     def _generate_dependency_type_class(self, type_name, selection_set):
         class_def = generate_class_def(self.query_name + type_name, ["BaseModel"])
