@@ -83,7 +83,7 @@ class QueryTypesGenerator:
             and (field_type := self.schema.mutation_type.fields.get(name))
         ):
             return field_type
-        raise ParsingError(f"Definition of {name} not found in schema.")
+        raise ParsingError(f"Definition for {name} not found in schema.")
 
     def _generate_dependency_type_class(self, type_name, selection_set):
         class_def = generate_class_def(self.query_name + type_name, ["BaseModel"])
