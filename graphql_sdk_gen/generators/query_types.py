@@ -51,6 +51,7 @@ class QueryTypesGenerator:
         class_def = generate_class_def(self.query_name, ["BaseModel"])
         self.public_names.append(class_def.name)
 
+        extra_defs = []
         for lineno, field in enumerate(self.query.selection_set.selections, start=1):
             field_type = self._get_field_type_from_schema(field.name.value)
             field_def = generate_ann_assign(
@@ -68,8 +69,9 @@ class QueryTypesGenerator:
                     field.selection_set,
                 )
                 if dependencies_defs:
-                    self.class_defs.extend(dependencies_defs)
+                    extra_defs.extend(dependencies_defs)
         self.class_defs.append(class_def)
+        self.class_defs.extend(extra_defs)
 
     def _get_field_type_from_schema(self, name: str) -> GraphQLField:
         if (
@@ -117,7 +119,7 @@ class QueryTypesGenerator:
                 if dependencies_defs:
                     extra_defs.extend(dependencies_defs)
 
-        return extra_defs + [class_def]
+        return [class_def] + extra_defs
 
     def _procces_annotation(self, annotation, field_type_name):
         if (field_type := self.class_types.get(field_type_name)) in (
