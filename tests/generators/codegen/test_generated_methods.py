@@ -4,8 +4,8 @@ from graphql_sdk_gen.generators.codegen import (
     generate_arg,
     generate_arguments,
     generate_async_method_definition,
-    generate_return,
     generate_method_call,
+    generate_return,
 )
 
 

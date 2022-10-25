@@ -1,7 +1,7 @@
 import ast
 
 import isort
-from autoflake import fix_code
+from autoflake import fix_code  # type: ignore
 from black import Mode, format_str
 
 

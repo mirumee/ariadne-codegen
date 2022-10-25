@@ -405,7 +405,7 @@ def test_generate_adds_update_forward_refs_calls():
         "CustomQuery",
         "CustomQueryCustomType",
         "CustomQueryCustomType1",
-        "CustomQueryCustomType2"
+        "CustomQueryCustomType2",
     ]
     expected_method_calls = [
         ast.Expr(
