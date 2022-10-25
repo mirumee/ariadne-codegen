@@ -159,25 +159,29 @@ class SchemaTypesGenerator:
         return module
 
     def generate(self) -> tuple[ast.Module, ast.Module, ast.Module]:
+        input_types_imports = [
+            generate_import_from([OPTIONAL, ANY, UNION], "typing"),
+            generate_import_from(["BaseModel"], "pydantic"),
+        ]
+        if self.enums:
+            input_types_imports.append(generate_import_from(self.enums, "enums", 1))
+        schema_types_imports = [
+            generate_import_from([OPTIONAL, ANY, UNION], "typing"),
+            generate_import_from(["BaseModel"], "pydantic"),
+        ]
+        if self.enums:
+            schema_types_imports.append(generate_import_from(self.enums, "enums", 1))
         return (
             self._generate_module(
                 [generate_import_from(["Enum"], "enum")], self.enums_classes, False
             ),
             self._generate_module(
-                [
-                    generate_import_from([OPTIONAL, ANY, UNION], "typing"),
-                    generate_import_from(["BaseModel"], "pydantic"),
-                    generate_import_from(self.enums, "enums", 1),
-                ],
+                input_types_imports,
                 self.input_types_classes,
                 True,
             ),
             self._generate_module(
-                [
-                    generate_import_from([OPTIONAL, ANY, UNION], "typing"),
-                    generate_import_from(["BaseModel"], "pydantic"),
-                    generate_import_from(self.enums, "enums", 1),
-                ],
+                schema_types_imports,
                 self.schema_types_classes,
                 True,
             ),
