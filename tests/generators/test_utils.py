@@ -29,5 +29,7 @@ from graphql_sdk_gen.generators.utils import ast_to_str
         ),
     ],
 )
-def test_ast_to_str_returns_correct_string(ast_object, expected_result):
-    assert ast_to_str(ast_object) == expected_result
+def test_ast_to_str_returns_correct_string_without_removing_imports(
+    ast_object, expected_result
+):
+    assert ast_to_str(ast_object, False) == expected_result

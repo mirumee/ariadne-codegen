@@ -65,9 +65,9 @@ def test_generator_parses_type_definition_with_scalar_field(
 
     generator = SchemaTypesGenerator(schema)
 
-    assert generator.public_names == [type_name]
+    assert generator.schema_types == [type_name]
     assert generator.class_types[type_name] == ClassType.OBJECT
-    class_def = generator.class_defs[0]
+    class_def = generator.schema_types_classes[0]
     assert isinstance(class_def, ast.ClassDef)
     assert compare_ast(class_def, expected_class_def)
     assert compare_ast(generator.fields[type_name][field_name], expected_field_def)
@@ -112,9 +112,9 @@ def test_generator_parses_type_with_custom_type_fields():
 
     generator = SchemaTypesGenerator(schema)
 
-    assert set(generator.public_names) == {"CustomType", "CustomType1", "CustomType2"}
+    assert set(generator.schema_types) == {"CustomType", "CustomType1", "CustomType2"}
     assert generator.class_types["CustomType"] == ClassType.OBJECT
-    class_def = generator.class_defs[0]
+    class_def = generator.schema_types_classes[0]
     assert isinstance(class_def, ast.ClassDef)
     assert compare_ast(class_def, expected_class_def)
 
@@ -137,9 +137,9 @@ def test_generator_parses_enum_definition():
 
     generator = SchemaTypesGenerator(schema)
 
-    assert generator.public_names == [enum_name]
+    assert generator.enums == [enum_name]
     assert generator.class_types[enum_name] == ClassType.ENUM
-    class_def = generator.class_defs[0]
+    class_def = generator.enums_classes[0]
     assert isinstance(class_def, ast.ClassDef)
     assert compare_ast(class_def, expected_class_def)
 
@@ -176,11 +176,11 @@ def test_generator_parses_type_that_implements_interface():
 
     generator = SchemaTypesGenerator(schema)
 
-    assert set(generator.public_names) == {"CustomType", "CustomInterface"}
+    assert set(generator.schema_types) == {"CustomType", "CustomInterface"}
     assert generator.class_types["CustomType"] == ClassType.OBJECT
     assert generator.class_types["CustomInterface"] == ClassType.INTERFACE
-    interface_def = generator.class_defs[0]
-    type_def = generator.class_defs[1]
+    interface_def = generator.schema_types_classes[0]
+    type_def = generator.schema_types_classes[1]
     assert isinstance(interface_def, ast.ClassDef)
     assert isinstance(type_def, ast.ClassDef)
     assert compare_ast(type_def, expected_type_def)
@@ -220,38 +220,62 @@ def test_generator_parses_input_type():
 
     generator = SchemaTypesGenerator(schema)
 
-    assert set(generator.public_names) == {"CustomInput", "CustomInput2"}
+    assert set(generator.input_types) == {"CustomInput", "CustomInput2"}
     assert generator.class_types["CustomInput"] == ClassType.INPUT
-    class_def = generator.class_defs[0]
+    class_def = generator.input_types_classes[0]
     assert isinstance(class_def, ast.ClassDef)
     assert compare_ast(class_def, expected_class_def)
 
 
-@pytest.mark.parametrize(
-    "from_, names",
-    [
-        ("enum", ["Enum"]),
-        ("typing", [OPTIONAL, ANY, UNION]),
-        ("pydantic", ["BaseModel"]),
-    ],
-)
-def test_generate_returns_module_with_correct_imports(from_, names):
+def test_generate_returns_modules_with_correct_imports():
     generator = SchemaTypesGenerator(GraphQLSchema())
 
-    module = generator.generate()
+    enums_module, input_types_module, schema_types_module = generator.generate()
 
-    import_ = next(
-        filter(
-            lambda i: isinstance(i, ast.ImportFrom) and i.module == from_, module.body
-        )
+    enums_imports = list(
+        filter(lambda i: isinstance(i, ast.ImportFrom), enums_module.body)
     )
-    assert import_
-    assert isinstance(import_, ast.ImportFrom)
-    assert import_.module == from_
-    assert {n.name for n in import_.names} == set(names)
+    expected_enums_imports = [
+        ast.ImportFrom(module="enum", names=[ast.alias(name="Enum")], level=0)
+    ]
+    assert compare_ast(enums_imports, expected_enums_imports)
+
+    input_types_imports = list(
+        filter(lambda i: isinstance(i, ast.ImportFrom), input_types_module.body)
+    )
+    expected_input_types_imports = [
+        ast.ImportFrom(
+            module="typing",
+            names=[
+                ast.alias(name=OPTIONAL),
+                ast.alias(name=ANY),
+                ast.alias(name=UNION),
+            ],
+            level=0,
+        ),
+        ast.ImportFrom(module="pydantic", names=[ast.alias(name="BaseModel")], level=0),
+    ]
+    assert compare_ast(input_types_imports, expected_input_types_imports)
+
+    schema_types_imports = list(
+        filter(lambda i: isinstance(i, ast.ImportFrom), schema_types_module.body)
+    )
+    expected_schema_types_imports = [
+        ast.ImportFrom(
+            module="typing",
+            names=[
+                ast.alias(name=OPTIONAL),
+                ast.alias(name=ANY),
+                ast.alias(name=UNION),
+            ],
+            level=0,
+        ),
+        ast.ImportFrom(module="pydantic", names=[ast.alias(name="BaseModel")], level=0),
+    ]
+    assert compare_ast(schema_types_imports, expected_schema_types_imports)
 
 
-def test_generate_returns_module_with_class_definitions():
+def test_generate_returns_modules_with_class_definitions():
     schema_str = """
     type CustomType implements CustomInterface {
         id: ID!
@@ -276,17 +300,27 @@ def test_generate_returns_module_with_class_definitions():
         VAL1
         VAL2
     }
+
+    input CustomInput {
+        field: Int!
+    }
     """
     schema = build_ast_schema(parse(schema_str))
     generator = SchemaTypesGenerator(schema)
 
-    module = generator.generate()
+    enums_module, input_types_module, schema_types_module = generator.generate()
 
-    class_names = {c.name for c in module.body if isinstance(c, ast.ClassDef)}
-    assert class_names == {
+    assert {c.name for c in enums_module.body if isinstance(c, ast.ClassDef)} == {
+        "CustomEnum"
+    }
+    assert {c.name for c in input_types_module.body if isinstance(c, ast.ClassDef)} == {
+        "CustomInput"
+    }
+    assert {
+        c.name for c in schema_types_module.body if isinstance(c, ast.ClassDef)
+    } == {
         "CustomType",
         "CustomInterface",
         "CustomType1",
         "CustomType2",
-        "CustomEnum",
     }

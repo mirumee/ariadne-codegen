@@ -7,7 +7,6 @@ from graphql_sdk_gen.generators.package import PackageGenerator
 SCHEMA_STR = """
 schema {
     query: Query
-
 }
 
 type Query {
@@ -22,7 +21,6 @@ type CustomType {
     field1: [String]
     field2: CustomType2
     field3: CustomEnum!
-    
 }
 
 type CustomType2 {
@@ -32,6 +30,10 @@ type CustomType2 {
 enum CustomEnum {
     VAL1
     VAL2
+}
+
+input CustomInput {
+    value: Int!
 }
 """
 
@@ -54,6 +56,12 @@ def test_generate_creates_directory_and_files(tmp_path):
     schema_types_path = package_path / f"{generator.schema_types_module_name}.py"
     assert schema_types_path.exists()
     assert schema_types_path.is_file()
+    input_types_path = package_path / f"{generator.input_types_module_name}.py"
+    assert input_types_path.exists()
+    assert input_types_path.is_file()
+    enums_path = package_path / f"{generator.enums_module_name}.py"
+    assert enums_path.exists()
+    assert enums_path.is_file()
 
 
 def test_generate_creates_files_with_correct_content(tmp_path):
@@ -93,21 +101,36 @@ def test_generate_creates_files_with_types(tmp_path):
 
     class CustomType2(BaseModel):
         fieldb: Optional[int]
-
-
+    """
+    expected_input_types = """
+    class CustomInput(BaseModel):
+        value: int
+    """
+    expected_enums = """
     class CustomEnum(str, Enum):
         VAL1 = "VAL1"
         VAL2 = "VAL2"
     """
-
     generator.generate()
 
-    types_file_path = (
+    schema_types_file_path = (
         tmp_path / package_name / f"{generator.schema_types_module_name}.py"
     )
-    with types_file_path.open() as type_file:
-        types_content = type_file.read()
-        assert dedent(expected_schema_types) in types_content
+    with schema_types_file_path.open() as schema_types_file:
+        schema_types_content = schema_types_file.read()
+        assert dedent(expected_schema_types) in schema_types_content
+
+    input_types_file_path = (
+        tmp_path / package_name / f"{generator.input_types_module_name}.py"
+    )
+    with input_types_file_path.open() as input_types_file:
+        input_types_content = input_types_file.read()
+        assert dedent(expected_input_types) in input_types_content
+
+    enums_file_path = tmp_path / package_name / f"{generator.enums_module_name}.py"
+    with enums_file_path.open() as enums_file:
+        enums_content = enums_file.read()
+        assert dedent(expected_enums) in enums_content
 
 
 def test_generate_creates_file_with_query_types(tmp_path):
@@ -127,8 +150,8 @@ def test_generate_creates_file_with_query_types(tmp_path):
     }
     """
     expected_query_types = """
-    class CustomQueryCustomType2(BaseModel):
-        fieldb: Optional[int]
+    class CustomQuery(BaseModel):
+        query1: Optional["CustomQueryCustomType"]
 
 
     class CustomQueryCustomType(BaseModel):
@@ -137,8 +160,8 @@ def test_generate_creates_file_with_query_types(tmp_path):
         field3: "CustomEnum"
 
 
-    class CustomQuery(BaseModel):
-        query1: Optional["CustomQueryCustomType"]
+    class CustomQueryCustomType2(BaseModel):
+        fieldb: Optional[int]
     """
 
     generator.add_query(parse(query_str).definitions[0])
@@ -149,7 +172,7 @@ def test_generate_creates_file_with_query_types(tmp_path):
         query_types_content = query_types_file.read()
         assert dedent(expected_query_types) in query_types_content
         assert (
-            f"from .{generator.schema_types_module_name} import CustomEnum"
+            f"from .{generator.enums_module_name} import CustomEnum"
             in query_types_content
         )
 
