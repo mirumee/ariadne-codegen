@@ -5,6 +5,7 @@ from graphql_sdk_gen.generators.codegen import (
     generate_arguments,
     generate_async_method_definition,
     generate_return,
+    generate_method_call,
 )
 
 
@@ -60,3 +61,17 @@ def test_generate_return_without_passed_value_returns_object_without_value():
 
     assert isinstance(result, ast.Return)
     assert not result.value
+
+
+def test_generate_method_call_returns_method_call_expression():
+    object_ = "object_name"
+    method = "method_name"
+
+    result = generate_method_call(object_name=object_, method_name=method)
+
+    assert isinstance(result, ast.Expr)
+    assert isinstance(result.value, ast.Call)
+    assert isinstance(result.value.func, ast.Attribute)
+    assert isinstance(result.value.func.value, ast.Name)
+    assert result.value.func.value.id == object_
+    assert result.value.func.attr == method

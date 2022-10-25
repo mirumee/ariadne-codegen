@@ -324,3 +324,84 @@ def test_generate_returns_modules_with_class_definitions():
         "CustomType1",
         "CustomType2",
     }
+
+
+def test_generate_returns_modules_with_update_forward_refs_calls():
+    schema_str = """
+    type CustomType implements CustomInterface {
+        id: ID!
+        field1: CustomType1!
+        field2: CustomType2
+        field3: CustomEnum!
+    }
+
+    interface CustomInterface {
+        id: ID!
+    }
+
+    type CustomType1 {
+        field: Int!
+    }
+
+    type CustomType2 {
+        field: Int!
+    }
+
+    enum CustomEnum {
+        VAL1
+        VAL2
+    }
+
+    input CustomInput {
+        field: Int!
+    }
+    """
+    schema = build_ast_schema(parse(schema_str))
+    generator = SchemaTypesGenerator(schema)
+
+    enums_module, input_types_module, schema_types_module = generator.generate()
+
+    enums_module_methods_calls = list(
+        filter(lambda x: isinstance(x, ast.Expr), enums_module.body)
+    )
+    assert not enums_module_methods_calls
+
+    input_types_module_methods_calls = list(
+        filter(lambda x: isinstance(x, ast.Expr), input_types_module.body)
+    )
+    expected_input_types_module_methods_calls = [
+        ast.Expr(
+            value=ast.Call(
+                func=ast.Attribute(
+                    value=ast.Name(id="CustomInput"), attr="update_forward_refs"
+                ),
+                args=[],
+                keywords=[],
+            )
+        )
+    ]
+    assert compare_ast(
+        input_types_module_methods_calls, expected_input_types_module_methods_calls
+    )
+
+    schema_types_module_methods_calls = list(
+        filter(lambda x: isinstance(x, ast.Expr), schema_types_module.body)
+    )
+    expected_schema_types_module_methods_calls = [
+        ast.Expr(
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id=name), attr="update_forward_refs"),
+                args=[],
+                keywords=[],
+            )
+        )
+        for name in [
+            "CustomInterface",
+            "CustomType",
+            "CustomType1",
+            "CustomType2",
+        ]
+    ]
+    assert compare_ast(
+        schema_types_module_methods_calls, expected_schema_types_module_methods_calls
+    )
