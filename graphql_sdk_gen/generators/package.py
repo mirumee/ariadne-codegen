@@ -23,6 +23,8 @@ class PackageGenerator:
         base_client_name: str = "BaseClient",
         base_client_file_path: Optional[str] = None,
         schema_types_module_name: str = "schema_types",
+        enums_module_name: str = "enums",
+        input_types_module_name: str = "input_types",
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
         arguments_generator: Optional[ArgumentsGenerator] = None,
@@ -41,6 +43,8 @@ class PackageGenerator:
             else Path(__file__).parent / "base_client.py"
         )
         self.schema_types_module_name = schema_types_module_name
+        self.enums_module_name = enums_module_name
+        self.input_types_module_name = input_types_module_name
 
         self.init_generator = init_generator if init_generator else InitFileGenerator()
         self.client_generator = (
@@ -62,20 +66,20 @@ class PackageGenerator:
     def _create_init_file(self):
         init_file_path = self.package_path / "__init__.py"
         init_module = self.init_generator.generate()
-        init_file_path.write_text(ast_to_str(init_module))
+        init_file_path.write_text(ast_to_str(init_module, False))
 
     def _create_client_file(self):
         client_file_path = self.package_path / "client.py"
 
         base_types = []
         for type_ in self.arguments_generator.used_types:
-            if type_ in self.schema_types_generator.public_names:
+            if type_ in self.schema_types_generator.input_types:
                 base_types.append(type_)
             else:
                 raise ParsingError("Argument type not found in schema.")
 
         self.client_generator.add_import(
-            names=base_types, from_=self.schema_types_module_name, level=1
+            names=base_types, from_=self.input_types_module_name, level=1
         )
         self.client_generator.add_import(
             names=[self.base_client_name],
@@ -89,12 +93,31 @@ class PackageGenerator:
             names=[self.client_generator.name], from_="client", level=1
         )
 
-    def _create_schema_types_file(self):
-        types_module = self.schema_types_generator.generate()
-        types_file_path = self.package_path / f"{self.schema_types_module_name}.py"
-        types_file_path.write_text(ast_to_str(types_module))
+    def _create_schema_types_files(self):
+        (
+            enums_module,
+            input_types_module,
+            schema_types_module,
+        ) = self.schema_types_generator.generate()
+
+        input_types_file_path = (
+            self.package_path / f"{self.schema_types_module_name}.py"
+        )
+        input_types_file_path.write_text(ast_to_str(schema_types_module))
         self.init_generator.add_import(
-            self.schema_types_generator.public_names, self.schema_types_module_name, 1
+            self.schema_types_generator.schema_types, self.schema_types_module_name, 1
+        )
+
+        input_types_file_path = self.package_path / f"{self.enums_module_name}.py"
+        input_types_file_path.write_text(ast_to_str(enums_module))
+        self.init_generator.add_import(
+            self.schema_types_generator.enums, self.enums_module_name, 1
+        )
+
+        input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
+        input_types_file_path.write_text(ast_to_str(input_types_module))
+        self.init_generator.add_import(
+            self.schema_types_generator.input_types, self.input_types_module_name, 1
         )
 
     def _create_query_types_files(self):
@@ -116,14 +139,14 @@ class PackageGenerator:
         if not self.package_path.exists():
             self.package_path.mkdir()
         self._create_client_file()
-        self._create_schema_types_file()
+        self._create_schema_types_files()
         self._create_query_types_files()
         self._copy_base_client_file()
         self._create_init_file()
 
     def add_query(self, definition: OperationDefinitionNode):
         if not (name := definition.name):
-            raise Exception
+            raise ParsingError("Query without name.")
 
         query_name = name.value
         method_name = str_to_snake_case(name.value)
@@ -135,7 +158,7 @@ class PackageGenerator:
             self.schema_types_generator.fields,
             self.schema_types_generator.class_types,
             definition,
-            self.schema_types_module_name,
+            self.enums_module_name,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
         self.init_generator.add_import(

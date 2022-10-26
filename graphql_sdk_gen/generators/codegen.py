@@ -220,3 +220,14 @@ def parse_field_type(
         return parse_field_type(type_.of_type, False)
 
     raise ParsingError("Invalid field type.")
+
+
+def generate_method_call(object_name: str, method_name: str) -> ast.Expr:
+    """Generate object`s method call."""
+    return ast.Expr(
+        value=ast.Call(
+            func=ast.Attribute(value=ast.Name(id=object_name), attr=method_name),
+            args=[],
+            keywords=[],
+        )
+    )

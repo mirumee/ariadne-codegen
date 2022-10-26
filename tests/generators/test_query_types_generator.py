@@ -131,19 +131,6 @@ FIELDS: dict[str, dict[str, ast.AnnAssign | ast.Assign]] = {
             """,
             [
                 ast.ClassDef(
-                    name="CustomQueryCustomType",
-                    bases=[ast.Name(id="BaseModel")],
-                    decorator_list=[],
-                    keywords=[],
-                    body=[
-                        ast.AnnAssign(
-                            target=ast.Name(id="id"),
-                            annotation=ast.Name(id="str"),
-                            simple=1,
-                        )
-                    ],
-                ),
-                ast.ClassDef(
                     name="CustomQuery",
                     bases=[ast.Name(id="BaseModel")],
                     decorator_list=[],
@@ -158,6 +145,19 @@ FIELDS: dict[str, dict[str, ast.AnnAssign | ast.Assign]] = {
                                     slice=ast.Name(id='"CustomQueryCustomType"'),
                                 ),
                             ),
+                            simple=1,
+                        )
+                    ],
+                ),
+                ast.ClassDef(
+                    name="CustomQueryCustomType",
+                    bases=[ast.Name(id="BaseModel")],
+                    decorator_list=[],
+                    keywords=[],
+                    body=[
+                        ast.AnnAssign(
+                            target=ast.Name(id="id"),
+                            annotation=ast.Name(id="str"),
                             simple=1,
                         )
                     ],
@@ -180,27 +180,15 @@ FIELDS: dict[str, dict[str, ast.AnnAssign | ast.Assign]] = {
             """,
             [
                 ast.ClassDef(
-                    name="CustomQueryCustomType1",
+                    name="CustomQuery",
                     bases=[ast.Name(id="BaseModel")],
                     keywords=[],
                     body=[
                         ast.AnnAssign(
-                            target=ast.Name(id="fielda"),
-                            annotation=ast.Name(id="int"),
-                            simple=1,
-                        )
-                    ],
-                    decorator_list=[],
-                ),
-                ast.ClassDef(
-                    name="CustomQueryCustomType2",
-                    bases=[ast.Name(id="BaseModel")],
-                    keywords=[],
-                    body=[
-                        ast.AnnAssign(
-                            target=ast.Name(id="fieldb"),
+                            target=ast.Name(id="query1"),
                             annotation=ast.Subscript(
-                                value=ast.Name(id=OPTIONAL), slice=ast.Name(id="int")
+                                value=ast.Name(id=OPTIONAL),
+                                slice=ast.Name(id='"CustomQueryCustomType"'),
                             ),
                             simple=1,
                         )
@@ -234,15 +222,27 @@ FIELDS: dict[str, dict[str, ast.AnnAssign | ast.Assign]] = {
                     decorator_list=[],
                 ),
                 ast.ClassDef(
-                    name="CustomQuery",
+                    name="CustomQueryCustomType1",
                     bases=[ast.Name(id="BaseModel")],
                     keywords=[],
                     body=[
                         ast.AnnAssign(
-                            target=ast.Name(id="query1"),
+                            target=ast.Name(id="fielda"),
+                            annotation=ast.Name(id="int"),
+                            simple=1,
+                        )
+                    ],
+                    decorator_list=[],
+                ),
+                ast.ClassDef(
+                    name="CustomQueryCustomType2",
+                    bases=[ast.Name(id="BaseModel")],
+                    keywords=[],
+                    body=[
+                        ast.AnnAssign(
+                            target=ast.Name(id="fieldb"),
                             annotation=ast.Subscript(
-                                value=ast.Name(id=OPTIONAL),
-                                slice=ast.Name(id='"CustomQueryCustomType"'),
+                                value=ast.Name(id=OPTIONAL), slice=ast.Name(id="int")
                             ),
                             simple=1,
                         )
@@ -291,19 +291,6 @@ def test_generator_generates_types_from_mutation():
 
     expected_class_defs = [
         ast.ClassDef(
-            name="CustomMutationCustomType",
-            bases=[ast.Name(id="BaseModel")],
-            decorator_list=[],
-            keywords=[],
-            body=[
-                ast.AnnAssign(
-                    target=ast.Name(id="id"),
-                    annotation=ast.Name(id="str"),
-                    simple=1,
-                )
-            ],
-        ),
-        ast.ClassDef(
             name="CustomMutation",
             bases=[ast.Name(id="BaseModel")],
             decorator_list=[],
@@ -312,6 +299,19 @@ def test_generator_generates_types_from_mutation():
                 ast.AnnAssign(
                     target=ast.Name(id="mutation1"),
                     annotation=ast.Name(id='"CustomMutationCustomType"'),
+                    simple=1,
+                )
+            ],
+        ),
+        ast.ClassDef(
+            name="CustomMutationCustomType",
+            bases=[ast.Name(id="BaseModel")],
+            decorator_list=[],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="id"),
+                    annotation=ast.Name(id="str"),
                     simple=1,
                 )
             ],
@@ -384,3 +384,47 @@ def test_generate_adds_enum_imports_to_generated_module():
         import_,
         ast.ImportFrom(module="schema_types", names=[ast.alias("CustomEnum")], level=1),
     )
+
+
+def test_generate_adds_update_forward_refs_calls():
+    query_str = """
+    query CustomQuery {
+        query1 {
+            field1 {
+                fielda
+            }
+            field2 {
+                fieldb
+            }
+        }
+    }
+    """
+    operation_definition = parse(query_str).definitions[0]
+    assert isinstance(operation_definition, OperationDefinitionNode)
+    expected_class_names = [
+        "CustomQuery",
+        "CustomQueryCustomType",
+        "CustomQueryCustomType1",
+        "CustomQueryCustomType2",
+    ]
+    expected_method_calls = [
+        ast.Expr(
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id=name), attr="update_forward_refs"),
+                args=[],
+                keywords=[],
+            )
+        )
+        for name in expected_class_names
+    ]
+    generator = QueryTypesGenerator(
+        build_ast_schema(parse(SCHEMA_STR)),
+        FIELDS,
+        CLASS_TYPES,
+        operation_definition,
+        "schema_types",
+    )
+    module = generator.generate()
+
+    method_calls = list(filter(lambda x: isinstance(x, ast.Expr), module.body))
+    assert compare_ast(method_calls, expected_method_calls)

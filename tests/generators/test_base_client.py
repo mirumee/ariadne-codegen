@@ -53,7 +53,7 @@ async def test_execute_parses_pydantic_variables_before_sending(mocker):
     assert call_kwargs["url"] == "/graphql/"
     assert call_kwargs["json"] == {
         "query": query_str,
-        "variables": {"v1": '{"a": 5}', "v2": '{"nested": {"a": 10}}'},
+        "variables": {"v1": {"a": 5}, "v2": {"nested": {"a": 10}}},
     }
 
 

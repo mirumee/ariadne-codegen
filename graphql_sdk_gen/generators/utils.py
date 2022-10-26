@@ -1,12 +1,18 @@
 import ast
 
 import isort
+from autoflake import fix_code  # type: ignore
 from black import Mode, format_str
 
 
-def ast_to_str(ast_obj: ast.AST) -> str:
+def ast_to_str(ast_obj: ast.AST, remove_unused_imports: bool = True) -> str:
     """Convert ast object into string."""
-    return format_str(isort.code(ast.unparse(ast_obj)), mode=Mode())
+    code = ast.unparse(ast_obj)
+    if remove_unused_imports:
+        code = fix_code(
+            code, remove_all_unused_imports=True, additional_imports=["typing"]
+        )
+    return format_str(isort.code(code), mode=Mode())
 
 
 def str_to_snake_case(name: str) -> str:
