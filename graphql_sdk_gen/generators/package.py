@@ -20,6 +20,7 @@ class PackageGenerator:
         target_path: str,
         schema: GraphQLSchema,
         client_name: str = "Client",
+        client_file_name: str = "client",
         base_client_name: str = "BaseClient",
         base_client_file_path: Optional[str] = None,
         schema_types_module_name: str = "schema_types",
@@ -36,6 +37,7 @@ class PackageGenerator:
         self.package_path = Path(target_path) / package_name
 
         self.client_name = client_name
+        self.client_file_name = client_file_name
         self.base_client_name = base_client_name
         self.base_client_file_path = (
             Path(base_client_file_path)
@@ -69,7 +71,7 @@ class PackageGenerator:
         init_file_path.write_text(ast_to_str(init_module, False))
 
     def _create_client_file(self):
-        client_file_path = self.package_path / "client.py"
+        client_file_path = self.package_path / f"{self.client_file_name}.py"
 
         base_types = []
         for type_ in self.arguments_generator.used_types:
@@ -90,7 +92,7 @@ class PackageGenerator:
         client_file_path.write_text(ast_to_str(client_module))
 
         self.init_generator.add_import(
-            names=[self.client_generator.name], from_="client", level=1
+            names=[self.client_generator.name], from_=self.client_file_name, level=1
         )
 
     def _create_schema_types_files(self):
