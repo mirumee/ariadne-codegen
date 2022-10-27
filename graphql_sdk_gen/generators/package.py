@@ -136,8 +136,23 @@ class PackageGenerator:
         target_base_client_path = self.package_path / self.base_client_file_path.name
         target_base_client_path.write_text(self.base_client_file_path.read_text())
 
+    def _validate_unique_file_names(self):
+        file_names = [
+            f"{self.client_file_name}.py",
+            self.base_client_file_path.name,
+            f"{self.schema_types_module_name}.py",
+            f"{self.enums_module_name}.py",
+            f"{self.input_types_module_name}.py",
+        ] + list(self.query_types_files.keys())
+
+        if len(file_names) != len(set(file_names)):
+            seen = set()
+            duplicated_files = {n for n in file_names if n in seen or seen.add(n)}
+            raise ParsingError(f"Duplicated file names: {',' .join(duplicated_files)}")
+
     def generate(self):
         """Generate package with graphql client."""
+        self._validate_unique_file_names()
         if not self.package_path.exists():
             self.package_path.mkdir()
         self._create_client_file()

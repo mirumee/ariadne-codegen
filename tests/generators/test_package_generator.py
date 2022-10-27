@@ -1,7 +1,9 @@
 from textwrap import dedent, indent
 
+import pytest
 from graphql import GraphQLSchema, build_ast_schema, parse
 
+from graphql_sdk_gen.exceptions import ParsingError
 from graphql_sdk_gen.generators.package import PackageGenerator
 
 SCHEMA_STR = """
@@ -278,3 +280,23 @@ def test_generate_creates_client_with_correctly_implemented_method(tmp_path):
         """
         assert indent(dedent(expected_method_def), "    ") in client_content
         assert "from .custom_query import CustomQuery" in client_content
+
+
+def test_generate_with_conflicting_query_name_raises_parsing_error(tmp_path):
+    generator = PackageGenerator(
+        "test_graphql_client",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        input_types_module_name="input_types",
+    )
+    query_str = """
+    query InputTypes {
+        query2 {
+            id
+        }
+    }
+    """
+    generator.add_query(parse(query_str).definitions[0])
+
+    with pytest.raises(ParsingError):
+        generator.generate()
