@@ -17,6 +17,12 @@ def main():
         package_name=settings.target_package_name,
         target_path=settings.target_package_path,
         schema=schema,
+        client_name=settings.client_name,
+        client_file_name=settings.client_file_name,
+        base_client_name=settings.base_client_name,
+        base_client_file_path=settings.base_client_file_path,
+        schema_types_module_name=settings.schema_types_module_name,
+        input_types_module_name=settings.input_types_module_name,
     )
     for query in queries:
         package_generator.add_query(query)
