@@ -59,6 +59,11 @@ Generated code requires:
 - pydantic
 - httpx (can be avoided by providing another base client class with `base_client_file_path` and `base_client_name` parameters)
 
+
+## Example
+
+Example with simple schema and few queries and mutations is available [here](./EXAMPLE.md).
+
 <br>
 
 ## **Crafted with ❤️ by [Mirumee Software](http://mirumee.com)** hello@mirumee.com
