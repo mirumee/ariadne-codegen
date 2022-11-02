@@ -2,7 +2,7 @@
 name = "graphql_sdk_gen"
 version = "0.1.0"
 description = "Codegen for Python GraphQL clients"
-authors = ["Mateusz Sopiński <mateusz.sopinski@mirumee.com>"]
+authors = ["Mirumee Software <hello@mirumee.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
