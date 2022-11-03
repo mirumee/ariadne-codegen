@@ -73,21 +73,29 @@ class PackageGenerator:
     def _create_client_file(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
 
-        base_types = []
+        input_types = []
+        enums = []
         for type_ in self.arguments_generator.used_types:
             if type_ in self.schema_types_generator.input_types:
-                base_types.append(type_)
+                input_types.append(type_)
+            elif type_ in self.schema_types_generator.enums:
+                enums.append(type_)
             else:
-                raise ParsingError("Argument type not found in schema.")
+                raise ParsingError(f"Argument type {type_} not found in schema.")
 
         self.client_generator.add_import(
-            names=base_types, from_=self.input_types_module_name, level=1
+            names=input_types, from_=self.input_types_module_name, level=1
         )
+        self.client_generator.add_import(
+            names=enums, from_=self.enums_module_name, level=1
+        )
+
         self.client_generator.add_import(
             names=[self.base_client_name],
             from_=self.base_client_file_path.stem,
             level=1,
         )
+
         client_module = self.client_generator.generate()
         client_file_path.write_text(ast_to_str(client_module))
 
