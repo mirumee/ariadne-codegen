@@ -87,13 +87,15 @@ query ListUsersByCountry($country: String!) {
 
 ## Running
 
-`pyproject.toml` contains only required parameters, rest is set to default.
+Add `[graphql-sdk-gen]` section to `pyproject.toml` with paths to files with [schema](#schema-file) and [queries/mutations](#queriesmutations-file).
 
 ```toml
 [graphql-sdk-gen]
 schema_path = "schema.graphql" 
 queries_path = "queries.graphql"
 ```
+
+Run command to generate code.
 
 ```
 graphql-sdk-gen
@@ -103,6 +105,8 @@ graphql-sdk-gen
 ## Result
 
 ### Generated files
+
+Structure of generated package:
 
 ```
 grapql_client/
