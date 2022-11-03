@@ -1,13 +1,13 @@
 # graphql-sdk-gen
 
-graphql-sdk-gen is a code generator that takes graphql schema, queries and mutations to generate fully typed, asynchronous python client.
+`graphql-sdk-gen` is a code generator that takes graphql schema, queries and mutations to generate fully typed and asynchronous python client.
 
 
 ## Features
 
-- Generating pydantic models from schema types, inputs and enums.
-- Generating pydnatic models that describe data returned from queries and mutations.
-- Generating client class with async method for every provided query and mutation.
+- Generate pydantic models from schema types, inputs and enums.
+- Generate pydnatic models for GraphQL results.
+- Generate client package with each GraphQL operation available as async method.
 
 
 ## Installation
