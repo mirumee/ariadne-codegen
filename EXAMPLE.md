@@ -54,7 +54,7 @@ enum Color {
 ```
 
 
-## Queries/Mutations file
+## Queries/mutations file
 
 ```gql
 mutation CreateUser($user_data: UserCreateInput!) {
@@ -88,11 +88,13 @@ query ListUsersByCountry($country: String!) {
 ## Running
 
 `pyproject.toml` contains only required parameters, rest is set to default.
+
 ```toml
 [graphql-sdk-gen]
 schema_path = "schema.graphql" 
 queries_path = "queries.graphql"
 ```
+
 ```
 graphql-sdk-gen
 ```
@@ -101,6 +103,7 @@ graphql-sdk-gen
 ## Result
 
 ### Generated files
+
 ```
 grapql_client/
     __init__.py
@@ -117,6 +120,7 @@ grapql_client/
 ### Client class
 
 Generated client class inherits from `BaseClient` and has async method for every provided query/mutation.
+
 ```py
 # graphql_client/client.py
 
@@ -182,6 +186,7 @@ Base client is copied from path provided in `base_client_file_path` and has to c
 ### Input types
 
 Models are generated from inputs from provided schema. They are used as arguments types in client`s methods.
+
 ```py
 # graphql_client/input_types.py
 
@@ -212,6 +217,7 @@ LocationInput.update_forward_refs()
 ### Enums
 
 Enums are generated from enums from provided schema. They are used in other generated classes as field types, but also as arguments types in client`s methods.
+
 ```py
 # graphql_client/enums.py
 
@@ -230,6 +236,7 @@ class Color(str, Enum):
 ### Schema types
 
 Models are generated from types from provided schema. Query/mutation specific models are generated based on these classes.
+
 ```py
 # graphql_client/schema_types.py
 
