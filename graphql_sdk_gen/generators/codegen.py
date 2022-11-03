@@ -155,7 +155,7 @@ def generate_await(value: ast.expr) -> ast.Await:
 
 def generate_call(
     func: ast.expr,
-    args: Optional[list[ast.expr]] = None,
+    args: Optional[list[Union[ast.expr, list[ast.expr]]]] = None,
     keywords: Optional[list[ast.keyword]] = None,
 ) -> ast.Call:
     """Generate call object."""
@@ -230,4 +230,21 @@ def generate_method_call(object_name: str, method_name: str) -> ast.Expr:
             args=[],
             keywords=[],
         )
+    )
+
+
+def generate_trivial_lambda(name: str, argument_name: str) -> ast.Assign:
+    """Generate lambda that returns given argument, eg. gql = lambda q: q."""
+    return ast.Assign(
+        targets=[ast.Name(id=name)],
+        value=ast.Lambda(
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[ast.arg(arg=argument_name)],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[],
+            ),
+            body=ast.Name(id=argument_name),
+        ),
     )

@@ -14,6 +14,7 @@ from .codegen import (
     generate_keyword,
     generate_name,
     generate_return,
+    generate_trivial_lambda,
 )
 from .constants import OPTIONAL
 
@@ -23,13 +24,19 @@ class ClientGenerator:
         self.name = name
         self.class_def = generate_class_def(name=name, base_names=[base_client])
         self.imports: list = [generate_import_from([OPTIONAL], "typing")]
+        self.gql_lambda_name = "gql"
 
     def generate(self) -> ast.Module:
         """Generate module with class definistion of grahql client."""
-        self.class_def.lineno = len(self.imports) + 1
+        gql_lambda = generate_trivial_lambda(self.gql_lambda_name, "q")
+        gql_lambda.lineno = len(self.imports) + 1
+        self.class_def.lineno = len(self.imports) + 2
         if not self.class_def.body:
             self.class_def.body.append(ast.Pass())
-        return ast.Module(body=self.imports + [self.class_def], type_ignores=[])
+        return ast.Module(
+            body=self.imports + [gql_lambda, self.class_def],
+            type_ignores=[],
+        )
 
     def add_import(self, names: list[str], from_: str, level: int = 0) -> None:
         """Add import to be included in init file."""
@@ -58,7 +65,12 @@ class ClientGenerator:
         return [
             generate_assign(
                 ["query"],
-                [generate_constant(l + "\n") for l in query_str.splitlines()],
+                generate_call(
+                    func=ast.Name(id=self.gql_lambda_name),
+                    args=[
+                        [generate_constant(l + "\n") for l in query_str.splitlines()]
+                    ],
+                ),
                 lineno=1,
             ),
             generate_ann_assign(

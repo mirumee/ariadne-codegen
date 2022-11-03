@@ -90,7 +90,11 @@ def test_add_async_method_generates_correct_method_body():
     expected_method_body = [
         ast.Assign(
             targets=[ast.Name(id="query")],
-            value=[ast.Constant(value=l + "\n") for l in query_str.splitlines()],
+            value=ast.Call(
+                func=ast.Name("gql"),
+                keywords=[],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+            ),
         ),
         ast.AnnAssign(
             target=ast.Name(id="variables"),

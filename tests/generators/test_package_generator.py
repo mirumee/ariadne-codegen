@@ -264,7 +264,7 @@ def test_generate_creates_client_with_correctly_implemented_method(tmp_path):
 
         expected_method_def = """
         async def custom_query(self, id: str, param: Optional[str]) -> CustomQuery:
-            query = (
+            query = gql(
                 "query CustomQuery($id: ID!, $param: String) {\\n"
                 "  query1(id: $id) {\\n"
                 "    field1\\n"
