@@ -262,23 +262,25 @@ def test_generate_creates_client_with_correctly_implemented_method(tmp_path):
     with client_file_path.open() as client_file:
         client_content = client_file.read()
 
-        expected_method_def = """
+        expected_method_def = '''
         async def custom_query(self, id: str, param: Optional[str]) -> CustomQuery:
             query = gql(
-                "query CustomQuery($id: ID!, $param: String) {\\n"
-                "  query1(id: $id) {\\n"
-                "    field1\\n"
-                "    field2 {\\n"
-                "      fieldb\\n"
-                "    }\\n"
-                "    field3\\n"
-                "  }\\n"
-                "}\\n"
+                """
+                query CustomQuery($id: ID!, $param: String) {
+                  query1(id: $id) {
+                    field1
+                    field2 {
+                      fieldb
+                    }
+                    field3
+                  }
+                }
+                """
             )
             variables: dict = {"id": id, "param": param}
             response = await self.execute(query=query, variables=variables)
             return CustomQuery.parse_obj(response.json().get("data", {}))
-        """
+        '''
         assert indent(dedent(expected_method_def), "    ") in client_content
         assert "from .custom_query import CustomQuery" in client_content
 
