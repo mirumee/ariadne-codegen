@@ -331,3 +331,18 @@ def test_generate_with_enum_as_query_argument_generates_client_with_correct_meth
         client_content = client_file.read()
         assert expected_method_def in client_content
         assert expected_enum_import in client_content
+
+
+def test_generate_creates_client_file_with_gql_lambda_definition(tmp_path):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+    )
+
+    generator.generate()
+
+    client_file_path = tmp_path / package_name / "client.py"
+    with client_file_path.open() as client_file:
+        client_content = client_file.read()
+        expected_gql_def = "gql = lambda q: q"
+        assert expected_gql_def in client_content
