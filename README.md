@@ -30,10 +30,12 @@ pip install git+https://github.com/mirumee/graphql-sdk-gen.git@main
 graphql-sdk-gen reads configuration from `pyproject.toml` from `[graphql-sdk-gen]` section.
 
 Required parameters:
+
 - `schema_path` - path to file/directory with graphql schema
 - `queries_path` - path to file/directory with queries
 
 Optional parameters:
+
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
 - `target_package_path` (defaults to cwd) - path where to generate package
 - `client_name` (defaults to `"Client"`) - name of generated client class
@@ -47,7 +49,8 @@ Optional parameters:
 
 ## Usage
 
-Command from below reads [configuration](#configuration) and generates files into `target_package_path/target_package_name` directory. 
+Command from below reads [configuration](#configuration) and generates files into `target_package_path/target_package_name` directory:
+
 ```
 graphql-sdk-gen
 ```
@@ -56,6 +59,7 @@ graphql-sdk-gen
 ## Generated code dependencies
 
 Generated code requires:
+
 - pydantic
 - httpx (can be avoided by providing another base client class with `base_client_file_path` and `base_client_name` parameters)
 
