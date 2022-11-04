@@ -90,7 +90,11 @@ def test_add_async_method_generates_correct_method_body():
     expected_method_body = [
         ast.Assign(
             targets=[ast.Name(id="query")],
-            value=[ast.Constant(value=l + "\n") for l in query_str.splitlines()],
+            value=ast.Call(
+                func=ast.Name("gql"),
+                keywords=[],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+            ),
         ),
         ast.AnnAssign(
             target=ast.Name(id="variables"),
@@ -144,3 +148,26 @@ def test_add_async_method_generates_correct_method_body():
     method_def = class_def.body[0]
     assert isinstance(method_def, ast.AsyncFunctionDef)
     assert compare_ast(method_def.body, expected_method_body)
+
+
+def test_generate_returns_module_with_gql_lambda_definition():
+    generator = ClientGenerator("ClientXyz", "BaseClient")
+    expected_assign = ast.Assign(
+        targets=[ast.Name(id="gql")],
+        value=ast.Lambda(
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[ast.arg(arg="q")],
+                kwonlyargs=[],
+                kw_defaults=[],
+                defaults=[],
+            ),
+            body=ast.Name(id="q"),
+        ),
+    )
+
+    module = generator.generate()
+
+    assign = next(filter(lambda expr: isinstance(expr, ast.Assign), module.body), None)
+    assert assign
+    assert compare_ast(assign, expected_assign)
