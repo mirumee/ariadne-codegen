@@ -16,6 +16,7 @@ type Query {
         id: ID!
     ): CustomType
     query2: [CustomType!]
+    query3(val: CustomEnum!): [CustomType]
 }
 
 type CustomType {
@@ -300,3 +301,31 @@ def test_generate_with_conflicting_query_name_raises_parsing_error(tmp_path):
 
     with pytest.raises(ParsingError):
         generator.generate()
+
+
+def test_generate_with_enum_as_query_argument_generates_client_with_correct_method(
+    tmp_path,
+):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+    )
+    query_str = """
+    query CustomQuery($val: CustomEnum!) {
+        query3(val: $val) {
+            id
+        }
+    }
+    """
+
+    expected_method_def = "def custom_query(self, val: CustomEnum) -> CustomQuery:"
+    expected_enum_import = f"from .{generator.enums_module_name} import CustomEnum"
+
+    generator.add_query(parse(query_str).definitions[0])
+    generator.generate()
+
+    client_file_path = tmp_path / package_name / "client.py"
+    with client_file_path.open() as client_file:
+        client_content = client_file.read()
+        assert expected_method_def in client_content
+        assert expected_enum_import in client_content
