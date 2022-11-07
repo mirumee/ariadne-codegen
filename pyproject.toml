@@ -38,6 +38,7 @@ disable = [
     "too-many-arguments",
     "duplicate-code",
     "no-name-in-module",
+    "too-many-locals",
 ]
 
 [tool.pytest.ini_options]
