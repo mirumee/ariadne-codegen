@@ -1,9 +1,16 @@
+from datetime import datetime
 from textwrap import dedent, indent
 
 import pytest
+from freezegun import freeze_time
 from graphql import GraphQLSchema, build_ast_schema, parse
 
 from graphql_sdk_gen.exceptions import ParsingError
+from graphql_sdk_gen.generators.constants import (
+    COMMENT_DATETIME_FORMAT,
+    SOURCE_COMMENT,
+    TIMESTAMP_COMMENT,
+)
 from graphql_sdk_gen.generators.package import PackageGenerator
 
 SCHEMA_STR = """
@@ -346,3 +353,83 @@ def test_generate_creates_client_file_with_gql_lambda_definition(tmp_path):
         client_content = client_file.read()
         expected_gql_def = "gql = lambda q: q"
         assert expected_gql_def in client_content
+
+
+@freeze_time("01.12.2022 12:00")
+def test_generate_adds_comment_with_timestamp_to_generated_files(tmp_path):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        include_comments=True,
+    )
+    query_str = """
+    query CustomQuery($val: CustomEnum!) {
+        query3(val: $val) {
+            id
+        }
+    }
+    """
+    generator.add_query(parse(query_str).definitions[0])
+    generator.generate()
+
+    package_path = tmp_path / package_name
+    files_names = [
+        "__init__.py",
+        generator.base_client_file_path.name,
+        f"{generator.enums_module_name}.py",
+        f"{generator.input_types_module_name}.py",
+        f"{generator.schema_types_module_name}.py",
+        "custom_query.py",
+    ]
+    expected_comment = TIMESTAMP_COMMENT.format(
+        datetime.now().strftime(COMMENT_DATETIME_FORMAT)
+    )
+    for file_name in files_names:
+        file_path = package_path / file_name
+        with file_path.open() as file_:
+            content = file_.read()
+            assert expected_comment in content
+
+
+def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
+    package_name = "test_graphql_client"
+    schema_source = "schema_source.graphql"
+    queries_source = "queries_source.graphql"
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        include_comments=True,
+        schema_source=schema_source,
+        queries_source=queries_source,
+    )
+    query_str = """
+    query CustomQuery($val: CustomEnum!) {
+        query3(val: $val) {
+            id
+        }
+    }
+    """
+    generator.add_query(parse(query_str).definitions[0])
+    generator.generate()
+
+    package_path = tmp_path / package_name
+
+    schema_source_files_names = [
+        f"{generator.enums_module_name}.py",
+        f"{generator.input_types_module_name}.py",
+        f"{generator.schema_types_module_name}.py",
+    ]
+    expected_schema_source_comment = SOURCE_COMMENT.format(schema_source)
+    for file_name in schema_source_files_names:
+        file_path = package_path / file_name
+        with file_path.open() as file_:
+            content = file_.read()
+            assert expected_schema_source_comment in content
+
+    expected_queries_source_comment = SOURCE_COMMENT.format(queries_source)
+    with package_path.joinpath("custom_query.py").open() as query_types_file:
+        content = query_types_file.read()
+        assert expected_queries_source_comment in content
