@@ -235,7 +235,7 @@ def test_generate_copies_base_client_file(tmp_path):
     assert copied_file_path.is_file()
     with copied_file_path.open() as copied_file:
         copied_content = copied_file.read()
-        assert dedent(copied_content) == dedent(base_client_file_content)
+        assert dedent(base_client_file_content) in dedent(copied_content)
 
 
 def test_generate_creates_client_with_correctly_implemented_method(tmp_path):

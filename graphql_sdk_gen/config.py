@@ -25,6 +25,7 @@ class Settings:
     schema_types_module_name: str = "schema_types"
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
+    include_comments: bool = True
 
     def __post_init__(self):
         self._assert_path_exists(self.schema_path)
