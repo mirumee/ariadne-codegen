@@ -23,6 +23,7 @@ mypy = "^0.971"
 types-toml = "^0.10.8"
 pytest-mock = "^3.8.2"
 pytest-asyncio = "^0.19.0"
+freezegun = "^1.2.2"
 
 [tool.poetry.scripts]
 graphql-sdk-gen = "graphql_sdk_gen.main:main"
@@ -37,6 +38,7 @@ disable = [
     "too-many-arguments",
     "duplicate-code",
     "no-name-in-module",
+    "too-many-locals",
 ]
 
 [tool.pytest.ini_options]

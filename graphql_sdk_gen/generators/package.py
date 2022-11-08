@@ -1,4 +1,5 @@
 import ast
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -7,6 +8,7 @@ from graphql import GraphQLSchema, OperationDefinitionNode, print_ast
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
+from .constants import COMMENT_DATETIME_FORMAT, SOURCE_COMMENT, TIMESTAMP_COMMENT
 from .init_file import InitFileGenerator
 from .query_types import QueryTypesGenerator
 from .schema_types import SchemaTypesGenerator
@@ -26,6 +28,9 @@ class PackageGenerator:
         schema_types_module_name: str = "schema_types",
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
+        include_comments: bool = True,
+        queries_source: str = "",
+        schema_source: str = "",
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
         arguments_generator: Optional[ArgumentsGenerator] = None,
@@ -48,6 +53,10 @@ class PackageGenerator:
         self.enums_module_name = enums_module_name
         self.input_types_module_name = input_types_module_name
 
+        self.include_comments = include_comments
+        self.queries_source = queries_source
+        self.schema_source = schema_source
+
         self.init_generator = init_generator if init_generator else InitFileGenerator()
         self.client_generator = (
             client_generator
@@ -65,10 +74,24 @@ class PackageGenerator:
 
         self.query_types_files: dict[str, ast.Module] = {}
 
+    def _proccess_generated_code(self, code: str, source: str = "") -> str:
+        if self.include_comments:
+            comments = [
+                TIMESTAMP_COMMENT.format(
+                    datetime.now().strftime(COMMENT_DATETIME_FORMAT)
+                )
+            ]
+            if source:
+                comments.append(SOURCE_COMMENT.format(source))
+            return "".join(comments) + "\n" + code
+
+        return code
+
     def _create_init_file(self):
         init_file_path = self.package_path / "__init__.py"
         init_module = self.init_generator.generate()
-        init_file_path.write_text(ast_to_str(init_module, False))
+        code = self._proccess_generated_code(ast_to_str(init_module, False))
+        init_file_path.write_text(code)
 
     def _create_client_file(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
@@ -97,7 +120,10 @@ class PackageGenerator:
         )
 
         client_module = self.client_generator.generate()
-        client_file_path.write_text(ast_to_str(client_module))
+        code = self._proccess_generated_code(
+            ast_to_str(client_module), self.queries_source
+        )
+        client_file_path.write_text(code)
 
         self.init_generator.add_import(
             names=[self.client_generator.name], from_=self.client_file_name, level=1
@@ -110,22 +136,31 @@ class PackageGenerator:
             schema_types_module,
         ) = self.schema_types_generator.generate()
 
-        input_types_file_path = (
+        schema_types_file_path = (
             self.package_path / f"{self.schema_types_module_name}.py"
         )
-        input_types_file_path.write_text(ast_to_str(schema_types_module))
+        schema_types_code = self._proccess_generated_code(
+            ast_to_str(schema_types_module), self.schema_source
+        )
+        schema_types_file_path.write_text(schema_types_code)
         self.init_generator.add_import(
             self.schema_types_generator.schema_types, self.schema_types_module_name, 1
         )
 
-        input_types_file_path = self.package_path / f"{self.enums_module_name}.py"
-        input_types_file_path.write_text(ast_to_str(enums_module))
+        enums_file_path = self.package_path / f"{self.enums_module_name}.py"
+        enums_code = self._proccess_generated_code(
+            ast_to_str(enums_module), self.schema_source
+        )
+        enums_file_path.write_text(enums_code)
         self.init_generator.add_import(
             self.schema_types_generator.enums, self.enums_module_name, 1
         )
 
         input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
-        input_types_file_path.write_text(ast_to_str(input_types_module))
+        input_types_code = self._proccess_generated_code(
+            ast_to_str(input_types_module), self.schema_source
+        )
+        input_types_file_path.write_text(input_types_code)
         self.init_generator.add_import(
             self.schema_types_generator.input_types, self.input_types_module_name, 1
         )
@@ -133,7 +168,10 @@ class PackageGenerator:
     def _create_query_types_files(self):
         for file_name, module in self.query_types_files.items():
             file_path = self.package_path / file_name
-            file_path.write_text(ast_to_str(module))
+            code = self._proccess_generated_code(
+                ast_to_str(module), self.queries_source
+            )
+            file_path.write_text(code)
 
     def _copy_base_client_file(self):
         self.init_generator.add_import(
@@ -142,7 +180,8 @@ class PackageGenerator:
             level=1,
         )
         target_base_client_path = self.package_path / self.base_client_file_path.name
-        target_base_client_path.write_text(self.base_client_file_path.read_text())
+        code = self._proccess_generated_code(self.base_client_file_path.read_text())
+        target_base_client_path.write_text(code)
 
     def _validate_unique_file_names(self):
         file_names = [

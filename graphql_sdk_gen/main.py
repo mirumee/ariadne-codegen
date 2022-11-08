@@ -23,6 +23,9 @@ def main():
         base_client_file_path=settings.base_client_file_path,
         schema_types_module_name=settings.schema_types_module_name,
         input_types_module_name=settings.input_types_module_name,
+        queries_source=settings.queries_path,
+        schema_source=settings.schema_path,
+        include_comments=settings.include_comments,
     )
     for query in queries:
         package_generator.add_query(query)
