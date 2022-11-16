@@ -9,6 +9,7 @@ from graphql import (
     GraphQLSchema,
     OperationDefinitionNode,
     OperationType,
+    print_ast,
 )
 
 from ..exceptions import NotSupported, ParsingError
@@ -56,6 +57,7 @@ class QueryTypesGenerator:
         self.public_names: list[str] = []
         self.class_defs: list = []
         self.used_enums: list = []
+        self.used_fragments_names: set[str] = set()
 
         self._parse_query()
 
@@ -143,6 +145,7 @@ class QueryTypesGenerator:
             if isinstance(selection, FieldNode):
                 fields.append(selection)
             elif isinstance(selection, FragmentSpreadNode):
+                self.used_fragments_names.add(selection.name.value)
                 fields.extend(
                     self._resolve_selection_set(
                         self.fragments_definitions[selection.name.value].selection_set
@@ -198,3 +201,16 @@ class QueryTypesGenerator:
             ],
             type_ignores=[],
         )
+
+    def get_operation_as_str(self) -> str:
+        operation_str = print_ast(self.query)
+
+        if self.used_fragments_names:
+            operation_str += "\n\n" + "\n\n".join(
+                {
+                    print_ast(self.fragments_definitions[n])
+                    for n in self.used_fragments_names
+                }
+            )
+
+        return operation_str

@@ -3,12 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from graphql import (
-    FragmentDefinitionNode,
-    GraphQLSchema,
-    OperationDefinitionNode,
-    print_ast,
-)
+from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNode
 
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
@@ -233,12 +228,13 @@ class PackageGenerator:
             self.fragments_definitions,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
+        operation_str = query_types_generator.get_operation_as_str()
         self.init_generator.add_import(
             query_types_generator.public_names, module_name, 1
         )
 
         arguments = self.arguments_generator.generate(definition.variable_definitions)
         self.client_generator.add_async_method(
-            method_name, query_name, arguments, print_ast(definition)
+            method_name, query_name, arguments, operation_str
         )
         self.client_generator.add_import([query_name], module_name, 1)
