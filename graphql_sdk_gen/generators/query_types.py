@@ -145,9 +145,7 @@ class QueryTypesGenerator:
             elif isinstance(selection, FragmentSpreadNode):
                 fields.extend(
                     self._resolve_selection_set(
-                        self.fragments_definitions[
-                            selection.name.value
-                        ].selection_set
+                        self.fragments_definitions[selection.name.value].selection_set
                     )
                 )
         return fields
