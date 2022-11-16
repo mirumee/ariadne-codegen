@@ -1,7 +1,12 @@
 import ast
 
 import pytest
-from graphql import OperationDefinitionNode, build_ast_schema, parse
+from graphql import (
+    FragmentDefinitionNode,
+    OperationDefinitionNode,
+    build_ast_schema,
+    parse,
+)
 
 from graphql_sdk_gen.generators.constants import LIST, OPTIONAL, ClassType
 from graphql_sdk_gen.generators.query_types import QueryTypesGenerator
@@ -428,3 +433,65 @@ def test_generate_adds_update_forward_refs_calls():
 
     method_calls = list(filter(lambda x: isinstance(x, ast.Expr), module.body))
     assert compare_ast(method_calls, expected_method_calls)
+
+
+def test_generator_generates_types_from_query_that_uses_fragment():
+    query_str = """
+    query CustomQuery {
+        query2 {
+            ...TestFragment
+            field2 {
+                fieldb
+            }
+        }
+    }
+
+    fragment TestFragment on CustomType {
+        id
+        field1 {
+            fielda
+        }
+    }
+    """
+    query_def, fragment_def = parse(query_str).definitions
+    assert isinstance(query_def, OperationDefinitionNode)
+    assert isinstance(fragment_def, FragmentDefinitionNode)
+
+    expected_class_def = ast.ClassDef(
+        name="CustomQueryCustomType",
+        bases=[ast.Name(id="BaseModel")],
+        keywords=[],
+        body=[
+            ast.AnnAssign(
+                target=ast.Name(id="id"), annotation=ast.Name(id="str"), simple=1
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="field1"),
+                annotation=ast.Name(id='"CustomQueryCustomType1"'),
+                simple=1,
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="field2"),
+                annotation=ast.Subscript(
+                    value=ast.Name(id="Optional"),
+                    slice=ast.Name(id='"CustomQueryCustomType2"'),
+                ),
+                simple=1,
+            ),
+        ],
+        decorator_list=[],
+    )
+
+    generator = QueryTypesGenerator(
+        build_ast_schema(parse(SCHEMA_STR)),
+        FIELDS,
+        CLASS_TYPES,
+        query_def,
+        "schema_types",
+        {"TestFragment": fragment_def},
+    )
+
+    assert len(generator.class_defs) == 4
+    class_def = generator.class_defs[1]
+    assert class_def.name == "CustomQueryCustomType"
+    assert compare_ast(class_def, expected_class_def)
