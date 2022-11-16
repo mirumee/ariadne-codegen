@@ -1,7 +1,15 @@
 import ast
-from typing import Union
+from typing import Optional, Union
 
-from graphql import GraphQLField, GraphQLSchema, OperationDefinitionNode, OperationType
+from graphql import (
+    FieldNode,
+    FragmentDefinitionNode,
+    FragmentSpreadNode,
+    GraphQLField,
+    GraphQLSchema,
+    OperationDefinitionNode,
+    OperationType,
+)
 
 from ..exceptions import NotSupported, ParsingError
 from .codegen import (
@@ -23,6 +31,7 @@ class QueryTypesGenerator:
         class_types: dict[str, ClassType],
         query: OperationDefinitionNode,
         enums_module_name: str,
+        fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
     ) -> None:
         self.schema = schema
         self.fields = fields
@@ -30,6 +39,9 @@ class QueryTypesGenerator:
 
         self.query = query
         self.enums_module_name = enums_module_name
+        self.fragments_definitions = (
+            fragments_definitions if fragments_definitions else {}
+        )
 
         if not self.query.name:
             raise NotSupported("Queries without name are not supported.")
@@ -52,7 +64,9 @@ class QueryTypesGenerator:
         self.public_names.append(class_def.name)
 
         extra_defs = []
-        for lineno, field in enumerate(self.query.selection_set.selections, start=1):
+        for lineno, field in enumerate(
+            self._resolve_selection_set(self.query.selection_set), start=1
+        ):
             field_type = self._get_field_type_from_schema(field.name.value)
             field_def = generate_ann_assign(
                 field.name.value, parse_field_type(field_type.type), lineno=lineno
@@ -95,7 +109,9 @@ class QueryTypesGenerator:
         self.public_names.append(class_def.name)
 
         extra_defs = []
-        for lineno, field in enumerate(selection_set.selections, start=1):
+        for lineno, field in enumerate(
+            self._resolve_selection_set(selection_set), start=1
+        ):
             field_name = field.name.value
             orginal_field_definition = self.fields[type_name][field_name]
 
@@ -120,6 +136,21 @@ class QueryTypesGenerator:
                     extra_defs.extend(dependencies_defs)
 
         return [class_def] + extra_defs
+
+    def _resolve_selection_set(self, selection_set):
+        fields = []
+        for selection in selection_set.selections:
+            if isinstance(selection, FieldNode):
+                fields.append(selection)
+            elif isinstance(selection, FragmentSpreadNode):
+                fields.extend(
+                    self._resolve_selection_set(
+                        self.fragments_definitions[
+                            selection.name.value
+                        ].selection_set
+                    )
+                )
+        return fields
 
     def _procces_annotation(self, annotation, field_type_name):
         if (field_type := self.class_types.get(field_type_name)) in (

@@ -4,15 +4,24 @@ import click
 
 from .config import settings
 from .generators.package import PackageGenerator
-from .schema import get_graphql_queries, get_graphql_schema
+from .schema import (
+    filter_fragments_definitions,
+    filter_operations_definitions,
+    get_graphql_queries,
+    get_graphql_schema,
+)
 
 
 @click.command()
 @click.version_option()
 def main():
     schema = get_graphql_schema()
-    queries = get_graphql_queries()
+    definitions = get_graphql_queries()
+    queries = filter_operations_definitions(definitions)
+    fragments = filter_fragments_definitions(definitions)
+
     sys.stdout.write(f"{settings}\n{schema}\n{queries}")
+
     package_generator = PackageGenerator(
         package_name=settings.target_package_name,
         target_path=settings.target_package_path,
@@ -26,6 +35,7 @@ def main():
         queries_source=settings.queries_path,
         schema_source=settings.schema_path,
         include_comments=settings.include_comments,
+        fragments=fragments,
     )
     for query in queries:
         package_generator.add_query(query)

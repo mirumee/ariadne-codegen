@@ -3,7 +3,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from graphql import GraphQLSchema, OperationDefinitionNode, print_ast
+from graphql import (
+    FragmentDefinitionNode,
+    GraphQLSchema,
+    OperationDefinitionNode,
+    print_ast,
+)
 
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
@@ -31,6 +36,7 @@ class PackageGenerator:
         include_comments: bool = True,
         queries_source: str = "",
         schema_source: str = "",
+        fragments: Optional[list[FragmentDefinitionNode]] = None,
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
         arguments_generator: Optional[ArgumentsGenerator] = None,
@@ -72,6 +78,7 @@ class PackageGenerator:
             else SchemaTypesGenerator(schema)
         )
 
+        self.fragments_definitions = {f.name.value: f for f in fragments or []}
         self.query_types_files: dict[str, ast.Module] = {}
 
     def _proccess_generated_code(self, code: str, source: str = "") -> str:
@@ -223,6 +230,7 @@ class PackageGenerator:
             self.schema_types_generator.class_types,
             definition,
             self.enums_module_name,
+            self.fragments_definitions,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
         self.init_generator.add_import(
