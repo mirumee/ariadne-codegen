@@ -1,7 +1,13 @@
 import ast
+from textwrap import dedent
 
 import pytest
-from graphql import OperationDefinitionNode, build_ast_schema, parse
+from graphql import (
+    FragmentDefinitionNode,
+    OperationDefinitionNode,
+    build_ast_schema,
+    parse,
+)
 
 from graphql_sdk_gen.generators.constants import LIST, OPTIONAL, ClassType
 from graphql_sdk_gen.generators.query_types import QueryTypesGenerator
@@ -116,6 +122,10 @@ FIELDS: dict[str, dict[str, ast.AnnAssign | ast.Assign]] = {
         ),
     },
 }
+
+
+def format_graphql_str(source: str) -> str:
+    return dedent(source).replace(4 * " ", 2 * " ").strip()
 
 
 @pytest.mark.parametrize(
@@ -428,3 +438,129 @@ def test_generate_adds_update_forward_refs_calls():
 
     method_calls = list(filter(lambda x: isinstance(x, ast.Expr), module.body))
     assert compare_ast(method_calls, expected_method_calls)
+
+
+def test_generator_generates_types_from_query_that_uses_fragment():
+    query_str = """
+    query CustomQuery {
+        query2 {
+            ...TestFragment
+            field2 {
+                fieldb
+            }
+        }
+    }
+
+    fragment TestFragment on CustomType {
+        id
+        field1 {
+            fielda
+        }
+    }
+    """
+    query_def, fragment_def = parse(query_str).definitions
+    assert isinstance(query_def, OperationDefinitionNode)
+    assert isinstance(fragment_def, FragmentDefinitionNode)
+
+    expected_class_def = ast.ClassDef(
+        name="CustomQueryCustomType",
+        bases=[ast.Name(id="BaseModel")],
+        keywords=[],
+        body=[
+            ast.AnnAssign(
+                target=ast.Name(id="id"), annotation=ast.Name(id="str"), simple=1
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="field1"),
+                annotation=ast.Name(id='"CustomQueryCustomType1"'),
+                simple=1,
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="field2"),
+                annotation=ast.Subscript(
+                    value=ast.Name(id="Optional"),
+                    slice=ast.Name(id='"CustomQueryCustomType2"'),
+                ),
+                simple=1,
+            ),
+        ],
+        decorator_list=[],
+    )
+
+    generator = QueryTypesGenerator(
+        build_ast_schema(parse(SCHEMA_STR)),
+        FIELDS,
+        CLASS_TYPES,
+        query_def,
+        "schema_types",
+        {"TestFragment": fragment_def},
+    )
+
+    assert len(generator.class_defs) == 4
+    class_def = generator.class_defs[1]
+    assert class_def.name == "CustomQueryCustomType"
+    assert compare_ast(class_def, expected_class_def)
+
+
+def test_get_operation_as_str_returns_str_with_used_fragments():
+    query_str = format_graphql_str(
+        """
+        query CustomQuery {
+            query2 {
+                ...TestFragment1
+                ...TestFragment2
+                field2 {
+                    fieldb
+                }
+            }
+        }
+        """
+    )
+
+    used_fragment1 = format_graphql_str(
+        """
+        fragment TestFragment1 on CustomType {
+            id
+        }
+    """
+    )
+
+    used_fragment2 = format_graphql_str(
+        """
+        fragment TestFragment2 on CustomType {
+            field1 {
+                fielda
+            }
+        }
+        """
+    )
+
+    not_used_fragment = format_graphql_str(
+        """
+        fragment TestFragment3 on CustomType {
+            field2 {
+                fieldb
+            }
+        }
+        """
+    )
+
+    generator = QueryTypesGenerator(
+        build_ast_schema(parse(SCHEMA_STR)),
+        FIELDS,
+        CLASS_TYPES,
+        parse(query_str).definitions[0],
+        "schema_types",
+        {
+            "TestFragment1": parse(used_fragment1).definitions[0],
+            "TestFragment2": parse(used_fragment2).definitions[0],
+            "TestFragment3": parse(not_used_fragment).definitions[0],
+        },
+    )
+
+    result = generator.get_operation_as_str()
+
+    assert query_str in result
+    assert used_fragment1 in result
+    assert used_fragment2 in result
+    assert not_used_fragment not in result

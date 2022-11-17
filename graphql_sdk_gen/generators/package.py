@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from graphql import GraphQLSchema, OperationDefinitionNode, print_ast
+from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNode
 
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
@@ -31,6 +31,7 @@ class PackageGenerator:
         include_comments: bool = True,
         queries_source: str = "",
         schema_source: str = "",
+        fragments: Optional[list[FragmentDefinitionNode]] = None,
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
         arguments_generator: Optional[ArgumentsGenerator] = None,
@@ -72,6 +73,7 @@ class PackageGenerator:
             else SchemaTypesGenerator(schema)
         )
 
+        self.fragments_definitions = {f.name.value: f for f in fragments or []}
         self.query_types_files: dict[str, ast.Module] = {}
 
     def _proccess_generated_code(self, code: str, source: str = "") -> str:
@@ -223,14 +225,16 @@ class PackageGenerator:
             self.schema_types_generator.class_types,
             definition,
             self.enums_module_name,
+            self.fragments_definitions,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
+        operation_str = query_types_generator.get_operation_as_str()
         self.init_generator.add_import(
             query_types_generator.public_names, module_name, 1
         )
 
         arguments = self.arguments_generator.generate(definition.variable_definitions)
         self.client_generator.add_async_method(
-            method_name, query_name, arguments, print_ast(definition)
+            method_name, query_name, arguments, operation_str
         )
         self.client_generator.add_import([query_name], module_name, 1)

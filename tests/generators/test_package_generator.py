@@ -433,3 +433,51 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
     with package_path.joinpath("custom_query.py").open() as query_types_file:
         content = query_types_file.read()
         assert expected_queries_source_comment in content
+
+
+def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_path):
+    package_name = "test_graphql_client"
+    query_str = """
+    query CustomQuery($id: ID!) {
+        query1(id: $id) {
+            ...TestFragment
+            field3
+        }
+    }
+
+    fragment TestFragment on CustomType {
+        field1
+        field2 {
+            fieldb
+        }
+    }
+    """
+    expected_types = """
+    class CustomQuery(BaseModel):
+        query1: Optional["CustomQueryCustomType"]
+
+
+    class CustomQueryCustomType(BaseModel):
+        field1: Optional[list[Optional[str]]]
+        field2: Optional["CustomQueryCustomType2"]
+        field3: "CustomEnum"
+
+
+    class CustomQueryCustomType2(BaseModel):
+        fieldb: Optional[int]
+    """
+    query_def, fragment_def = parse(query_str).definitions
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        fragments=[fragment_def],
+    )
+
+    generator.add_query(query_def)
+    generator.generate()
+
+    result_types_file_path = tmp_path / package_name / "custom_query.py"
+    with result_types_file_path.open() as result_types_file:
+        result_types_content = result_types_file.read()
+        assert dedent(expected_types) in result_types_content

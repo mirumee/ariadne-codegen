@@ -77,10 +77,20 @@ query ListAllUsers {
 
 query ListUsersByCountry($country: String!) {
     users(country: $country) {
-        id
-        email
+        ...BasicUser
+        ...UserPersonalData
         favourite_color
     }
+}
+
+fragment BasicUser on User {
+    id
+    email
+}
+
+fragment UserPersonalData on User {
+    firstName
+    lastName
 }
 ```
 
@@ -179,10 +189,20 @@ class Client(BaseClient):
             """
             query ListUsersByCountry($country: String!) {
               users(country: $country) {
-                id
-                email
+                ...BasicUser
+                ...UserPersonalData
                 favourite_color
               }
+            }
+
+            fragment BasicUser on User {
+              id
+              email
+            }
+
+            fragment UserPersonalData on User {
+              firstName
+              lastName
             }
             """
         )
@@ -347,6 +367,8 @@ class ListUsersByCountry(BaseModel):
 class ListUsersByCountryUser(BaseModel):
     id: str
     email: str
+    firstName: Optional[str]
+    lastName: Optional[str]
     favourite_color: Optional["Color"]
 
 

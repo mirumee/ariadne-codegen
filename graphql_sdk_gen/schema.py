@@ -3,8 +3,10 @@ from typing import Generator, Tuple
 
 from graphql import (
     DefinitionNode,
+    FragmentDefinitionNode,
     GraphQLSchema,
     GraphQLSyntaxError,
+    OperationDefinitionNode,
     assert_valid_schema,
     build_ast_schema,
     parse,
@@ -12,6 +14,20 @@ from graphql import (
 
 from .config import settings
 from .exceptions import InvalidGraphqlSyntax
+
+
+def filter_operations_definitions(
+    definitions: Tuple[DefinitionNode, ...]
+) -> list[OperationDefinitionNode]:
+    """Return list including only operations definitions."""
+    return [d for d in definitions if isinstance(d, OperationDefinitionNode)]
+
+
+def filter_fragments_definitions(
+    definitions: Tuple[DefinitionNode, ...]
+) -> list[FragmentDefinitionNode]:
+    """Return list including only fragments definitions."""
+    return [d for d in definitions if isinstance(d, FragmentDefinitionNode)]
 
 
 def get_graphql_queries() -> Tuple[DefinitionNode, ...]:
