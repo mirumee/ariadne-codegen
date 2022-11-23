@@ -253,7 +253,11 @@ def test_generate_returns_modules_with_correct_imports():
             ],
             level=0,
         ),
-        ast.ImportFrom(module="pydantic", names=[ast.alias(name="BaseModel")], level=0),
+        ast.ImportFrom(
+            module="pydantic",
+            names=[ast.alias(name="BaseModel"), ast.alias(name="Field")],
+            level=0,
+        ),
     ]
     assert compare_ast(input_types_imports, expected_input_types_imports)
 
