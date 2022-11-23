@@ -6,7 +6,7 @@ from graphql import GraphQLSchema, build_ast_schema, parse
 from graphql_sdk_gen.generators.constants import ANY, OPTIONAL, UNION, ClassType
 from graphql_sdk_gen.generators.schema_types import SchemaTypesGenerator
 
-from ..utils import compare_ast
+from ..utils import compare_ast, get_class_def
 
 
 @pytest.mark.parametrize(
@@ -409,3 +409,234 @@ def test_generate_returns_modules_with_update_forward_refs_calls():
     assert compare_ast(
         schema_types_module_methods_calls, expected_schema_types_module_methods_calls
     )
+
+
+@pytest.mark.parametrize(
+    "field_str, expected_field_value",
+    [
+        ("field: Int! = 5", ast.Constant(value=5)),
+        ("field: Float = 1.5", ast.Constant(value=1.5)),
+        ('field: String = "abc"', ast.Constant(value="abc")),
+        ("field: Boolean = false", ast.Constant(value=False)),
+        ("field: String = null", ast.Constant(value=None)),
+    ],
+)
+def test_generator_parses_inputs_scalar_field_default_value(
+    field_str, expected_field_value
+):
+    schema_str = f"input testInput {{{field_str}}}"
+    schema = build_ast_schema(parse(schema_str))
+
+    generator = SchemaTypesGenerator(schema)
+    _, input_module, _ = generator.generate()
+
+    class_def = get_class_def(input_module)
+
+    assert isinstance(class_def, ast.ClassDef)
+    assert class_def.name == "testInput"
+    assert len(class_def.body) == 1
+    field_def = class_def.body[0]
+    assert isinstance(field_def, ast.AnnAssign)
+    assert field_def.value
+    assert compare_ast(field_def.value, expected_field_value)
+
+
+@pytest.mark.parametrize(
+    "field_str, expected_list",
+    [
+        (
+            "field: [Int!] = [1, 2]",
+            ast.List(elts=[ast.Constant(value=1), ast.Constant(value=2)]),
+        ),
+        (
+            'field: [String!] = ["a", "b", "c"]',
+            ast.List(
+                elts=[
+                    ast.Constant(value="a"),
+                    ast.Constant(value="b"),
+                    ast.Constant(value="c"),
+                ]
+            ),
+        ),
+        (
+            'field: [[String]!] = [["a", "a"], ["b", "b"], ["c", "c"]]',
+            ast.List(
+                elts=[
+                    ast.List(
+                        elts=[
+                            ast.Constant(value="a"),
+                            ast.Constant(value="a"),
+                        ]
+                    ),
+                    ast.List(
+                        elts=[
+                            ast.Constant(value="b"),
+                            ast.Constant(value="b"),
+                        ]
+                    ),
+                    ast.List(
+                        elts=[
+                            ast.Constant(value="c"),
+                            ast.Constant(value="c"),
+                        ]
+                    ),
+                ]
+            ),
+        ),
+    ],
+)
+def test_generator_parses_inputs_list_field_default_value(field_str, expected_list):
+    schema_str = f"input testInput {{{field_str}}}"
+    expected_pydantic_field = ast.Call(
+        func=ast.Name(id="Field"),
+        args=[],
+        keywords=[
+            ast.keyword(
+                arg="default_factory",
+                value=ast.Lambda(
+                    args=ast.arguments(
+                        posonlyargs=[],
+                        args=[],
+                        kwonlyargs=[],
+                        kw_defaults=[],
+                        defaults=[],
+                    ),
+                    body=expected_list,
+                ),
+            )
+        ],
+    )
+
+    schema = build_ast_schema(parse(schema_str))
+
+    generator = SchemaTypesGenerator(schema)
+    _, input_module, _ = generator.generate()
+
+    class_def = get_class_def(input_module)
+
+    assert isinstance(class_def, ast.ClassDef)
+    assert class_def.name == "testInput"
+    assert len(class_def.body) == 1
+    field_def = class_def.body[0]
+    assert isinstance(field_def, ast.AnnAssign)
+    assert field_def.value
+    assert compare_ast(field_def.value, expected_pydantic_field)
+
+
+def test_generator_parses_inputs_object_field_default_value():
+    schema_str = """
+    input testInput {
+        field: secondInput = {val: 5}
+    }
+
+    input secondInput {
+        val: Int!
+    }
+    """
+    expected_field_value = ast.Call(
+        func=ast.Attribute(value=ast.Name(id="secondInput"), attr="parse_obj"),
+        args=[
+            ast.Dict(keys=[ast.Constant(value="val")], values=[ast.Constant(value=5)])
+        ],
+        keywords=[],
+    )
+    schema = build_ast_schema(parse(schema_str))
+
+    generator = SchemaTypesGenerator(schema)
+    _, input_module, _ = generator.generate()
+
+    class_def = get_class_def(input_module, 1)
+
+    assert isinstance(class_def, ast.ClassDef)
+    assert class_def.name == "testInput"
+    assert len(class_def.body) == 1
+    field_def = class_def.body[0]
+    assert isinstance(field_def, ast.AnnAssign)
+    assert field_def.value
+    assert compare_ast(field_def.value, expected_field_value)
+
+
+def test_generator_parses_inputs_field_with_nested_object_as_default_value():
+    schema_str = """
+    input testInput {
+        field: secondInput = { nested: { val: 1.5 } }
+    }
+
+    input secondInput {
+        nested: nestedInput! = { val: 2.5 }
+    }
+
+    input nestedInput {
+        val: Float! 
+    }
+    """
+    expected_field_value = ast.Call(
+        func=ast.Attribute(value=ast.Name(id="secondInput"), attr="parse_obj"),
+        args=[
+            ast.Dict(
+                keys=[ast.Constant(value="nested")],
+                values=[
+                    ast.Dict(
+                        keys=[ast.Constant(value="val")],
+                        values=[ast.Constant(value=1.5)],
+                    )
+                ],
+            )
+        ],
+        keywords=[],
+    )
+    schema = build_ast_schema(parse(schema_str))
+
+    generator = SchemaTypesGenerator(schema)
+    _, input_module, _ = generator.generate()
+
+    class_def = get_class_def(input_module, 2)
+
+    assert isinstance(class_def, ast.ClassDef)
+    assert class_def.name == "testInput"
+    assert len(class_def.body) == 1
+    field_def = class_def.body[0]
+    assert isinstance(field_def, ast.AnnAssign)
+    assert field_def.value
+    assert compare_ast(field_def.value, expected_field_value)
+
+
+def test_generator_generates_input_types_classes_in_correct_order():
+    schema_str = """
+    input beforeInput {
+        field: Boolean!
+    }
+
+    input testInput {
+        field: secondInput = { nested: { val: 1.5 } }
+    }
+
+    input secondInput {
+        nested: nestedInput! = { val: 2.5 }
+    }
+
+    input nestedInput {
+        val: Float! 
+    }
+
+    input afterInput {
+        field: Boolean!
+    }
+    """
+
+    schema = build_ast_schema(parse(schema_str))
+
+    generator = SchemaTypesGenerator(schema)
+    _, input_module, _ = generator.generate()
+
+    generated_class_names = [
+        c.name for c in input_module.body if isinstance(c, ast.ClassDef)
+    ]
+
+    assert generated_class_names == [
+        "beforeInput",
+        "nestedInput",
+        "secondInput",
+        "testInput",
+        "afterInput",
+    ]

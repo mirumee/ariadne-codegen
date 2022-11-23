@@ -1,16 +1,8 @@
 import ast
-from typing import Optional
 
 from graphql_sdk_gen.generators.client import ClientGenerator
 
-from ..utils import compare_ast
-
-
-def _get_class_def(module: ast.Module) -> Optional[ast.ClassDef]:
-    for expr in module.body:
-        if isinstance(expr, ast.ClassDef):
-            return expr
-    return None
+from ..utils import compare_ast, get_class_def
 
 
 def test_generate_returns_module_with_correct_class_name():
@@ -18,7 +10,7 @@ def test_generate_returns_module_with_correct_class_name():
     generator = ClientGenerator(name, "BaseClient")
 
     module = generator.generate()
-    class_def = _get_class_def(module)
+    class_def = get_class_def(module)
 
     assert class_def
     assert class_def.name == name
@@ -54,7 +46,7 @@ def test_add_async_method_adds_method_definition():
     generator.add_async_method(method_name, return_type, arguments, "")
     module = generator.generate()
 
-    class_def = _get_class_def(module)
+    class_def = get_class_def(module)
     assert class_def
     method_def = class_def.body[0]
 
@@ -143,7 +135,7 @@ def test_add_async_method_generates_correct_method_body():
     generator.add_async_method(method_name, return_type, arguments, query_str)
     module = generator.generate()
 
-    class_def = _get_class_def(module)
+    class_def = get_class_def(module)
     assert class_def
     method_def = class_def.body[0]
     assert isinstance(method_def, ast.AsyncFunctionDef)
