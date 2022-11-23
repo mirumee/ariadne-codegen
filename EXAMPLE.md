@@ -14,6 +14,7 @@ type Query {
 
 type Mutation {
   userCreate(userData: UserCreateInput!): User
+  userPreferences(data: UserPreferencesInput): Boolean!
 }
 
 input UserCreateInput {
@@ -50,6 +51,21 @@ enum Color {
   GREEN
   BLUE
   YELLOW
+}
+
+input UserPreferencesInput {
+  luckyNumber: Int = 7
+  favouriteWord: String = "word"
+  colorOpacity: Float = 1.0
+  excludedTags: [String!] = ["offtop", "tag123"]
+  notificationsPreferences: NotificationsPreferencesInput! = {receiveMails: true, receivePushNotifications: true, receiveSms: false, title: "Mr"}
+}
+
+input NotificationsPreferencesInput {
+  receiveMails: Boolean!
+  receivePushNotifications: Boolean!
+  receiveSms: Boolean!
+  title: String!
 }
 ```
 
@@ -224,7 +240,7 @@ Models are generated from inputs from provided schema. They are used as argument
 
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .enums import Color
 
@@ -242,8 +258,36 @@ class LocationInput(BaseModel):
     country: Optional[str]
 
 
+class NotificationsPreferencesInput(BaseModel):
+    receiveMails: bool
+    receivePushNotifications: bool
+    receiveSms: bool
+    title: str
+
+
+class UserPreferencesInput(BaseModel):
+    luckyNumber: Optional[int] = 7
+    favouriteWord: Optional[str] = "word"
+    colorOpacity: Optional[float] = 1.0
+    excludedTags: Optional[list[str]] = Field(
+        default_factory=lambda: ["offtop", "tag123"]
+    )
+    notificationsPreferences: "NotificationsPreferencesInput" = (
+        NotificationsPreferencesInput.parse_obj(
+            {
+                "receiveMails": True,
+                "receivePushNotifications": True,
+                "receiveSms": False,
+                "title": "Mr",
+            }
+        )
+    )
+
+
 UserCreateInput.update_forward_refs()
 LocationInput.update_forward_refs()
+NotificationsPreferencesInput.update_forward_refs()
+UserPreferencesInput.update_forward_refs()
 ```
 
 ### Enums
