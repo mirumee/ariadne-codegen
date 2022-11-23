@@ -142,7 +142,8 @@ def generate_union_annotation(
 
 
 def generate_dict(
-    keys: Optional[list[ast.expr]] = None, values: Optional[list[ast.expr]] = None
+    keys: Optional[list[ast.expr]] = None,
+    values: Optional[list[Optional[ast.expr]]] = None,
 ) -> ast.Dict:
     """Generate dict object."""
     return ast.Dict(keys=keys if keys else [], values=values if values else [])
@@ -222,15 +223,20 @@ def parse_field_type(
     raise ParsingError("Invalid field type.")
 
 
-def generate_method_call(object_name: str, method_name: str) -> ast.Expr:
+def generate_method_call(
+    object_name: str, method_name: str, args: Optional[list[Optional[ast.expr]]] = None
+) -> ast.Call:
     """Generate object`s method call."""
-    return ast.Expr(
-        value=ast.Call(
-            func=ast.Attribute(value=ast.Name(id=object_name), attr=method_name),
-            args=[],
-            keywords=[],
-        )
+    return ast.Call(
+        func=ast.Attribute(value=ast.Name(id=object_name), attr=method_name),
+        args=args or [],
+        keywords=[],
     )
+
+
+def generate_expr(value: ast.expr):
+    """Generate expression object."""
+    return ast.Expr(value=value)
 
 
 def generate_trivial_lambda(name: str, argument_name: str) -> ast.Assign:
@@ -248,3 +254,13 @@ def generate_trivial_lambda(name: str, argument_name: str) -> ast.Assign:
             body=ast.Name(id=argument_name),
         ),
     )
+
+
+def generate_list(elements: list[Optional[ast.expr]]) -> ast.List:
+    """Generate list object."""
+    return ast.List(elts=elements)
+
+
+def generate_lambda(args: ast.arguments, body: ast.expr) -> ast.Lambda:
+    """Generate lambda definition."""
+    return ast.Lambda(args=args, body=body)
