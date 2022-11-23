@@ -174,6 +174,7 @@ class SchemaTypesGenerator:
                 )
         return None
 
+    # pylint: disable=too-many-return-statements
     def _parse_const_value_node(
         self, node, root_field_type, class_name, nested_list=False, nested_object=False
     ) -> Optional[ast.expr]:
