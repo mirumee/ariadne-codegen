@@ -76,6 +76,8 @@ class PackageGenerator:
         self.fragments_definitions = {f.name.value: f for f in fragments or []}
         self.query_types_files: dict[str, ast.Module] = {}
 
+        self.generated_files: list[str] = []
+
     def _proccess_generated_code(self, code: str, source: str = "") -> str:
         if self.include_comments:
             comments = [
@@ -94,6 +96,7 @@ class PackageGenerator:
         init_module = self.init_generator.generate()
         code = self._proccess_generated_code(ast_to_str(init_module, False))
         init_file_path.write_text(code)
+        self.generated_files.append(init_file_path.name)
 
     def _create_client_file(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
@@ -126,6 +129,7 @@ class PackageGenerator:
             ast_to_str(client_module), self.queries_source
         )
         client_file_path.write_text(code)
+        self.generated_files.append(client_file_path.name)
 
         self.init_generator.add_import(
             names=[self.client_generator.name], from_=self.client_file_name, level=1
@@ -145,6 +149,7 @@ class PackageGenerator:
             ast_to_str(schema_types_module), self.schema_source
         )
         schema_types_file_path.write_text(schema_types_code)
+        self.generated_files.append(schema_types_file_path.name)
         self.init_generator.add_import(
             self.schema_types_generator.schema_types, self.schema_types_module_name, 1
         )
@@ -154,6 +159,7 @@ class PackageGenerator:
             ast_to_str(enums_module), self.schema_source
         )
         enums_file_path.write_text(enums_code)
+        self.generated_files.append(enums_file_path.name)
         self.init_generator.add_import(
             self.schema_types_generator.enums, self.enums_module_name, 1
         )
@@ -163,6 +169,7 @@ class PackageGenerator:
             ast_to_str(input_types_module), self.schema_source
         )
         input_types_file_path.write_text(input_types_code)
+        self.generated_files.append(input_types_file_path.name)
         self.init_generator.add_import(
             self.schema_types_generator.input_types, self.input_types_module_name, 1
         )
@@ -174,6 +181,7 @@ class PackageGenerator:
                 ast_to_str(module), self.queries_source
             )
             file_path.write_text(code)
+            self.generated_files.append(file_path.name)
 
     def _copy_base_client_file(self):
         self.init_generator.add_import(
@@ -184,6 +192,7 @@ class PackageGenerator:
         target_base_client_path = self.package_path / self.base_client_file_path.name
         code = self._proccess_generated_code(self.base_client_file_path.read_text())
         target_base_client_path.write_text(code)
+        self.generated_files.append(target_base_client_path.name)
 
     def _validate_unique_file_names(self):
         file_names = [
@@ -199,7 +208,7 @@ class PackageGenerator:
             duplicated_files = {n for n in file_names if n in seen or seen.add(n)}
             raise ParsingError(f"Duplicated file names: {',' .join(duplicated_files)}")
 
-    def generate(self):
+    def generate(self) -> list[str]:
         """Generate package with graphql client."""
         self._validate_unique_file_names()
         if not self.package_path.exists():
@@ -209,6 +218,8 @@ class PackageGenerator:
         self._create_query_types_files()
         self._copy_base_client_file()
         self._create_init_file()
+
+        return sorted(self.generated_files)
 
     def add_query(self, definition: OperationDefinitionNode):
         if not (name := definition.name):
