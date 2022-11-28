@@ -1,6 +1,6 @@
 import ast
 from itertools import zip_longest
-from typing import Union
+from typing import Optional, Union
 
 
 def compare_ast(
@@ -21,3 +21,13 @@ def compare_ast(
         return all(compare_ast(n1, n2) for n1, n2 in zip_longest(node1, node2))
 
     return node1 == node2
+
+
+def get_class_def(module: ast.Module, class_index=0) -> Optional[ast.ClassDef]:
+    found = 0
+    for expr in module.body:
+        if isinstance(expr, ast.ClassDef):
+            found += 1
+            if found - 1 == class_index:
+                return expr
+    return None

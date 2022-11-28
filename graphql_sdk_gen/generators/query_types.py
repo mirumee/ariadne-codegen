@@ -16,6 +16,7 @@ from ..exceptions import NotSupported, ParsingError
 from .codegen import (
     generate_ann_assign,
     generate_class_def,
+    generate_expr,
     generate_import_from,
     generate_method_call,
     parse_field_type,
@@ -196,7 +197,9 @@ class QueryTypesGenerator:
             body=self.imports
             + self.class_defs
             + [
-                generate_method_call(class_def.name, "update_forward_refs")
+                generate_expr(
+                    generate_method_call(class_def.name, "update_forward_refs")
+                )
                 for class_def in self.class_defs
             ],
             type_ignores=[],

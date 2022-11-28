@@ -1,22 +1,39 @@
 import ast
-from typing import Union
+from collections import defaultdict
+from typing import Optional, Union
 
 from graphql import (
+    BooleanValueNode,
+    EnumValueNode,
+    FloatValueNode,
     GraphQLEnumType,
+    GraphQLInputField,
     GraphQLInputObjectType,
     GraphQLInterfaceType,
     GraphQLNamedType,
     GraphQLObjectType,
     GraphQLSchema,
+    IntValueNode,
+    ListValueNode,
+    NullValueNode,
+    ObjectValueNode,
+    StringValueNode,
 )
 
 from ..exceptions import NotSupported
 from .codegen import (
     generate_ann_assign,
+    generate_arguments,
     generate_assign,
+    generate_call,
     generate_class_def,
     generate_constant,
+    generate_dict,
+    generate_expr,
     generate_import_from,
+    generate_keyword,
+    generate_lambda,
+    generate_list,
     generate_method_call,
     generate_name,
     parse_field_type,
@@ -39,6 +56,8 @@ class SchemaTypesGenerator:
         self.enums_classes: list[ast.ClassDef] = []
         self.input_types_classes: list[ast.ClassDef] = []
         self.schema_types_classes: list[ast.ClassDef] = []
+
+        self.input_types_dependencies: dict[str, list[str]] = defaultdict(list)
 
         for definition in self.types_to_parse:
             self._parse_type_definition(definition)
@@ -129,12 +148,108 @@ class SchemaTypesGenerator:
 
         self.fields[definition.name] = {}
         for lineno, (name, field) in enumerate(definition.fields.items(), start=1):
+            field_annotation = parse_field_type(field.type)
             field_def = generate_ann_assign(
-                name, parse_field_type(field.type), lineno=lineno
+                target=name,
+                annotation=field_annotation,
+                value=self._parse_field_default_value(
+                    field, field_annotation, class_def.name
+                ),
+                lineno=lineno,
             )
             class_def.body.append(field_def)
             self.fields[definition.name][name] = field_def
         return class_def
+
+    def _parse_field_default_value(
+        self, field, field_annotation, class_name
+    ) -> Optional[ast.expr]:
+        if isinstance(field, GraphQLInputField):
+            if field.ast_node and field.ast_node.default_value:
+                root_field_type = self._get_type_from_input_field_annotation(
+                    field_annotation
+                )
+                return self._parse_const_value_node(
+                    field.ast_node.default_value, root_field_type, class_name
+                )
+        return None
+
+    # pylint: disable=too-many-return-statements
+    def _parse_const_value_node(
+        self, node, root_field_type, class_name, nested_list=False, nested_object=False
+    ) -> Optional[ast.expr]:
+        if isinstance(node, IntValueNode):
+            return generate_constant(int(node.value))
+
+        if isinstance(node, FloatValueNode):
+            return generate_constant(float(node.value))
+
+        if isinstance(node, StringValueNode):
+            return generate_constant(node.value)
+
+        if isinstance(node, BooleanValueNode):
+            return generate_constant(bool(node.value))
+
+        if isinstance(node, NullValueNode):
+            return generate_constant(None)
+
+        if isinstance(node, EnumValueNode):
+            return generate_name(f"{root_field_type}.{node.value}")
+
+        if isinstance(node, ListValueNode):
+            list_ = generate_list(
+                [
+                    self._parse_const_value_node(
+                        v,
+                        root_field_type,
+                        class_name,
+                        nested_object=nested_object,
+                        nested_list=True,
+                    )
+                    for v in node.values
+                ]
+            )
+            if not nested_list:
+                return self._generate_list_as_default_value(list_)
+            return list_
+
+        if isinstance(node, ObjectValueNode):
+            dict_ = generate_dict(
+                keys=[generate_constant(f.name.value) for f in node.fields],
+                values=[
+                    self._parse_const_value_node(
+                        f.value,
+                        root_field_type,
+                        class_name,
+                        nested_object=True,
+                        nested_list=True,
+                    )
+                    for f in node.fields
+                ],
+            )
+            if not nested_object:
+                self.input_types_dependencies[class_name].append(root_field_type)
+                return generate_method_call(root_field_type, "parse_obj", [dict_])
+            return dict_
+
+        return None
+
+    def _get_type_from_input_field_annotation(self, annotation):
+        if isinstance(annotation, ast.Name):
+            return annotation.id.replace('"', "")
+
+        return self._get_type_from_input_field_annotation(annotation.slice)
+
+    def _generate_list_as_default_value(self, list_: ast.List):
+        return generate_call(
+            func=generate_name("Field"),
+            keywords=[
+                generate_keyword(
+                    arg="default_factory",
+                    value=generate_lambda(args=generate_arguments(), body=list_),
+                )
+            ],
+        )
 
     def _generate_module(
         self,
@@ -152,16 +267,39 @@ class SchemaTypesGenerator:
         if include_update_forward_refs_calls:
             module.body.extend(
                 [
-                    generate_method_call(c.name, "update_forward_refs")
+                    generate_expr(generate_method_call(c.name, "update_forward_refs"))
                     for c in class_defs
                 ]
             )
         return module
 
+    def _get_sorted_input_class_defs(self):
+        input_class_defs_dict_ = {c.name: c for c in self.input_types_classes}
+
+        processed_names = []
+        for class_ in self.input_types_classes:
+            if class_.name not in processed_names:
+                processed_names.extend(self._get_dependant_names(class_.name))
+                processed_names.append(class_.name)
+
+        names_without_duplicates = self._get_list_without_duplicates(processed_names)
+        return [input_class_defs_dict_[n] for n in names_without_duplicates]
+
+    def _get_dependant_names(self, name):
+        result = []
+        for dependency_name in self.input_types_dependencies[name]:
+            result.extend(self._get_dependant_names(dependency_name))
+            result.append(dependency_name)
+        return result
+
+    def _get_list_without_duplicates(self, list_):
+        seen = set()
+        return [x for x in list_ if not (x in seen or seen.add(x))]
+
     def generate(self) -> tuple[ast.Module, ast.Module, ast.Module]:
         input_types_imports = [
             generate_import_from([OPTIONAL, ANY, UNION], "typing"),
-            generate_import_from(["BaseModel"], "pydantic"),
+            generate_import_from(["BaseModel", "Field"], "pydantic"),
         ]
         if self.enums:
             input_types_imports.append(generate_import_from(self.enums, "enums", 1))
@@ -177,7 +315,7 @@ class SchemaTypesGenerator:
             ),
             self._generate_module(
                 input_types_imports,
-                self.input_types_classes,
+                self._get_sorted_input_class_defs(),
                 True,
             ),
             self._generate_module(
