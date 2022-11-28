@@ -481,3 +481,33 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
     with result_types_file_path.open() as result_types_file:
         result_types_content = result_types_file.read()
         assert dedent(expected_types) in result_types_content
+
+
+def test_generate_returns_list_of_generated_files(tmp_path):
+    generator = PackageGenerator(
+        "test_graphql_client",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+    )
+    query_str = """
+    query CustomQuery {
+        query2 {
+            id
+        }
+    }
+    """
+    generator.add_query(parse(query_str).definitions[0])
+
+    generated_files = generator.generate()
+
+    assert sorted(generated_files) == sorted(
+        [
+            "__init__.py",
+            generator.base_client_file_path.name,
+            f"{generator.client_file_name}.py",
+            f"{generator.schema_types_module_name}.py",
+            f"{generator.input_types_module_name}.py",
+            f"{generator.enums_module_name}.py",
+            "custom_query.py",
+        ]
+    )
