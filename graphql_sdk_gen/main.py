@@ -2,7 +2,7 @@ import sys
 
 import click
 
-from .config import settings
+from .config import get_used_settings_message, settings
 from .generators.package import PackageGenerator
 from .schema import (
     filter_fragments_definitions,
@@ -20,7 +20,7 @@ def main():
     queries = filter_operations_definitions(definitions)
     fragments = filter_fragments_definitions(definitions)
 
-    sys.stdout.write(f"{settings}\n{schema}\n{queries}")
+    sys.stdout.write(get_used_settings_message(settings))
 
     package_generator = PackageGenerator(
         package_name=settings.target_package_name,
@@ -39,7 +39,9 @@ def main():
     )
     for query in queries:
         package_generator.add_query(query)
-    package_generator.generate()
+    generated_files = package_generator.generate()
+
+    sys.stdout.write("\nGenerated files:\n  " + "\n  ".join(generated_files) + "\n")
 
 
 if __name__ == "__main__":

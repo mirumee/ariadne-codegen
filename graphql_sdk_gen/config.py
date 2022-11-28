@@ -2,6 +2,7 @@ import importlib.util
 from dataclasses import dataclass, field, fields
 from keyword import iskeyword
 from pathlib import Path
+from textwrap import dedent
 
 import toml
 
@@ -106,6 +107,29 @@ def parse_config_file(
         raise MissingConfiguration(
             f"Missing configuration fields: {', '.join(missing_fields)}"
         ) from exc
+
+
+def get_used_settings_message(settings: Settings) -> str:
+    comments_msg = (
+        "Including comments."
+        if settings.include_comments
+        else "Not including comments."
+    )
+    return dedent(
+        f"""\
+        Using schema from '{settings.schema_path}'.
+        Reading queries from '{settings.queries_path}'.
+        Using '{settings.target_package_name}' as package name.
+        Generating package into '{settings.target_package_path}'.
+        Using '{settings.client_name}' as client name.
+        Using '{settings.base_client_name}' as base client class.
+        Coping base client class from '{settings.base_client_file_path}'.
+        Generating types into '{settings.schema_types_module_name}.py'.
+        Generating enums into '{settings.enums_module_name}.py'.
+        Generating inputs into '{settings.input_types_module_name}.py'.
+        {comments_msg}
+        """
+    )
 
 
 settings = parse_config_file(get_config_file_path())
