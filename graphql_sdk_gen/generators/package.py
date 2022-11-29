@@ -72,7 +72,9 @@ class PackageGenerator:
             else ClientGenerator(self.client_name, self.base_client_name)
         )
         self.arguments_generator = (
-            arguments_generator if arguments_generator else ArgumentsGenerator()
+            arguments_generator
+            if arguments_generator
+            else ArgumentsGenerator(convert_to_snake_case)
         )
         self.schema_types_generator = (
             schema_types_generator
@@ -267,8 +269,10 @@ class PackageGenerator:
             query_types_generator.public_names, module_name, 1
         )
 
-        arguments = self.arguments_generator.generate(definition.variable_definitions)
+        arguments, arguments_dict = self.arguments_generator.generate(
+            definition.variable_definitions
+        )
         self.client_generator.add_async_method(
-            method_name, query_name, arguments, operation_str
+            method_name, query_name, arguments, arguments_dict, operation_str
         )
         self.client_generator.add_import([query_name], module_name, 1)

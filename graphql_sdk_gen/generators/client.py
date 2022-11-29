@@ -43,24 +43,31 @@ class ClientGenerator:
         self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
     def add_async_method(
-        self, name: str, return_type: str, arguments: ast.arguments, query_str: str
+        self,
+        name: str,
+        return_type: str,
+        arguments: ast.arguments,
+        arguments_dict: ast.Dict,
+        query_str: str,
     ):
         """Add definition of async method."""
-        arguments_names = [a.arg for a in arguments.args[1:]]
         self.class_def.body.append(
             generate_async_method_definition(
                 name=name,
                 arguments=arguments,
                 return_type=generate_name(return_type),
                 body=self._generate_query_method_body(
-                    query_str, arguments_names, return_type
+                    query_str, arguments_dict, return_type
                 ),
                 lineno=len(self.class_def.body) + 1,
             )
         )
 
     def _generate_query_method_body(
-        self, query_str: str, argument_names: list[str], return_type: str
+        self,
+        query_str: str,
+        arguments_dict: ast.Dict,
+        return_type: str,
     ) -> list[ast.stmt]:
         return [
             generate_assign(
@@ -76,10 +83,7 @@ class ClientGenerator:
             generate_ann_assign(
                 "variables",
                 generate_name("dict"),
-                generate_dict(
-                    [generate_constant(n) for n in argument_names],
-                    [generate_name(n) for n in argument_names],
-                ),
+                arguments_dict,
                 lineno=2,
             ),
             generate_assign(
