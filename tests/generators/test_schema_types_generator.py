@@ -228,7 +228,12 @@ def test_generator_parses_input_type():
 
 
 def test_generate_returns_modules_with_correct_imports():
-    generator = SchemaTypesGenerator(GraphQLSchema())
+    generator = SchemaTypesGenerator(
+        GraphQLSchema(),
+        base_model_import=ast.ImportFrom(
+            module="base_model", names=[ast.alias(name="BaseModel")], level=1
+        ),
+    )
 
     enums_module, input_types_module, schema_types_module = generator.generate()
 
@@ -255,8 +260,11 @@ def test_generate_returns_modules_with_correct_imports():
         ),
         ast.ImportFrom(
             module="pydantic",
-            names=[ast.alias(name="BaseModel"), ast.alias(name="Field")],
+            names=[ast.alias(name="Field")],
             level=0,
+        ),
+        ast.ImportFrom(
+            module="base_model", names=[ast.alias(name="BaseModel")], level=1
         ),
     ]
     assert compare_ast(input_types_imports, expected_input_types_imports)
@@ -274,7 +282,10 @@ def test_generate_returns_modules_with_correct_imports():
             ],
             level=0,
         ),
-        ast.ImportFrom(module="pydantic", names=[ast.alias(name="BaseModel")], level=0),
+        ast.ImportFrom(module="pydantic", names=[ast.alias(name="Field")], level=0),
+        ast.ImportFrom(
+            module="base_model", names=[ast.alias(name="BaseModel")], level=1
+        ),
     ]
     assert compare_ast(schema_types_imports, expected_schema_types_imports)
 

@@ -87,7 +87,8 @@ def test_generate_creates_files_with_correct_content(tmp_path):
         init_content = init_file.read()
         assert "from .client import Client" in init_content
         assert "from .base_client import BaseClient" in init_content
-        assert '__all__ = ["BaseClient", "Client"]' in init_content
+        assert "from .base_model import BaseModel" in init_content
+        assert '__all__ = ["BaseClient", "BaseModel", "Client"]' in init_content
 
     client_file_path = package_path / "client.py"
     with client_file_path.open() as client_file:
@@ -504,6 +505,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
         [
             "__init__.py",
             generator.base_client_file_path.name,
+            "base_model.py",
             f"{generator.client_file_name}.py",
             f"{generator.schema_types_module_name}.py",
             f"{generator.input_types_module_name}.py",

@@ -42,8 +42,9 @@ def test_add_async_method_adds_method_definition():
         kw_defaults=[],
         defaults=[],
     )
+    arguments_dict = ast.Dict(keys=[], values=[])
 
-    generator.add_async_method(method_name, return_type, arguments, "")
+    generator.add_async_method(method_name, return_type, arguments, arguments_dict, "")
     module = generator.generate()
 
     class_def = get_class_def(module)
@@ -70,6 +71,9 @@ def test_add_async_method_generates_correct_method_body():
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[],
+    )
+    arguments_dict = ast.Dict(
+        keys=[ast.Constant(value="arg1")], values=[ast.Name(id="arg1")]
     )
     query_str = """
     query ListXyz($arg1: Int!) {
@@ -132,7 +136,9 @@ def test_add_async_method_generates_correct_method_body():
             )
         ),
     ]
-    generator.add_async_method(method_name, return_type, arguments, query_str)
+    generator.add_async_method(
+        method_name, return_type, arguments, arguments_dict, query_str
+    )
     module = generator.generate()
 
     class_def = get_class_def(module)

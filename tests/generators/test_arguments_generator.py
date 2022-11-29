@@ -31,7 +31,7 @@ def test_generate_returns_arguments_with_correct_non_optional_names_and_annotati
     ]
     variable_definitions = _get_variable_definitions_from_query_str(query)
 
-    arguments = generator.generate(variable_definitions)
+    arguments, _ = generator.generate(variable_definitions)
 
     assert isinstance(arguments, ast.arguments)
     names = [a.arg for a in arguments.args]
@@ -45,7 +45,7 @@ def test_generate_returns_arguments_with_correct_optional_annotation():
     query = "query q($id: ID) {r}"
     variable_definitions = _get_variable_definitions_from_query_str(query)
 
-    arguments = generator.generate(variable_definitions)
+    arguments, _ = generator.generate(variable_definitions)
 
     assert isinstance(arguments, ast.arguments)
     assert len(arguments.args) == 2
@@ -64,7 +64,7 @@ def test_generate_returns_arguments_with_only_self_argument_without_annotation()
     query = "query q {r}"
     variable_definitions = _get_variable_definitions_from_query_str(query)
 
-    arguments = generator.generate(variable_definitions)
+    arguments, _ = generator.generate(variable_definitions)
 
     assert isinstance(arguments, ast.arguments)
     assert len(arguments.args) == 1
