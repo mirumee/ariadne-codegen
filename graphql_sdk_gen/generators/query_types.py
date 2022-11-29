@@ -34,6 +34,7 @@ class QueryTypesGenerator:
         query: OperationDefinitionNode,
         enums_module_name: str,
         fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
+        base_model_import: Optional[ast.ImportFrom] = None,
     ) -> None:
         self.schema = schema
         self.fields = fields
@@ -52,7 +53,8 @@ class QueryTypesGenerator:
 
         self.imports: list[ast.stmt] = [
             generate_import_from([OPTIONAL], "typing"),
-            generate_import_from(["BaseModel"], "pydantic"),
+            generate_import_from(["Field"], "pydantic"),
+            base_model_import or generate_import_from(["BaseModel"], "pydantic"),
         ]
 
         self.public_names: list[str] = []
@@ -127,6 +129,7 @@ class QueryTypesGenerator:
                 annotation=annotation,
                 simple=1,
                 lineno=lineno,
+                value=orginal_field_definition.value,
             )
             class_def.body.append(field_def)
 

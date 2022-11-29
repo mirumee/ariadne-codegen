@@ -36,6 +36,8 @@ class BaseClient:
 
     def _convert_dict_to_json_serializable(self, dict_: dict[str, Any]):
         return {
-            key: value if not isinstance(value, BaseModel) else value.dict()
+            key: value
+            if not isinstance(value, BaseModel)
+            else value.dict(by_alias=True)
             for key, value in dict_.items()
         }

@@ -8,6 +8,7 @@ from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNo
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
+from .codegen import generate_import_from
 from .constants import COMMENT_DATETIME_FORMAT, SOURCE_COMMENT, TIMESTAMP_COMMENT
 from .init_file import InitFileGenerator
 from .query_types import QueryTypesGenerator
@@ -31,6 +32,7 @@ class PackageGenerator:
         include_comments: bool = True,
         queries_source: str = "",
         schema_source: str = "",
+        convert_to_snake_case: bool = True,
         fragments: Optional[list[FragmentDefinitionNode]] = None,
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
@@ -50,6 +52,11 @@ class PackageGenerator:
             if base_client_file_path
             else Path(__file__).parent / "base_client.py"
         )
+        self.base_model_file_path = Path(__file__).parent / "base_model.py"
+        self.base_model_import = generate_import_from(
+            ["BaseModel"], self.base_model_file_path.stem, 1
+        )
+
         self.schema_types_module_name = schema_types_module_name
         self.enums_module_name = enums_module_name
         self.input_types_module_name = input_types_module_name
@@ -70,7 +77,9 @@ class PackageGenerator:
         self.schema_types_generator = (
             schema_types_generator
             if schema_types_generator
-            else SchemaTypesGenerator(schema)
+            else SchemaTypesGenerator(
+                schema, convert_to_snake_case, self.base_model_import
+            )
         )
 
         self.fragments_definitions = {f.name.value: f for f in fragments or []}
@@ -194,10 +203,22 @@ class PackageGenerator:
         target_base_client_path.write_text(code)
         self.generated_files.append(target_base_client_path.name)
 
+    def _copy_base_model_file(self):
+        self.init_generator.add_import(
+            names=["BaseModel"],
+            from_=self.base_model_file_path.stem,
+            level=1,
+        )
+        target_base_model_path = self.package_path / self.base_model_file_path.name
+        code = self._proccess_generated_code(self.base_model_file_path.read_text())
+        target_base_model_path.write_text(code)
+        self.generated_files.append(target_base_model_path.name)
+
     def _validate_unique_file_names(self):
         file_names = [
             f"{self.client_file_name}.py",
             self.base_client_file_path.name,
+            self.base_model_file_path.name,
             f"{self.schema_types_module_name}.py",
             f"{self.enums_module_name}.py",
             f"{self.input_types_module_name}.py",
@@ -217,6 +238,7 @@ class PackageGenerator:
         self._create_schema_types_files()
         self._create_query_types_files()
         self._copy_base_client_file()
+        self._copy_base_model_file()
         self._create_init_file()
 
         return sorted(self.generated_files)
@@ -237,6 +259,7 @@ class PackageGenerator:
             definition,
             self.enums_module_name,
             self.fragments_definitions,
+            self.base_model_import,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
         operation_str = query_types_generator.get_operation_as_str()
