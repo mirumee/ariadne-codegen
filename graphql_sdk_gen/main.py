@@ -36,6 +36,7 @@ def main():
         schema_source=settings.schema_path,
         include_comments=settings.include_comments,
         fragments=fragments,
+        convert_to_snake_case=settings.convert_to_snake_case,
     )
     for query in queries:
         package_generator.add_query(query)

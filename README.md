@@ -46,6 +46,7 @@ Optional parameters:
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `include_comments` (defaults to `True`) - a flag that specifies whether to include comments in generated files
+- `convert_to_snake_case` (defaults to `True`) - a flag that specifies whether to convert fields and arguments names to snake case
 
 
 ## Usage
