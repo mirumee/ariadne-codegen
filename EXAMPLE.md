@@ -21,7 +21,7 @@ input UserCreateInput {
   firstName: String
   lastName: String
   email: String!
-  favourite_color: Color 
+  favouriteColor: Color 
   location: LocationInput
 }
 
@@ -35,7 +35,7 @@ type User {
   firstName: String
   lastName: String
   email: String!
-  favourite_color: Color 
+  favouriteColor: Color 
   location: Location
 }
 
@@ -73,8 +73,8 @@ input NotificationsPreferencesInput {
 ## Queries/mutations file
 
 ```gql
-mutation CreateUser($user_data: UserCreateInput!) {
-    userCreate(userData: $user_data) {
+mutation CreateUser($userData: UserCreateInput!) {
+    userCreate(userData: $userData) {
         id
     }
 }
@@ -95,7 +95,7 @@ query ListUsersByCountry($country: String!) {
     users(country: $country) {
         ...BasicUser
         ...UserPersonalData
-        favourite_color
+        favouriteColor
     }
 }
 
@@ -138,6 +138,7 @@ Structure of generated package:
 grapql_client/
     __init__.py
     base_client.py
+    base_model.py
     client.py
     create_user.py
     enums.py
@@ -169,14 +170,14 @@ class Client(BaseClient):
     async def create_user(self, user_data: UserCreateInput) -> CreateUser:
         query = gql(
             """
-            mutation CreateUser($user_data: UserCreateInput!) {
-              userCreate(userData: $user_data) {
+            mutation CreateUser($userData: UserCreateInput!) {
+              userCreate(userData: $userData) {
                 id
               }
             }
             """
         )
-        variables: dict = {"user_data": user_data}
+        variables: dict = {"userData": user_data}
         response = await self.execute(query=query, variables=variables)
         return CreateUser.parse_obj(response.json().get("data", {}))
 
@@ -207,7 +208,7 @@ class Client(BaseClient):
               users(country: $country) {
                 ...BasicUser
                 ...UserPersonalData
-                favourite_color
+                favouriteColor
               }
             }
 
@@ -231,6 +232,10 @@ class Client(BaseClient):
 
 Base client is copied from path provided in `base_client_file_path` and has to contain definition of class with name provided in `base_client_name`.
 
+### Base model
+
+`base_model.py` is a file that contains preconfigured class, which extends pydantic's `BaseModel` class and is used by other generated classes.
+
 ### Input types
 
 Models are generated from inputs from provided schema. They are used as arguments types in client`s methods.
@@ -240,16 +245,17 @@ Models are generated from inputs from provided schema. They are used as argument
 
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from .base_model import BaseModel
 from .enums import Color
 
 
 class UserCreateInput(BaseModel):
-    firstName: Optional[str]
-    lastName: Optional[str]
+    first_name: Optional[str] = Field(alias="firstName")
+    last_name: Optional[str] = Field(alias="lastName")
     email: str
-    favourite_color: Optional["Color"]
+    favourite_color: Optional["Color"] = Field(alias="favouriteColor")
     location: Optional["LocationInput"]
 
 
@@ -259,28 +265,29 @@ class LocationInput(BaseModel):
 
 
 class NotificationsPreferencesInput(BaseModel):
-    receiveMails: bool
-    receivePushNotifications: bool
-    receiveSms: bool
+    receive_mails: bool = Field(alias="receiveMails")
+    receive_push_notifications: bool = Field(alias="receivePushNotifications")
+    receive_sms: bool = Field(alias="receiveSms")
     title: str
 
 
 class UserPreferencesInput(BaseModel):
-    luckyNumber: Optional[int] = 7
-    favouriteWord: Optional[str] = "word"
-    colorOpacity: Optional[float] = 1.0
-    excludedTags: Optional[list[str]] = Field(
-        default_factory=lambda: ["offtop", "tag123"]
+    lucky_number: Optional[int] = Field(alias="luckyNumber", default=7)
+    favourite_word: Optional[str] = Field(alias="favouriteWord", default="word")
+    color_opacity: Optional[float] = Field(alias="colorOpacity", default=1.0)
+    excluded_tags: Optional[list[str]] = Field(
+        alias="excludedTags", default_factory=lambda: ["offtop", "tag123"]
     )
-    notificationsPreferences: "NotificationsPreferencesInput" = (
-        NotificationsPreferencesInput.parse_obj(
+    notifications_preferences: "NotificationsPreferencesInput" = Field(
+        alias="notificationsPreferences",
+        default=NotificationsPreferencesInput.parse_obj(
             {
                 "receiveMails": True,
                 "receivePushNotifications": True,
                 "receiveSms": False,
                 "title": "Mr",
             }
-        )
+        ),
     )
 
 
@@ -318,17 +325,18 @@ Models are generated from types from provided schema. Query/mutation specific mo
 
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import Field
 
+from .base_model import BaseModel
 from .enums import Color
 
 
 class User(BaseModel):
     id: str
-    firstName: Optional[str]
-    lastName: Optional[str]
+    first_name: Optional[str] = Field(alias="firstName")
+    last_name: Optional[str] = Field(alias="lastName")
     email: str
-    favourite_color: Optional["Color"]
+    favourite_color: Optional["Color"] = Field(alias="favouriteColor")
     location: Optional["Location"]
 
 
@@ -350,7 +358,7 @@ For every provided query/mutation there is generated file, that contains models 
 
 from typing import Optional
 
-from pydantic import BaseModel
+from .base_model import BaseModel
 
 
 class CreateUser(BaseModel):
@@ -370,7 +378,9 @@ CreateUserUser.update_forward_refs()
 
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import Field
+
+from .base_model import BaseModel
 
 
 class ListAllUsers(BaseModel):
@@ -379,8 +389,8 @@ class ListAllUsers(BaseModel):
 
 class ListAllUsersUser(BaseModel):
     id: str
-    firstName: Optional[str]
-    lastName: Optional[str]
+    first_name: Optional[str] = Field(alias="firstName")
+    last_name: Optional[str] = Field(alias="lastName")
     email: str
     location: Optional["ListAllUsersLocation"]
 
@@ -399,8 +409,9 @@ ListAllUsersLocation.update_forward_refs()
 
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import Field
 
+from .base_model import BaseModel
 from .enums import Color
 
 
@@ -411,9 +422,9 @@ class ListUsersByCountry(BaseModel):
 class ListUsersByCountryUser(BaseModel):
     id: str
     email: str
-    firstName: Optional[str]
-    lastName: Optional[str]
-    favourite_color: Optional["Color"]
+    first_name: Optional[str] = Field(alias="firstName")
+    last_name: Optional[str] = Field(alias="lastName")
+    favourite_color: Optional["Color"] = Field(alias="favouriteColor")
 
 
 ListUsersByCountry.update_forward_refs()
@@ -428,16 +439,23 @@ Generated init file contains reimports and list of all generated classes.
 # graphql_client/__init__.py
 
 from .base_client import BaseClient
+from .base_model import BaseModel
 from .client import Client
 from .create_user import CreateUser, CreateUserUser
 from .enums import Color
-from .input_types import LocationInput, UserCreateInput
+from .input_types import (
+    LocationInput,
+    NotificationsPreferencesInput,
+    UserCreateInput,
+    UserPreferencesInput,
+)
 from .list_all_users import ListAllUsers, ListAllUsersLocation, ListAllUsersUser
 from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUser
 from .schema_types import Location, User
 
 __all__ = [
     "BaseClient",
+    "BaseModel",
     "Client",
     "Color",
     "CreateUser",
@@ -449,7 +467,9 @@ __all__ = [
     "ListUsersByCountryUser",
     "Location",
     "LocationInput",
+    "NotificationsPreferencesInput",
     "User",
     "UserCreateInput",
+    "UserPreferencesInput",
 ]
 ```

@@ -39,10 +39,16 @@ from .codegen import (
     parse_field_type,
 )
 from .constants import ANY, OPTIONAL, UNION, ClassType
+from .utils import str_to_snake_case
 
 
 class SchemaTypesGenerator:
-    def __init__(self, schema: GraphQLSchema) -> None:
+    def __init__(
+        self,
+        schema: GraphQLSchema,
+        convert_to_snake_case: bool = True,
+        base_model_import: Optional[ast.ImportFrom] = None,
+    ) -> None:
         self.schema = schema
         self.types_to_parse = self._filter_schema_types()
 
@@ -58,6 +64,10 @@ class SchemaTypesGenerator:
         self.schema_types_classes: list[ast.ClassDef] = []
 
         self.input_types_dependencies: dict[str, list[str]] = defaultdict(list)
+        self.convert_to_snake_case = convert_to_snake_case
+        self.base_model_import = base_model_import or generate_import_from(
+            ["BaseModel"], "pydantic"
+        )
 
         for definition in self.types_to_parse:
             self._parse_type_definition(definition)
@@ -147,7 +157,8 @@ class SchemaTypesGenerator:
         class_def = generate_class_def(name=definition.name, base_names=["BaseModel"])
 
         self.fields[definition.name] = {}
-        for lineno, (name, field) in enumerate(definition.fields.items(), start=1):
+        for lineno, (org_name, field) in enumerate(definition.fields.items(), start=1):
+            name = self._process_field_name(org_name)
             field_annotation = parse_field_type(field.type)
             field_def = generate_ann_assign(
                 target=name,
@@ -157,9 +168,42 @@ class SchemaTypesGenerator:
                 ),
                 lineno=lineno,
             )
+            if name != org_name:
+                field_def.value = self._generate_alias(field_def, org_name)
             class_def.body.append(field_def)
-            self.fields[definition.name][name] = field_def
+            self.fields[definition.name][org_name] = field_def
         return class_def
+
+    def _process_field_name(self, name: str) -> str:
+        if self.convert_to_snake_case:
+            return str_to_snake_case(name)
+        return name
+
+    def _generate_alias(self, field_def: ast.AnnAssign, alias: str) -> ast.Call:
+        field_with_alias = generate_call(
+            func=generate_name("Field"),
+            keywords=[
+                generate_keyword(
+                    arg="alias",
+                    value=generate_constant(alias),
+                )
+            ],
+        )
+        if field_def.value:
+            if (
+                isinstance(field_def.value, ast.Call)
+                and isinstance(field_def.value.func, ast.Name)
+                and field_def.value.func.id == "Field"
+            ):
+                field_with_alias.keywords.extend(field_def.value.keywords)
+            else:
+                field_with_alias.keywords.append(
+                    generate_keyword(
+                        arg="default",
+                        value=field_def.value,
+                    )
+                )
+        return field_with_alias
 
     def _parse_field_default_value(
         self, field, field_annotation, class_name
@@ -299,13 +343,15 @@ class SchemaTypesGenerator:
     def generate(self) -> tuple[ast.Module, ast.Module, ast.Module]:
         input_types_imports = [
             generate_import_from([OPTIONAL, ANY, UNION], "typing"),
-            generate_import_from(["BaseModel", "Field"], "pydantic"),
+            generate_import_from(["Field"], "pydantic"),
+            self.base_model_import,
         ]
         if self.enums:
             input_types_imports.append(generate_import_from(self.enums, "enums", 1))
         schema_types_imports = [
             generate_import_from([OPTIONAL, ANY, UNION], "typing"),
-            generate_import_from(["BaseModel"], "pydantic"),
+            generate_import_from(["Field"], "pydantic"),
+            self.base_model_import,
         ]
         if self.enums:
             schema_types_imports.append(generate_import_from(self.enums, "enums", 1))

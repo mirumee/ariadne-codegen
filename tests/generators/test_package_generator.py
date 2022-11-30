@@ -72,6 +72,12 @@ def test_generate_creates_directory_and_files(tmp_path):
     enums_path = package_path / f"{generator.enums_module_name}.py"
     assert enums_path.exists()
     assert enums_path.is_file()
+    base_client_path = package_path / generator.base_client_file_path.name
+    assert base_client_path.exists()
+    assert base_client_path.is_file()
+    base_model_path = package_path / "base_model.py"
+    assert base_model_path.exists()
+    assert base_model_path.is_file()
 
 
 def test_generate_creates_files_with_correct_content(tmp_path):
@@ -87,7 +93,8 @@ def test_generate_creates_files_with_correct_content(tmp_path):
         init_content = init_file.read()
         assert "from .client import Client" in init_content
         assert "from .base_client import BaseClient" in init_content
-        assert '__all__ = ["BaseClient", "Client"]' in init_content
+        assert "from .base_model import BaseModel" in init_content
+        assert '__all__ = ["BaseClient", "BaseModel", "Client"]' in init_content
 
     client_file_path = package_path / "client.py"
     with client_file_path.open() as client_file:
@@ -504,6 +511,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
         [
             "__init__.py",
             generator.base_client_file_path.name,
+            "base_model.py",
             f"{generator.client_file_name}.py",
             f"{generator.schema_types_module_name}.py",
             f"{generator.input_types_module_name}.py",
