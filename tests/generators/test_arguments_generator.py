@@ -5,6 +5,8 @@ from graphql import OperationDefinitionNode, parse
 from graphql_sdk_gen.generators.arguments import ArgumentsGenerator
 from graphql_sdk_gen.generators.constants import OPTIONAL
 
+from ..utils import compare_ast
+
 
 def _get_variable_definitions_from_query_str(query: str):
     document_node = parse(query)
@@ -82,3 +84,30 @@ def test_generate_saves_used_non_scalar_types():
 
     assert len(generator.used_types) == 2
     assert generator.used_types == ["Type1", "Type2"]
+
+
+def test_generate_returns_arguments_and_dictionary_with_snake_case_names():
+    generator = ArgumentsGenerator(convert_to_snake_case=True)
+    query = "query q($camelCase: String!, $snake_case: String!) {r}"
+    variable_definitions = _get_variable_definitions_from_query_str(query)
+
+    arguments, arguments_dict = generator.generate(variable_definitions)
+
+    expected_arguments = ast.arguments(
+        posonlyargs=[],
+        args=[
+            ast.arg(arg="self"),
+            ast.arg(arg="camel_case", annotation=ast.Name(id="str")),
+            ast.arg(arg="snake_case", annotation=ast.Name(id="str")),
+        ],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[],
+    )
+    expected_arguments_dict = ast.Dict(
+        keys=[ast.Constant(value="camelCase"), ast.Constant(value="snake_case")],
+        values=[ast.Name(id="camel_case"), ast.Name(id="snake_case")],
+    )
+
+    assert compare_ast(arguments, expected_arguments)
+    assert compare_ast(arguments_dict, expected_arguments_dict)

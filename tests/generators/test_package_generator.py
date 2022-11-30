@@ -72,6 +72,12 @@ def test_generate_creates_directory_and_files(tmp_path):
     enums_path = package_path / f"{generator.enums_module_name}.py"
     assert enums_path.exists()
     assert enums_path.is_file()
+    base_client_path = package_path / generator.base_client_file_path.name
+    assert base_client_path.exists()
+    assert base_client_path.is_file()
+    base_model_path = package_path / "base_model.py"
+    assert base_model_path.exists()
+    assert base_model_path.is_file()
 
 
 def test_generate_creates_files_with_correct_content(tmp_path):

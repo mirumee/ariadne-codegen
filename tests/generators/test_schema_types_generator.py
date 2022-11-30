@@ -651,3 +651,190 @@ def test_generator_generates_input_types_classes_in_correct_order():
         "testInput",
         "afterInput",
     ]
+
+
+def test_generator_converts_field_names_to_snake_case():
+    schema_str = """
+    type CustomType {
+        fieldTest1: String!
+        field_test2: String!
+        fieldtest3: String!
+    }
+
+    input CustomInput {
+        inputField1: String!
+        input_field2: String!
+        inputfield3: String!
+    }
+
+    enum CustomEnum {
+        enumValue1
+        enum_value2
+    }
+    """
+    schema = build_ast_schema(parse(schema_str))
+    expected_type_class = ast.ClassDef(
+        name="CustomType",
+        bases=[ast.Name(id="BaseModel")],
+        keywords=[],
+        body=[
+            ast.AnnAssign(
+                target=ast.Name(id="field_test1"),
+                annotation=ast.Name(id="str"),
+                value=ast.Call(
+                    func=ast.Name(id="Field"),
+                    args=[],
+                    keywords=[
+                        ast.keyword(arg="alias", value=ast.Constant(value="fieldTest1"))
+                    ],
+                ),
+                simple=1,
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="field_test2"),
+                annotation=ast.Name(id="str"),
+                value=None,
+                simple=1,
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="fieldtest3"),
+                annotation=ast.Name(id="str"),
+                value=None,
+                simple=1,
+            ),
+        ],
+        decorator_list=[],
+    )
+    expected_input_class = ast.ClassDef(
+        name="CustomInput",
+        bases=[ast.Name(id="BaseModel")],
+        keywords=[],
+        body=[
+            ast.AnnAssign(
+                target=ast.Name(id="input_field1"),
+                annotation=ast.Name(id="str"),
+                value=ast.Call(
+                    func=ast.Name(id="Field"),
+                    args=[],
+                    keywords=[
+                        ast.keyword(
+                            arg="alias", value=ast.Constant(value="inputField1")
+                        )
+                    ],
+                ),
+                simple=1,
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="input_field2"),
+                annotation=ast.Name(id="str"),
+                simple=1,
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="inputfield3"),
+                annotation=ast.Name(id="str"),
+                simple=1,
+            ),
+        ],
+        decorator_list=[],
+    )
+    expected_enum_class = ast.ClassDef(
+        name="CustomEnum",
+        bases=[ast.Name(id="str"), ast.Name(id="Enum")],
+        keywords=[],
+        body=[
+            ast.Assign(
+                targets=[ast.Name(id="enumValue1")],
+                value=ast.Constant(value="enumValue1"),
+            ),
+            ast.Assign(
+                targets=[ast.Name(id="enum_value2")],
+                value=ast.Constant(value="enum_value2"),
+            ),
+        ],
+        decorator_list=[],
+    )
+
+    generator = SchemaTypesGenerator(schema)
+    enums_module, inputs_module, types_module = generator.generate()
+
+    type_class = get_class_def(types_module)
+    input_class = get_class_def(inputs_module)
+    enum_class = get_class_def(enums_module)
+
+    assert compare_ast(type_class, expected_type_class)
+    assert compare_ast(input_class, expected_input_class)
+    assert compare_ast(enum_class, expected_enum_class)
+
+
+def test_generator_converts_field_name_with_default_value_to_snake_case():
+    schema_str = """
+    input CustomInput {
+        inputField1: String! = "abcd"
+        inputField2: [Int!]! = [1, 2, 3]
+    }
+    """
+    expected_input_class = ast.ClassDef(
+        name="CustomInput",
+        bases=[ast.Name(id="BaseModel")],
+        keywords=[],
+        body=[
+            ast.AnnAssign(
+                target=ast.Name(id="input_field1"),
+                annotation=ast.Name(id="str"),
+                value=ast.Call(
+                    func=ast.Name(id="Field"),
+                    args=[],
+                    keywords=[
+                        ast.keyword(
+                            arg="alias", value=ast.Constant(value="inputField1")
+                        ),
+                        ast.keyword(arg="default", value=ast.Constant(value="abcd")),
+                    ],
+                ),
+                simple=1,
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="input_field2"),
+                annotation=ast.Subscript(
+                    value=ast.Name(id="list"), slice=ast.Name(id="int")
+                ),
+                value=ast.Call(
+                    func=ast.Name(id="Field"),
+                    args=[],
+                    keywords=[
+                        ast.keyword(
+                            arg="alias", value=ast.Constant(value="inputField2")
+                        ),
+                        ast.keyword(
+                            arg="default_factory",
+                            value=ast.Lambda(
+                                args=ast.arguments(
+                                    posonlyargs=[],
+                                    args=[],
+                                    kwonlyargs=[],
+                                    kw_defaults=[],
+                                    defaults=[],
+                                ),
+                                body=ast.List(
+                                    elts=[
+                                        ast.Constant(value=1),
+                                        ast.Constant(value=2),
+                                        ast.Constant(value=3),
+                                    ]
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+                simple=1,
+            ),
+        ],
+        decorator_list=[],
+    )
+    schema = build_ast_schema(parse(schema_str))
+
+    generator = SchemaTypesGenerator(schema)
+    _, inputs_module, _ = generator.generate()
+
+    input_class = get_class_def(inputs_module)
+    assert compare_ast(input_class, expected_input_class)
