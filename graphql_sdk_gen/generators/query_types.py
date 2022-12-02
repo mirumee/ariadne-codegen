@@ -9,9 +9,12 @@ from graphql import (
     GraphQLField,
     GraphQLSchema,
     InlineFragmentNode,
+    NameNode,
     OperationDefinitionNode,
     OperationType,
+    SelectionNode,
     print_ast,
+    SelectionSetNode,
 )
 
 from ..exceptions import NotSupported, ParsingError
@@ -86,10 +89,12 @@ class QueryTypesGenerator:
             class_def.body.append(field_def)
 
             if field.selection_set:
+                add_typename = len(field_type_names) > 1
                 for field_type_name in field_type_names:
                     dependencies_defs = self._generate_dependency_type_class(
                         field_type_name,
                         field.selection_set,
+                        add_typename
                     )
                     if dependencies_defs:
                         extra_defs.extend(dependencies_defs)
@@ -111,16 +116,25 @@ class QueryTypesGenerator:
             return field_type
         raise ParsingError(f"Definition for {name} not found in schema.")
 
-    def _generate_dependency_type_class(self, type_name, selection_set):
+    def _generate_dependency_type_class(
+        self, type_name, selection_set, add_typename: bool = False
+    ):
         class_def = generate_class_def(self.query_name + type_name, ["BaseModel"])
         if class_def.name in self.public_names:
             return None
         self.public_names.append(class_def.name)
 
         extra_defs = []
-        for lineno, field in enumerate(
-            self._resolve_selection_set(selection_set, type_name), start=1
-        ):
+        resolved_selection_set = self._resolve_selection_set(selection_set, type_name)
+        if add_typename:
+            (
+                resolved_selection_set,
+                selection_set.selections,
+            ) = self._add_typename_field_to_selections(
+                resolved_selection_set, selection_set
+            )
+
+        for lineno, field in enumerate(resolved_selection_set, start=1):
             field_name = field.name.value
             orginal_field_definition = self._get_schema_field_definition(
                 type_name, field_name
@@ -142,10 +156,10 @@ class QueryTypesGenerator:
             class_def.body.append(field_def)
 
             if field.selection_set:
+                add_typename = len(field_type_names) > 1
                 for field_type_name in field_type_names:
                     dependencies_defs = self._generate_dependency_type_class(
-                        field_type_name,
-                        field.selection_set,
+                        field_type_name, field.selection_set, add_typename
                     )
                     if dependencies_defs:
                         extra_defs.extend(dependencies_defs)
@@ -159,7 +173,9 @@ class QueryTypesGenerator:
             return generate_typename_field_definition()
         return self.fields[type_name][field_name]
 
-    def _resolve_selection_set(self, selection_set, root_type: str = ""):
+    def _resolve_selection_set(
+        self, selection_set: SelectionSetNode, root_type: str = ""
+    ) -> list[FieldNode]:
         fields = []
         for selection in selection_set.selections:
             if isinstance(selection, FieldNode):
@@ -236,6 +252,18 @@ class QueryTypesGenerator:
             )
 
         raise ParsingError("Invalid annotation type.")
+
+    def _add_typename_field_to_selections(
+        self, resolved_fields: list[FieldNode], selection_set: SelectionSetNode
+    ) -> tuple[list[FieldNode], tuple[SelectionNode, ...]]:
+        field_names = {f.name.value for f in resolved_fields}
+        if "__typename" not in field_names:
+            typename_field = FieldNode(name=NameNode(value="__typename"))
+            return [typename_field, *resolved_fields], (
+                typename_field,
+                *selection_set.selections,
+            )
+        return resolved_fields, selection_set.selections
 
     def generate(self) -> ast.Module:
         if self.used_enums:
