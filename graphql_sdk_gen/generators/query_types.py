@@ -1,4 +1,5 @@
 import ast
+from itertools import chain
 from typing import Optional, Union
 
 from graphql import (
@@ -7,6 +8,7 @@ from graphql import (
     FragmentSpreadNode,
     GraphQLField,
     GraphQLSchema,
+    InlineFragmentNode,
     OperationDefinitionNode,
     OperationType,
     print_ast,
@@ -22,7 +24,7 @@ from .codegen import (
     generate_typename_field_definition,
     parse_field_type,
 )
-from .constants import OPTIONAL
+from .constants import OPTIONAL, UNION
 from .schema_types import ClassType
 
 
@@ -53,7 +55,7 @@ class QueryTypesGenerator:
         self.query_name = self.query.name.value
 
         self.imports: list[ast.stmt] = [
-            generate_import_from([OPTIONAL], "typing"),
+            generate_import_from([OPTIONAL, UNION], "typing"),
             generate_import_from(["Field"], "pydantic"),
             base_model_import or generate_import_from(["BaseModel"], "pydantic"),
         ]
@@ -77,19 +79,20 @@ class QueryTypesGenerator:
             field_def = generate_ann_assign(
                 field.name.value, parse_field_type(field_type.type), lineno=lineno
             )
-            field_type_name = self._walk_annotation(field_def.annotation)
+            field_type_names = self._walk_annotation(field_def.annotation)
             field_def.annotation = self._procces_annotation(
-                field_def.annotation, field_type_name
+                field_def.annotation, field_type_names
             )
             class_def.body.append(field_def)
 
             if field.selection_set:
-                dependencies_defs = self._generate_dependency_type_class(
-                    field_type_name,
-                    field.selection_set,
-                )
-                if dependencies_defs:
-                    extra_defs.extend(dependencies_defs)
+                for field_type_name in field_type_names:
+                    dependencies_defs = self._generate_dependency_type_class(
+                        field_type_name,
+                        field.selection_set,
+                    )
+                    if dependencies_defs:
+                        extra_defs.extend(dependencies_defs)
         self.class_defs.append(class_def)
         self.class_defs.extend(extra_defs)
 
@@ -116,16 +119,18 @@ class QueryTypesGenerator:
 
         extra_defs = []
         for lineno, field in enumerate(
-            self._resolve_selection_set(selection_set), start=1
+            self._resolve_selection_set(selection_set, type_name), start=1
         ):
             field_name = field.name.value
             orginal_field_definition = self._get_schema_field_definition(
                 type_name, field_name
             )
 
-            field_type_name = self._walk_annotation(orginal_field_definition.annotation)
+            field_type_names = self._walk_annotation(
+                orginal_field_definition.annotation
+            )
             annotation = self._procces_annotation(
-                orginal_field_definition.annotation, field_type_name
+                orginal_field_definition.annotation, field_type_names
             )
             field_def = ast.AnnAssign(
                 target=orginal_field_definition.target,
@@ -137,12 +142,13 @@ class QueryTypesGenerator:
             class_def.body.append(field_def)
 
             if field.selection_set:
-                dependencies_defs = self._generate_dependency_type_class(
-                    field_type_name,
-                    field.selection_set,
-                )
-                if dependencies_defs:
-                    extra_defs.extend(dependencies_defs)
+                for field_type_name in field_type_names:
+                    dependencies_defs = self._generate_dependency_type_class(
+                        field_type_name,
+                        field.selection_set,
+                    )
+                    if dependencies_defs:
+                        extra_defs.extend(dependencies_defs)
 
         return [class_def] + extra_defs
 
@@ -153,6 +159,7 @@ class QueryTypesGenerator:
             return generate_typename_field_definition()
         return self.fields[type_name][field_name]
 
+    def _resolve_selection_set(self, selection_set, root_type: str = ""):
         fields = []
         for selection in selection_set.selections:
             if isinstance(selection, FieldNode):
@@ -161,38 +168,68 @@ class QueryTypesGenerator:
                 self.used_fragments_names.add(selection.name.value)
                 fields.extend(
                     self._resolve_selection_set(
-                        self.fragments_definitions[selection.name.value].selection_set
+                        self.fragments_definitions[selection.name.value].selection_set,
+                        root_type,
                     )
                 )
+            elif isinstance(selection, InlineFragmentNode):
+                if selection.type_condition.name.value == root_type:
+                    fields.extend(
+                        self._resolve_selection_set(selection.selection_set, root_type)
+                    )
         return fields
 
-    def _procces_annotation(self, annotation, field_type_name):
-        if (field_type := self.class_types.get(field_type_name)) in (
-            ClassType.OBJECT,
-            ClassType.INTERFACE,
+    def _procces_annotation(self, annotation, field_type_names):
+        if any(
+            [
+                self.class_types.get(field_type_name)
+                in (
+                    ClassType.OBJECT,
+                    ClassType.INTERFACE,
+                )
+                for field_type_name in field_type_names
+            ]
         ):
             return self._add_prefix_to_annotation(annotation, self.query_name)
 
-        if field_type == ClassType.ENUM:
-            self.used_enums.append(field_type_name)
+        for field_type_name in field_type_names:
+            if self.class_types.get(field_type_name) == ClassType.ENUM:
+                self.used_enums.append(field_type_name)
 
         return annotation
 
-    def _walk_annotation(self, annotation):
+    def _walk_annotation(self, annotation) -> list[str]:
         if isinstance(annotation, ast.Name):
-            return annotation.id.replace('"', "")
-
-        return self._walk_annotation(annotation.slice)
+            return [annotation.id.replace('"', "")]
+        if isinstance(annotation, ast.Subscript):
+            if isinstance(annotation.slice, ast.Tuple):
+                return list(
+                    chain(
+                        *[self._walk_annotation(elt) for elt in annotation.slice.elts]
+                    )
+                )
+            else:
+                return self._walk_annotation(annotation.slice)
+        return []
 
     def _add_prefix_to_annotation(self, annotation, prefix):
         if isinstance(annotation, ast.Name):
             if annotation.id.startswith('"') and annotation.id.endswith('"'):
                 result = '"' + prefix + annotation.id.replace('"', "") + '"'
-            else:
-                result = prefix + annotation.id
-            return ast.Name(id=result)
+                return ast.Name(id=result)
 
         if isinstance(annotation, ast.Subscript):
+            if isinstance(annotation.slice, ast.Tuple):
+                return ast.Subscript(
+                    value=annotation.value,
+                    slice=ast.Tuple(
+                        elts=[
+                            self._add_prefix_to_annotation(elt, prefix)
+                            for elt in annotation.slice.elts
+                        ]
+                    ),
+                )
+
             return ast.Subscript(
                 value=annotation.value,
                 slice=self._add_prefix_to_annotation(annotation.slice, prefix),

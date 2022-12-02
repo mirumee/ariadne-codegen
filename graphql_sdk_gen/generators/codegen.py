@@ -209,7 +209,7 @@ def parse_field_type(
         return generate_annotation_name('"' + type_.name + '"', nullable)
 
     if isinstance(type_, GraphQLUnionType):
-        subtypes = [parse_field_type(subtype) for subtype in type_.types]
+        subtypes = [parse_field_type(subtype, False) for subtype in type_.types]
         return generate_union_annotation(subtypes, nullable)
 
     if isinstance(type_, GraphQLList):
