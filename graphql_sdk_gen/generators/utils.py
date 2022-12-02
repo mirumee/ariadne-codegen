@@ -12,7 +12,7 @@ def ast_to_str(ast_obj: ast.AST, remove_unused_imports: bool = True) -> str:
     code = ast.unparse(ast_obj)
     if remove_unused_imports:
         code = fix_code(
-            code, remove_all_unused_imports=True, additional_imports=["typing"]
+            code, remove_all_unused_imports=True
         )
     code = format_multiline_strings(code)
     return format_str(isort.code(code), mode=Mode())
