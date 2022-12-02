@@ -264,3 +264,23 @@ def generate_list(elements: list[Optional[ast.expr]]) -> ast.List:
 def generate_lambda(args: ast.arguments, body: ast.expr) -> ast.Lambda:
     """Generate lambda definition."""
     return ast.Lambda(args=args, body=body)
+
+
+def generate_field_with_alias(name):
+    return generate_call(
+        func=generate_name("Field"),
+        keywords=[
+            generate_keyword(
+                arg="alias",
+                value=generate_constant(name),
+            )
+        ],
+    )
+
+
+def generate_typename_field_definition():
+    return generate_ann_assign(
+        target="__typename__",
+        annotation=generate_name("str"),
+        value=generate_field_with_alias("__typename"),
+    )

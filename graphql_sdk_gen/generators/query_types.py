@@ -19,6 +19,7 @@ from .codegen import (
     generate_expr,
     generate_import_from,
     generate_method_call,
+    generate_typename_field_definition,
     parse_field_type,
 )
 from .constants import OPTIONAL
@@ -118,7 +119,9 @@ class QueryTypesGenerator:
             self._resolve_selection_set(selection_set), start=1
         ):
             field_name = field.name.value
-            orginal_field_definition = self.fields[type_name][field_name]
+            orginal_field_definition = self._get_schema_field_definition(
+                type_name, field_name
+            )
 
             field_type_name = self._walk_annotation(orginal_field_definition.annotation)
             annotation = self._procces_annotation(
@@ -143,7 +146,13 @@ class QueryTypesGenerator:
 
         return [class_def] + extra_defs
 
-    def _resolve_selection_set(self, selection_set):
+    def _get_schema_field_definition(
+        self, type_name: str, field_name: str
+    ) -> Union[ast.AnnAssign, ast.Assign]:
+        if field_name == "__typename":
+            return generate_typename_field_definition()
+        return self.fields[type_name][field_name]
+
         fields = []
         for selection in selection_set.selections:
             if isinstance(selection, FieldNode):

@@ -30,6 +30,7 @@ from .codegen import (
     generate_constant,
     generate_dict,
     generate_expr,
+    generate_field_with_alias,
     generate_import_from,
     generate_keyword,
     generate_lambda,
@@ -180,15 +181,7 @@ class SchemaTypesGenerator:
         return name
 
     def _generate_alias(self, field_def: ast.AnnAssign, alias: str) -> ast.Call:
-        field_with_alias = generate_call(
-            func=generate_name("Field"),
-            keywords=[
-                generate_keyword(
-                    arg="alias",
-                    value=generate_constant(alias),
-                )
-            ],
-        )
+        field_with_alias = generate_field_with_alias(alias)
         if field_def.value:
             if (
                 isinstance(field_def.value, ast.Call)
