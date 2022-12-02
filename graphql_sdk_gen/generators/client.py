@@ -16,14 +16,14 @@ from .codegen import (
     generate_return,
     generate_trivial_lambda,
 )
-from .constants import OPTIONAL
+from .constants import OPTIONAL, TYPING_MODULE
 
 
 class ClientGenerator:
     def __init__(self, name: str, base_client: str) -> None:
         self.name = name
         self.class_def = generate_class_def(name=name, base_names=[base_client])
-        self.imports: list = [generate_import_from([OPTIONAL], "typing")]
+        self.imports: list = [generate_import_from([OPTIONAL], TYPING_MODULE)]
         self.gql_lambda_name = "gql"
 
     def generate(self) -> ast.Module:

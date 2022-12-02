@@ -1,5 +1,6 @@
 import ast
 from itertools import zip_longest
+from textwrap import dedent
 from typing import Optional, Union
 
 
@@ -31,3 +32,11 @@ def get_class_def(module: ast.Module, class_index=0) -> Optional[ast.ClassDef]:
             if found - 1 == class_index:
                 return expr
     return None
+
+
+def filter_class_defs(module: ast.Module) -> list[ast.ClassDef]:
+    return [expr for expr in module.body if isinstance(expr, ast.ClassDef)]
+
+
+def format_graphql_str(source: str) -> str:
+    return dedent(source).replace(4 * " ", 2 * " ").strip()

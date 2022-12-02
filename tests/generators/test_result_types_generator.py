@@ -1,5 +1,5 @@
 import ast
-from textwrap import dedent
+from typing import cast
 
 import pytest
 from graphql import (
@@ -9,10 +9,16 @@ from graphql import (
     parse,
 )
 
-from graphql_sdk_gen.generators.constants import LIST, OPTIONAL, ClassType
-from graphql_sdk_gen.generators.query_types import QueryTypesGenerator
+from graphql_sdk_gen.generators.constants import (
+    BASE_MODEL_CLASS_NAME,
+    LIST,
+    OPTIONAL,
+    UPDATE_FORWARD_REFS_METHOD,
+    ClassType,
+)
+from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
 
-from ..utils import compare_ast
+from ..utils import compare_ast, filter_class_defs, format_graphql_str
 
 SCHEMA_STR = """
 schema {
@@ -68,7 +74,7 @@ CLASS_TYPES = {
     "CustomEnum": ClassType.ENUM,
 }
 
-FIELDS: dict[str, dict[str, ast.AnnAssign | ast.Assign]] = {
+FIELDS_IMPLEMENTATIONS: dict[str, dict[str, ast.AnnAssign]] = {
     "CustomType": {
         "id": ast.AnnAssign(
             target=ast.Name(id="id"),
@@ -124,10 +130,6 @@ FIELDS: dict[str, dict[str, ast.AnnAssign | ast.Assign]] = {
 }
 
 
-def format_graphql_str(source: str) -> str:
-    return dedent(source).replace(4 * " ", 2 * " ").strip()
-
-
 @pytest.mark.parametrize(
     "query_str, expected_class_defs",
     [
@@ -142,7 +144,7 @@ def format_graphql_str(source: str) -> str:
             [
                 ast.ClassDef(
                     name="CustomQuery",
-                    bases=[ast.Name(id="BaseModel")],
+                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     decorator_list=[],
                     keywords=[],
                     body=[
@@ -161,7 +163,7 @@ def format_graphql_str(source: str) -> str:
                 ),
                 ast.ClassDef(
                     name="CustomQueryCustomType",
-                    bases=[ast.Name(id="BaseModel")],
+                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     decorator_list=[],
                     keywords=[],
                     body=[
@@ -191,7 +193,7 @@ def format_graphql_str(source: str) -> str:
             [
                 ast.ClassDef(
                     name="CustomQuery",
-                    bases=[ast.Name(id="BaseModel")],
+                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
                     body=[
                         ast.AnnAssign(
@@ -207,7 +209,7 @@ def format_graphql_str(source: str) -> str:
                 ),
                 ast.ClassDef(
                     name="CustomQueryCustomType",
-                    bases=[ast.Name(id="BaseModel")],
+                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
                     body=[
                         ast.AnnAssign(
@@ -233,7 +235,7 @@ def format_graphql_str(source: str) -> str:
                 ),
                 ast.ClassDef(
                     name="CustomQueryCustomType1",
-                    bases=[ast.Name(id="BaseModel")],
+                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
                     body=[
                         ast.AnnAssign(
@@ -246,7 +248,7 @@ def format_graphql_str(source: str) -> str:
                 ),
                 ast.ClassDef(
                     name="CustomQueryCustomType2",
-                    bases=[ast.Name(id="BaseModel")],
+                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
                     body=[
                         ast.AnnAssign(
@@ -263,24 +265,31 @@ def format_graphql_str(source: str) -> str:
         ),
     ],
 )
-def test_generator_generates_types_from_query(query_str, expected_class_defs):
-    operation_definition = parse(query_str).definitions[0]
-    assert isinstance(operation_definition, OperationDefinitionNode)
-
-    generator = QueryTypesGenerator(
-        build_ast_schema(parse(SCHEMA_STR)),
-        FIELDS,
-        CLASS_TYPES,
-        operation_definition,
-        "schema_types",
+def test_generate_returns_module_with_generated_result_types_from_query(
+    query_str, expected_class_defs
+):
+    operation_definition = cast(
+        OperationDefinitionNode, parse(query_str).definitions[0]
+    )
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
     )
 
-    assert len(generator.class_defs) == len(expected_class_defs)
-    assert compare_ast(generator.class_defs, expected_class_defs)
-    assert set(generator.public_names) == {c.name for c in expected_class_defs}
+    module = generator.generate()
+
+    generated_class_defs = filter_class_defs(module)
+    assert len(generated_class_defs) == len(expected_class_defs)
+    assert compare_ast(generated_class_defs, expected_class_defs)
+    assert set(generator.get_generated_public_names()) == {
+        c.name for c in expected_class_defs
+    }
 
 
-def test_generator_generates_types_from_mutation():
+def test_generate_returns_module_with_types_generated_from_mutation():
     mutation_str = """
         mutation CustomMutation($num: Int!) {
             mutation1(num: $num) {
@@ -288,21 +297,13 @@ def test_generator_generates_types_from_mutation():
             }
         }
     """
-    operation_definition = parse(mutation_str).definitions[0]
-    assert isinstance(operation_definition, OperationDefinitionNode)
-
-    generator = QueryTypesGenerator(
-        build_ast_schema(parse(SCHEMA_STR)),
-        FIELDS,
-        CLASS_TYPES,
-        operation_definition,
-        "schema_types",
+    operation_definition = cast(
+        OperationDefinitionNode, parse(mutation_str).definitions[0]
     )
-
     expected_class_defs = [
         ast.ClassDef(
             name="CustomMutation",
-            bases=[ast.Name(id="BaseModel")],
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             decorator_list=[],
             keywords=[],
             body=[
@@ -315,7 +316,7 @@ def test_generator_generates_types_from_mutation():
         ),
         ast.ClassDef(
             name="CustomMutationCustomType",
-            bases=[ast.Name(id="BaseModel")],
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             decorator_list=[],
             keywords=[],
             body=[
@@ -327,13 +328,25 @@ def test_generator_generates_types_from_mutation():
             ],
         ),
     ]
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+    )
 
-    assert len(generator.class_defs) == len(expected_class_defs)
-    assert compare_ast(generator.class_defs, expected_class_defs)
-    assert set(generator.public_names) == {c.name for c in expected_class_defs}
+    module = generator.generate()
+
+    generated_class_defs = filter_class_defs(module)
+    assert len(generated_class_defs) == len(expected_class_defs)
+    assert compare_ast(generated_class_defs, expected_class_defs)
+    assert set(generator.get_generated_public_names()) == {
+        c.name for c in expected_class_defs
+    }
 
 
-def test_generator_generates_only_not_duplicated_types_definitions():
+def test_generate_returns_module_with_not_duplicated_types_definitions():
     query_str = """
     query CustomQuery {
         query3 {
@@ -346,29 +359,30 @@ def test_generator_generates_only_not_duplicated_types_definitions():
         }
     }
     """
-    operation_definition = parse(query_str).definitions[0]
-    assert isinstance(operation_definition, OperationDefinitionNode)
-
-    generator = QueryTypesGenerator(
-        build_ast_schema(parse(SCHEMA_STR)),
-        FIELDS,
-        CLASS_TYPES,
-        operation_definition,
-        "schema_types",
+    operation_definition = cast(
+        OperationDefinitionNode, parse(query_str).definitions[0]
     )
-
     expected_class_names = [
         "CustomQuery",
         "CustomQueryCustomType3",
         "CustomQueryCustomType1",
     ]
-    generated_class_names = [class_def.name for class_def in generator.class_defs]
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+    )
 
+    module = generator.generate()
+
+    generated_class_names = [class_def.name for class_def in filter_class_defs(module)]
     assert len(generated_class_names) == len(expected_class_names)
     assert sorted(generated_class_names) == sorted(expected_class_names)
 
 
-def test_generate_adds_enum_imports_to_generated_module():
+def test_generate_returns_module_with_enum_imports():
     query_str = """
     query CustomQuery {
         query2 {
@@ -376,27 +390,28 @@ def test_generate_adds_enum_imports_to_generated_module():
         }
     }
     """
-    operation_definition = parse(query_str).definitions[0]
-    assert isinstance(operation_definition, OperationDefinitionNode)
-
-    generator = QueryTypesGenerator(
-        build_ast_schema(parse(SCHEMA_STR)),
-        FIELDS,
-        CLASS_TYPES,
-        operation_definition,
-        "schema_types",
+    operation_definition = cast(
+        OperationDefinitionNode, parse(query_str).definitions[0]
     )
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+    )
+
     module = generator.generate()
 
     assert isinstance(module, ast.Module)
     import_ = list(filter(lambda e: isinstance(e, ast.ImportFrom), module.body))[-1]
     assert compare_ast(
         import_,
-        ast.ImportFrom(module="schema_types", names=[ast.alias("CustomEnum")], level=1),
+        ast.ImportFrom(module="enums", names=[ast.alias("CustomEnum")], level=1),
     )
 
 
-def test_generate_adds_update_forward_refs_calls():
+def test_generate_returns_module_with_update_forward_refs_calls():
     query_str = """
     query CustomQuery {
         query1 {
@@ -409,8 +424,9 @@ def test_generate_adds_update_forward_refs_calls():
         }
     }
     """
-    operation_definition = parse(query_str).definitions[0]
-    assert isinstance(operation_definition, OperationDefinitionNode)
+    operation_definition = cast(
+        OperationDefinitionNode, parse(query_str).definitions[0]
+    )
     expected_class_names = [
         "CustomQuery",
         "CustomQueryCustomType",
@@ -420,27 +436,30 @@ def test_generate_adds_update_forward_refs_calls():
     expected_method_calls = [
         ast.Expr(
             value=ast.Call(
-                func=ast.Attribute(value=ast.Name(id=name), attr="update_forward_refs"),
+                func=ast.Attribute(
+                    value=ast.Name(id=name), attr=UPDATE_FORWARD_REFS_METHOD
+                ),
                 args=[],
                 keywords=[],
             )
         )
         for name in expected_class_names
     ]
-    generator = QueryTypesGenerator(
-        build_ast_schema(parse(SCHEMA_STR)),
-        FIELDS,
-        CLASS_TYPES,
-        operation_definition,
-        "schema_types",
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
     )
+
     module = generator.generate()
 
     method_calls = list(filter(lambda x: isinstance(x, ast.Expr), module.body))
     assert compare_ast(method_calls, expected_method_calls)
 
 
-def test_generator_generates_types_from_query_that_uses_fragment():
+def test_generate_returns_module_with_types_generated_from_query_that_uses_fragment():
     query_str = """
     query CustomQuery {
         query2 {
@@ -458,13 +477,13 @@ def test_generator_generates_types_from_query_that_uses_fragment():
         }
     }
     """
-    query_def, fragment_def = parse(query_str).definitions
-    assert isinstance(query_def, OperationDefinitionNode)
-    assert isinstance(fragment_def, FragmentDefinitionNode)
-
+    operation_definition, fragment_def = cast(
+        tuple[OperationDefinitionNode, FragmentDefinitionNode],
+        parse(query_str).definitions,
+    )
     expected_class_def = ast.ClassDef(
         name="CustomQueryCustomType",
-        bases=[ast.Name(id="BaseModel")],
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         body=[
             ast.AnnAssign(
@@ -486,20 +505,22 @@ def test_generator_generates_types_from_query_that_uses_fragment():
         ],
         decorator_list=[],
     )
-
-    generator = QueryTypesGenerator(
-        build_ast_schema(parse(SCHEMA_STR)),
-        FIELDS,
-        CLASS_TYPES,
-        query_def,
-        "schema_types",
-        {"TestFragment": fragment_def},
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+        fragments_definitions={"TestFragment": fragment_def},
     )
 
-    assert len(generator.class_defs) == 4
-    class_def = generator.class_defs[1]
-    assert class_def.name == "CustomQueryCustomType"
-    assert compare_ast(class_def, expected_class_def)
+    module = generator.generate()
+
+    class_defs = filter_class_defs(module)
+    assert len(class_defs) == 4
+    custom_type_class_def = class_defs[1]
+    assert custom_type_class_def.name == "CustomQueryCustomType"
+    assert compare_ast(custom_type_class_def, expected_class_def)
 
 
 def test_get_operation_as_str_returns_str_with_used_fragments():
@@ -545,16 +566,24 @@ def test_get_operation_as_str_returns_str_with_used_fragments():
         """
     )
 
-    generator = QueryTypesGenerator(
-        build_ast_schema(parse(SCHEMA_STR)),
-        FIELDS,
-        CLASS_TYPES,
-        parse(query_str).definitions[0],
-        "schema_types",
-        {
-            "TestFragment1": parse(used_fragment1).definitions[0],
-            "TestFragment2": parse(used_fragment2).definitions[0],
-            "TestFragment3": parse(not_used_fragment).definitions[0],
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+        fragments_definitions={
+            "TestFragment1": cast(
+                FragmentDefinitionNode, parse(used_fragment1).definitions[0]
+            ),
+            "TestFragment2": cast(
+                FragmentDefinitionNode, parse(used_fragment2).definitions[0]
+            ),
+            "TestFragment3": cast(
+                FragmentDefinitionNode, parse(not_used_fragment).definitions[0]
+            ),
         },
     )
 

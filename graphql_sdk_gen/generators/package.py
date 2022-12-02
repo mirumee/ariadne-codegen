@@ -9,9 +9,14 @@ from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
 from .codegen import generate_import_from
-from .constants import COMMENT_DATETIME_FORMAT, SOURCE_COMMENT, TIMESTAMP_COMMENT
+from .constants import (
+    BASE_MODEL_CLASS_NAME,
+    COMMENT_DATETIME_FORMAT,
+    SOURCE_COMMENT,
+    TIMESTAMP_COMMENT,
+)
 from .init_file import InitFileGenerator
-from .query_types import QueryTypesGenerator
+from .result_types import ResultTypesGenerator
 from .schema_types import SchemaTypesGenerator
 from .utils import ast_to_str, str_to_snake_case
 
@@ -54,7 +59,7 @@ class PackageGenerator:
         )
         self.base_model_file_path = Path(__file__).parent / "base_model.py"
         self.base_model_import = generate_import_from(
-            ["BaseModel"], self.base_model_file_path.stem, 1
+            [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
         )
 
         self.schema_types_module_name = schema_types_module_name
@@ -207,7 +212,7 @@ class PackageGenerator:
 
     def _copy_base_model_file(self):
         self.init_generator.add_import(
-            names=["BaseModel"],
+            names=[BASE_MODEL_CLASS_NAME],
             from_=self.base_model_file_path.stem,
             level=1,
         )
@@ -254,19 +259,19 @@ class PackageGenerator:
         module_name = method_name
         file_name = f"{module_name}.py"
 
-        query_types_generator = QueryTypesGenerator(
-            self.schema,
-            self.schema_types_generator.fields,
-            self.schema_types_generator.class_types,
-            definition,
-            self.enums_module_name,
-            self.fragments_definitions,
-            self.base_model_import,
+        query_types_generator = ResultTypesGenerator(
+            schema=self.schema,
+            operation_definition=definition,
+            schema_fields_implementations=self.schema_types_generator.fields,
+            class_types=self.schema_types_generator.class_types,
+            enums_module_name=self.enums_module_name,
+            fragments_definitions=self.fragments_definitions,
+            base_model_import=self.base_model_import,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
         operation_str = query_types_generator.get_operation_as_str()
         self.init_generator.add_import(
-            query_types_generator.public_names, module_name, 1
+            query_types_generator.get_generated_public_names(), module_name, 1
         )
 
         arguments, arguments_dict = self.arguments_generator.generate(

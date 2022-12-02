@@ -3,7 +3,17 @@ import ast
 import pytest
 from graphql import GraphQLSchema, build_ast_schema, parse
 
-from graphql_sdk_gen.generators.constants import ANY, OPTIONAL, UNION, ClassType
+from graphql_sdk_gen.generators.constants import (
+    ANY,
+    BASE_MODEL_CLASS_NAME,
+    FIELD_CLASS,
+    OPTIONAL,
+    PYDANTIC_MODULE,
+    TYPING_MODULE,
+    UNION,
+    UPDATE_FORWARD_REFS_METHOD,
+    ClassType,
+)
 from graphql_sdk_gen.generators.schema_types import SchemaTypesGenerator
 
 from ..utils import compare_ast, get_class_def
@@ -57,7 +67,7 @@ def test_generator_parses_type_definition_with_scalar_field(
     )
     expected_class_def = ast.ClassDef(
         name=type_name,
-        bases=[ast.Name(id="BaseModel")],
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         decorator_list=[],
         body=[expected_field_def],
@@ -90,7 +100,7 @@ def test_generator_parses_type_with_custom_type_fields():
     """
     expected_class_def = ast.ClassDef(
         name="CustomType",
-        bases=[ast.Name(id="BaseModel")],
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         decorator_list=[],
         body=[
@@ -168,7 +178,7 @@ def test_generator_parses_type_that_implements_interface():
     )
     expected_interface_def = ast.ClassDef(
         name="CustomInterface",
-        bases=[ast.Name(id="BaseModel")],
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         decorator_list=[],
         body=[expected_field_def],
@@ -200,7 +210,7 @@ def test_generator_parses_input_type():
     """
     expected_class_def = ast.ClassDef(
         name="CustomInput",
-        bases=[ast.Name(id="BaseModel")],
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         decorator_list=[],
         body=[
@@ -231,7 +241,7 @@ def test_generate_returns_modules_with_correct_imports():
     generator = SchemaTypesGenerator(
         GraphQLSchema(),
         base_model_import=ast.ImportFrom(
-            module="base_model", names=[ast.alias(name="BaseModel")], level=1
+            module="base_model", names=[ast.alias(name=BASE_MODEL_CLASS_NAME)], level=1
         ),
     )
 
@@ -250,7 +260,7 @@ def test_generate_returns_modules_with_correct_imports():
     )
     expected_input_types_imports = [
         ast.ImportFrom(
-            module="typing",
+            module=TYPING_MODULE,
             names=[
                 ast.alias(name=OPTIONAL),
                 ast.alias(name=ANY),
@@ -259,12 +269,12 @@ def test_generate_returns_modules_with_correct_imports():
             level=0,
         ),
         ast.ImportFrom(
-            module="pydantic",
-            names=[ast.alias(name="Field")],
+            module=PYDANTIC_MODULE,
+            names=[ast.alias(name=FIELD_CLASS)],
             level=0,
         ),
         ast.ImportFrom(
-            module="base_model", names=[ast.alias(name="BaseModel")], level=1
+            module="base_model", names=[ast.alias(name=BASE_MODEL_CLASS_NAME)], level=1
         ),
     ]
     assert compare_ast(input_types_imports, expected_input_types_imports)
@@ -274,7 +284,7 @@ def test_generate_returns_modules_with_correct_imports():
     )
     expected_schema_types_imports = [
         ast.ImportFrom(
-            module="typing",
+            module=TYPING_MODULE,
             names=[
                 ast.alias(name=OPTIONAL),
                 ast.alias(name=ANY),
@@ -282,9 +292,11 @@ def test_generate_returns_modules_with_correct_imports():
             ],
             level=0,
         ),
-        ast.ImportFrom(module="pydantic", names=[ast.alias(name="Field")], level=0),
         ast.ImportFrom(
-            module="base_model", names=[ast.alias(name="BaseModel")], level=1
+            module=PYDANTIC_MODULE, names=[ast.alias(name=FIELD_CLASS)], level=0
+        ),
+        ast.ImportFrom(
+            module="base_model", names=[ast.alias(name=BASE_MODEL_CLASS_NAME)], level=1
         ),
     ]
     assert compare_ast(schema_types_imports, expected_schema_types_imports)
@@ -388,7 +400,7 @@ def test_generate_returns_modules_with_update_forward_refs_calls():
         ast.Expr(
             value=ast.Call(
                 func=ast.Attribute(
-                    value=ast.Name(id="CustomInput"), attr="update_forward_refs"
+                    value=ast.Name(id="CustomInput"), attr=UPDATE_FORWARD_REFS_METHOD
                 ),
                 args=[],
                 keywords=[],
@@ -405,7 +417,9 @@ def test_generate_returns_modules_with_update_forward_refs_calls():
     expected_schema_types_module_methods_calls = [
         ast.Expr(
             value=ast.Call(
-                func=ast.Attribute(value=ast.Name(id=name), attr="update_forward_refs"),
+                func=ast.Attribute(
+                    value=ast.Name(id=name), attr=UPDATE_FORWARD_REFS_METHOD
+                ),
                 args=[],
                 keywords=[],
             )
@@ -499,7 +513,7 @@ def test_generator_parses_inputs_scalar_field_default_value(
 def test_generator_parses_inputs_list_field_default_value(field_str, expected_list):
     schema_str = f"input testInput {{{field_str}}}"
     expected_pydantic_field = ast.Call(
-        func=ast.Name(id="Field"),
+        func=ast.Name(id=FIELD_CLASS),
         args=[],
         keywords=[
             ast.keyword(
@@ -675,14 +689,14 @@ def test_generator_converts_field_names_to_snake_case():
     schema = build_ast_schema(parse(schema_str))
     expected_type_class = ast.ClassDef(
         name="CustomType",
-        bases=[ast.Name(id="BaseModel")],
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         body=[
             ast.AnnAssign(
                 target=ast.Name(id="field_test1"),
                 annotation=ast.Name(id="str"),
                 value=ast.Call(
-                    func=ast.Name(id="Field"),
+                    func=ast.Name(id=FIELD_CLASS),
                     args=[],
                     keywords=[
                         ast.keyword(arg="alias", value=ast.Constant(value="fieldTest1"))
@@ -707,14 +721,14 @@ def test_generator_converts_field_names_to_snake_case():
     )
     expected_input_class = ast.ClassDef(
         name="CustomInput",
-        bases=[ast.Name(id="BaseModel")],
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         body=[
             ast.AnnAssign(
                 target=ast.Name(id="input_field1"),
                 annotation=ast.Name(id="str"),
                 value=ast.Call(
-                    func=ast.Name(id="Field"),
+                    func=ast.Name(id=FIELD_CLASS),
                     args=[],
                     keywords=[
                         ast.keyword(
@@ -775,14 +789,14 @@ def test_generator_converts_field_name_with_default_value_to_snake_case():
     """
     expected_input_class = ast.ClassDef(
         name="CustomInput",
-        bases=[ast.Name(id="BaseModel")],
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         body=[
             ast.AnnAssign(
                 target=ast.Name(id="input_field1"),
                 annotation=ast.Name(id="str"),
                 value=ast.Call(
-                    func=ast.Name(id="Field"),
+                    func=ast.Name(id=FIELD_CLASS),
                     args=[],
                     keywords=[
                         ast.keyword(
@@ -799,7 +813,7 @@ def test_generator_converts_field_name_with_default_value_to_snake_case():
                     value=ast.Name(id="list"), slice=ast.Name(id="int")
                 ),
                 value=ast.Call(
-                    func=ast.Name(id="Field"),
+                    func=ast.Name(id=FIELD_CLASS),
                     args=[],
                     keywords=[
                         ast.keyword(

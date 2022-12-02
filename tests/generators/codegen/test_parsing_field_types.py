@@ -16,7 +16,7 @@ from graphql import (
 )
 
 from graphql_sdk_gen.generators.codegen import parse_field_type
-from graphql_sdk_gen.generators.constants import ANY, LIST, OPTIONAL, UNION
+from graphql_sdk_gen.generators.constants import ANY, FIELD_CLASS, LIST, OPTIONAL, UNION
 
 
 @pytest.mark.parametrize(
@@ -74,7 +74,7 @@ def test_parse_field_type_given_custom_type_returns_name_object(type_class):
     type_name = "Xyz"
     type_ = type_class(
         name=type_name,
-        fields={"field": GraphQLField(type_=GraphQLScalarType(name="String"))},
+        fields={FIELD_CLASS: GraphQLField(type_=GraphQLScalarType(name="String"))},
     )
 
     result = parse_field_type(type_, False)
@@ -91,7 +91,7 @@ def test_parse_field_type_given_custom_type_returns_optional_annotation(type_cla
     type_name = "Xyz"
     type_ = type_class(
         name=type_name,
-        fields={"field": GraphQLField(type_=GraphQLScalarType(name="String"))},
+        fields={FIELD_CLASS: GraphQLField(type_=GraphQLScalarType(name="String"))},
     )
 
     result = parse_field_type(type_, True)
@@ -132,7 +132,9 @@ def test_parse_field_type_given_union_type_returns_union_annotation():
         types=[
             GraphQLObjectType(
                 name="String",
-                fields={"field": GraphQLField(type_=GraphQLScalarType(name="String"))},
+                fields={
+                    FIELD_CLASS: GraphQLField(type_=GraphQLScalarType(name="String"))
+                },
             )
         ],
     )
@@ -151,7 +153,9 @@ def test_parse_field_type_given_union_type_returns_optional_union_annotation():
         types=[
             GraphQLObjectType(
                 name="String",
-                fields={"field": GraphQLField(type_=GraphQLScalarType(name="String"))},
+                fields={
+                    FIELD_CLASS: GraphQLField(type_=GraphQLScalarType(name="String"))
+                },
             )
         ],
     )
@@ -196,15 +200,17 @@ def test_parse_field_type_given_list_type_returns_optional_list_annotation():
         GraphQLScalarType(name="String"),
         GraphQLObjectType(
             name="Xyz",
-            fields={"field": GraphQLField(type_=GraphQLScalarType(name="String"))},
+            fields={FIELD_CLASS: GraphQLField(type_=GraphQLScalarType(name="String"))},
         ),
         GraphQLInputObjectType(
             name="Xyz",
-            fields={"field": GraphQLInputField(type_=GraphQLScalarType(name="String"))},
+            fields={
+                FIELD_CLASS: GraphQLInputField(type_=GraphQLScalarType(name="String"))
+            },
         ),
         GraphQLInterfaceType(
             name="Xyz",
-            fields={"field": GraphQLField(type_=GraphQLScalarType(name="String"))},
+            fields={FIELD_CLASS: GraphQLField(type_=GraphQLScalarType(name="String"))},
         ),
         GraphQLEnumType(name="Xyz", values={"X": GraphQLEnumValue(value="X")}),
     ],
@@ -236,7 +242,9 @@ def test_parse_field_type_given_non_null_union_type_returns_not_optional_annotat
                 GraphQLObjectType(
                     name="String",
                     fields={
-                        "field": GraphQLField(type_=GraphQLScalarType(name="String"))
+                        FIELD_CLASS: GraphQLField(
+                            type_=GraphQLScalarType(name="String")
+                        )
                     },
                 )
             ],
