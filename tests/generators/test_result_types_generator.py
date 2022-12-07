@@ -30,10 +30,9 @@ type Query {
   query1(
     id: ID!
   ): CustomType
-
   query2: [CustomType!]
-
   query3: CustomType3!
+  query4: UnionType!
 }
 
 type Mutation {
@@ -64,6 +63,8 @@ enum CustomEnum {
     VAL1
     VAL2
 }
+
+union UnionType = CustomType1 | CustomType2
 """
 
 CLASS_TYPES = {
@@ -521,6 +522,212 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
     custom_type_class_def = class_defs[1]
     assert custom_type_class_def.name == "CustomQueryCustomType"
     assert compare_ast(custom_type_class_def, expected_class_def)
+
+
+def test_generate_returns_module_with_handled_typename_field():
+    query_str = """
+    query CustomQuery {
+        query2 {
+            __typename
+            id
+        }
+    }
+    """
+    operation_definition = cast(
+        OperationDefinitionNode, parse(query_str).definitions[0]
+    )
+
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+    )
+    expected_fields_implementations = [
+        ast.AnnAssign(
+            target=ast.Name(id="__typename__"),
+            annotation=ast.Name(id="str"),
+            value=ast.Call(
+                func=ast.Name(id="Field"),
+                args=[],
+                keywords=[
+                    ast.keyword(arg="alias", value=ast.Constant(value="__typename"))
+                ],
+            ),
+            simple=1,
+        ),
+        ast.AnnAssign(
+            target=ast.Name(id="id"),
+            annotation=ast.Name(id="str"),
+            simple=1,
+        ),
+    ]
+
+    module = generator.generate()
+
+    class_defs = filter_class_defs(module)
+    assert len(class_defs) == 2
+    assert class_defs[0].name == "CustomQuery"
+    assert class_defs[1].name == "CustomQueryCustomType"
+    assert compare_ast(class_defs[1].body, expected_fields_implementations)
+
+
+def test_generate_returns_module_with_classes_for_union_fields():
+    query_str = format_graphql_str(
+        """
+        query CustomQuery {
+            query4 {
+                ... on CustomType1 {
+                    fielda
+                }
+                ... on CustomType2 {
+                    fieldb
+                }
+            }
+        }
+        """
+    )
+    expected_classes_defs = [
+        ast.ClassDef(
+            name="CustomQuery",
+            bases=[ast.Name(id="BaseModel")],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="query4"),
+                    annotation=ast.Subscript(
+                        value=ast.Name(id="Union"),
+                        slice=ast.Tuple(
+                            elts=[
+                                ast.Name(id='"CustomQueryCustomType1"'),
+                                ast.Name(id='"CustomQueryCustomType2"'),
+                            ],
+                        ),
+                    ),
+                    simple=1,
+                )
+            ],
+            decorator_list=[],
+        ),
+        ast.ClassDef(
+            name="CustomQueryCustomType1",
+            bases=[ast.Name(id="BaseModel")],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="__typename__"),
+                    annotation=ast.Name(id="str"),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg="alias", value=ast.Constant(value="__typename")
+                            )
+                        ],
+                    ),
+                    simple=1,
+                ),
+                ast.AnnAssign(
+                    target=ast.Name(id="fielda"),
+                    annotation=ast.Name(id="int"),
+                    simple=1,
+                ),
+            ],
+            decorator_list=[],
+        ),
+        ast.ClassDef(
+            name="CustomQueryCustomType2",
+            bases=[ast.Name(id="BaseModel")],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="__typename__"),
+                    annotation=ast.Name(id="str"),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg="alias", value=ast.Constant(value="__typename")
+                            )
+                        ],
+                    ),
+                    simple=1,
+                ),
+                ast.AnnAssign(
+                    target=ast.Name(id="fieldb"),
+                    annotation=ast.Subscript(
+                        value=ast.Name(id="Optional"),
+                        slice=ast.Name(id="int"),
+                    ),
+                    simple=1,
+                ),
+            ],
+            decorator_list=[],
+        ),
+    ]
+
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    class_defs = filter_class_defs(module)
+    assert compare_ast(class_defs, expected_classes_defs)
+
+
+def test_get_operation_as_str_returns_str_with_added_typename():
+    query_str = format_graphql_str(
+        """
+        query CustomQuery {
+            query4 {
+                ... on CustomType1 {
+                    fielda
+                }
+                ... on CustomType2 {
+                    fieldb
+                }
+            }
+        }
+        """
+    )
+    expected_result = format_graphql_str(
+        """
+        query CustomQuery {
+            query4 {
+                __typename
+                ... on CustomType1 {
+                    fielda
+                }
+                ... on CustomType2 {
+                    fieldb
+                }
+            }
+        }
+        """
+    )
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+    )
+
+    result = generator.get_operation_as_str()
+
+    assert result == expected_result
 
 
 def test_get_operation_as_str_returns_str_with_used_fragments():
