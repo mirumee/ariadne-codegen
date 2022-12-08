@@ -22,6 +22,7 @@ from .codegen import (
     generate_ann_assign,
     generate_class_def,
     generate_expr,
+    generate_field_with_alias,
     generate_import_from,
     generate_method_call,
     generate_module,
@@ -43,6 +44,7 @@ from .constants import (
 )
 from .schema_types import ClassType
 from .types import Annotation, AnnotationSlice, GraphQLFieldType
+from .utils import str_to_snake_case
 
 
 class ResultTypesGenerator:
@@ -55,6 +57,7 @@ class ResultTypesGenerator:
         enums_module_name: str,
         fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
+        convert_to_snake_case: bool = True,
     ) -> None:
         self.schema = schema
         self.schema_fields_implementations = schema_fields_implementations
@@ -69,6 +72,7 @@ class ResultTypesGenerator:
         self.fragments_definitions = (
             fragments_definitions if fragments_definitions else {}
         )
+        self.convert_to_snake_case = convert_to_snake_case
 
         self._imports: list[ast.ImportFrom] = [
             generate_import_from([OPTIONAL, UNION], TYPING_MODULE),
@@ -127,12 +131,16 @@ class ResultTypesGenerator:
             self._resolve_selection_set(self.operation_definition.selection_set),
             start=1,
         ):
+            org_name = field.name.value
+            name = self._process_field_name(org_name)
             schema_field = self._get_field_from_schema(field.name.value)
             field_implementation = generate_ann_assign(
-                field.name.value,
-                parse_field_type(cast(GraphQLFieldType, schema_field.type)),
+                target=name,
+                annotation=parse_field_type(cast(GraphQLFieldType, schema_field.type)),
                 lineno=lineno,
             )
+            if name != org_name:
+                field_implementation.value = generate_field_with_alias(org_name)
 
             field_types_names = self._get_field_types_names(
                 cast(Annotation, field_implementation.annotation)
@@ -173,6 +181,11 @@ class ResultTypesGenerator:
                         self._resolve_selection_set(selection.selection_set, root_type)
                     )
         return fields
+
+    def _process_field_name(self, name: str) -> str:
+        if self.convert_to_snake_case:
+            return str_to_snake_case(name)
+        return name
 
     def _get_field_from_schema(self, name: str) -> GraphQLField:
         if (
