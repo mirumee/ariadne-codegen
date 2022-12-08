@@ -69,6 +69,7 @@ class PackageGenerator:
         self.include_comments = include_comments
         self.queries_source = queries_source
         self.schema_source = schema_source
+        self.convert_to_snake_case = convert_to_snake_case
 
         self.init_generator = init_generator if init_generator else InitFileGenerator()
         self.client_generator = (
@@ -79,13 +80,13 @@ class PackageGenerator:
         self.arguments_generator = (
             arguments_generator
             if arguments_generator
-            else ArgumentsGenerator(convert_to_snake_case)
+            else ArgumentsGenerator(self.convert_to_snake_case)
         )
         self.schema_types_generator = (
             schema_types_generator
             if schema_types_generator
             else SchemaTypesGenerator(
-                schema, convert_to_snake_case, self.base_model_import
+                schema, self.convert_to_snake_case, self.base_model_import
             )
         )
 
@@ -267,6 +268,7 @@ class PackageGenerator:
             enums_module_name=self.enums_module_name,
             fragments_definitions=self.fragments_definitions,
             base_model_import=self.base_model_import,
+            convert_to_snake_case=self.convert_to_snake_case,
         )
         self.query_types_files[file_name] = query_types_generator.generate()
         operation_str = query_types_generator.get_operation_as_str()
