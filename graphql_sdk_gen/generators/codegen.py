@@ -13,7 +13,8 @@ from graphql import (
 )
 
 from ..exceptions import ParsingError
-from .constants import ANY, LIST, OPTIONAL, SIMPLE_TYPE_MAP, UNION
+from .constants import ANY, FIELD_CLASS, LIST, OPTIONAL, SIMPLE_TYPE_MAP, UNION
+from .types import Annotation, GraphQLFieldType
 
 
 def generate_import_from(
@@ -118,14 +119,14 @@ def generate_assign(
 
 
 def generate_ann_assign(
-    target: str,
-    annotation: Union[ast.Name, ast.Subscript],
+    target: Union[str, ast.expr],
+    annotation: Annotation,
     value: Optional[ast.expr] = None,
     lineno: int = 1,
 ) -> ast.AnnAssign:
     """Generate ann assign object."""
     return ast.AnnAssign(
-        target=ast.Name(id=target),
+        target=target if isinstance(target, ast.expr) else ast.Name(id=target),
         annotation=annotation,
         simple=1,
         value=value,
@@ -181,16 +182,7 @@ def generate_return(value: Optional[ast.expr] = None) -> ast.Return:
 
 
 def parse_field_type(
-    type_: Union[
-        GraphQLEnumType,
-        GraphQLInputObjectType,
-        GraphQLInterfaceType,
-        GraphQLList,
-        GraphQLNonNull,
-        GraphQLObjectType,
-        GraphQLScalarType,
-        GraphQLUnionType,
-    ],
+    type_: GraphQLFieldType,
     nullable: bool = True,
 ) -> Union[ast.Name, ast.Subscript]:
     """Parse graphql type and return generated annotation."""
@@ -209,7 +201,7 @@ def parse_field_type(
         return generate_annotation_name('"' + type_.name + '"', nullable)
 
     if isinstance(type_, GraphQLUnionType):
-        subtypes = [parse_field_type(subtype) for subtype in type_.types]
+        subtypes = [parse_field_type(subtype, False) for subtype in type_.types]
         return generate_union_annotation(subtypes, nullable)
 
     if isinstance(type_, GraphQLList):
@@ -264,3 +256,35 @@ def generate_list(elements: list[Optional[ast.expr]]) -> ast.List:
 def generate_lambda(args: ast.arguments, body: ast.expr) -> ast.Lambda:
     """Generate lambda definition."""
     return ast.Lambda(args=args, body=body)
+
+
+def generate_field_with_alias(name):
+    return generate_call(
+        func=generate_name(FIELD_CLASS),
+        keywords=[
+            generate_keyword(
+                arg="alias",
+                value=generate_constant(name),
+            )
+        ],
+    )
+
+
+def generate_typename_field_definition():
+    return generate_ann_assign(
+        target="__typename__",
+        annotation=generate_name("str"),
+        value=generate_field_with_alias("__typename"),
+    )
+
+
+def generate_module(body: list[ast.stmt]) -> ast.Module:
+    return ast.Module(body=body, type_ignores=[])
+
+
+def generate_subscript(value: ast.expr, slice_: ast.expr) -> ast.Subscript:
+    return ast.Subscript(value=value, slice=slice_)
+
+
+def generate_tuple(elts: list[ast.expr]) -> ast.Tuple:
+    return ast.Tuple(elts=elts)

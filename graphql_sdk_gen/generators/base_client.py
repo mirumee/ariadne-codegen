@@ -15,7 +15,7 @@ class BaseClient:
             http_client if http_client else httpx.AsyncClient(base_url=base_url)
         )
 
-    async def __aenter__(self) -> BaseClient:
+    async def __aenter__(self):
         return self
 
     async def __aexit__(

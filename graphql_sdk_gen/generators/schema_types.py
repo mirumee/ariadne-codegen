@@ -30,6 +30,7 @@ from .codegen import (
     generate_constant,
     generate_dict,
     generate_expr,
+    generate_field_with_alias,
     generate_import_from,
     generate_keyword,
     generate_lambda,
@@ -38,7 +39,17 @@ from .codegen import (
     generate_name,
     parse_field_type,
 )
-from .constants import ANY, OPTIONAL, UNION, ClassType
+from .constants import (
+    ANY,
+    BASE_MODEL_CLASS_NAME,
+    FIELD_CLASS,
+    OPTIONAL,
+    PYDANTIC_MODULE,
+    TYPING_MODULE,
+    UNION,
+    UPDATE_FORWARD_REFS_METHOD,
+    ClassType,
+)
 from .utils import str_to_snake_case
 
 
@@ -52,7 +63,7 @@ class SchemaTypesGenerator:
         self.schema = schema
         self.types_to_parse = self._filter_schema_types()
 
-        self.fields: dict[str, dict[str, Union[ast.AnnAssign, ast.Assign]]] = {}
+        self.fields: dict[str, dict[str, ast.AnnAssign]] = {}
         self.class_types: dict[str, ClassType] = {}
 
         self.enums: list[str] = []
@@ -66,7 +77,7 @@ class SchemaTypesGenerator:
         self.input_types_dependencies: dict[str, list[str]] = defaultdict(list)
         self.convert_to_snake_case = convert_to_snake_case
         self.base_model_import = base_model_import or generate_import_from(
-            ["BaseModel"], "pydantic"
+            [BASE_MODEL_CLASS_NAME], PYDANTIC_MODULE
         )
 
         for definition in self.types_to_parse:
@@ -145,7 +156,6 @@ class SchemaTypesGenerator:
                 [val_name], generate_constant(val_def.value), lineno
             )
             class_def.body.append(field_def)
-            self.fields[definition.name][val_name] = field_def
         return class_def
 
     def _parse_object_input_or_interface_definition(
@@ -154,7 +164,9 @@ class SchemaTypesGenerator:
             GraphQLObjectType, GraphQLInputObjectType, GraphQLInterfaceType
         ],
     ) -> ast.ClassDef:
-        class_def = generate_class_def(name=definition.name, base_names=["BaseModel"])
+        class_def = generate_class_def(
+            name=definition.name, base_names=[BASE_MODEL_CLASS_NAME]
+        )
 
         self.fields[definition.name] = {}
         for lineno, (org_name, field) in enumerate(definition.fields.items(), start=1):
@@ -180,20 +192,12 @@ class SchemaTypesGenerator:
         return name
 
     def _generate_alias(self, field_def: ast.AnnAssign, alias: str) -> ast.Call:
-        field_with_alias = generate_call(
-            func=generate_name("Field"),
-            keywords=[
-                generate_keyword(
-                    arg="alias",
-                    value=generate_constant(alias),
-                )
-            ],
-        )
+        field_with_alias = generate_field_with_alias(alias)
         if field_def.value:
             if (
                 isinstance(field_def.value, ast.Call)
                 and isinstance(field_def.value.func, ast.Name)
-                and field_def.value.func.id == "Field"
+                and field_def.value.func.id == FIELD_CLASS
             ):
                 field_with_alias.keywords.extend(field_def.value.keywords)
             else:
@@ -286,7 +290,7 @@ class SchemaTypesGenerator:
 
     def _generate_list_as_default_value(self, list_: ast.List):
         return generate_call(
-            func=generate_name("Field"),
+            func=generate_name(FIELD_CLASS),
             keywords=[
                 generate_keyword(
                     arg="default_factory",
@@ -311,7 +315,9 @@ class SchemaTypesGenerator:
         if include_update_forward_refs_calls:
             module.body.extend(
                 [
-                    generate_expr(generate_method_call(c.name, "update_forward_refs"))
+                    generate_expr(
+                        generate_method_call(c.name, UPDATE_FORWARD_REFS_METHOD)
+                    )
                     for c in class_defs
                 ]
             )
@@ -342,15 +348,15 @@ class SchemaTypesGenerator:
 
     def generate(self) -> tuple[ast.Module, ast.Module, ast.Module]:
         input_types_imports = [
-            generate_import_from([OPTIONAL, ANY, UNION], "typing"),
-            generate_import_from(["Field"], "pydantic"),
+            generate_import_from([OPTIONAL, ANY, UNION], TYPING_MODULE),
+            generate_import_from([FIELD_CLASS], PYDANTIC_MODULE),
             self.base_model_import,
         ]
         if self.enums:
             input_types_imports.append(generate_import_from(self.enums, "enums", 1))
         schema_types_imports = [
-            generate_import_from([OPTIONAL, ANY, UNION], "typing"),
-            generate_import_from(["Field"], "pydantic"),
+            generate_import_from([OPTIONAL, ANY, UNION], TYPING_MODULE),
+            generate_import_from([FIELD_CLASS], PYDANTIC_MODULE),
             self.base_model_import,
         ]
         if self.enums:
