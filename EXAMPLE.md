@@ -358,11 +358,13 @@ For every provided query/mutation there is generated file, that contains models 
 
 from typing import Optional
 
+from pydantic import Field
+
 from .base_model import BaseModel
 
 
 class CreateUser(BaseModel):
-    userCreate: Optional["CreateUserUser"]
+    user_create: Optional["CreateUserUser"] = Field(alias="userCreate")
 
 
 class CreateUserUser(BaseModel):

@@ -18,7 +18,7 @@ from graphql_sdk_gen.generators.constants import (
 )
 from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
 
-from ..utils import compare_ast, filter_class_defs, format_graphql_str
+from ..utils import compare_ast, filter_class_defs, format_graphql_str, get_class_def
 
 SCHEMA_STR = """
 schema {
@@ -33,6 +33,7 @@ type Query {
   query2: [CustomType!]
   query3: CustomType3!
   query4: UnionType!
+  camelCaseQuery: CustomType!
 }
 
 type Mutation {
@@ -683,6 +684,46 @@ def test_generate_returns_module_with_classes_for_union_fields():
 
     class_defs = filter_class_defs(module)
     assert compare_ast(class_defs, expected_classes_defs)
+
+
+def test_generate_returns_module_with_query_names_converted_to_snake_case():
+    query_str = """
+    query CustomQuery {
+        camelCaseQuery {
+            id
+        }
+    }
+    """
+    expected_field_implementation = ast.AnnAssign(
+        target=ast.Name(id="camel_case_query"),
+        annotation=ast.Name(id='"CustomQueryCustomType"'),
+        value=ast.Call(
+            func=ast.Name(id="Field"),
+            args=[],
+            keywords=[
+                ast.keyword(arg="alias", value=ast.Constant(value="camelCaseQuery"))
+            ],
+        ),
+        simple=1,
+    )
+
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
+        class_types=CLASS_TYPES,
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    class_def = get_class_def(module)
+    assert class_def.name == "CustomQuery"
+    assert len(class_def.body) == 1
+    field_implementation = class_def.body[0]
+    assert compare_ast(field_implementation, expected_field_implementation)
 
 
 def test_get_operation_as_str_returns_str_with_added_typename():
