@@ -288,3 +288,20 @@ def generate_subscript(value: ast.expr, slice_: ast.expr) -> ast.Subscript:
 
 def generate_tuple(elts: list[ast.expr]) -> ast.Tuple:
     return ast.Tuple(elts=elts)
+
+
+def generate_method_definition(
+    name: str,
+    arguments: ast.arguments,
+    return_type: Union[ast.Name, ast.Subscript],
+    body: Optional[list[ast.stmt]] = None,
+    lineno: int = 1,
+) -> ast.FunctionDef:
+    return ast.FunctionDef(
+        name=name,
+        args=arguments,
+        body=body if body else [ast.Pass()],
+        decorator_list=[],
+        returns=return_type,
+        lineno=lineno,
+    )

@@ -12,6 +12,7 @@ from .codegen import (
     generate_dict,
     generate_import_from,
     generate_keyword,
+    generate_method_definition,
     generate_name,
     generate_return,
     generate_trivial_lambda,
@@ -24,11 +25,15 @@ class ClientGenerator:
         self.name = name
         self.class_def = generate_class_def(name=name, base_names=[base_client])
         self.imports: list = [generate_import_from([OPTIONAL], TYPING_MODULE)]
-        self.gql_lambda_name = "gql"
+
+        self._gql_lambda_name = "gql"
+        self._operation_str_variable = "query"
+        self._variables_dict_variable = "variables"
+        self._response_variable = "response"
 
     def generate(self) -> ast.Module:
         """Generate module with class definistion of grahql client."""
-        gql_lambda = generate_trivial_lambda(self.gql_lambda_name, "q")
+        gql_lambda = generate_trivial_lambda(self._gql_lambda_name, "q")
         gql_lambda.lineno = len(self.imports) + 1
         self.class_def.lineno = len(self.imports) + 2
         if not self.class_def.body:
@@ -42,79 +47,141 @@ class ClientGenerator:
         """Add import to be included in init file."""
         self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
-    def add_async_method(
+    def add_method(
         self,
         name: str,
         return_type: str,
         arguments: ast.arguments,
         arguments_dict: ast.Dict,
-        query_str: str,
+        operation_str: str,
+        async_: bool = True,
     ):
-        """Add definition of async method."""
-        self.class_def.body.append(
-            generate_async_method_definition(
+        """Add method to client."""
+        method_def = (
+            self._generate_async_method(
                 name=name,
+                return_type=return_type,
                 arguments=arguments,
-                return_type=generate_name(return_type),
-                body=self._generate_query_method_body(
-                    query_str, arguments_dict, return_type
-                ),
-                lineno=len(self.class_def.body) + 1,
+                arguments_dict=arguments_dict,
+                operation_str=operation_str,
+            )
+            if async_
+            else self._generate_method(
+                name=name,
+                return_type=return_type,
+                arguments=arguments,
+                arguments_dict=arguments_dict,
+                operation_str=operation_str,
             )
         )
+        method_def.lineno = len(self.class_def.body) + 1
+        self.class_def.body.append(method_def)
 
-    def _generate_query_method_body(
+    def _generate_async_method(
         self,
-        query_str: str,
-        arguments_dict: ast.Dict,
+        name: str,
         return_type: str,
-    ) -> list[ast.stmt]:
-        return [
-            generate_assign(
-                ["query"],
-                generate_call(
-                    func=ast.Name(id=self.gql_lambda_name),
-                    args=[
-                        [generate_constant(l + "\n") for l in query_str.splitlines()]
-                    ],
+        arguments: ast.arguments,
+        arguments_dict: ast.Dict,
+        operation_str: str,
+    ) -> ast.AsyncFunctionDef:
+        return generate_async_method_definition(
+            name=name,
+            arguments=arguments,
+            return_type=generate_name(return_type),
+            body=[
+                self._generate_operation_str_assign(operation_str, 1),
+                self._generate_variables_assign(arguments_dict, 2),
+                self._generate_async_response_assign(3),
+                self._generate_return_parsed_obj(return_type),
+            ],
+        )
+
+    def _generate_method(
+        self,
+        name: str,
+        return_type: str,
+        arguments: ast.arguments,
+        arguments_dict: ast.Dict,
+        operation_str: str,
+    ) -> ast.FunctionDef:
+        return generate_method_definition(
+            name=name,
+            arguments=arguments,
+            return_type=generate_name(return_type),
+            body=[
+                self._generate_operation_str_assign(operation_str, 1),
+                self._generate_variables_assign(arguments_dict, 2),
+                self._generate_response_assign(3),
+                self._generate_return_parsed_obj(return_type),
+            ],
+        )
+
+    def _generate_operation_str_assign(
+        self, operation_str: str, lineno: int = 1
+    ) -> ast.Assign:
+        return generate_assign(
+            targets=[self._operation_str_variable],
+            value=generate_call(
+                func=ast.Name(id=self._gql_lambda_name),
+                args=[
+                    [generate_constant(l + "\n") for l in operation_str.splitlines()]
+                ],
+            ),
+            lineno=lineno,
+        )
+
+    def _generate_variables_assign(
+        self, arguments_dict: ast.Dict, lineno: int = 1
+    ) -> ast.AnnAssign:
+        return generate_ann_assign(
+            target=self._variables_dict_variable,
+            annotation=generate_name("dict"),
+            value=arguments_dict,
+            lineno=lineno,
+        )
+
+    def _generate_async_response_assign(self, lineno: int = 1) -> ast.Assign:
+        return generate_assign(
+            targets=[self._response_variable],
+            value=generate_await(self._generate_execute_call()),
+            lineno=lineno,
+        )
+
+    def _generate_response_assign(self, lineno: int = 1) -> ast.Assign:
+        return generate_assign(
+            targets=[self._response_variable],
+            value=self._generate_execute_call(),
+            lineno=lineno,
+        )
+
+    def _generate_execute_call(self) -> ast.Call:
+        return generate_call(
+            func=generate_attribute(generate_name("self"), "execute"),
+            keywords=[
+                generate_keyword("query", generate_name(self._operation_str_variable)),
+                generate_keyword(
+                    "variables", generate_name(self._variables_dict_variable)
                 ),
-                lineno=1,
-            ),
-            generate_ann_assign(
-                "variables",
-                generate_name("dict"),
-                arguments_dict,
-                lineno=2,
-            ),
-            generate_assign(
-                ["response"],
-                generate_await(
+            ],
+        )
+
+    def _generate_return_parsed_obj(self, return_type: str) -> ast.Return:
+        return generate_return(
+            generate_call(
+                func=generate_attribute(generate_name(return_type), "parse_obj"),
+                args=[
                     generate_call(
-                        func=generate_attribute(generate_name("self"), "execute"),
-                        keywords=[
-                            generate_keyword("query", generate_name("query")),
-                            generate_keyword("variables", generate_name("variables")),
-                        ],
-                    )
-                ),
-                lineno=3,
-            ),
-            generate_return(
-                generate_call(
-                    func=generate_attribute(generate_name(return_type), "parse_obj"),
-                    args=[
-                        generate_call(
-                            func=generate_attribute(
-                                generate_call(
-                                    generate_attribute(
-                                        generate_name("response"), "json"
-                                    )
-                                ),
-                                "get",
+                        func=generate_attribute(
+                            generate_call(
+                                generate_attribute(
+                                    generate_name(self._response_variable), "json"
+                                )
                             ),
-                            args=[generate_constant("data"), generate_dict()],
-                        )
-                    ],
-                )
-            ),
-        ]
+                            "get",
+                        ),
+                        args=[generate_constant("data"), generate_dict()],
+                    )
+                ],
+            )
+        )

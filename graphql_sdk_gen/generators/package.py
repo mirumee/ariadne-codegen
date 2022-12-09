@@ -279,7 +279,11 @@ class PackageGenerator:
         arguments, arguments_dict = self.arguments_generator.generate(
             definition.variable_definitions
         )
-        self.client_generator.add_async_method(
-            method_name, query_name, arguments, arguments_dict, operation_str
+        self.client_generator.add_method(
+            name=method_name,
+            return_type=query_name,
+            arguments=arguments,
+            arguments_dict=arguments_dict,
+            operation_str=operation_str,
         )
         self.client_generator.add_import([query_name], module_name, 1)
