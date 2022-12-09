@@ -4,33 +4,33 @@ import httpx
 from pydantic import BaseModel
 
 
-class BaseClient:
+class AsyncBaseClient:
     def __init__(
-        self, base_url: str, http_client: Optional[httpx.Client] = None
+        self, base_url: str, http_client: Optional[httpx.AsyncClient] = None
     ) -> None:
         self.base_url = base_url
         self.http_client = (
-            http_client if http_client else httpx.Client(base_url=base_url)
+            http_client if http_client else httpx.AsyncClient(base_url=base_url)
         )
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(
+    async def __aexit__(
         self,
         exc_type,
         exc_val,
         exc_tb,
     ) -> None:
-        self.http_client.close()
+        await self.http_client.aclose()
 
-    def execute(
+    async def execute(
         self, query: str, variables: Optional[dict[str, Any]] = None
     ) -> httpx.Response:
         payload: dict[str, Any] = {"query": query}
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
-        return self.http_client.post(url="/graphql/", json=payload)
+        return await self.http_client.post(url="/graphql/", json=payload)
 
     def _convert_dict_to_json_serializable(self, dict_: dict[str, Any]):
         return {
