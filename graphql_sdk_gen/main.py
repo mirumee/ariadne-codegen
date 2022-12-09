@@ -37,6 +37,7 @@ def main():
         include_comments=settings.include_comments,
         fragments=fragments,
         convert_to_snake_case=settings.convert_to_snake_case,
+        async_client=settings.async_client,
     )
     for query in queries:
         package_generator.add_query(query)

@@ -29,7 +29,7 @@ class PackageGenerator:
         schema: GraphQLSchema,
         client_name: str = "Client",
         client_file_name: str = "client",
-        base_client_name: str = "BaseClient",
+        base_client_name: str = "AsyncBaseClient",
         base_client_file_path: Optional[str] = None,
         schema_types_module_name: str = "schema_types",
         enums_module_name: str = "enums",
@@ -38,6 +38,7 @@ class PackageGenerator:
         queries_source: str = "",
         schema_source: str = "",
         convert_to_snake_case: bool = True,
+        async_client: bool = True,
         fragments: Optional[list[FragmentDefinitionNode]] = None,
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
@@ -51,12 +52,21 @@ class PackageGenerator:
 
         self.client_name = client_name
         self.client_file_name = client_file_name
+
+        self.async_client = async_client
         self.base_client_name = base_client_name
-        self.base_client_file_path = (
-            Path(base_client_file_path)
-            if base_client_file_path
-            else Path(__file__).parent / "base_client.py"
-        )
+        if base_client_file_path:
+            self.base_client_file_path = Path(base_client_file_path)
+        else:
+            if self.async_client:
+                self.base_client_file_path = Path(__file__).parent.joinpath(
+                    "async_base_client.py"
+                )
+            else:
+                self.base_client_file_path = Path(__file__).parent.joinpath(
+                    "base_client.py"
+                )
+
         self.base_model_file_path = Path(__file__).parent / "base_model.py"
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
@@ -285,5 +295,6 @@ class PackageGenerator:
             arguments=arguments,
             arguments_dict=arguments_dict,
             operation_str=operation_str,
+            async_=self.async_client,
         )
         self.client_generator.add_import([query_name], module_name, 1)

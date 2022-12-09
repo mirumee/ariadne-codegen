@@ -40,13 +40,14 @@ Optional parameters:
 - `target_package_path` (defaults to cwd) - path where to generate package
 - `client_name` (defaults to `"Client"`) - name of generated client class
 - `client_file_name` (defaults to `"client"`) - name of file with generated client class
-- `base_client_name` (defaults to `"BaseClient"`) - name of base client class
-- `base_client_file_path` (defaults to `.../graphql_sdk_gen/generators/base_client.py`) - path to file where `base_client_name` is defined
+- `base_client_name` (defaults to `"AsyncBaseClient"`) - name of base client class
+- `base_client_file_path` (defaults to `.../graphql_sdk_gen/generators/async_base_client.py`) - path to file where `base_client_name` is defined
 - `schema_types_module_name` (defaults to `"schema_types"`) - name of file with generated schema types models
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `include_comments` (defaults to `True`) - a flag that specifies whether to include comments in generated files
 - `convert_to_snake_case` (defaults to `True`) - a flag that specifies whether to convert fields and arguments names to snake case
+- `async_client` (default to `True`) - a flag that specifies whether to generate client with async methods
 
 
 ## Usage
