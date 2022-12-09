@@ -31,7 +31,7 @@ def test_add_import_adds_import_to_generated_module():
     assert [n.name for n in generated_import.names] == [name]
 
 
-def test_add_async_method_adds_method_definition():
+def test_add_method_adds_method_definition():
     generator = ClientGenerator("Client", "BaseClient")
     method_name = "list_xyz"
     return_type = "ListXyz"
@@ -44,7 +44,7 @@ def test_add_async_method_adds_method_definition():
     )
     arguments_dict = ast.Dict(keys=[], values=[])
 
-    generator.add_async_method(method_name, return_type, arguments, arguments_dict, "")
+    generator.add_method(method_name, return_type, arguments, arguments_dict, "")
     module = generator.generate()
 
     class_def = get_class_def(module)
@@ -58,7 +58,7 @@ def test_add_async_method_adds_method_definition():
     assert method_def.args == arguments
 
 
-def test_add_async_method_generates_correct_method_body():
+def test_add_method_generates_correct_method_body():
     generator = ClientGenerator("Client", "BaseClient")
     method_name = "list_xyz"
     return_type = "ListXyz"
@@ -136,7 +136,7 @@ def test_add_async_method_generates_correct_method_body():
             )
         ),
     ]
-    generator.add_async_method(
+    generator.add_method(
         method_name, return_type, arguments, arguments_dict, query_str
     )
     module = generator.generate()

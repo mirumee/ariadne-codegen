@@ -1,13 +1,13 @@
 import pytest
 from pydantic import BaseModel
 
-from graphql_sdk_gen.generators.base_client import BaseClient
+from graphql_sdk_gen.generators.async_base_client import AsyncBaseClient
 
 
 @pytest.mark.asyncio
 async def test_execute_sends_post_to_correct_endpoint_with_correct_payload(mocker):
     fake_client = mocker.AsyncMock()
-    client = BaseClient("base_url", fake_client)
+    client = AsyncBaseClient("base_url", fake_client)
     query_str = """
     query Abc($v: String!) {
         abc(v: $v) {
@@ -34,7 +34,7 @@ async def test_execute_parses_pydantic_variables_before_sending(mocker):
         nested: TestModel1
 
     fake_client = mocker.AsyncMock()
-    client = BaseClient("base_url", fake_client)
+    client = AsyncBaseClient("base_url", fake_client)
     query_str = """
     query Abc($v1: TestModel1!, $v2: TestModel2) {
         abc(v1: $v1, v2: $v2){
@@ -60,7 +60,7 @@ async def test_execute_parses_pydantic_variables_before_sending(mocker):
 @pytest.mark.asyncio
 async def test_base_client_used_as_context_manager_closes_http_client(mocker):
     fake_client = mocker.AsyncMock()
-    async with BaseClient("base_url", fake_client) as base_client:
+    async with AsyncBaseClient("base_url", fake_client) as base_client:
         await base_client.execute("")
 
     assert fake_client.aclose.called

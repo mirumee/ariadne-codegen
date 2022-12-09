@@ -92,15 +92,15 @@ def test_generate_creates_files_with_correct_content(tmp_path):
     with init_file_path.open() as init_file:
         init_content = init_file.read()
         assert "from .client import Client" in init_content
-        assert "from .base_client import BaseClient" in init_content
+        assert "from .async_base_client import AsyncBaseClient" in init_content
         assert "from .base_model import BaseModel" in init_content
-        assert '__all__ = ["BaseClient", "BaseModel", "Client"]' in init_content
+        assert '__all__ = ["AsyncBaseClient", "BaseModel", "Client"]' in init_content
 
     client_file_path = package_path / "client.py"
     with client_file_path.open() as client_file:
         client_content = client_file.read()
-        assert "class Client(BaseClient):" in client_content
-        assert "from .base_client import BaseClient" in client_content
+        assert "class Client(AsyncBaseClient):" in client_content
+        assert "from .async_base_client import AsyncBaseClient" in client_content
 
 
 def test_generate_creates_files_with_types(tmp_path):

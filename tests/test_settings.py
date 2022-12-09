@@ -43,6 +43,7 @@ def test_settings_with_not_importable_base_client_file_raises_invalid_configurat
             schema_path=schema_path.as_posix(),
             queries_path=queries_path.as_posix(),
             base_client_file_path=base_client_file_path.as_posix(),
+            base_client_name="BaseClient",
         )
 
 
