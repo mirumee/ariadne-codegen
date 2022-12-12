@@ -137,7 +137,7 @@ Structure of generated package:
 ```
 grapql_client/
     __init__.py
-    base_client.py
+    async_base_client.py
     base_model.py
     client.py
     create_user.py
@@ -150,14 +150,14 @@ grapql_client/
 
 ### Client class
 
-Generated client class inherits from `BaseClient` and has async method for every provided query/mutation.
+Generated client class inherits from `AsyncBaseClient` and has async method for every provided query/mutation.
 
 ```py
 # graphql_client/client.py
 
 from typing import Optional
 
-from .base_client import BaseClient
+from .async_base_client import AsyncBaseClient
 from .create_user import CreateUser
 from .input_types import UserCreateInput
 from .list_all_users import ListAllUsers
@@ -166,7 +166,7 @@ from .list_users_by_country import ListUsersByCountry
 gql = lambda q: q
 
 
-class Client(BaseClient):
+class Client(AsyncBaseClient):
     async def create_user(self, user_data: UserCreateInput) -> CreateUser:
         query = gql(
             """
@@ -440,7 +440,7 @@ Generated init file contains reimports and list of all generated classes.
 ```py
 # graphql_client/__init__.py
 
-from .base_client import BaseClient
+from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel
 from .client import Client
 from .create_user import CreateUser, CreateUserUser
@@ -456,7 +456,7 @@ from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUser
 from .schema_types import Location, User
 
 __all__ = [
-    "BaseClient",
+    "AsyncBaseClient",
     "BaseModel",
     "Client",
     "Color",

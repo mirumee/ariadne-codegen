@@ -3,13 +3,14 @@ from dataclasses import dataclass, field, fields
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
+from typing import Optional
 
 import toml
 
 from .exceptions import ConfigFileNotFound, InvalidConfiguration, MissingConfiguration
 
 
-@dataclass(frozen=True)
+@dataclass
 class Settings:
     schema_path: str
     queries_path: str
@@ -17,19 +18,18 @@ class Settings:
     target_package_path: str = field(default_factory=lambda: Path.cwd().as_posix())
     client_name: str = "Client"
     client_file_name: str = "client"
-    base_client_name: str = "BaseClient"
-    base_client_file_path: str = field(
-        default_factory=lambda: Path(__file__)
-        .parent.joinpath("generators", "base_client.py")
-        .as_posix()
-    )
+    base_client_name: Optional[str] = None
+    base_client_file_path: Optional[str] = None
     schema_types_module_name: str = "schema_types"
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     include_comments: bool = True
     convert_to_snake_case: bool = True
+    async_client: bool = True
 
     def __post_init__(self):
+        self._set_default_base_client_data()
+
         self._assert_path_exists(self.schema_path)
         self._assert_path_exists(self.queries_path)
 
@@ -48,6 +48,20 @@ class Settings:
         self._assert_string_is_valid_python_identifier(self.schema_types_module_name)
         self._assert_string_is_valid_python_identifier(self.enums_module_name)
         self._assert_string_is_valid_python_identifier(self.input_types_module_name)
+
+    def _set_default_base_client_data(self):
+        if not self.base_client_name and not self.base_client_file_path:
+            generators_path = Path(__file__).parent.joinpath("generators")
+            if self.async_client:
+                self.base_client_file_path = generators_path.joinpath(
+                    "async_base_client.py"
+                ).as_posix()
+                self.base_client_name = "AsyncBaseClient"
+            else:
+                self.base_client_file_path = generators_path.joinpath(
+                    "base_client.py"
+                ).as_posix()
+                self.base_client_name = "BaseClient"
 
     def _assert_path_exists(self, path: str):
         if not Path(path).exists():
@@ -116,6 +130,16 @@ def get_used_settings_message(settings: Settings) -> str:
         if settings.include_comments
         else "Not including comments."
     )
+    snake_case_msg = (
+        "Converting fields and arguments name to snake case."
+        if settings.convert_to_snake_case
+        else "Not converting fields and arguments name to snake case."
+    )
+    async_client_msg = (
+        "Generating async client."
+        if settings.async_client
+        else "Generating not async client."
+    )
     return dedent(
         f"""\
         Using schema from '{settings.schema_path}'.
@@ -129,6 +153,8 @@ def get_used_settings_message(settings: Settings) -> str:
         Generating enums into '{settings.enums_module_name}.py'.
         Generating inputs into '{settings.input_types_module_name}.py'.
         {comments_msg}
+        {snake_case_msg}
+        {async_client_msg}
         """
     )
 

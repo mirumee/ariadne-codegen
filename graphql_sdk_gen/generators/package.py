@@ -29,7 +29,7 @@ class PackageGenerator:
         schema: GraphQLSchema,
         client_name: str = "Client",
         client_file_name: str = "client",
-        base_client_name: str = "BaseClient",
+        base_client_name: str = "AsyncBaseClient",
         base_client_file_path: Optional[str] = None,
         schema_types_module_name: str = "schema_types",
         enums_module_name: str = "enums",
@@ -38,6 +38,7 @@ class PackageGenerator:
         queries_source: str = "",
         schema_source: str = "",
         convert_to_snake_case: bool = True,
+        async_client: bool = True,
         fragments: Optional[list[FragmentDefinitionNode]] = None,
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
@@ -51,12 +52,21 @@ class PackageGenerator:
 
         self.client_name = client_name
         self.client_file_name = client_file_name
+
+        self.async_client = async_client
         self.base_client_name = base_client_name
-        self.base_client_file_path = (
-            Path(base_client_file_path)
-            if base_client_file_path
-            else Path(__file__).parent / "base_client.py"
-        )
+        if base_client_file_path:
+            self.base_client_file_path = Path(base_client_file_path)
+        else:
+            if self.async_client:
+                self.base_client_file_path = Path(__file__).parent.joinpath(
+                    "async_base_client.py"
+                )
+            else:
+                self.base_client_file_path = Path(__file__).parent.joinpath(
+                    "base_client.py"
+                )
+
         self.base_model_file_path = Path(__file__).parent / "base_model.py"
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
@@ -207,7 +217,9 @@ class PackageGenerator:
             level=1,
         )
         target_base_client_path = self.package_path / self.base_client_file_path.name
-        code = self._proccess_generated_code(self.base_client_file_path.read_text())
+        code = self._proccess_generated_code(
+            self.base_client_file_path.read_text("utf-8")
+        )
         target_base_client_path.write_text(code)
         self.generated_files.append(target_base_client_path.name)
 
@@ -279,7 +291,12 @@ class PackageGenerator:
         arguments, arguments_dict = self.arguments_generator.generate(
             definition.variable_definitions
         )
-        self.client_generator.add_async_method(
-            method_name, query_name, arguments, arguments_dict, operation_str
+        self.client_generator.add_method(
+            name=method_name,
+            return_type=query_name,
+            arguments=arguments,
+            arguments_dict=arguments_dict,
+            operation_str=operation_str,
+            async_=self.async_client,
         )
         self.client_generator.add_import([query_name], module_name, 1)

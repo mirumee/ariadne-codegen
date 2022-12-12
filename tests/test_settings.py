@@ -1,7 +1,10 @@
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
 
+import graphql_sdk_gen.generators.async_base_client
+import graphql_sdk_gen.generators.base_client
 from graphql_sdk_gen.config import Settings, get_used_settings_message
 from graphql_sdk_gen.exceptions import InvalidConfiguration
 
@@ -43,6 +46,7 @@ def test_settings_with_not_importable_base_client_file_raises_invalid_configurat
             schema_path=schema_path.as_posix(),
             queries_path=queries_path.as_posix(),
             base_client_file_path=base_client_file_path.as_posix(),
+            base_client_name="BaseClient",
         )
 
 
@@ -68,6 +72,37 @@ def test_settings_with_base_client_not_defined_in_file_raises_configuration_exce
             base_client_name="OtherClient",
             base_client_file_path=base_client_file_path.as_posix(),
         )
+
+
+@pytest.mark.parametrize(
+    "async_client,expected_name,expected_path",
+    [
+        (
+            True,
+            "AsyncBaseClient",
+            Path(graphql_sdk_gen.generators.async_base_client.__file__).as_posix(),
+        ),
+        (
+            False,
+            "BaseClient",
+            Path(graphql_sdk_gen.generators.base_client.__file__).as_posix(),
+        ),
+    ],
+)
+def test_settings_sets_correct_default_values_for_base_client_name_and_path(
+    tmp_path, async_client, expected_name, expected_path
+):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = Settings(
+        schema_path=schema_path, queries_path=queries_path, async_client=async_client
+    )
+
+    assert settings.base_client_name == expected_name
+    assert settings.base_client_file_path == expected_path
 
 
 def test_get_used_settings_message_returns_string_with_data_from_given_settings(
