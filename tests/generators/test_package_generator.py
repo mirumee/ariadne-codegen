@@ -80,7 +80,7 @@ def test_generate_creates_directory_and_files(tmp_path):
     assert base_model_path.is_file()
 
 
-def test_generate_creates_files_with_correct_content(tmp_path):
+def test_generate_creates_files_with_correct_imports(tmp_path):
     package_name = "test_graphql_client"
     generator = PackageGenerator(package_name, tmp_path.as_posix(), GraphQLSchema())
 
@@ -252,10 +252,13 @@ def test_generate_copies_base_client_file(tmp_path):
         assert dedent(base_client_file_content) in dedent(copied_content)
 
 
-def test_generate_creates_client_with_correctly_implemented_method(tmp_path):
+def test_generate_creates_client_with_correctly_implemented_async_method(tmp_path):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        async_client=True,
     )
     query_str = """
     query CustomQuery($id: ID!, $param: String) {
@@ -324,7 +327,10 @@ def test_generate_with_enum_as_query_argument_generates_client_with_correct_meth
 ):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        async_client=True,
     )
     query_str = """
     query CustomQuery($val: CustomEnum!) {
