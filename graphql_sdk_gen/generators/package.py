@@ -217,7 +217,9 @@ class PackageGenerator:
             level=1,
         )
         target_base_client_path = self.package_path / self.base_client_file_path.name
-        code = self._proccess_generated_code(self.base_client_file_path.read_text())
+        code = self._proccess_generated_code(
+            self.base_client_file_path.read_text("utf-8")
+        )
         target_base_client_path.write_text(code)
         self.generated_files.append(target_base_client_path.name)
 
