@@ -364,15 +364,15 @@ from .base_model import BaseModel
 
 
 class CreateUser(BaseModel):
-    user_create: Optional["CreateUserUser"] = Field(alias="userCreate")
+    user_create: Optional["CreateUserUserCreate"] = Field(alias="userCreate")
 
 
-class CreateUserUser(BaseModel):
+class CreateUserUserCreate(BaseModel):
     id: str
 
 
 CreateUser.update_forward_refs()
-CreateUserUser.update_forward_refs()
+CreateUserUserCreate.update_forward_refs()
 ```
 
 ```py
@@ -386,24 +386,24 @@ from .base_model import BaseModel
 
 
 class ListAllUsers(BaseModel):
-    users: list["ListAllUsersUser"]
+    users: list["ListAllUsersUsers"]
 
 
-class ListAllUsersUser(BaseModel):
+class ListAllUsersUsers(BaseModel):
     id: str
     first_name: Optional[str] = Field(alias="firstName")
     last_name: Optional[str] = Field(alias="lastName")
     email: str
-    location: Optional["ListAllUsersLocation"]
+    location: Optional["ListAllUsersUsersLocation"]
 
 
-class ListAllUsersLocation(BaseModel):
+class ListAllUsersUsersLocation(BaseModel):
     country: Optional[str]
 
 
 ListAllUsers.update_forward_refs()
-ListAllUsersUser.update_forward_refs()
-ListAllUsersLocation.update_forward_refs()
+ListAllUsersUsers.update_forward_refs()
+ListAllUsersUsersLocation.update_forward_refs()
 ```
 
 ```py
@@ -418,19 +418,19 @@ from .enums import Color
 
 
 class ListUsersByCountry(BaseModel):
-    users: list["ListUsersByCountryUser"]
+    users: list["ListUsersByCountryUsers"]
 
 
-class ListUsersByCountryUser(BaseModel):
+class ListUsersByCountryUsers(BaseModel):
     id: str
     email: str
     first_name: Optional[str] = Field(alias="firstName")
     last_name: Optional[str] = Field(alias="lastName")
-    favourite_color: Optional["Color"] = Field(alias="favouriteColor")
+    favourite_color: Optional[Color] = Field(alias="favouriteColor")
 
 
 ListUsersByCountry.update_forward_refs()
-ListUsersByCountryUser.update_forward_refs()
+ListUsersByCountryUsers.update_forward_refs()
 ```
 
 ### Init file
@@ -443,7 +443,7 @@ Generated init file contains reimports and list of all generated classes.
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel
 from .client import Client
-from .create_user import CreateUser, CreateUserUser
+from .create_user import CreateUser, CreateUserUserCreate
 from .enums import Color
 from .input_types import (
     LocationInput,
@@ -451,8 +451,8 @@ from .input_types import (
     UserCreateInput,
     UserPreferencesInput,
 )
-from .list_all_users import ListAllUsers, ListAllUsersLocation, ListAllUsersUser
-from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUser
+from .list_all_users import ListAllUsers, ListAllUsersUsers, ListAllUsersUsersLocation
+from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUsers
 from .schema_types import Location, User
 
 __all__ = [
@@ -461,12 +461,12 @@ __all__ = [
     "Client",
     "Color",
     "CreateUser",
-    "CreateUserUser",
+    "CreateUserUserCreate",
     "ListAllUsers",
-    "ListAllUsersLocation",
-    "ListAllUsersUser",
+    "ListAllUsersUsers",
+    "ListAllUsersUsersLocation",
     "ListUsersByCountry",
-    "ListUsersByCountryUser",
+    "ListUsersByCountryUsers",
     "Location",
     "LocationInput",
     "NotificationsPreferencesInput",
