@@ -15,7 +15,7 @@ from graphql import (
 Annotation = Union[ast.Name, ast.Subscript]
 AnnotationSlice = Union[Annotation, ast.Tuple]
 
-GraphQLFieldType = Union[
+CodegenFieldType = Union[
     GraphQLEnumType,
     GraphQLInputObjectType,
     GraphQLInterfaceType,

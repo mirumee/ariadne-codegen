@@ -1,17 +1,19 @@
 import ast
-from itertools import chain
-from typing import Optional, Union, cast
+from typing import Optional, cast
 
 from graphql import (
     FieldNode,
     FragmentDefinitionNode,
     FragmentSpreadNode,
+    GraphQLEnumType,
     GraphQLField,
+    GraphQLNonNull,
+    GraphQLObjectType,
+    GraphQLScalarType,
     GraphQLSchema,
     InlineFragmentNode,
     NameNode,
     OperationDefinitionNode,
-    OperationType,
     SelectionNode,
     SelectionSetNode,
     print_ast,
@@ -26,13 +28,9 @@ from .codegen import (
     generate_import_from,
     generate_method_call,
     generate_module,
-    generate_name,
-    generate_subscript,
-    generate_tuple,
-    generate_typename_field_definition,
-    parse_field_type,
 )
 from .constants import (
+    ANY,
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
     OPTIONAL,
@@ -42,9 +40,9 @@ from .constants import (
     UNION,
     UPDATE_FORWARD_REFS_METHOD,
 )
-from .schema_types import ClassType
-from .types import Annotation, AnnotationSlice, GraphQLFieldType
-from .utils import str_to_snake_case
+from .fields import FieldNames, parse_operation_field_type
+from .types import CodegenFieldType
+from .utils import str_to_pascal_case, str_to_snake_case
 
 
 class ResultTypesGenerator:
@@ -52,21 +50,15 @@ class ResultTypesGenerator:
         self,
         schema: GraphQLSchema,
         operation_definition: OperationDefinitionNode,
-        schema_fields_implementations: dict[str, dict[str, ast.AnnAssign]],
-        class_types: dict[str, ClassType],
         enums_module_name: str,
         fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
         convert_to_snake_case: bool = True,
     ) -> None:
         self.schema = schema
-        self.schema_fields_implementations = schema_fields_implementations
-        self.class_types = class_types
-
         self.operation_definition = operation_definition
         if not self.operation_definition.name:
             raise NotSupported("Operations without name are not supported.")
-        self.operation_name = self.operation_definition.name.value
 
         self.enums_module_name = enums_module_name
         self.fragments_definitions = (
@@ -75,18 +67,21 @@ class ResultTypesGenerator:
         self.convert_to_snake_case = convert_to_snake_case
 
         self._imports: list[ast.ImportFrom] = [
-            generate_import_from([OPTIONAL, UNION], TYPING_MODULE),
+            generate_import_from([OPTIONAL, UNION, ANY], TYPING_MODULE),
             generate_import_from([FIELD_CLASS], PYDANTIC_MODULE),
             base_model_import
             or generate_import_from([BASE_MODEL_CLASS_NAME], PYDANTIC_MODULE),
         ]
-
         self._public_names: list[str] = []
         self._class_defs: list[ast.ClassDef] = []
         self._used_enums: list[str] = []
         self._used_fragments_names: set[str] = set()
 
-        self._parse_operation_definition()
+        self._class_defs = self._parse_type_definition(
+            class_name=str_to_pascal_case(self.operation_definition.name.value),
+            type_name=self.operation_definition.operation.value.capitalize(),
+            selection_set=self.operation_definition.selection_set,
+        )
 
     def generate(self) -> ast.Module:
         if self._used_enums:
@@ -122,32 +117,46 @@ class ResultTypesGenerator:
     def get_generated_public_names(self) -> list[str]:
         return self._public_names
 
-    def _parse_operation_definition(self):
-        class_def = generate_class_def(self.operation_name, [BASE_MODEL_CLASS_NAME])
+    def _parse_type_definition(
+        self,
+        class_name: str,
+        type_name: str,
+        selection_set: SelectionSetNode,
+        add_typename: bool = False,
+    ) -> list[ast.ClassDef]:
+        class_def = generate_class_def(class_name, [BASE_MODEL_CLASS_NAME])
+        if class_def.name in self._public_names:
+            return []
         self._public_names.append(class_def.name)
 
         extra_classes = []
+        resolved_selection_set = self._resolve_selection_set(selection_set, type_name)
+        if add_typename:
+            (
+                resolved_selection_set,
+                selection_set.selections,
+            ) = self._add_typename_field_to_selections(
+                resolved_selection_set, selection_set
+            )
         for lineno, field in enumerate(
-            self._resolve_selection_set(self.operation_definition.selection_set),
+            resolved_selection_set,
             start=1,
         ):
             org_name = field.name.value
             name = self._process_field_name(org_name)
-            schema_field = self._get_field_from_schema(field.name.value)
+            field_definition = self._get_field_from_schema(type_name, org_name)
+            annotation, field_types_names = parse_operation_field_type(
+                cast(CodegenFieldType, field_definition.type),
+                class_name=class_name + str_to_pascal_case(name),
+            )
+
             field_implementation = generate_ann_assign(
                 target=name,
-                annotation=parse_field_type(cast(GraphQLFieldType, schema_field.type)),
+                annotation=annotation,
                 lineno=lineno,
             )
             if name != org_name:
                 field_implementation.value = generate_field_with_alias(org_name)
-
-            field_types_names = self._get_field_types_names(
-                cast(Annotation, field_implementation.annotation)
-            )
-            field_implementation.annotation = self._procces_annotation(
-                cast(Annotation, field_implementation.annotation), field_types_names
-            )
 
             class_def.body.append(field_implementation)
 
@@ -156,9 +165,9 @@ class ResultTypesGenerator:
                     field.selection_set, field_types_names
                 )
             )
+            self._save_used_enums(field_types_names)
 
-        self._class_defs.append(class_def)
-        self._class_defs.extend(extra_classes)
+        return [class_def] + extra_classes
 
     def _resolve_selection_set(
         self, selection_set: SelectionSetNode, root_type: str = ""
@@ -182,171 +191,6 @@ class ResultTypesGenerator:
                     )
         return fields
 
-    def _process_field_name(self, name: str) -> str:
-        if self.convert_to_snake_case:
-            return str_to_snake_case(name)
-        return name
-
-    def _get_field_from_schema(self, name: str) -> GraphQLField:
-        if (
-            self.operation_definition.operation == OperationType.QUERY
-            and self.schema.query_type
-            and (field := self.schema.query_type.fields.get(name))
-        ):
-            return field
-        if (
-            self.operation_definition.operation == OperationType.MUTATION
-            and self.schema.mutation_type
-            and (field := self.schema.mutation_type.fields.get(name))
-        ):
-            return field
-        raise ParsingError(f"Definition for {name} not found in schema.")
-
-    def _get_field_types_names(
-        self, annotation: Union[Annotation, AnnotationSlice]
-    ) -> list[str]:
-        if isinstance(annotation, ast.Name):
-            return [annotation.id.replace('"', "")]
-
-        if isinstance(annotation, ast.Subscript):
-            if isinstance(annotation.slice, ast.Tuple):
-                return list(
-                    chain(
-                        *[
-                            self._get_field_types_names(cast(AnnotationSlice, elt))
-                            for elt in annotation.slice.elts
-                        ]
-                    )
-                )
-            return self._get_field_types_names(cast(AnnotationSlice, annotation.slice))
-        return []
-
-    def _procces_annotation(
-        self, annotation: Annotation, field_type_names: list[str]
-    ) -> Annotation:
-        if any(
-            self.class_types.get(field_type_name)
-            in (
-                ClassType.OBJECT,
-                ClassType.INTERFACE,
-            )
-            for field_type_name in field_type_names
-        ):
-            return self._add_prefix_to_annotation(annotation, self.operation_name)
-
-        for field_type_name in field_type_names:
-            if self.class_types.get(field_type_name) == ClassType.ENUM:
-                self._used_enums.append(field_type_name)
-
-        return annotation
-
-    def _add_prefix_to_annotation(
-        self, annotation: AnnotationSlice, prefix: str
-    ) -> Annotation:
-        if isinstance(annotation, ast.Name):
-            if annotation.id.startswith('"') and annotation.id.endswith('"'):
-                return generate_name(
-                    '"' + prefix + annotation.id.replace('"', "") + '"'
-                )
-
-        if isinstance(annotation, ast.Subscript):
-            if isinstance(annotation.slice, ast.Tuple):
-                return generate_subscript(
-                    value=annotation.value,
-                    slice_=generate_tuple(
-                        [
-                            self._add_prefix_to_annotation(
-                                cast(AnnotationSlice, elt), prefix
-                            )
-                            for elt in annotation.slice.elts
-                        ]
-                    ),
-                )
-
-            return generate_subscript(
-                value=annotation.value,
-                slice_=self._add_prefix_to_annotation(
-                    cast(AnnotationSlice, annotation.slice), prefix
-                ),
-            )
-
-        raise ParsingError("Invalid annotation type.")
-
-    def _parse_field_selection_set_types(
-        self, selection_set: Optional[SelectionSetNode], field_types_names: list[str]
-    ) -> list[ast.ClassDef]:
-        if selection_set:
-            generated_classes = []
-            add_typename = len(field_types_names) > 1
-            for field_type_name in field_types_names:
-                generated_classes.extend(
-                    self._generate_classes_for_type(
-                        field_type_name, selection_set, add_typename
-                    )
-                )
-            return generated_classes
-        return []
-
-    def _generate_classes_for_type(
-        self,
-        type_name: str,
-        selection_set: SelectionSetNode,
-        add_typename: bool = False,
-    ) -> list[ast.ClassDef]:
-        class_def = generate_class_def(
-            self.operation_name + type_name, [BASE_MODEL_CLASS_NAME]
-        )
-        if class_def.name in self._public_names:
-            return []
-        self._public_names.append(class_def.name)
-
-        extra_classes = []
-        resolved_selection_set = self._resolve_selection_set(selection_set, type_name)
-        if add_typename:
-            (
-                resolved_selection_set,
-                selection_set.selections,
-            ) = self._add_typename_field_to_selections(
-                resolved_selection_set, selection_set
-            )
-
-        for lineno, field in enumerate(resolved_selection_set, start=1):
-            field_name = field.name.value
-            schema_field_implementation = self._get_schema_field_implementation(
-                type_name, field_name
-            )
-
-            field_type_names = self._get_field_types_names(
-                cast(Annotation, schema_field_implementation.annotation)
-            )
-            field_implementation = generate_ann_assign(
-                target=schema_field_implementation.target,
-                annotation=self._procces_annotation(
-                    cast(Annotation, schema_field_implementation.annotation),
-                    field_type_names,
-                ),
-                value=schema_field_implementation.value,
-                lineno=lineno,
-            )
-            class_def.body.append(field_implementation)
-
-            extra_classes.extend(
-                self._parse_field_selection_set_types(
-                    field.selection_set, field_type_names
-                )
-            )
-
-        return [class_def] + extra_classes
-
-    def _get_schema_field_implementation(
-        self, type_name: str, field_name: str
-    ) -> ast.AnnAssign:
-        if field_name == TYPENAME_FIELD_NAME:
-            return generate_typename_field_definition()
-        return cast(
-            ast.AnnAssign, self.schema_fields_implementations[type_name][field_name]
-        )
-
     def _add_typename_field_to_selections(
         self, resolved_fields: list[FieldNode], selection_set: SelectionSetNode
     ) -> tuple[list[FieldNode], tuple[SelectionNode, ...]]:
@@ -358,3 +202,51 @@ class ResultTypesGenerator:
                 *selection_set.selections,
             )
         return resolved_fields, selection_set.selections
+
+    def _process_field_name(self, name: str) -> str:
+        if self.convert_to_snake_case:
+            if name == TYPENAME_FIELD_NAME:
+                return "__typename__"
+            return str_to_snake_case(name)
+        return name
+
+    def _get_field_from_schema(self, type_name: str, field_name: str) -> GraphQLField:
+        try:
+            return cast(GraphQLObjectType, self.schema.type_map[type_name]).fields[
+                field_name
+            ]
+        except KeyError as exc:
+            if field_name == TYPENAME_FIELD_NAME:
+                return GraphQLField(
+                    type_=GraphQLNonNull(type_=GraphQLScalarType(name="String"))
+                )
+            raise ParsingError(
+                f"Field {field_name} not found in type {type_name}."
+            ) from exc
+
+    def _parse_field_selection_set_types(
+        self,
+        selection_set: Optional[SelectionSetNode],
+        field_types_names: list[FieldNames],
+    ) -> list[ast.ClassDef]:
+        if selection_set:
+            generated_classes = []
+            add_typename = len(field_types_names) > 1
+            for field_type_names in field_types_names:
+                generated_classes.extend(
+                    self._parse_type_definition(
+                        class_name=field_type_names.class_name,
+                        type_name=field_type_names.type_name,
+                        selection_set=selection_set,
+                        add_typename=add_typename,
+                    )
+                )
+            return generated_classes
+        return []
+
+    def _save_used_enums(self, field_types_names: list[FieldNames]):
+        for field_type_names in field_types_names:
+            if isinstance(
+                self.schema.type_map.get(field_type_names.type_name), GraphQLEnumType
+            ):
+                self._used_enums.append(field_type_names.type_name)
