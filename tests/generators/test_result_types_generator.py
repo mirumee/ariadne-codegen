@@ -737,7 +737,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
 def test_generate_adds_base_class_to_generated_type_provided_by_with_mixin_directive():
     query_str = f"""
     query CustomQuery {{
-        camelCaseQuery @{WITH_MIXIN_NAME} (from: ".abcd", class_name: "MixinClass") {{
+        camelCaseQuery @{WITH_MIXIN_NAME}(from: ".abcd", className: "MixinClass") {{
             id
         }}
     }}
@@ -765,10 +765,10 @@ def test_generate_adds_base_class_to_generated_type_provided_by_with_mixin_direc
 def test_generate_handles_multiple_with_mixin_directives():
     query_str = f"""
     query CustomQuery {{
-        camelCaseQuery @{WITH_MIXIN_NAME}(from: ".abcd", class_name: "MixinAbcd") {{
+        camelCaseQuery @{WITH_MIXIN_NAME}(from: ".abcd", className: "MixinAbcd") {{
             id
         }}
-        query2 @{WITH_MIXIN_NAME}(from: ".xyz", class_name: "MixinXyz") {{
+        query2 @{WITH_MIXIN_NAME}(from: ".xyz", className: "MixinXyz") {{
             id
         }}
     }}
@@ -811,8 +811,8 @@ def test_generate_handles_multiple_with_mixin_directives_on_one_field():
     query_str = f"""
     query CustomQuery {{
         camelCaseQuery
-            @{WITH_MIXIN_NAME}(from: ".abcd", class_name: "MixinAbcd")
-            @{WITH_MIXIN_NAME}(from: ".xyz", class_name: "MixinXyz") {{
+            @{WITH_MIXIN_NAME}(from: ".abcd", className: "MixinAbcd")
+            @{WITH_MIXIN_NAME}(from: ".xyz", className: "MixinXyz") {{
             id
         }}
     }}
@@ -849,9 +849,9 @@ def test_generate_handles_multiple_with_mixin_directives_on_one_field():
 @pytest.mark.parametrize(
     "arguments",
     [
-        'from: ".abcd", class_name: 1',
-        'from: 1, class_name: "ClassName"',
-        'class_name: "ClassName"',
+        'from: ".abcd", className: 1',
+        'from: 1, className: "ClassName"',
+        'className: "ClassName"',
         'from: ".xyz"',
     ],
 )

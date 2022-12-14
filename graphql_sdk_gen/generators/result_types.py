@@ -244,10 +244,10 @@ class ResultTypesGenerator:
             arguments = self._parse_mixin_arguments(directive)
             self._imports.append(
                 generate_import_from(
-                    names=[arguments["class_name"]], from_=arguments["from"]
+                    names=[arguments["className"]], from_=arguments["from"]
                 )
             )
-            extra_base_classes.append(arguments["class_name"])
+            extra_base_classes.append(arguments["className"])
         return extra_base_classes
 
     def _parse_mixin_arguments(self, directive: DirectiveNode):
@@ -264,8 +264,8 @@ class ResultTypesGenerator:
                 raise ParsingError(msg)
             arguments[arg.name.value] = arg.value.value
 
-        if "from" not in arguments or "class_name" not in arguments:
-            raise ParsingError("Required arguments (from, class_name) not found.")
+        if "from" not in arguments or "className" not in arguments:
+            raise ParsingError("Required arguments (from, className) not found.")
         return arguments
 
     def _parse_field_selection_set_types(
