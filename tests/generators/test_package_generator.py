@@ -168,16 +168,16 @@ def test_generate_creates_file_with_query_types(tmp_path):
     """
     expected_query_types = """
     class CustomQuery(BaseModel):
-        query1: Optional["CustomQueryCustomType"]
+        query1: Optional["CustomQueryQuery1"]
 
 
-    class CustomQueryCustomType(BaseModel):
+    class CustomQueryQuery1(BaseModel):
         field1: Optional[list[Optional[str]]]
-        field2: Optional["CustomQueryCustomType2"]
-        field3: "CustomEnum"
+        field2: Optional["CustomQueryQuery1Field2"]
+        field3: CustomEnum
 
 
-    class CustomQueryCustomType2(BaseModel):
+    class CustomQueryQuery1Field2(BaseModel):
         fieldb: Optional[int]
     """
 
@@ -467,16 +467,16 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
     """
     expected_types = """
     class CustomQuery(BaseModel):
-        query1: Optional["CustomQueryCustomType"]
+        query1: Optional["CustomQueryQuery1"]
 
 
-    class CustomQueryCustomType(BaseModel):
+    class CustomQueryQuery1(BaseModel):
         field1: Optional[list[Optional[str]]]
-        field2: Optional["CustomQueryCustomType2"]
-        field3: "CustomEnum"
+        field2: Optional["CustomQueryQuery1Field2"]
+        field3: CustomEnum
 
 
-    class CustomQueryCustomType2(BaseModel):
+    class CustomQueryQuery1Field2(BaseModel):
         fieldb: Optional[int]
     """
     query_def, fragment_def = parse(query_str).definitions

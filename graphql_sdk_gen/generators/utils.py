@@ -17,8 +17,14 @@ def ast_to_str(ast_obj: ast.AST, remove_unused_imports: bool = True) -> str:
 
 
 def str_to_snake_case(name: str) -> str:
+    """Converts camelCase or PascalCase string into snake_case."""
     result = "".join([f"_{c.lower()}" if c.isupper() else c for c in name])
     return result[1:] if result.startswith("_") else result
+
+
+def str_to_pascal_case(name: str) -> str:
+    """Converts snake_case string into PascalCase."""
+    return "".join(n[:1].upper() + n[1:] for n in name.split("_"))
 
 
 def convert_to_multiline_string(source: str, variable_indent_size=8) -> str:

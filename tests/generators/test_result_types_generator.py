@@ -14,7 +14,6 @@ from graphql_sdk_gen.generators.constants import (
     LIST,
     OPTIONAL,
     UPDATE_FORWARD_REFS_METHOD,
-    ClassType,
 )
 from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
 
@@ -68,69 +67,6 @@ enum CustomEnum {
 union UnionType = CustomType1 | CustomType2
 """
 
-CLASS_TYPES = {
-    "CustomType": ClassType.OBJECT,
-    "CustomType1": ClassType.OBJECT,
-    "CustomType2": ClassType.OBJECT,
-    "CustomType3": ClassType.OBJECT,
-    "CustomEnum": ClassType.ENUM,
-}
-
-FIELDS_IMPLEMENTATIONS: dict[str, dict[str, ast.AnnAssign]] = {
-    "CustomType": {
-        "id": ast.AnnAssign(
-            target=ast.Name(id="id"),
-            annotation=ast.Name(id="str"),
-            simple=1,
-        ),
-        "field1": ast.AnnAssign(
-            target=ast.Name(id="field1"),
-            annotation=ast.Name(id='"CustomType1"'),
-            simple=1,
-        ),
-        "field2": ast.AnnAssign(
-            target=ast.Name(id="field2"),
-            annotation=ast.Subscript(
-                value=ast.Name(id=OPTIONAL), slice=ast.Name(id='"CustomType2"')
-            ),
-            simple=1,
-        ),
-        "field3": ast.AnnAssign(
-            target=ast.Name(id="field3"),
-            annotation=ast.Name(id='"CustomEnum"'),
-            simple=1,
-        ),
-    },
-    "CustomType1": {
-        "fielda": ast.AnnAssign(
-            target=ast.Name(id="fielda"),
-            annotation=ast.Name(id="int"),
-            simple=1,
-        )
-    },
-    "CustomType2": {
-        "fieldb": ast.AnnAssign(
-            target=ast.Name(id="fieldb"),
-            annotation=ast.Subscript(
-                value=ast.Name(id=OPTIONAL), slice=ast.Name(id="int")
-            ),
-            simple=1,
-        )
-    },
-    "CustomType3": {
-        "field1": ast.AnnAssign(
-            target=ast.Name(id="field1"),
-            annotation=ast.Name(id='"CustomType1"'),
-            simple=1,
-        ),
-        "field2": ast.AnnAssign(
-            target=ast.Name(id="field1"),
-            annotation=ast.Name(id='"CustomType1"'),
-            simple=1,
-        ),
-    },
-}
-
 
 @pytest.mark.parametrize(
     "query_str, expected_class_defs",
@@ -156,7 +92,7 @@ FIELDS_IMPLEMENTATIONS: dict[str, dict[str, ast.AnnAssign]] = {
                                 value=ast.Name(id=OPTIONAL),
                                 slice=ast.Subscript(
                                     value=ast.Name(id=LIST),
-                                    slice=ast.Name(id='"CustomQueryCustomType"'),
+                                    slice=ast.Name(id='"CustomQueryQuery2"'),
                                 ),
                             ),
                             simple=1,
@@ -164,7 +100,7 @@ FIELDS_IMPLEMENTATIONS: dict[str, dict[str, ast.AnnAssign]] = {
                     ],
                 ),
                 ast.ClassDef(
-                    name="CustomQueryCustomType",
+                    name="CustomQueryQuery2",
                     bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     decorator_list=[],
                     keywords=[],
@@ -202,7 +138,7 @@ FIELDS_IMPLEMENTATIONS: dict[str, dict[str, ast.AnnAssign]] = {
                             target=ast.Name(id="query1"),
                             annotation=ast.Subscript(
                                 value=ast.Name(id=OPTIONAL),
-                                slice=ast.Name(id='"CustomQueryCustomType"'),
+                                slice=ast.Name(id='"CustomQueryQuery1"'),
                             ),
                             simple=1,
                         )
@@ -210,33 +146,33 @@ FIELDS_IMPLEMENTATIONS: dict[str, dict[str, ast.AnnAssign]] = {
                     decorator_list=[],
                 ),
                 ast.ClassDef(
-                    name="CustomQueryCustomType",
+                    name="CustomQueryQuery1",
                     bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
                     body=[
                         ast.AnnAssign(
                             target=ast.Name(id="field1"),
-                            annotation=ast.Name(id='"CustomQueryCustomType1"'),
+                            annotation=ast.Name(id='"CustomQueryQuery1Field1"'),
                             simple=1,
                         ),
                         ast.AnnAssign(
                             target=ast.Name(id="field2"),
                             annotation=ast.Subscript(
                                 value=ast.Name(id=OPTIONAL),
-                                slice=ast.Name(id='"CustomQueryCustomType2"'),
+                                slice=ast.Name(id='"CustomQueryQuery1Field2"'),
                             ),
                             simple=1,
                         ),
                         ast.AnnAssign(
                             target=ast.Name(id="field3"),
-                            annotation=ast.Name(id='"CustomEnum"'),
+                            annotation=ast.Name(id="CustomEnum"),
                             simple=1,
                         ),
                     ],
                     decorator_list=[],
                 ),
                 ast.ClassDef(
-                    name="CustomQueryCustomType1",
+                    name="CustomQueryQuery1Field1",
                     bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
                     body=[
@@ -249,7 +185,7 @@ FIELDS_IMPLEMENTATIONS: dict[str, dict[str, ast.AnnAssign]] = {
                     decorator_list=[],
                 ),
                 ast.ClassDef(
-                    name="CustomQueryCustomType2",
+                    name="CustomQueryQuery1Field2",
                     bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
                     body=[
@@ -276,8 +212,6 @@ def test_generate_returns_module_with_generated_result_types_from_query(
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
 
@@ -311,13 +245,13 @@ def test_generate_returns_module_with_types_generated_from_mutation():
             body=[
                 ast.AnnAssign(
                     target=ast.Name(id="mutation1"),
-                    annotation=ast.Name(id='"CustomMutationCustomType"'),
+                    annotation=ast.Name(id='"CustomMutationMutation1"'),
                     simple=1,
                 )
             ],
         ),
         ast.ClassDef(
-            name="CustomMutationCustomType",
+            name="CustomMutationMutation1",
             bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             decorator_list=[],
             keywords=[],
@@ -333,8 +267,6 @@ def test_generate_returns_module_with_types_generated_from_mutation():
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
 
@@ -348,7 +280,7 @@ def test_generate_returns_module_with_types_generated_from_mutation():
     }
 
 
-def test_generate_returns_module_with_not_duplicated_types_definitions():
+def test_generate_returns_module_with_class_per_every_field():
     query_str = """
     query CustomQuery {
         query3 {
@@ -366,14 +298,13 @@ def test_generate_returns_module_with_not_duplicated_types_definitions():
     )
     expected_class_names = [
         "CustomQuery",
-        "CustomQueryCustomType3",
-        "CustomQueryCustomType1",
+        "CustomQueryQuery3",
+        "CustomQueryQuery3Field1",
+        "CustomQueryQuery3Field2",
     ]
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
 
@@ -398,8 +329,6 @@ def test_generate_returns_module_with_enum_imports():
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
 
@@ -431,9 +360,9 @@ def test_generate_returns_module_with_update_forward_refs_calls():
     )
     expected_class_names = [
         "CustomQuery",
-        "CustomQueryCustomType",
-        "CustomQueryCustomType1",
-        "CustomQueryCustomType2",
+        "CustomQueryQuery1",
+        "CustomQueryQuery1Field1",
+        "CustomQueryQuery1Field2",
     ]
     expected_method_calls = [
         ast.Expr(
@@ -450,8 +379,6 @@ def test_generate_returns_module_with_update_forward_refs_calls():
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
 
@@ -484,7 +411,7 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
         parse(query_str).definitions,
     )
     expected_class_def = ast.ClassDef(
-        name="CustomQueryCustomType",
+        name="CustomQueryQuery2",
         bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
         keywords=[],
         body=[
@@ -493,14 +420,14 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
             ),
             ast.AnnAssign(
                 target=ast.Name(id="field1"),
-                annotation=ast.Name(id='"CustomQueryCustomType1"'),
+                annotation=ast.Name(id='"CustomQueryQuery2Field1"'),
                 simple=1,
             ),
             ast.AnnAssign(
                 target=ast.Name(id="field2"),
                 annotation=ast.Subscript(
                     value=ast.Name(id="Optional"),
-                    slice=ast.Name(id='"CustomQueryCustomType2"'),
+                    slice=ast.Name(id='"CustomQueryQuery2Field2"'),
                 ),
                 simple=1,
             ),
@@ -510,8 +437,6 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
         fragments_definitions={"TestFragment": fragment_def},
     )
@@ -521,7 +446,7 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
     class_defs = filter_class_defs(module)
     assert len(class_defs) == 4
     custom_type_class_def = class_defs[1]
-    assert custom_type_class_def.name == "CustomQueryCustomType"
+    assert custom_type_class_def.name == "CustomQueryQuery2"
     assert compare_ast(custom_type_class_def, expected_class_def)
 
 
@@ -541,8 +466,6 @@ def test_generate_returns_module_with_handled_typename_field():
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
     expected_fields_implementations = [
@@ -570,7 +493,7 @@ def test_generate_returns_module_with_handled_typename_field():
     class_defs = filter_class_defs(module)
     assert len(class_defs) == 2
     assert class_defs[0].name == "CustomQuery"
-    assert class_defs[1].name == "CustomQueryCustomType"
+    assert class_defs[1].name == "CustomQueryQuery2"
     assert compare_ast(class_defs[1].body, expected_fields_implementations)
 
 
@@ -601,8 +524,8 @@ def test_generate_returns_module_with_classes_for_union_fields():
                         value=ast.Name(id="Union"),
                         slice=ast.Tuple(
                             elts=[
-                                ast.Name(id='"CustomQueryCustomType1"'),
-                                ast.Name(id='"CustomQueryCustomType2"'),
+                                ast.Name(id='"CustomQueryQuery4CustomType1"'),
+                                ast.Name(id='"CustomQueryQuery4CustomType2"'),
                             ],
                         ),
                     ),
@@ -612,7 +535,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
             decorator_list=[],
         ),
         ast.ClassDef(
-            name="CustomQueryCustomType1",
+            name="CustomQueryQuery4CustomType1",
             bases=[ast.Name(id="BaseModel")],
             keywords=[],
             body=[
@@ -639,7 +562,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
             decorator_list=[],
         ),
         ast.ClassDef(
-            name="CustomQueryCustomType2",
+            name="CustomQueryQuery4CustomType2",
             bases=[ast.Name(id="BaseModel")],
             keywords=[],
             body=[
@@ -675,8 +598,6 @@ def test_generate_returns_module_with_classes_for_union_fields():
         operation_definition=cast(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
 
@@ -696,7 +617,7 @@ def test_generate_returns_module_with_query_names_converted_to_snake_case():
     """
     expected_field_implementation = ast.AnnAssign(
         target=ast.Name(id="camel_case_query"),
-        annotation=ast.Name(id='"CustomQueryCustomType"'),
+        annotation=ast.Name(id='"CustomQueryCamelCaseQuery"'),
         value=ast.Call(
             func=ast.Name(id="Field"),
             args=[],
@@ -712,8 +633,6 @@ def test_generate_returns_module_with_query_names_converted_to_snake_case():
         operation_definition=cast(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
 
@@ -724,6 +643,87 @@ def test_generate_returns_module_with_query_names_converted_to_snake_case():
     assert len(class_def.body) == 1
     field_implementation = class_def.body[0]
     assert compare_ast(field_implementation, expected_field_implementation)
+
+
+def test_generate_returns_module_with_class_for_every_appearance_of_type():
+    query_str = """
+    query CustomQuery($id: ID!) {
+        query1(id: $id){
+            field3
+        }
+        camelCaseQuery {
+            id
+        }
+    }
+    """
+    expected_class_defs = [
+        ast.ClassDef(
+            name="CustomQuery",
+            bases=[ast.Name(id="BaseModel")],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="query1"),
+                    annotation=ast.Subscript(
+                        value=ast.Name(id="Optional"),
+                        slice=ast.Name(id='"CustomQueryQuery1"'),
+                    ),
+                    simple=1,
+                ),
+                ast.AnnAssign(
+                    target=ast.Name(id="camel_case_query"),
+                    annotation=ast.Name(id='"CustomQueryCamelCaseQuery"'),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg="alias", value=ast.Constant(value="camelCaseQuery")
+                            )
+                        ],
+                    ),
+                    simple=1,
+                ),
+            ],
+            decorator_list=[],
+        ),
+        ast.ClassDef(
+            name="CustomQueryQuery1",
+            bases=[ast.Name(id="BaseModel")],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="field3"),
+                    annotation=ast.Name(id="CustomEnum"),
+                    simple=1,
+                )
+            ],
+            decorator_list=[],
+        ),
+        ast.ClassDef(
+            name="CustomQueryCamelCaseQuery",
+            bases=[ast.Name(id="BaseModel")],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="id"), annotation=ast.Name(id="str"), simple=1
+                )
+            ],
+            decorator_list=[],
+        ),
+    ]
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    class_defs = filter_class_defs(module)
+    assert compare_ast(class_defs, expected_class_defs)
 
 
 def test_get_operation_as_str_returns_str_with_added_typename():
@@ -761,8 +761,6 @@ def test_get_operation_as_str_returns_str_with_added_typename():
         operation_definition=cast(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
     )
 
@@ -819,8 +817,6 @@ def test_get_operation_as_str_returns_str_with_used_fragments():
         operation_definition=cast(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
-        schema_fields_implementations=FIELDS_IMPLEMENTATIONS,
-        class_types=CLASS_TYPES,
         enums_module_name="enums",
         fragments_definitions={
             "TestFragment1": cast(

@@ -18,7 +18,7 @@ from .constants import (
 from .init_file import InitFileGenerator
 from .result_types import ResultTypesGenerator
 from .schema_types import SchemaTypesGenerator
-from .utils import ast_to_str, str_to_snake_case
+from .utils import ast_to_str, str_to_pascal_case, str_to_snake_case
 
 
 class PackageGenerator:
@@ -267,7 +267,7 @@ class PackageGenerator:
         if not (name := definition.name):
             raise ParsingError("Query without name.")
 
-        query_name = name.value
+        return_type_name = str_to_pascal_case(name.value)
         method_name = str_to_snake_case(name.value)
         module_name = method_name
         file_name = f"{module_name}.py"
@@ -275,8 +275,6 @@ class PackageGenerator:
         query_types_generator = ResultTypesGenerator(
             schema=self.schema,
             operation_definition=definition,
-            schema_fields_implementations=self.schema_types_generator.fields,
-            class_types=self.schema_types_generator.class_types,
             enums_module_name=self.enums_module_name,
             fragments_definitions=self.fragments_definitions,
             base_model_import=self.base_model_import,
@@ -293,10 +291,10 @@ class PackageGenerator:
         )
         self.client_generator.add_method(
             name=method_name,
-            return_type=query_name,
+            return_type=return_type_name,
             arguments=arguments,
             arguments_dict=arguments_dict,
             operation_str=operation_str,
             async_=self.async_client,
         )
-        self.client_generator.add_import([query_name], module_name, 1)
+        self.client_generator.add_import([return_type_name], module_name, 1)

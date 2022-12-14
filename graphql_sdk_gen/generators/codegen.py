@@ -14,7 +14,7 @@ from graphql import (
 
 from ..exceptions import ParsingError
 from .constants import ANY, FIELD_CLASS, LIST, OPTIONAL, SIMPLE_TYPE_MAP, UNION
-from .types import Annotation, GraphQLFieldType
+from .types import Annotation, CodegenFieldType
 
 
 def generate_import_from(
@@ -182,7 +182,7 @@ def generate_return(value: Optional[ast.expr] = None) -> ast.Return:
 
 
 def parse_field_type(
-    type_: GraphQLFieldType,
+    type_: CodegenFieldType,
     nullable: bool = True,
 ) -> Union[ast.Name, ast.Subscript]:
     """Parse graphql type and return generated annotation."""
