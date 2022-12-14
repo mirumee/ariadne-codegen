@@ -9,15 +9,23 @@ from graphql import (
     parse,
 )
 
+from graphql_sdk_gen.exceptions import ParsingError
 from graphql_sdk_gen.generators.constants import (
     BASE_MODEL_CLASS_NAME,
     LIST,
     OPTIONAL,
     UPDATE_FORWARD_REFS_METHOD,
+    WITH_MIXIN_DIRECTIVE_NAME,
 )
 from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
 
-from ..utils import compare_ast, filter_class_defs, format_graphql_str, get_class_def
+from ..utils import (
+    compare_ast,
+    filter_class_defs,
+    filter_imports,
+    format_graphql_str,
+    get_class_def,
+)
 
 SCHEMA_STR = """
 schema {
@@ -724,6 +732,150 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
 
     class_defs = filter_class_defs(module)
     assert compare_ast(class_defs, expected_class_defs)
+
+
+def test_generate_adds_base_class_to_generated_type_provided_by_with_mixin_directive():
+    query_str = f"""
+    query CustomQuery {{
+        camelCaseQuery
+        @{WITH_MIXIN_DIRECTIVE_NAME} (from: ".abcd", class_name: "MixinClass") {{
+            id
+        }}
+    }}
+    """
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    class_def = get_class_def(module, 1)
+    assert class_def.name == "CustomQueryCamelCaseQuery"
+    assert [n.id for n in class_def.bases] == [BASE_MODEL_CLASS_NAME, "MixinClass"]
+    import_def = filter_imports(module)[-1]
+    assert compare_ast(
+        import_def,
+        ast.ImportFrom(module=".abcd", names=[ast.alias(name="MixinClass")], level=0),
+    )
+
+
+def test_generate_handles_multiple_with_mixin_directives():
+    query_str = f"""
+    query CustomQuery {{
+        camelCaseQuery
+            @{WITH_MIXIN_DIRECTIVE_NAME}(from: ".abcd", class_name: "MixinAbcd") {{
+            id
+        }}
+        query2 @{WITH_MIXIN_DIRECTIVE_NAME}(from: ".xyz", class_name: "MixinXyz") {{
+            id
+        }}
+    }}
+    """
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    class_def_camel_case = get_class_def(module, 1)
+    assert class_def_camel_case.name == "CustomQueryCamelCaseQuery"
+    assert [n.id for n in class_def_camel_case.bases] == [
+        BASE_MODEL_CLASS_NAME,
+        "MixinAbcd",
+    ]
+    import_def_abcd = filter_imports(module)[-2]
+    assert compare_ast(
+        import_def_abcd,
+        ast.ImportFrom(module=".abcd", names=[ast.alias(name="MixinAbcd")], level=0),
+    )
+    class_def_query2 = get_class_def(module, 2)
+    assert class_def_query2.name == "CustomQueryQuery2"
+    assert [n.id for n in class_def_query2.bases] == [
+        BASE_MODEL_CLASS_NAME,
+        "MixinXyz",
+    ]
+    import_def_xyz = filter_imports(module)[-1]
+    assert compare_ast(
+        import_def_xyz,
+        ast.ImportFrom(module=".xyz", names=[ast.alias(name="MixinXyz")], level=0),
+    )
+
+
+def test_generate_handles_multiple_with_mixin_directives_on_one_field():
+    query_str = f"""
+    query CustomQuery {{
+        camelCaseQuery
+            @{WITH_MIXIN_DIRECTIVE_NAME}(from: ".abcd", class_name: "MixinAbcd")
+            @{WITH_MIXIN_DIRECTIVE_NAME}(from: ".xyz", class_name: "MixinXyz") {{
+            id
+        }}
+    }}
+    """
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    class_def = get_class_def(module, 1)
+    assert class_def.name == "CustomQueryCamelCaseQuery"
+    assert [n.id for n in class_def.bases] == [
+        BASE_MODEL_CLASS_NAME,
+        "MixinAbcd",
+        "MixinXyz",
+    ]
+    import_def_abcd = filter_imports(module)[-2]
+    assert compare_ast(
+        import_def_abcd,
+        ast.ImportFrom(module=".abcd", names=[ast.alias(name="MixinAbcd")], level=0),
+    )
+    import_def_xyz = filter_imports(module)[-1]
+    assert compare_ast(
+        import_def_xyz,
+        ast.ImportFrom(module=".xyz", names=[ast.alias(name="MixinXyz")], level=0),
+    )
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        'from: ".abcd", class_name: 1',
+        'from: 1, class_name: "ClassName"',
+        'class_name: "ClassName"',
+        'from: ".xyz"',
+    ],
+)
+def test_generator_with_incorrect_data_passed_to_with_mixin_raises_parsing_error(
+    arguments,
+):
+    query_str = f"""
+    query CustomQuery {{
+        camelCaseQuery @{WITH_MIXIN_DIRECTIVE_NAME}({arguments}) {{
+            id
+        }}
+    }}
+    """
+
+    with pytest.raises(ParsingError):
+        ResultTypesGenerator(
+            schema=build_ast_schema(parse(SCHEMA_STR)),
+            operation_definition=cast(
+                OperationDefinitionNode, parse(query_str).definitions[0]
+            ),
+            enums_module_name="enums",
+        )
 
 
 def test_get_operation_as_str_returns_str_with_added_typename():

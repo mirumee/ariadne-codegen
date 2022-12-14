@@ -262,7 +262,7 @@ class ResultTypesGenerator:
                 raise ParsingError("Arguments passed to withMixin have to be strings.")
             arguments[arg.name.value] = arg.value.value
 
-        if "from" not in arguments and "class_name" not in arguments:
+        if "from" not in arguments or "class_name" not in arguments:
             raise ParsingError("Required arguments (from, class_name) not found.")
         return arguments
 
