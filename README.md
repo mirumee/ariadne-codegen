@@ -47,7 +47,8 @@ Optional parameters:
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `include_comments` (defaults to `True`) - a flag that specifies whether to include comments in generated files
 - `convert_to_snake_case` (defaults to `True`) - a flag that specifies whether to convert fields and arguments names to snake case
-- `async_client` (default to `True`) - a flag that specifies whether to generate client with async methods
+- `async_client` (defaults to `True`) - a flag that specifies whether to generate client with async methods
+- `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 
 
 ## Usage

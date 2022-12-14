@@ -144,6 +144,7 @@ def get_used_settings_message(settings: Settings) -> str:
         if settings.async_client
         else "Generating not async client."
     )
+    files_to_include_list = ",".join(settings.files_to_include)
     return dedent(
         f"""\
         Using schema from '{settings.schema_path}'.
@@ -159,6 +160,7 @@ def get_used_settings_message(settings: Settings) -> str:
         {comments_msg}
         {snake_case_msg}
         {async_client_msg}
+        Coping following files into package: {files_to_include_list}
         """
     )
 
