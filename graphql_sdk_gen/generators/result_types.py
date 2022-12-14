@@ -2,6 +2,7 @@ import ast
 from typing import Optional, cast
 
 from graphql import (
+    DirectiveNode,
     FieldNode,
     FragmentDefinitionNode,
     FragmentSpreadNode,
@@ -16,6 +17,7 @@ from graphql import (
     OperationDefinitionNode,
     SelectionNode,
     SelectionSetNode,
+    StringValueNode,
     print_ast,
 )
 
@@ -39,6 +41,7 @@ from .constants import (
     TYPING_MODULE,
     UNION,
     UPDATE_FORWARD_REFS_METHOD,
+    WITH_MIXIN_DIRECTIVE_NAME,
 )
 from .fields import FieldNames, parse_operation_field_type
 from .types import CodegenFieldType
@@ -123,8 +126,13 @@ class ResultTypesGenerator:
         type_name: str,
         selection_set: SelectionSetNode,
         add_typename: bool = False,
+        extra_bases: Optional[list[str]] = None,
     ) -> list[ast.ClassDef]:
-        class_def = generate_class_def(class_name, [BASE_MODEL_CLASS_NAME])
+        class_bases = [BASE_MODEL_CLASS_NAME]
+        if extra_bases:
+            class_bases.extend(extra_bases)
+        class_def = generate_class_def(class_name, class_bases)
+
         if class_def.name in self._public_names:
             return []
         self._public_names.append(class_def.name)
@@ -162,11 +170,12 @@ class ResultTypesGenerator:
 
             extra_classes.extend(
                 self._parse_field_selection_set_types(
-                    field.selection_set, field_types_names
+                    selection_set=field.selection_set,
+                    field_types_names=field_types_names,
+                    extra_bases=self._parse_with_mixin_directives(field),
                 )
             )
             self._save_used_enums(field_types_names)
-
         return [class_def] + extra_classes
 
     def _resolve_selection_set(
@@ -224,10 +233,44 @@ class ResultTypesGenerator:
                 f"Field {field_name} not found in type {type_name}."
             ) from exc
 
+    def _parse_with_mixin_directives(self, field: FieldNode) -> list[str]:
+        if not field.directives:
+            return []
+        directives = [
+            d
+            for d in field.directives
+            if d.name and d.name.value == WITH_MIXIN_DIRECTIVE_NAME
+        ]
+        extra_base_classes: list[str] = []
+        for directive in directives:
+            arguments = self._parse_mixin_arguments(directive)
+            self._imports.append(
+                generate_import_from(
+                    names=[arguments["class_name"]], from_=arguments["from"]
+                )
+            )
+            extra_base_classes.append(arguments["class_name"])
+        return extra_base_classes
+
+    def _parse_mixin_arguments(self, directive: DirectiveNode):
+        arguments = {}
+        for arg in directive.arguments:
+            if not (
+                isinstance(arg.name, NameNode)
+                and isinstance(arg.value, StringValueNode)
+            ):
+                raise ParsingError("Arguments passed to withMixin have to be strings.")
+            arguments[arg.name.value] = arg.value.value
+
+        if "from" not in arguments and "class_name" not in arguments:
+            raise ParsingError("Required arguments (from, class_name) not found.")
+        return arguments
+
     def _parse_field_selection_set_types(
         self,
         selection_set: Optional[SelectionSetNode],
         field_types_names: list[FieldNames],
+        extra_bases: Optional[list[str]] = None,
     ) -> list[ast.ClassDef]:
         if selection_set:
             generated_classes = []
@@ -239,6 +282,7 @@ class ResultTypesGenerator:
                         type_name=field_type_names.type_name,
                         selection_set=selection_set,
                         add_typename=add_typename,
+                        extra_bases=extra_bases,
                     )
                 )
             return generated_classes
