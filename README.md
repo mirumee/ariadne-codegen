@@ -60,6 +60,52 @@ graphql-sdk-gen
 ```
 
 
+## Custom directives
+
+### `withMixin`
+
+This directive allows to extend class generated for query/mutation field.
+`withMixin` takes two, required arguments:
+- `from` - name of a module to import from
+- `class_name` - name of a parent class
+
+Generated class will use `class_name` as extra base class, and import will be added to the file.
+```py
+from {from} import {class_name}
+...
+class OperationNameField(BaseModel, {class_name}):
+    ...
+```
+
+This directive can be used along with `files_to_include` option to extend funcionallity of generated classes.
+
+
+#### Example of usage of `withMixin` and `files_to_include`:
+
+Query with `withMixin` directive: 
+```gql
+query listUsers {
+    users @withMixin(from: ".mixins", class_name: "UsersMixin") {
+        id
+    }
+}
+```
+
+Part of `pyproject.toml` with `files_to_include` (`mixins.py` contains `UsersMixin` implementation)
+```toml
+files_to_include = [".../mixins.py"]
+```
+
+Part of generated `list_users.py` file:
+```py
+...
+from .mixins import UsersMixin
+...
+class ListUsersUsers(BaseModel, UsersMixin):
+    ...
+```
+
+
 ## Generated code dependencies
 
 Generated code requires:
