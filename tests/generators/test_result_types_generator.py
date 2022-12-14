@@ -15,7 +15,7 @@ from graphql_sdk_gen.generators.constants import (
     LIST,
     OPTIONAL,
     UPDATE_FORWARD_REFS_METHOD,
-    WITH_MIXIN_DIRECTIVE_NAME,
+    WITH_MIXIN_NAME,
 )
 from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
 
@@ -737,8 +737,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
 def test_generate_adds_base_class_to_generated_type_provided_by_with_mixin_directive():
     query_str = f"""
     query CustomQuery {{
-        camelCaseQuery
-        @{WITH_MIXIN_DIRECTIVE_NAME} (from: ".abcd", class_name: "MixinClass") {{
+        camelCaseQuery @{WITH_MIXIN_NAME} (from: ".abcd", class_name: "MixinClass") {{
             id
         }}
     }}
@@ -766,11 +765,10 @@ def test_generate_adds_base_class_to_generated_type_provided_by_with_mixin_direc
 def test_generate_handles_multiple_with_mixin_directives():
     query_str = f"""
     query CustomQuery {{
-        camelCaseQuery
-            @{WITH_MIXIN_DIRECTIVE_NAME}(from: ".abcd", class_name: "MixinAbcd") {{
+        camelCaseQuery @{WITH_MIXIN_NAME}(from: ".abcd", class_name: "MixinAbcd") {{
             id
         }}
-        query2 @{WITH_MIXIN_DIRECTIVE_NAME}(from: ".xyz", class_name: "MixinXyz") {{
+        query2 @{WITH_MIXIN_NAME}(from: ".xyz", class_name: "MixinXyz") {{
             id
         }}
     }}
@@ -813,8 +811,8 @@ def test_generate_handles_multiple_with_mixin_directives_on_one_field():
     query_str = f"""
     query CustomQuery {{
         camelCaseQuery
-            @{WITH_MIXIN_DIRECTIVE_NAME}(from: ".abcd", class_name: "MixinAbcd")
-            @{WITH_MIXIN_DIRECTIVE_NAME}(from: ".xyz", class_name: "MixinXyz") {{
+            @{WITH_MIXIN_NAME}(from: ".abcd", class_name: "MixinAbcd")
+            @{WITH_MIXIN_NAME}(from: ".xyz", class_name: "MixinXyz") {{
             id
         }}
     }}
@@ -862,7 +860,7 @@ def test_generator_with_incorrect_data_passed_to_with_mixin_raises_parsing_error
 ):
     query_str = f"""
     query CustomQuery {{
-        camelCaseQuery @{WITH_MIXIN_DIRECTIVE_NAME}({arguments}) {{
+        camelCaseQuery @{WITH_MIXIN_NAME}({arguments}) {{
             id
         }}
     }}

@@ -41,7 +41,7 @@ from .constants import (
     TYPING_MODULE,
     UNION,
     UPDATE_FORWARD_REFS_METHOD,
-    WITH_MIXIN_DIRECTIVE_NAME,
+    WITH_MIXIN_NAME,
 )
 from .fields import FieldNames, parse_operation_field_type
 from .types import CodegenFieldType
@@ -237,9 +237,7 @@ class ResultTypesGenerator:
         if not field.directives:
             return []
         directives = [
-            d
-            for d in field.directives
-            if d.name and d.name.value == WITH_MIXIN_DIRECTIVE_NAME
+            d for d in field.directives if d.name and d.name.value == WITH_MIXIN_NAME
         ]
         extra_base_classes: list[str] = []
         for directive in directives:
@@ -259,7 +257,11 @@ class ResultTypesGenerator:
                 isinstance(arg.name, NameNode)
                 and isinstance(arg.value, StringValueNode)
             ):
-                raise ParsingError("Arguments passed to withMixin have to be strings.")
+                msg = (
+                    f"Arguments passed to {WITH_MIXIN_NAME} have to be strings."
+                    f"Passed argument: {print_ast(arg)}"
+                )
+                raise ParsingError(msg)
             arguments[arg.name.value] = arg.value.value
 
         if "from" not in arguments or "class_name" not in arguments:

@@ -34,4 +34,4 @@ PYDANTIC_MODULE = "pydantic"
 FIELD_CLASS = "Field"
 UPDATE_FORWARD_REFS_METHOD = "update_forward_refs"
 
-WITH_MIXIN_DIRECTIVE_NAME = "withMixin"
+WITH_MIXIN_NAME = "withMixin"
