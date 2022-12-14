@@ -181,7 +181,7 @@ def test_generate_creates_file_with_query_types(tmp_path):
         fieldb: Optional[int]
     """
 
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     query_types_file_path = tmp_path / package_name / "custom_query.py"
@@ -214,7 +214,7 @@ def test_generate_creates_multiple_query_types_files(tmp_path):
     """
 
     for definition in parse(query_str).definitions:
-        generator.add_query(definition)
+        generator.add_operation(definition)
     generator.generate()
 
     package_path = tmp_path / package_name
@@ -272,7 +272,7 @@ def test_generate_creates_client_with_correctly_implemented_async_method(tmp_pat
     }
     """
 
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     client_file_path = tmp_path / package_name / "client.py"
@@ -316,7 +316,7 @@ def test_generate_with_conflicting_query_name_raises_parsing_error(tmp_path):
         }
     }
     """
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
 
     with pytest.raises(ParsingError):
         generator.generate()
@@ -343,7 +343,7 @@ def test_generate_with_enum_as_query_argument_generates_client_with_correct_meth
     expected_method_def = "def custom_query(self, val: CustomEnum) -> CustomQuery:"
     expected_enum_import = f"from .{generator.enums_module_name} import CustomEnum"
 
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     client_file_path = tmp_path / package_name / "client.py"
@@ -384,7 +384,7 @@ def test_generate_adds_comment_with_timestamp_to_generated_files(tmp_path):
         }
     }
     """
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     package_path = tmp_path / package_name
@@ -425,7 +425,7 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
         }
     }
     """
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     package_path = tmp_path / package_name
@@ -487,7 +487,7 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
         fragments=[fragment_def],
     )
 
-    generator.add_query(query_def)
+    generator.add_operation(query_def)
     generator.generate()
 
     result_types_file_path = tmp_path / package_name / "custom_query.py"
@@ -509,7 +509,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
         }
     }
     """
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
 
     generated_files = generator.generate()
 
