@@ -13,9 +13,11 @@ from graphql_sdk_gen.exceptions import ParsingError
 from graphql_sdk_gen.generators.constants import (
     BASE_MODEL_CLASS_NAME,
     LIST,
+    MIXIN_FROM_NAME,
+    MIXIN_IMPORT_NAME,
+    MIXIN_NAME,
     OPTIONAL,
     UPDATE_FORWARD_REFS_METHOD,
-    WITH_MIXIN_NAME,
 )
 from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
 
@@ -734,10 +736,11 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
     assert compare_ast(class_defs, expected_class_defs)
 
 
-def test_generate_adds_base_class_to_generated_type_provided_by_with_mixin_directive():
+def test_generate_adds_base_class_to_generated_type_provided_by_mixin_directive():
     query_str = f"""
     query CustomQuery {{
-        camelCaseQuery @{WITH_MIXIN_NAME}(from: ".abcd", className: "MixinClass") {{
+        camelCaseQuery
+        @{MIXIN_NAME}({MIXIN_FROM_NAME}: ".abcd", {MIXIN_IMPORT_NAME}: "MixinClass") {{
             id
         }}
     }}
@@ -762,13 +765,15 @@ def test_generate_adds_base_class_to_generated_type_provided_by_with_mixin_direc
     )
 
 
-def test_generate_handles_multiple_with_mixin_directives():
+def test_generate_handles_multiple_mixin_directives():
     query_str = f"""
     query CustomQuery {{
-        camelCaseQuery @{WITH_MIXIN_NAME}(from: ".abcd", className: "MixinAbcd") {{
+        camelCaseQuery
+        @{MIXIN_NAME}({MIXIN_FROM_NAME}: ".abcd", {MIXIN_IMPORT_NAME}: "MixinAbcd") {{
             id
         }}
-        query2 @{WITH_MIXIN_NAME}(from: ".xyz", className: "MixinXyz") {{
+        query2
+        @{MIXIN_NAME}({MIXIN_FROM_NAME}: ".xyz", {MIXIN_IMPORT_NAME}: "MixinXyz") {{
             id
         }}
     }}
@@ -807,12 +812,12 @@ def test_generate_handles_multiple_with_mixin_directives():
     )
 
 
-def test_generate_handles_multiple_with_mixin_directives_on_one_field():
+def test_generate_handles_multiple_mixin_directives_on_one_field():
     query_str = f"""
     query CustomQuery {{
         camelCaseQuery
-            @{WITH_MIXIN_NAME}(from: ".abcd", className: "MixinAbcd")
-            @{WITH_MIXIN_NAME}(from: ".xyz", className: "MixinXyz") {{
+            @{MIXIN_NAME}({MIXIN_FROM_NAME}: ".abcd", {MIXIN_IMPORT_NAME}: "MixinAbcd")
+            @{MIXIN_NAME}({MIXIN_FROM_NAME}: ".xyz", {MIXIN_IMPORT_NAME}: "MixinXyz") {{
             id
         }}
     }}
@@ -849,18 +854,18 @@ def test_generate_handles_multiple_with_mixin_directives_on_one_field():
 @pytest.mark.parametrize(
     "arguments",
     [
-        'from: ".abcd", className: 1',
-        'from: 1, className: "ClassName"',
-        'className: "ClassName"',
-        'from: ".xyz"',
+        f'{MIXIN_FROM_NAME}: ".abcd", {MIXIN_IMPORT_NAME}: 1',
+        f'{MIXIN_FROM_NAME}: 1, {MIXIN_IMPORT_NAME}: "ClassName"',
+        f'{MIXIN_IMPORT_NAME}: "ClassName"',
+        f'{MIXIN_FROM_NAME}: ".xyz"',
     ],
 )
-def test_generator_with_incorrect_data_passed_to_with_mixin_raises_parsing_error(
+def test_generator_with_incorrect_data_passed_to_mixin_raises_parsing_error(
     arguments,
 ):
     query_str = f"""
     query CustomQuery {{
-        camelCaseQuery @{WITH_MIXIN_NAME}({arguments}) {{
+        camelCaseQuery @{MIXIN_NAME}({arguments}) {{
             id
         }}
     }}

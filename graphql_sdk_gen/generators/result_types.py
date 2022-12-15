@@ -35,13 +35,15 @@ from .constants import (
     ANY,
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
+    MIXIN_FROM_NAME,
+    MIXIN_IMPORT_NAME,
+    MIXIN_NAME,
     OPTIONAL,
     PYDANTIC_MODULE,
     TYPENAME_FIELD_NAME,
     TYPING_MODULE,
     UNION,
     UPDATE_FORWARD_REFS_METHOD,
-    WITH_MIXIN_NAME,
 )
 from .fields import FieldNames, parse_operation_field_type
 from .types import CodegenFieldType
@@ -172,7 +174,7 @@ class ResultTypesGenerator:
                 self._parse_field_selection_set_types(
                     selection_set=field.selection_set,
                     field_types_names=field_types_names,
-                    extra_bases=self._parse_with_mixin_directives(field),
+                    extra_bases=self._parse_mixin_directives(field),
                 )
             )
             self._save_used_enums(field_types_names)
@@ -233,21 +235,22 @@ class ResultTypesGenerator:
                 f"Field {field_name} not found in type {type_name}."
             ) from exc
 
-    def _parse_with_mixin_directives(self, field: FieldNode) -> list[str]:
+    def _parse_mixin_directives(self, field: FieldNode) -> list[str]:
         if not field.directives:
             return []
         directives = [
-            d for d in field.directives if d.name and d.name.value == WITH_MIXIN_NAME
+            d for d in field.directives if d.name and d.name.value == MIXIN_NAME
         ]
         extra_base_classes: list[str] = []
         for directive in directives:
             arguments = self._parse_mixin_arguments(directive)
             self._imports.append(
                 generate_import_from(
-                    names=[arguments["className"]], from_=arguments["from"]
+                    names=[arguments[MIXIN_IMPORT_NAME]],
+                    from_=arguments[MIXIN_FROM_NAME],
                 )
             )
-            extra_base_classes.append(arguments["className"])
+            extra_base_classes.append(arguments[MIXIN_IMPORT_NAME])
         return extra_base_classes
 
     def _parse_mixin_arguments(self, directive: DirectiveNode):
@@ -258,14 +261,15 @@ class ResultTypesGenerator:
                 and isinstance(arg.value, StringValueNode)
             ):
                 msg = (
-                    f"Arguments passed to {WITH_MIXIN_NAME} have to be strings."
+                    f"Arguments passed to {MIXIN_NAME} have to be strings."
                     f"Passed argument: {print_ast(arg)}"
                 )
                 raise ParsingError(msg)
             arguments[arg.name.value] = arg.value.value
 
-        if "from" not in arguments or "className" not in arguments:
-            raise ParsingError("Required arguments (from, className) not found.")
+        if MIXIN_FROM_NAME not in arguments or MIXIN_IMPORT_NAME not in arguments:
+            msg = "Required arguments ({}, {}) not found."
+            raise ParsingError(msg.format(MIXIN_FROM_NAME, MIXIN_IMPORT_NAME))
         return arguments
 
     def _parse_field_selection_set_types(
