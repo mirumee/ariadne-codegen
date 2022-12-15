@@ -38,9 +38,10 @@ def main():
         fragments=fragments,
         convert_to_snake_case=settings.convert_to_snake_case,
         async_client=settings.async_client,
+        files_to_include=settings.files_to_include,
     )
     for query in queries:
-        package_generator.add_query(query)
+        package_generator.add_operation(query)
     generated_files = package_generator.generate()
 
     sys.stdout.write("\nGenerated files:\n  " + "\n  ".join(generated_files) + "\n")

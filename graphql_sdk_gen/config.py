@@ -26,6 +26,7 @@ class Settings:
     include_comments: bool = True
     convert_to_snake_case: bool = True
     async_client: bool = True
+    files_to_include: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         self._set_default_base_client_data()
@@ -48,6 +49,9 @@ class Settings:
         self._assert_string_is_valid_python_identifier(self.schema_types_module_name)
         self._assert_string_is_valid_python_identifier(self.enums_module_name)
         self._assert_string_is_valid_python_identifier(self.input_types_module_name)
+
+        for file_path in self.files_to_include:
+            self._assert_path_is_valid_file(file_path)
 
     def _set_default_base_client_data(self):
         if not self.base_client_name and not self.base_client_file_path:
@@ -140,6 +144,7 @@ def get_used_settings_message(settings: Settings) -> str:
         if settings.async_client
         else "Generating not async client."
     )
+    files_to_include_list = ",".join(settings.files_to_include)
     return dedent(
         f"""\
         Using schema from '{settings.schema_path}'.
@@ -155,6 +160,7 @@ def get_used_settings_message(settings: Settings) -> str:
         {comments_msg}
         {snake_case_msg}
         {async_client_msg}
+        Coping following files into package: {files_to_include_list}
         """
     )
 

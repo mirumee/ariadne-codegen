@@ -181,7 +181,7 @@ def test_generate_creates_file_with_query_types(tmp_path):
         fieldb: Optional[int]
     """
 
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     query_types_file_path = tmp_path / package_name / "custom_query.py"
@@ -214,7 +214,7 @@ def test_generate_creates_multiple_query_types_files(tmp_path):
     """
 
     for definition in parse(query_str).definitions:
-        generator.add_query(definition)
+        generator.add_operation(definition)
     generator.generate()
 
     package_path = tmp_path / package_name
@@ -272,7 +272,7 @@ def test_generate_creates_client_with_correctly_implemented_async_method(tmp_pat
     }
     """
 
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     client_file_path = tmp_path / package_name / "client.py"
@@ -316,7 +316,7 @@ def test_generate_with_conflicting_query_name_raises_parsing_error(tmp_path):
         }
     }
     """
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
 
     with pytest.raises(ParsingError):
         generator.generate()
@@ -343,7 +343,7 @@ def test_generate_with_enum_as_query_argument_generates_client_with_correct_meth
     expected_method_def = "def custom_query(self, val: CustomEnum) -> CustomQuery:"
     expected_enum_import = f"from .{generator.enums_module_name} import CustomEnum"
 
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     client_file_path = tmp_path / package_name / "client.py"
@@ -384,7 +384,7 @@ def test_generate_adds_comment_with_timestamp_to_generated_files(tmp_path):
         }
     }
     """
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     package_path = tmp_path / package_name
@@ -425,7 +425,7 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
         }
     }
     """
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
     generator.generate()
 
     package_path = tmp_path / package_name
@@ -487,7 +487,7 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
         fragments=[fragment_def],
     )
 
-    generator.add_query(query_def)
+    generator.add_operation(query_def)
     generator.generate()
 
     result_types_file_path = tmp_path / package_name / "custom_query.py"
@@ -509,7 +509,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
         }
     }
     """
-    generator.add_query(parse(query_str).definitions[0])
+    generator.add_operation(parse(query_str).definitions[0])
 
     generated_files = generator.generate()
 
@@ -525,3 +525,30 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             "custom_query.py",
         ]
     )
+
+
+def test_generate_copies_files_to_include(tmp_path):
+    file1 = tmp_path / "file1.py"
+    file1_content = "class TestBaseClass:\n    pass"
+    file1.write_text(file1_content)
+
+    file2_dir = tmp_path / "dir"
+    file2_dir.mkdir()
+    file2 = file2_dir / "file2.py"
+    file2_content = "class TestBaseClass2:\n    pass"
+    file2.write_text(file2_content)
+
+    generator = PackageGenerator(
+        package_name="test_graphql_client",
+        target_path=tmp_path.as_posix(),
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        files_to_include=[file1.as_posix(), file2.as_posix()],
+    )
+    generated_files = generator.generate()
+
+    assert "file1.py" in generated_files
+    package_path = tmp_path / "test_graphql_client"
+    with package_path.joinpath("file1.py").open() as copied_file1:
+        assert file1_content in copied_file1.read()
+    with package_path.joinpath("file2.py").open() as copied_file2:
+        assert file2_content in copied_file2.read()
