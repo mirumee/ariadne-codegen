@@ -12,11 +12,13 @@ from graphql import (
 from graphql_sdk_gen.exceptions import ParsingError
 from graphql_sdk_gen.generators.constants import (
     BASE_MODEL_CLASS_NAME,
+    INCLUDE_DIRECTIVE_NAME,
     LIST,
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
     MIXIN_NAME,
     OPTIONAL,
+    SKIP_DIRECTIVE_NAME,
     UPDATE_FORWARD_REFS_METHOD,
 )
 from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
@@ -879,6 +881,44 @@ def test_generator_with_incorrect_data_passed_to_mixin_raises_parsing_error(
             ),
             enums_module_name="enums",
         )
+
+
+@pytest.mark.parametrize("directive", [INCLUDE_DIRECTIVE_NAME, SKIP_DIRECTIVE_NAME])
+def test_generator_returns_module_with_handled_skip_and_include_directives(directive):
+    query_str = f"""
+    query CustomQuery {{
+        query3 {{
+            field1 @{directive}{{
+                fielda
+            }}
+            field2 {{
+                fielda
+            }}
+        }}
+    }}
+    """
+    expected_field_def = ast.AnnAssign(
+        target=ast.Name(id="field1"),
+        annotation=ast.Subscript(
+            value=ast.Name(id=OPTIONAL),
+            slice=ast.Name(id='"CustomQueryQuery3Field1"'),
+        ),
+        simple=1,
+    )
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    class_def = get_class_def(module, 1)
+    assert class_def.name == "CustomQueryQuery3"
+    field_def = class_def.body[0]
+    assert compare_ast(field_def, expected_field_def)
 
 
 def test_get_operation_as_str_returns_str_with_added_typename():
