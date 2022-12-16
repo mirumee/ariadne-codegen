@@ -30,7 +30,6 @@ def main():
         client_file_name=settings.client_file_name,
         base_client_name=settings.base_client_name,
         base_client_file_path=settings.base_client_file_path,
-        schema_types_module_name=settings.schema_types_module_name,
         input_types_module_name=settings.input_types_module_name,
         queries_source=settings.queries_path,
         schema_source=settings.schema_path,

@@ -6,7 +6,6 @@ from graphql import (
     DirectiveNode,
     GraphQLEnumType,
     GraphQLEnumValueMap,
-    GraphQLInputObjectType,
     GraphQLInterfaceType,
     GraphQLList,
     GraphQLNonNull,
@@ -23,7 +22,7 @@ from graphql_sdk_gen.generators.constants import (
     SKIP_DIRECTIVE_NAME,
     UNION,
 )
-from graphql_sdk_gen.generators.fields import (
+from graphql_sdk_gen.generators.result_fields import (
     FieldNames,
     is_nullable,
     parse_operation_field,
@@ -170,19 +169,9 @@ def test_parse_operation_field_type_returns_annotation_for_objects_and_interface
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="TestEnum")),
             [FieldNames(class_name="TestEnum", type_name="TestEnum")],
         ),
-        (
-            GraphQLNonNull(GraphQLInputObjectType("TestInput", fields={})),
-            ast.Name(id="TestInput"),
-            [FieldNames(class_name="TestInput", type_name="TestInput")],
-        ),
-        (
-            GraphQLInputObjectType("TestInput", fields={}),
-            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="TestInput")),
-            [FieldNames(class_name="TestInput", type_name="TestInput")],
-        ),
     ],
 )
-def test_parse_operation_field_type_returns_annotation_for_enums_and_inputs(
+def test_parse_operation_field_type_returns_annotation_for_enums(
     type_, expected_annotation, expected_names
 ):
     annotation, names = parse_operation_field_type(type_=type_)

@@ -33,6 +33,8 @@ TYPING_MODULE = "typing"
 PYDANTIC_MODULE = "pydantic"
 FIELD_CLASS = "Field"
 UPDATE_FORWARD_REFS_METHOD = "update_forward_refs"
+ENUM_MODULE = "enum"
+ENUM_CLASS = "Enum"
 
 MIXIN_NAME = "mixin"
 MIXIN_FROM_NAME = "from"
