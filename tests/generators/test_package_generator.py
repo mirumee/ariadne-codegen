@@ -63,9 +63,6 @@ def test_generate_creates_directory_and_files(tmp_path):
     client_file_path = package_path / "client.py"
     assert client_file_path.exists()
     assert client_file_path.is_file()
-    schema_types_path = package_path / f"{generator.schema_types_module_name}.py"
-    assert schema_types_path.exists()
-    assert schema_types_path.is_file()
     input_types_path = package_path / f"{generator.input_types_module_name}.py"
     assert input_types_path.exists()
     assert input_types_path.is_file()
@@ -108,17 +105,6 @@ def test_generate_creates_files_with_types(tmp_path):
     generator = PackageGenerator(
         package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
     )
-    expected_schema_types = """
-    class CustomType(BaseModel):
-        id: str
-        field1: Optional[list[Optional[str]]]
-        field2: Optional["CustomType2"]
-        field3: "CustomEnum"
-
-
-    class CustomType2(BaseModel):
-        fieldb: Optional[int]
-    """
     expected_input_types = """
     class CustomInput(BaseModel):
         value: int
@@ -128,14 +114,8 @@ def test_generate_creates_files_with_types(tmp_path):
         VAL1 = "VAL1"
         VAL2 = "VAL2"
     """
-    generator.generate()
 
-    schema_types_file_path = (
-        tmp_path / package_name / f"{generator.schema_types_module_name}.py"
-    )
-    with schema_types_file_path.open() as schema_types_file:
-        schema_types_content = schema_types_file.read()
-        assert dedent(expected_schema_types) in schema_types_content
+    generator.generate()
 
     input_types_file_path = (
         tmp_path / package_name / f"{generator.input_types_module_name}.py"
@@ -393,7 +373,6 @@ def test_generate_adds_comment_with_timestamp_to_generated_files(tmp_path):
         generator.base_client_file_path.name,
         f"{generator.enums_module_name}.py",
         f"{generator.input_types_module_name}.py",
-        f"{generator.schema_types_module_name}.py",
         "custom_query.py",
     ]
     expected_comment = TIMESTAMP_COMMENT.format(
@@ -433,7 +412,6 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
     schema_source_files_names = [
         f"{generator.enums_module_name}.py",
         f"{generator.input_types_module_name}.py",
-        f"{generator.schema_types_module_name}.py",
     ]
     expected_schema_source_comment = SOURCE_COMMENT.format(schema_source)
     for file_name in schema_source_files_names:
@@ -519,7 +497,6 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             generator.base_client_file_path.name,
             "base_model.py",
             f"{generator.client_file_name}.py",
-            f"{generator.schema_types_module_name}.py",
             f"{generator.input_types_module_name}.py",
             f"{generator.enums_module_name}.py",
             "custom_query.py",

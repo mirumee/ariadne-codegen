@@ -134,6 +134,5 @@ def test_get_used_settings_message_returns_string_with_data_from_given_settings(
     assert settings.client_name in result
     assert settings.base_client_name in result
     assert settings.base_client_file_path in result
-    assert settings.schema_types_module_name in result
     assert settings.enums_module_name in result
     assert settings.input_types_module_name in result
