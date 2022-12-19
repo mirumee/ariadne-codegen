@@ -145,7 +145,6 @@ grapql_client/
     input_types.py
     list_all_users.py
     list_users_by_country.py
-    schema_types.py
 ```
 
 ### Client class
@@ -251,17 +250,17 @@ from .base_model import BaseModel
 from .enums import Color
 
 
+class LocationInput(BaseModel):
+    city: Optional[str]
+    country: Optional[str]
+
+
 class UserCreateInput(BaseModel):
     first_name: Optional[str] = Field(alias="firstName")
     last_name: Optional[str] = Field(alias="lastName")
     email: str
-    favourite_color: Optional["Color"] = Field(alias="favouriteColor")
+    favourite_color: Optional[Color] = Field(alias="favouriteColor")
     location: Optional["LocationInput"]
-
-
-class LocationInput(BaseModel):
-    city: Optional[str]
-    country: Optional[str]
 
 
 class NotificationsPreferencesInput(BaseModel):
@@ -291,8 +290,8 @@ class UserPreferencesInput(BaseModel):
     )
 
 
-UserCreateInput.update_forward_refs()
 LocationInput.update_forward_refs()
+UserCreateInput.update_forward_refs()
 NotificationsPreferencesInput.update_forward_refs()
 UserPreferencesInput.update_forward_refs()
 ```
@@ -314,39 +313,6 @@ class Color(str, Enum):
     GREEN = "GREEN"
     BLUE = "BLUE"
     YELLOW = "YELLOW"
-```
-
-### Schema types
-
-Models are generated from types from provided schema. Query/mutation specific models are generated based on these classes.
-
-```py
-# graphql_client/schema_types.py
-
-from typing import Optional
-
-from pydantic import Field
-
-from .base_model import BaseModel
-from .enums import Color
-
-
-class User(BaseModel):
-    id: str
-    first_name: Optional[str] = Field(alias="firstName")
-    last_name: Optional[str] = Field(alias="lastName")
-    email: str
-    favourite_color: Optional["Color"] = Field(alias="favouriteColor")
-    location: Optional["Location"]
-
-
-class Location(BaseModel):
-    city: Optional[str]
-    country: Optional[str]
-
-
-User.update_forward_refs()
-Location.update_forward_refs()
 ```
 
 ### Query/mutation types
@@ -453,7 +419,6 @@ from .input_types import (
 )
 from .list_all_users import ListAllUsers, ListAllUsersUsers, ListAllUsersUsersLocation
 from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUsers
-from .schema_types import Location, User
 
 __all__ = [
     "AsyncBaseClient",
@@ -467,10 +432,8 @@ __all__ = [
     "ListAllUsersUsersLocation",
     "ListUsersByCountry",
     "ListUsersByCountryUsers",
-    "Location",
     "LocationInput",
     "NotificationsPreferencesInput",
-    "User",
     "UserCreateInput",
     "UserPreferencesInput",
 ]
