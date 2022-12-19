@@ -1,7 +1,9 @@
+import ast
 from collections import namedtuple
-from typing import Tuple, cast
+from typing import Optional, Tuple, cast
 
 from graphql import (
+    DirectiveNode,
     GraphQLEnumType,
     GraphQLInputObjectType,
     GraphQLInterfaceType,
@@ -16,12 +18,35 @@ from ..exceptions import ParsingError
 from .codegen import (
     generate_annotation_name,
     generate_list_annotation,
+    generate_nullable_annotation,
     generate_union_annotation,
 )
-from .constants import ANY, SIMPLE_TYPE_MAP
+from .constants import (
+    ANY,
+    INCLUDE_DIRECTIVE_NAME,
+    OPTIONAL,
+    SIMPLE_TYPE_MAP,
+    SKIP_DIRECTIVE_NAME,
+)
 from .types import Annotation, CodegenFieldType
 
 FieldNames = namedtuple("FieldNames", ["class_name", "type_name"])
+
+
+def parse_operation_field(
+    type_: CodegenFieldType,
+    directives: Optional[Tuple[DirectiveNode, ...]] = None,
+    class_name: str = "",
+) -> Tuple[Annotation, list[FieldNames]]:
+    annotation, field_types_names = parse_operation_field_type(
+        type_=type_, class_name=class_name
+    )
+    if not (is_nullable(annotation)) and directives:
+        nullable_directives = [INCLUDE_DIRECTIVE_NAME, SKIP_DIRECTIVE_NAME]
+        directives_names = [d.name.value for d in directives]
+        if any(n in nullable_directives for n in directives_names):
+            annotation = generate_nullable_annotation(annotation)
+    return annotation, field_types_names
 
 
 def parse_operation_field_type(
@@ -89,3 +114,11 @@ def parse_operation_field_type(
         )
 
     raise ParsingError("Invalid field type.")
+
+
+def is_nullable(annotation: Annotation) -> bool:
+    return (
+        isinstance(annotation, ast.Subscript)
+        and isinstance(annotation.value, ast.Name)
+        and annotation.value.id == OPTIONAL
+    )

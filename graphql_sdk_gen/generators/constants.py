@@ -37,3 +37,6 @@ UPDATE_FORWARD_REFS_METHOD = "update_forward_refs"
 MIXIN_NAME = "mixin"
 MIXIN_FROM_NAME = "from"
 MIXIN_IMPORT_NAME = "import"
+
+SKIP_DIRECTIVE_NAME = "skip"
+INCLUDE_DIRECTIVE_NAME = "include"
