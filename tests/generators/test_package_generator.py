@@ -276,6 +276,7 @@ def test_generate_creates_client_with_correctly_implemented_async_method(tmp_pat
             )
             variables: dict = {"id": id, "param": param}
             response = await self.execute(query=query, variables=variables)
+            self.raise_for_errors(response)
             return CustomQuery.parse_obj(response.json().get("data", {}))
         '''
         assert indent(dedent(expected_method_def), "    ") in client_content
@@ -497,6 +498,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             generator.base_client_file_path.name,
             "base_model.py",
             f"{generator.client_file_name}.py",
+            generator.exceptions_file_path.name,
             f"{generator.input_types_module_name}.py",
             f"{generator.enums_module_name}.py",
             "custom_query.py",

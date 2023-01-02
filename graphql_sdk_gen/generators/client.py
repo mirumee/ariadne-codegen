@@ -10,6 +10,7 @@ from .codegen import (
     generate_class_def,
     generate_constant,
     generate_dict,
+    generate_expr,
     generate_import_from,
     generate_keyword,
     generate_method_definition,
@@ -93,6 +94,7 @@ class ClientGenerator:
                 self._generate_operation_str_assign(operation_str, 1),
                 self._generate_variables_assign(arguments_dict, 2),
                 self._generate_async_response_assign(3),
+                self._generate_errors_check(),
                 self._generate_return_parsed_obj(return_type),
             ],
         )
@@ -113,6 +115,7 @@ class ClientGenerator:
                 self._generate_operation_str_assign(operation_str, 1),
                 self._generate_variables_assign(arguments_dict, 2),
                 self._generate_response_assign(3),
+                self._generate_errors_check(),
                 self._generate_return_parsed_obj(return_type),
             ],
         )
@@ -164,6 +167,14 @@ class ClientGenerator:
                     "variables", generate_name(self._variables_dict_variable)
                 ),
             ],
+        )
+
+    def _generate_errors_check(self) -> ast.Expr:
+        return generate_expr(
+            value=generate_call(
+                func=generate_attribute(generate_name("self"), "raise_for_errors"),
+                args=[generate_name("response")],
+            )
         )
 
     def _generate_return_parsed_obj(self, return_type: str) -> ast.Return:

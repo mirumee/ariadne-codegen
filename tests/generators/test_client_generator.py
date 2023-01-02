@@ -143,6 +143,13 @@ def test_add_method_generates_correct_async_method_body():
                 )
             ),
         ),
+        ast.Expr(
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="raise_for_errors"),
+                args=[ast.Name(id="response")],
+                keywords=[],
+            )
+        ),
         ast.Return(
             value=ast.Call(
                 func=ast.Attribute(value=ast.Name(id="ListXyz"), attr="parse_obj"),
@@ -270,6 +277,13 @@ def test_add_method_generates_correct_method_body():
                     ast.keyword(arg="variables", value=ast.Name(id="variables")),
                 ],
             ),
+        ),
+        ast.Expr(
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="raise_for_errors"),
+                args=[ast.Name(id="response")],
+                keywords=[],
+            )
         ),
         ast.Return(
             value=ast.Call(

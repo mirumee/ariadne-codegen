@@ -1,4 +1,3 @@
-import importlib.util
 from dataclasses import dataclass, field, fields
 from keyword import iskeyword
 from pathlib import Path
@@ -84,15 +83,8 @@ class Settings:
             )
 
     def _assert_class_is_defined_in_file(self, file_path: Path, class_name: str):
-        spec = importlib.util.spec_from_file_location(
-            file_path.stem, file_path.as_posix()
-        )
-        if not spec or not spec.loader:
-            raise InvalidConfiguration(f"Cannot import from {file_path}")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        class_ = getattr(module, class_name, None)
-        if not class_:
+        file_content = file_path.read_text()
+        if f"class {class_name}" not in file_content:
             raise InvalidConfiguration(f"Cannot import {class_name} from {file_path}")
 
 

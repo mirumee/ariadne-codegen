@@ -66,6 +66,7 @@ class PackageGenerator:
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
         )
+        self.exceptions_file_path = Path(__file__).parent / "dependencies" / "exceptions.py"
 
         self.files_to_include = (
             [Path(f) for f in files_to_include] if files_to_include else []
@@ -181,6 +182,7 @@ class PackageGenerator:
                 f"{self.client_file_name}.py",
                 self.base_client_file_path.name,
                 self.base_model_file_path.name,
+                self.exceptions_file_path.name,
                 f"{self.enums_module_name}.py",
                 f"{self.input_types_module_name}.py",
             ]
@@ -280,6 +282,7 @@ class PackageGenerator:
         for source_path in self.files_to_include + [
             self.base_client_file_path,
             self.base_model_file_path,
+            self.exceptions_file_path,
         ]:
             code = self._proccess_generated_code(source_path.read_text())
             target_path = self.package_path / source_path.name
