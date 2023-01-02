@@ -60,7 +60,9 @@ class PackageGenerator:
         self.client_name = client_name
         self.base_client_name = base_client_name
 
-        self.base_model_file_path = Path(__file__).parent / "base_model.py"
+        self.base_model_file_path = (
+            Path(__file__).parent / "dependencies" / "base_model.py"
+        )
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
         )
@@ -110,12 +112,12 @@ class PackageGenerator:
             self.base_client_file_path = Path(base_client_file_path)
         else:
             if self.async_client:
-                self.base_client_file_path = Path(__file__).parent.joinpath(
-                    "async_base_client.py"
+                self.base_client_file_path = (
+                    Path(__file__).parent / "dependencies" / "async_base_client.py"
                 )
             else:
-                self.base_client_file_path = Path(__file__).parent.joinpath(
-                    "base_client.py"
+                self.base_client_file_path = (
+                    Path(__file__).parent / "dependencies" / "base_client.py"
                 )
 
         self.fragments_definitions = {f.name.value: f for f in fragments or []}

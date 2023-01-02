@@ -3,8 +3,8 @@ from textwrap import dedent
 
 import pytest
 
-import graphql_sdk_gen.generators.async_base_client
-import graphql_sdk_gen.generators.base_client
+import graphql_sdk_gen.generators.dependencies.async_base_client
+import graphql_sdk_gen.generators.dependencies.base_client
 from graphql_sdk_gen.config import Settings, get_used_settings_message
 from graphql_sdk_gen.exceptions import InvalidConfiguration
 
@@ -80,12 +80,12 @@ def test_settings_with_base_client_not_defined_in_file_raises_configuration_exce
         (
             True,
             "AsyncBaseClient",
-            Path(graphql_sdk_gen.generators.async_base_client.__file__).as_posix(),
+            Path(graphql_sdk_gen.generators.dependencies.async_base_client.__file__).as_posix(),
         ),
         (
             False,
             "BaseClient",
-            Path(graphql_sdk_gen.generators.base_client.__file__).as_posix(),
+            Path(graphql_sdk_gen.generators.dependencies.base_client.__file__).as_posix(),
         ),
     ],
 )

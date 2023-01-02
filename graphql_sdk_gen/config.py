@@ -53,7 +53,7 @@ class Settings:
 
     def _set_default_base_client_data(self):
         if not self.base_client_name and not self.base_client_file_path:
-            generators_path = Path(__file__).parent.joinpath("generators")
+            generators_path = Path(__file__).parent / "generators" / "dependencies"
             if self.async_client:
                 self.base_client_file_path = generators_path.joinpath(
                     "async_base_client.py"
