@@ -142,6 +142,7 @@ grapql_client/
     client.py
     create_user.py
     enums.py
+    exceptions.py
     input_types.py
     list_all_users.py
     list_users_by_country.py
@@ -178,6 +179,7 @@ class Client(AsyncBaseClient):
         )
         variables: dict = {"userData": user_data}
         response = await self.execute(query=query, variables=variables)
+        self.raise_for_errors(response)
         return CreateUser.parse_obj(response.json().get("data", {}))
 
     async def list_all_users(self) -> ListAllUsers:
@@ -198,6 +200,7 @@ class Client(AsyncBaseClient):
         )
         variables: dict = {}
         response = await self.execute(query=query, variables=variables)
+        self.raise_for_errors(response)
         return ListAllUsers.parse_obj(response.json().get("data", {}))
 
     async def list_users_by_country(self, country: str) -> ListUsersByCountry:
@@ -211,19 +214,20 @@ class Client(AsyncBaseClient):
               }
             }
 
-            fragment BasicUser on User {
-              id
-              email
-            }
-
             fragment UserPersonalData on User {
               firstName
               lastName
+            }
+
+            fragment BasicUser on User {
+              id
+              email
             }
             """
         )
         variables: dict = {"country": country}
         response = await self.execute(query=query, variables=variables)
+        self.raise_for_errors(response)
         return ListUsersByCountry.parse_obj(response.json().get("data", {}))
 ```
 
