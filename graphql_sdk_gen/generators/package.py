@@ -66,7 +66,9 @@ class PackageGenerator:
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
         )
-        self.exceptions_file_path = Path(__file__).parent / "dependencies" / "exceptions.py"
+        self.exceptions_file_path = (
+            Path(__file__).parent / "dependencies" / "exceptions.py"
+        )
 
         self.files_to_include = (
             [Path(f) for f in files_to_include] if files_to_include else []
