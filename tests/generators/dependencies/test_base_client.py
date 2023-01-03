@@ -1,6 +1,11 @@
+import json
+
+import httpx
+import pytest
 from pydantic import BaseModel
 
 from graphql_sdk_gen.generators.dependencies.base_client import BaseClient
+from graphql_sdk_gen.generators.dependencies.exceptions import GraphQLMultiError
 
 
 def test_execute_sends_post_to_correct_endpoint_with_correct_payload(mocker):
@@ -52,6 +57,52 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
         "query": query_str,
         "variables": {"v1": {"a": 5}, "v2": {"nested": {"a": 10}}},
     }
+
+
+@pytest.mark.parametrize(
+    "response_content",
+    [
+        {
+            "errors": [
+                {
+                    "message": "Error message",
+                    "locations": [{"line": 6, "column": 7}],
+                    "path": ["field1", "field2", 1, "id"],
+                }
+            ]
+        },
+        {
+            "errors": [
+                {
+                    "message": "Error message type A",
+                    "locations": [{"line": 6, "column": 7}],
+                    "path": ["field1", "field2", 1, "id"],
+                },
+                {
+                    "message": "Error message type B",
+                    "locations": [{"line": 6, "column": 7}],
+                    "path": ["field1", "field2", 1, "id"],
+                },
+            ]
+        },
+    ],
+)
+def test_raise_for_errors_raises_graphql_multi_error(mocker, response_content):
+    client = BaseClient("base_url", mocker.MagicMock())
+
+    with pytest.raises(GraphQLMultiError):
+        client.raise_for_errors(
+            httpx.Response(status_code=200, content=json.dumps(response_content))
+        )
+
+
+@pytest.mark.parametrize("response_content", [{"errors": []}, {"errors": None}, {}])
+def test_raise_for_errors_doesnt_raise_exception(mocker, response_content):
+    client = BaseClient("base_url", mocker.MagicMock())
+
+    client.raise_for_errors(
+        httpx.Response(status_code=200, content=json.dumps(response_content))
+    )
 
 
 def test_base_client_used_as_context_manager_closes_http_client(mocker):
