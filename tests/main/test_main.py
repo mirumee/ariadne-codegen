@@ -35,6 +35,42 @@ def test_main_shows_version():
 
 
 @pytest.mark.parametrize(
+    "project_dir, package_name, expected_package_path",
+    [
+        (
+            (
+                Path(__file__).parent / "example" / "pyproject.toml",
+                (
+                    Path(__file__).parent / "example" / "queries.graphql",
+                    Path(__file__).parent / "example" / "schema.graphql",
+                ),
+            ),
+            "example_client",
+            Path(__file__).parent / "example" / "expected_client",
+        )
+    ],
+    indirect=["project_dir"],
+)
+def test_main_generates_correct_package(
+    project_dir, package_name, expected_package_path
+):
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+    generated_files = list(package_path.glob("*"))
+    assert [f.name for f in generated_files] == [
+        f.name for f in expected_package_path.glob("*")
+    ]
+
+    for file_ in generated_files:
+        content = file_.read_text()
+        expected_content = expected_package_path.joinpath(file_.name).read_text()
+        assert content == expected_content, file_.name
+
+
+@pytest.mark.parametrize(
     "project_dir, expected_exception",
     [
         (
