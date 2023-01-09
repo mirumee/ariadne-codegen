@@ -1,0 +1,16 @@
+schema {
+  query: Query
+}
+
+type Query {
+  queryA: TypeA!
+  queryB: TypeB!
+}
+
+type TypeA {
+  fieldA: Int!
+}
+
+type TypeB {
+  fieldB: String!
+}
