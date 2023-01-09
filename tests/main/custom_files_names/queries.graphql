@@ -1,0 +1,5 @@
+query getQueryA($dataA: inputA!) {
+  queryA(dataA: $dataA) {
+    fieldA
+  }
+}
