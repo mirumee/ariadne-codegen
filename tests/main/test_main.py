@@ -47,7 +47,21 @@ def test_main_shows_version():
             ),
             "example_client",
             Path(__file__).parent / "example" / "expected_client",
-        )
+        ),
+        (
+            (
+                Path(__file__).parent / "extended_models" / "pyproject.toml",
+                (
+                    Path(__file__).parent / "extended_models" / "queries.graphql",
+                    Path(__file__).parent / "extended_models" / "schema.graphql",
+                    Path(__file__).parent / "extended_models" / "common_mixins.py",
+                    Path(__file__).parent / "extended_models" / "mixins_a.py",
+                    Path(__file__).parent / "extended_models" / "mixins_b.py",
+                ),
+            ),
+            "client_with_extended_models",
+            Path(__file__).parent / "extended_models" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )

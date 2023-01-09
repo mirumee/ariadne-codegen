@@ -1,0 +1,2 @@
+class MixinB:
+    pass
