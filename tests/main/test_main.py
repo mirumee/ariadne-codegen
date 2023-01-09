@@ -73,6 +73,20 @@ def test_main_shows_version():
             "custom_names_client",
             Path(__file__).parent / "custom_files_names" / "expected_client",
         ),
+        (
+            (
+                Path(__file__).parent / "custom_base_client" / "pyproject.toml",
+                (
+                    Path(__file__).parent / "custom_base_client" / "queries.graphql",
+                    Path(__file__).parent / "custom_base_client" / "schema.graphql",
+                    Path(__file__).parent
+                    / "custom_base_client"
+                    / "custom_base_client.py",
+                ),
+            ),
+            "custom_base_client",
+            Path(__file__).parent / "custom_base_client" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
