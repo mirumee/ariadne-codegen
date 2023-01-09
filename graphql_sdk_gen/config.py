@@ -162,4 +162,5 @@ def get_used_settings_message(settings: Settings) -> str:
     )
 
 
-settings = parse_config_file(get_config_file_path())
+def get_settings() -> Settings:
+    return parse_config_file(get_config_file_path())

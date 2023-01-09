@@ -1,7 +1,6 @@
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode
 
-from graphql_sdk_gen.config import Settings
 from graphql_sdk_gen.exceptions import InvalidGraphqlSyntax
 from graphql_sdk_gen.schema import (
     get_graphql_queries,
@@ -202,44 +201,21 @@ def test_load_graphql_files_from_path_returns_schema_from_nested_directory(
     ["single_file_schema", "schemas_directory", "schemas_nested_directories"],
     indirect=True,
 )
-def test_get_graphql_schema_returns_graphql_schema(
-    mocker, path_fixture, single_file_query
-):
-    mocker.patch(
-        "graphql_sdk_gen.schema.settings",
-        Settings(
-            schema_path=path_fixture.as_posix(),
-            queries_path=single_file_query.as_posix(),
-        ),
-    )
-    assert isinstance(get_graphql_schema(), GraphQLSchema)
+def test_get_graphql_schema_returns_graphql_schema(path_fixture):
+    assert isinstance(get_graphql_schema(path_fixture.as_posix()), GraphQLSchema)
 
 
 def test_get_graphql_schema_with_invalid_schema_raises_invalid_graphql_syntax_exception(
-    mocker, incorrect_schema_file, single_file_query
+    incorrect_schema_file,
 ):
-    mocker.patch(
-        "graphql_sdk_gen.schema.settings",
-        Settings(
-            schema_path=incorrect_schema_file.as_posix(),
-            queries_path=single_file_query.as_posix(),
-        ),
-    )
     with pytest.raises(InvalidGraphqlSyntax):
-        get_graphql_schema()
+        get_graphql_schema(incorrect_schema_file.as_posix())
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_single_file(
-    mocker, single_file_schema, single_file_query
+    single_file_query,
 ):
-    mocker.patch(
-        "graphql_sdk_gen.schema.settings",
-        Settings(
-            schema_path=single_file_schema.as_posix(),
-            queries_path=single_file_query.as_posix(),
-        ),
-    )
-    queries = get_graphql_queries()
+    queries = get_graphql_queries(single_file_query.as_posix())
     assert len(queries) == 1
     assert isinstance(queries[0], OperationDefinitionNode)
     assert queries[0].name
@@ -247,16 +223,10 @@ def test_get_graphql_queries_returns_schema_definitions_from_single_file(
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_directory(
-    mocker, single_file_schema, queries_directory
+    queries_directory,
 ):
-    mocker.patch(
-        "graphql_sdk_gen.schema.settings",
-        Settings(
-            schema_path=single_file_schema.as_posix(),
-            queries_path=queries_directory.as_posix(),
-        ),
-    )
-    queries = get_graphql_queries()
+
+    queries = get_graphql_queries(queries_directory.as_posix())
     assert len(queries) == 2
     assert isinstance(queries[0], OperationDefinitionNode)
     assert isinstance(queries[1], OperationDefinitionNode)
@@ -267,14 +237,7 @@ def test_get_graphql_queries_returns_schema_definitions_from_directory(
 
 
 def test_get_graphql_queries_with_invalid_file_raises_invalid_graphql_syntax_exception(
-    mocker, single_file_schema, incorrect_file_query
+    incorrect_file_query,
 ):
-    mocker.patch(
-        "graphql_sdk_gen.schema.settings",
-        Settings(
-            schema_path=single_file_schema.as_posix(),
-            queries_path=incorrect_file_query.as_posix(),
-        ),
-    )
     with pytest.raises(InvalidGraphqlSyntax):
-        get_graphql_queries()
+        get_graphql_queries(incorrect_file_query.as_posix())
