@@ -6,17 +6,17 @@ from .base_model import BaseModel
 from .enums import Color
 
 
+class LocationInput(BaseModel):
+    city: Optional[str]
+    country: Optional[str]
+
+
 class UserCreateInput(BaseModel):
     first_name: Optional[str] = Field(alias="firstName")
     last_name: Optional[str] = Field(alias="lastName")
     email: str
-    favourite_color: Optional["Color"] = Field(alias="favouriteColor")
+    favourite_color: Optional[Color] = Field(alias="favouriteColor")
     location: Optional["LocationInput"]
-
-
-class LocationInput(BaseModel):
-    city: Optional[str]
-    country: Optional[str]
 
 
 class NotificationsPreferencesInput(BaseModel):
@@ -46,7 +46,7 @@ class UserPreferencesInput(BaseModel):
     )
 
 
-UserCreateInput.update_forward_refs()
 LocationInput.update_forward_refs()
+UserCreateInput.update_forward_refs()
 NotificationsPreferencesInput.update_forward_refs()
 UserPreferencesInput.update_forward_refs()

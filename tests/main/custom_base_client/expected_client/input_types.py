@@ -3,7 +3,7 @@ from .enums import enumA
 
 
 class inputA(BaseModel):
-    version: "enumA"
+    version: enumA
 
 
 inputA.update_forward_refs()

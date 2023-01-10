@@ -5,6 +5,5 @@ include_comments = false
 target_package_name = "custom_names_client"
 
 client_file_name = "custom_client"
-schema_types_module_name = "custom_schema_types"
 enums_module_name = "custom_enums"
 input_types_module_name = "custom_input_types"

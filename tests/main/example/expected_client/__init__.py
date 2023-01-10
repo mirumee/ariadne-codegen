@@ -11,7 +11,6 @@ from .input_types import (
 )
 from .list_all_users import ListAllUsers, ListAllUsersUsers, ListAllUsersUsersLocation
 from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUsers
-from .schema_types import Location, User
 
 __all__ = [
     "AsyncBaseClient",
@@ -25,10 +24,8 @@ __all__ = [
     "ListAllUsersUsersLocation",
     "ListUsersByCountry",
     "ListUsersByCountryUsers",
-    "Location",
     "LocationInput",
     "NotificationsPreferencesInput",
-    "User",
     "UserCreateInput",
     "UserPreferencesInput",
 ]
