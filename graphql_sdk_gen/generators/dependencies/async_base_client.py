@@ -4,9 +4,9 @@ import httpx
 from pydantic import BaseModel
 
 from .exceptions import (
+    GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
-    GraphQLClientGraphQLMultiError,
 )
 
 

@@ -5,7 +5,11 @@ import pytest
 from pydantic import BaseModel
 
 from graphql_sdk_gen.generators.dependencies.base_client import BaseClient
-from graphql_sdk_gen.generators.dependencies.exceptions import GraphQLMultiError
+from graphql_sdk_gen.generators.dependencies.exceptions import (
+    GraphQLClientGraphQLMultiError,
+    GraphQLClientHttpError,
+    GraphQlClientInvalidResponseError,
+)
 
 
 def test_execute_sends_post_to_correct_endpoint_with_correct_payload(mocker):
@@ -60,18 +64,55 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
 
 
 @pytest.mark.parametrize(
+    "status_code, response_content",
+    [
+        (401, {"msg": "Unauthorized"}),
+        (403, {"msg": "Forbidden"}),
+        (404, {"msg": "Not Found"}),
+        (500, {"msg": "Internal Server Error"}),
+    ],
+)
+def test_get_data_raises_graphql_client_http_error(
+    mocker, status_code, response_content
+):
+    client = BaseClient("base_url", mocker.MagicMock())
+    response = httpx.Response(
+        status_code=status_code, content=json.dumps(response_content)
+    )
+
+    with pytest.raises(GraphQLClientHttpError) as exc:
+        client.get_data(response)
+        assert exc.status_code == status_code
+        assert exc.response == response
+
+
+@pytest.mark.parametrize("response_content", ["invalid_json", {"not_data": ""}, ""])
+def test_get_data_raises_graphql_client_invalid_response_error(
+    mocker, response_content
+):
+    client = BaseClient("base_url", mocker.MagicMock())
+    response = httpx.Response(status_code=200, content=json.dumps(response_content))
+
+    with pytest.raises(GraphQlClientInvalidResponseError) as exc:
+        client.get_data(response)
+        assert exc.response == response
+
+
+@pytest.mark.parametrize(
     "response_content",
     [
         {
+            "data": {},
             "errors": [
                 {
                     "message": "Error message",
                     "locations": [{"line": 6, "column": 7}],
                     "path": ["field1", "field2", 1, "id"],
                 }
-            ]
+            ],
         },
         {
+            "data": {},
             "errors": [
                 {
                     "message": "Error message type A",
@@ -83,26 +124,31 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
                     "locations": [{"line": 6, "column": 7}],
                     "path": ["field1", "field2", 1, "id"],
                 },
-            ]
+            ],
         },
     ],
 )
-def test_raise_for_errors_raises_graphql_multi_error(mocker, response_content):
+def test_get_data_raises_graphql_client_graphql_multi_error(mocker, response_content):
     client = BaseClient("base_url", mocker.MagicMock())
 
-    with pytest.raises(GraphQLMultiError):
-        client.raise_for_errors(
+    with pytest.raises(GraphQLClientGraphQLMultiError):
+        client.get_data(
             httpx.Response(status_code=200, content=json.dumps(response_content))
         )
 
 
-@pytest.mark.parametrize("response_content", [{"errors": []}, {"errors": None}, {}])
-def test_raise_for_errors_doesnt_raise_exception(mocker, response_content):
+@pytest.mark.parametrize(
+    "response_content",
+    [{"errors": [], "data": {}}, {"errors": None, "data": {}}, {"data": {}}],
+)
+def test_get_data_doesnt_raise_exception(mocker, response_content):
     client = BaseClient("base_url", mocker.MagicMock())
 
-    client.raise_for_errors(
+    data = client.get_data(
         httpx.Response(status_code=200, content=json.dumps(response_content))
     )
+
+    assert data == response_content["data"]
 
 
 def test_base_client_used_as_context_manager_closes_http_client(mocker):

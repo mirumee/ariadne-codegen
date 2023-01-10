@@ -276,8 +276,8 @@ def test_generate_creates_client_with_correctly_implemented_async_method(tmp_pat
             )
             variables: dict = {"id": id, "param": param}
             response = await self.execute(query=query, variables=variables)
-            self.raise_for_errors(response)
-            return CustomQuery.parse_obj(response.json().get("data", {}))
+            data = self.get_data(response)
+            return CustomQuery.parse_obj(data)
         '''
         assert indent(dedent(expected_method_def), "    ") in client_content
         assert "from .custom_query import CustomQuery" in client_content

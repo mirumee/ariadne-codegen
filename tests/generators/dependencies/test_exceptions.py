@@ -1,6 +1,6 @@
 from graphql_sdk_gen.generators.dependencies.exceptions import (
-    GraphQLError,
-    GraphQLMultiError,
+    GraphQLClientGraphQLError,
+    GraphQLClientGraphQLMultiError,
 )
 
 
@@ -15,9 +15,9 @@ def test_from_dict_returns_graphql_error_with_parsed_data():
         },
     }
 
-    result = GraphQLError.from_dict(error_dict)
+    result = GraphQLClientGraphQLError.from_dict(error_dict)
 
-    assert isinstance(result, GraphQLError)
+    assert isinstance(result, GraphQLClientGraphQLError)
     assert result.message == error_dict["message"]
     assert result.locations == error_dict["locations"]
     assert result.path == error_dict["path"]
@@ -47,19 +47,19 @@ def test_from_errors_dicts_returns_graphql_multi_error_with_parsed_data():
         },
     ]
 
-    result = GraphQLMultiError.from_errors_dicts(errors_dicts)
+    result = GraphQLClientGraphQLMultiError.from_errors_dicts(errors_dicts, {})
 
-    assert isinstance(result, GraphQLMultiError)
+    assert isinstance(result, GraphQLClientGraphQLMultiError)
     error0, error1 = result.errors
 
-    assert isinstance(error0, GraphQLError)
+    assert isinstance(error0, GraphQLClientGraphQLError)
     assert error0.message == errors_dicts[0]["message"]
     assert error0.locations == errors_dicts[0]["locations"]
     assert error0.path == errors_dicts[0]["path"]
     assert error0.extensions == errors_dicts[0]["extensions"]
     assert error0.orginal == errors_dicts[0]
 
-    assert isinstance(error1, GraphQLError)
+    assert isinstance(error1, GraphQLClientGraphQLError)
     assert error1.message == errors_dicts[1]["message"]
     assert error1.locations == errors_dicts[1]["locations"]
     assert error1.path == errors_dicts[1]["path"]

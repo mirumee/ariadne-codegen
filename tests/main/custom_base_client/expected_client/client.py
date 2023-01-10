@@ -20,4 +20,5 @@ class Client(CustomAsyncBaseClient):
         )
         variables: dict = {"dataA": data_a}
         response = await self.execute(query=query, variables=variables)
-        return GetQueryA.parse_obj(response.json().get("data", {}))
+        data = self.get_data(response)
+        return GetQueryA.parse_obj(data)
