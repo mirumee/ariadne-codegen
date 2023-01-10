@@ -3,7 +3,11 @@ from typing import Any, Optional
 import httpx
 from pydantic import BaseModel
 
-from .exceptions import GraphQLMultiError
+from .exceptions import (
+    GraphQLClientHttpError,
+    GraphQlClientInvalidResponseError,
+    GraphQLClientGraphQLMultiError,
+)
 
 
 class AsyncBaseClient:
@@ -34,9 +38,28 @@ class AsyncBaseClient:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
         return await self.http_client.post(url="/graphql/", json=payload)
 
-    def raise_for_errors(self, response: httpx.Response) -> None:
-        if errors := response.json().get("errors"):
-            raise GraphQLMultiError.from_errors_dicts(errors)
+    def get_data(self, response: httpx.Response) -> dict:
+        if not response.is_success:
+            raise GraphQLClientHttpError(
+                status_code=response.status_code, response=response
+            )
+
+        try:
+            response_dict = response.json()
+        except ValueError as exc:
+            raise GraphQlClientInvalidResponseError(response=response) from exc
+
+        if "data" not in response_dict:
+            raise GraphQlClientInvalidResponseError(response=response)
+
+        data = response_dict["data"]
+
+        if errors := response_dict.get("errors"):
+            raise GraphQLClientGraphQLMultiError.from_errors_dicts(
+                errors_dicts=errors, data=data
+            )
+
+        return data
 
     def _convert_dict_to_json_serializable(self, dict_: dict[str, Any]):
         return {
