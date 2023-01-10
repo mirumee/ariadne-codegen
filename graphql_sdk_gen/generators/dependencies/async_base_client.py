@@ -45,16 +45,16 @@ class AsyncBaseClient:
             )
 
         try:
-            response_dict = response.json()
+            response_json = response.json()
         except ValueError as exc:
             raise GraphQlClientInvalidResponseError(response=response) from exc
 
-        if "data" not in response_dict:
+        if (not isinstance(response_json, dict)) or ("data" not in response_json):
             raise GraphQlClientInvalidResponseError(response=response)
 
-        data = response_dict["data"]
+        data = response_json["data"]
 
-        if errors := response_dict.get("errors"):
+        if errors := response_json.get("errors"):
             raise GraphQLClientGraphQLMultiError.from_errors_dicts(
                 errors_dicts=errors, data=data
             )
