@@ -9,7 +9,6 @@ from .codegen import (
     generate_call,
     generate_class_def,
     generate_constant,
-    generate_dict,
     generate_import_from,
     generate_keyword,
     generate_method_definition,
@@ -30,6 +29,7 @@ class ClientGenerator:
         self._operation_str_variable = "query"
         self._variables_dict_variable = "variables"
         self._response_variable = "response"
+        self._data_variable = "data"
 
     def generate(self) -> ast.Module:
         """Generate module with class definistion of grahql client."""
@@ -93,6 +93,7 @@ class ClientGenerator:
                 self._generate_operation_str_assign(operation_str, 1),
                 self._generate_variables_assign(arguments_dict, 2),
                 self._generate_async_response_assign(3),
+                self._generate_data_retrieval(),
                 self._generate_return_parsed_obj(return_type),
             ],
         )
@@ -113,6 +114,7 @@ class ClientGenerator:
                 self._generate_operation_str_assign(operation_str, 1),
                 self._generate_variables_assign(arguments_dict, 2),
                 self._generate_response_assign(3),
+                self._generate_data_retrieval(),
                 self._generate_return_parsed_obj(return_type),
             ],
         )
@@ -166,22 +168,19 @@ class ClientGenerator:
             ],
         )
 
+    def _generate_data_retrieval(self) -> ast.Assign:
+        return generate_assign(
+            targets=[self._data_variable],
+            value=generate_call(
+                func=generate_attribute(value=generate_name("self"), attr="get_data"),
+                args=[generate_name(self._response_variable)],
+            ),
+        )
+
     def _generate_return_parsed_obj(self, return_type: str) -> ast.Return:
         return generate_return(
             generate_call(
                 func=generate_attribute(generate_name(return_type), "parse_obj"),
-                args=[
-                    generate_call(
-                        func=generate_attribute(
-                            generate_call(
-                                generate_attribute(
-                                    generate_name(self._response_variable), "json"
-                                )
-                            ),
-                            "get",
-                        ),
-                        args=[generate_constant("data"), generate_dict()],
-                    )
-                ],
+                args=[generate_name(self._data_variable)],
             )
         )

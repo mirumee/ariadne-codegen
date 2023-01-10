@@ -3,8 +3,8 @@ from textwrap import dedent
 
 import pytest
 
-import graphql_sdk_gen.generators.async_base_client
-import graphql_sdk_gen.generators.base_client
+import graphql_sdk_gen.generators.dependencies.async_base_client
+import graphql_sdk_gen.generators.dependencies.base_client
 from graphql_sdk_gen.config import Settings, get_used_settings_message
 from graphql_sdk_gen.exceptions import InvalidConfiguration
 
@@ -80,12 +80,12 @@ def test_settings_with_base_client_not_defined_in_file_raises_configuration_exce
         (
             True,
             "AsyncBaseClient",
-            Path(graphql_sdk_gen.generators.async_base_client.__file__).as_posix(),
+            Path(graphql_sdk_gen.generators.dependencies.async_base_client.__file__),
         ),
         (
             False,
             "BaseClient",
-            Path(graphql_sdk_gen.generators.base_client.__file__).as_posix(),
+            Path(graphql_sdk_gen.generators.dependencies.base_client.__file__),
         ),
     ],
 )
@@ -102,7 +102,7 @@ def test_settings_sets_correct_default_values_for_base_client_name_and_path(
     )
 
     assert settings.base_client_name == expected_name
-    assert settings.base_client_file_path == expected_path
+    assert settings.base_client_file_path == expected_path.as_posix()
 
 
 def test_get_used_settings_message_returns_string_with_data_from_given_settings(

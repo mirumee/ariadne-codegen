@@ -18,6 +18,9 @@ from .codegen import generate_import_from
 from .constants import (
     BASE_MODEL_CLASS_NAME,
     COMMENT_DATETIME_FORMAT,
+    DEFAULT_ASYNC_BASE_CLIENT_PATH,
+    DEFAULT_BASE_CLIENT_PATH,
+    GRAPHQL_CLIENT_EXCEPTIONS_NAMES,
     SOURCE_COMMENT,
     TIMESTAMP_COMMENT,
 )
@@ -60,9 +63,14 @@ class PackageGenerator:
         self.client_name = client_name
         self.base_client_name = base_client_name
 
-        self.base_model_file_path = Path(__file__).parent / "base_model.py"
+        self.base_model_file_path = (
+            Path(__file__).parent / "dependencies" / "base_model.py"
+        )
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
+        )
+        self.exceptions_file_path = (
+            Path(__file__).parent / "dependencies" / "exceptions.py"
         )
 
         self.files_to_include = (
@@ -110,18 +118,15 @@ class PackageGenerator:
             self.base_client_file_path = Path(base_client_file_path)
         else:
             if self.async_client:
-                self.base_client_file_path = Path(__file__).parent.joinpath(
-                    "async_base_client.py"
-                )
+                self.base_client_file_path = DEFAULT_ASYNC_BASE_CLIENT_PATH
             else:
-                self.base_client_file_path = Path(__file__).parent.joinpath(
-                    "base_client.py"
-                )
+                self.base_client_file_path = DEFAULT_BASE_CLIENT_PATH
 
         self.fragments_definitions = {f.name.value: f for f in fragments or []}
 
         self.result_types_files: dict[str, ast.Module] = {}
         self.generated_files: list[str] = []
+        self.include_exceptions_file = self._include_exceptions()
 
     def generate(self) -> list[str]:
         """Generate package with graphql client."""
@@ -173,6 +178,12 @@ class PackageGenerator:
         )
         self.client_generator.add_import([return_type_name], module_name, 1)
 
+    def _include_exceptions(self):
+        return self.base_client_file_path in (
+            DEFAULT_ASYNC_BASE_CLIENT_PATH,
+            DEFAULT_BASE_CLIENT_PATH,
+        )
+
     def _validate_unique_file_names(self):
         file_names = (
             [
@@ -185,6 +196,8 @@ class PackageGenerator:
             + list(self.result_types_files.keys())
             + [f.name for f in self.files_to_include]
         )
+        if self.include_exceptions_file:
+            file_names.append(self.exceptions_file_path.name)
 
         if len(file_names) != len(set(file_names)):
             seen = set()
@@ -275,10 +288,18 @@ class PackageGenerator:
             self.generated_files.append(file_path.name)
 
     def _copy_files(self):
-        for source_path in self.files_to_include + [
+        files_to_copy = self.files_to_include + [
             self.base_client_file_path,
             self.base_model_file_path,
-        ]:
+        ]
+        if self.include_exceptions_file:
+            files_to_copy.append(self.exceptions_file_path)
+            self.init_generator.add_import(
+                names=GRAPHQL_CLIENT_EXCEPTIONS_NAMES,
+                from_=self.exceptions_file_path.stem,
+                level=1,
+            )
+        for source_path in files_to_copy:
             code = self._proccess_generated_code(source_path.read_text())
             target_path = self.package_path / source_path.name
             target_path.write_text(code)

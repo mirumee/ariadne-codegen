@@ -3,6 +3,13 @@ from .base_model import BaseModel
 from .client import Client
 from .create_user import CreateUser, CreateUserUserCreate
 from .enums import Color
+from .exceptions import (
+    GraphQLClientError,
+    GraphQLClientGraphQLError,
+    GraphQLClientGraphQLMultiError,
+    GraphQLClientHttpError,
+    GraphQlClientInvalidResponseError,
+)
 from .input_types import (
     LocationInput,
     NotificationsPreferencesInput,
@@ -19,6 +26,11 @@ __all__ = [
     "Color",
     "CreateUser",
     "CreateUserUserCreate",
+    "GraphQLClientError",
+    "GraphQLClientGraphQLError",
+    "GraphQLClientGraphQLMultiError",
+    "GraphQLClientHttpError",
+    "GraphQlClientInvalidResponseError",
     "ListAllUsers",
     "ListAllUsersUsers",
     "ListAllUsersUsersLocation",

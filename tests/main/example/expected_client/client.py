@@ -22,7 +22,8 @@ class Client(AsyncBaseClient):
         )
         variables: dict = {"userData": user_data}
         response = await self.execute(query=query, variables=variables)
-        return CreateUser.parse_obj(response.json().get("data", {}))
+        data = self.get_data(response)
+        return CreateUser.parse_obj(data)
 
     async def list_all_users(self) -> ListAllUsers:
         query = gql(
@@ -42,7 +43,8 @@ class Client(AsyncBaseClient):
         )
         variables: dict = {}
         response = await self.execute(query=query, variables=variables)
-        return ListAllUsers.parse_obj(response.json().get("data", {}))
+        data = self.get_data(response)
+        return ListAllUsers.parse_obj(data)
 
     async def list_users_by_country(self, country: str) -> ListUsersByCountry:
         query = gql(
@@ -68,4 +70,5 @@ class Client(AsyncBaseClient):
         )
         variables: dict = {"country": country}
         response = await self.execute(query=query, variables=variables)
-        return ListUsersByCountry.parse_obj(response.json().get("data", {}))
+        data = self.get_data(response)
+        return ListUsersByCountry.parse_obj(data)

@@ -91,7 +91,19 @@ def test_generate_creates_files_with_correct_imports(tmp_path):
         assert "from .client import Client" in init_content
         assert "from .async_base_client import AsyncBaseClient" in init_content
         assert "from .base_model import BaseModel" in init_content
-        assert '__all__ = ["AsyncBaseClient", "BaseModel", "Client"]' in init_content
+        expected_all = """
+            __all__ = [
+                "AsyncBaseClient",
+                "BaseModel",
+                "Client",
+                "GraphQLClientError",
+                "GraphQLClientGraphQLError",
+                "GraphQLClientGraphQLMultiError",
+                "GraphQLClientHttpError",
+                "GraphQlClientInvalidResponseError",
+            ]
+        """
+        assert dedent(expected_all) in init_content
 
     client_file_path = package_path / "client.py"
     with client_file_path.open() as client_file:
@@ -276,7 +288,8 @@ def test_generate_creates_client_with_correctly_implemented_async_method(tmp_pat
             )
             variables: dict = {"id": id, "param": param}
             response = await self.execute(query=query, variables=variables)
-            return CustomQuery.parse_obj(response.json().get("data", {}))
+            data = self.get_data(response)
+            return CustomQuery.parse_obj(data)
         '''
         assert indent(dedent(expected_method_def), "    ") in client_content
         assert "from .custom_query import CustomQuery" in client_content
@@ -497,6 +510,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             generator.base_client_file_path.name,
             "base_model.py",
             f"{generator.client_file_name}.py",
+            generator.exceptions_file_path.name,
             f"{generator.input_types_module_name}.py",
             f"{generator.enums_module_name}.py",
             "custom_query.py",

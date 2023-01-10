@@ -143,25 +143,18 @@ def test_add_method_generates_correct_async_method_body():
                 )
             ),
         ),
+        ast.Assign(
+            targets=[ast.Name(id="data")],
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="get_data"),
+                args=[ast.Name(id="response")],
+                keywords=[],
+            ),
+        ),
         ast.Return(
             value=ast.Call(
                 func=ast.Attribute(value=ast.Name(id="ListXyz"), attr="parse_obj"),
-                args=[
-                    ast.Call(
-                        func=ast.Attribute(
-                            value=ast.Call(
-                                func=ast.Attribute(
-                                    value=ast.Name(id="response"), attr="json"
-                                ),
-                                args=[],
-                                keywords=[],
-                            ),
-                            attr="get",
-                        ),
-                        args=[ast.Constant(value="data"), ast.Dict(keys=[], values=[])],
-                        keywords=[],
-                    )
-                ],
+                args=[ast.Name(id="data")],
                 keywords=[],
             )
         ),
@@ -271,25 +264,18 @@ def test_add_method_generates_correct_method_body():
                 ],
             ),
         ),
+        ast.Assign(
+            targets=[ast.Name(id="data")],
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="get_data"),
+                args=[ast.Name(id="response")],
+                keywords=[],
+            ),
+        ),
         ast.Return(
             value=ast.Call(
                 func=ast.Attribute(value=ast.Name(id="ListXyz"), attr="parse_obj"),
-                args=[
-                    ast.Call(
-                        func=ast.Attribute(
-                            value=ast.Call(
-                                func=ast.Attribute(
-                                    value=ast.Name(id="response"), attr="json"
-                                ),
-                                args=[],
-                                keywords=[],
-                            ),
-                            attr="get",
-                        ),
-                        args=[ast.Constant(value="data"), ast.Dict(keys=[], values=[])],
-                        keywords=[],
-                    )
-                ],
+                args=[ast.Name(id="data")],
                 keywords=[],
             )
         ),
