@@ -179,8 +179,8 @@ class Client(AsyncBaseClient):
         )
         variables: dict = {"userData": user_data}
         response = await self.execute(query=query, variables=variables)
-        self.raise_for_errors(response)
-        return CreateUser.parse_obj(response.json().get("data", {}))
+        data = self.get_data(response)
+        return CreateUser.parse_obj(data)
 
     async def list_all_users(self) -> ListAllUsers:
         query = gql(
@@ -200,8 +200,8 @@ class Client(AsyncBaseClient):
         )
         variables: dict = {}
         response = await self.execute(query=query, variables=variables)
-        self.raise_for_errors(response)
-        return ListAllUsers.parse_obj(response.json().get("data", {}))
+        data = self.get_data(response)
+        return ListAllUsers.parse_obj(data)
 
     async def list_users_by_country(self, country: str) -> ListUsersByCountry:
         query = gql(
@@ -214,21 +214,21 @@ class Client(AsyncBaseClient):
               }
             }
 
-            fragment UserPersonalData on User {
-              firstName
-              lastName
-            }
-
             fragment BasicUser on User {
               id
               email
+            }
+
+            fragment UserPersonalData on User {
+              firstName
+              lastName
             }
             """
         )
         variables: dict = {"country": country}
         response = await self.execute(query=query, variables=variables)
-        self.raise_for_errors(response)
-        return ListUsersByCountry.parse_obj(response.json().get("data", {}))
+        data = self.get_data(response)
+        return ListUsersByCountry.parse_obj(data)
 ```
 
 ### Base client
@@ -415,6 +415,13 @@ from .base_model import BaseModel
 from .client import Client
 from .create_user import CreateUser, CreateUserUserCreate
 from .enums import Color
+from .exceptions import (
+    GraphQLClientError,
+    GraphQLClientGraphQLError,
+    GraphQLClientGraphQLMultiError,
+    GraphQLClientHttpError,
+    GraphQlClientInvalidResponseError,
+)
 from .input_types import (
     LocationInput,
     NotificationsPreferencesInput,
@@ -431,6 +438,11 @@ __all__ = [
     "Color",
     "CreateUser",
     "CreateUserUserCreate",
+    "GraphQLClientError",
+    "GraphQLClientGraphQLError",
+    "GraphQLClientGraphQLMultiError",
+    "GraphQLClientHttpError",
+    "GraphQlClientInvalidResponseError",
     "ListAllUsers",
     "ListAllUsersUsers",
     "ListAllUsersUsersLocation",
