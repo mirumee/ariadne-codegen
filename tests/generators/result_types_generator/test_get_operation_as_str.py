@@ -124,3 +124,4 @@ def test_get_operation_as_str_returns_str_with_used_fragments():
     assert used_fragment1 in result
     assert used_fragment2 in result
     assert not_used_fragment not in result
+    assert result.index(used_fragment1) < result.index(used_fragment2)

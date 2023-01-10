@@ -12,7 +12,6 @@ from graphql import (
     parse,
 )
 
-from .config import settings
 from .exceptions import InvalidGraphqlSyntax
 
 
@@ -30,16 +29,16 @@ def filter_fragments_definitions(
     return [d for d in definitions if isinstance(d, FragmentDefinitionNode)]
 
 
-def get_graphql_queries() -> Tuple[DefinitionNode, ...]:
-    """Get graphql queries definitions build from path provided by settings."""
-    queries_str = load_graphql_files_from_path(Path(settings.queries_path))
+def get_graphql_queries(queries_path: str) -> Tuple[DefinitionNode, ...]:
+    """Get graphql queries definitions build from provided path."""
+    queries_str = load_graphql_files_from_path(Path(queries_path))
     queries_ast = parse(queries_str)
     return queries_ast.definitions
 
 
-def get_graphql_schema() -> GraphQLSchema:
-    """Get graphql schema build from path provided by settings."""
-    schema_str = load_graphql_files_from_path(Path(settings.schema_path))
+def get_graphql_schema(schema_path: str) -> GraphQLSchema:
+    """Get graphql schema build from provided path."""
+    schema_str = load_graphql_files_from_path(Path(schema_path))
     graphql_ast = parse(schema_str)
     schema: GraphQLSchema = build_ast_schema(graphql_ast)
     assert_valid_schema(schema)

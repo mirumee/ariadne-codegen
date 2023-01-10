@@ -1,0 +1,23 @@
+from typing import Optional
+
+from .custom_base_client import CustomAsyncBaseClient
+from .get_query_a import GetQueryA
+from .input_types import inputA
+
+gql = lambda q: q
+
+
+class Client(CustomAsyncBaseClient):
+    async def get_query_a(self, data_a: inputA) -> GetQueryA:
+        query = gql(
+            """
+            query getQueryA($dataA: inputA!) {
+              queryA(dataA: $dataA) {
+                fieldA
+              }
+            }
+            """
+        )
+        variables: dict = {"dataA": data_a}
+        response = await self.execute(query=query, variables=variables)
+        return GetQueryA.parse_obj(response.json().get("data", {}))

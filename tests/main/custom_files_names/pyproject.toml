@@ -1,0 +1,9 @@
+[graphql-sdk-gen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+include_comments = false
+target_package_name = "custom_names_client"
+
+client_file_name = "custom_client"
+enums_module_name = "custom_enums"
+input_types_module_name = "custom_input_types"

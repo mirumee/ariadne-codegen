@@ -1,0 +1,21 @@
+schema {
+  query: Query
+}
+
+type Query {
+  queryA(dataA: inputA!): TypeA!
+}
+
+type TypeA {
+  fieldA: Int!
+}
+
+input inputA {
+  version: enumA!
+}
+
+enum enumA {
+  A
+  B
+  C
+}

@@ -2,7 +2,7 @@ import sys
 
 import click
 
-from .config import get_used_settings_message, settings
+from .config import get_settings, get_used_settings_message
 from .generators.package import PackageGenerator
 from .schema import (
     filter_fragments_definitions,
@@ -15,8 +15,9 @@ from .schema import (
 @click.command()
 @click.version_option()
 def main():
-    schema = get_graphql_schema()
-    definitions = get_graphql_queries()
+    settings = get_settings()
+    schema = get_graphql_schema(settings.schema_path)
+    definitions = get_graphql_queries(settings.queries_path)
     queries = filter_operations_definitions(definitions)
     fragments = filter_fragments_definitions(definitions)
 

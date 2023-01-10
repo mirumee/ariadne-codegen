@@ -1,0 +1,6 @@
+[graphql-sdk-gen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+include_comments = false
+target_package_name = "client_with_extended_models"
+files_to_include = ["common_mixins.py", "mixins_a.py", "mixins_b.py"]

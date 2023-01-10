@@ -1,0 +1,9 @@
+[graphql-sdk-gen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+include_comments = false
+target_package_name = "custom_base_client"
+
+base_client_name = "CustomAsyncBaseClient"
+base_client_file_path = "custom_base_client.py"
+async_client = true

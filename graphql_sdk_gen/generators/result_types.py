@@ -110,12 +110,10 @@ class ResultTypesGenerator:
     def get_operation_as_str(self) -> str:
         operation_str = print_ast(self.operation_definition)
         if self._used_fragments_names:
-            operation_str += "\n\n" + "\n\n".join(
-                {
-                    print_ast(self.fragments_definitions[n])
-                    for n in self._used_fragments_names
-                }
-            )
+            for used_fragment in sorted(self._used_fragments_names):
+                operation_str += "\n\n" + print_ast(
+                    self.fragments_definitions[used_fragment]
+                )
 
         return operation_str
 

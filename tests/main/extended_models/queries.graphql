@@ -1,0 +1,15 @@
+query getQueryA {
+  queryA
+    @mixin(from: ".mixins_a", import: "MixinA")
+    @mixin(from: ".common_mixins", import: "CommonMixin") {
+    fieldA
+  }
+}
+
+query getQueryB {
+  queryB
+    @mixin(from: ".mixins_b", import: "MixinB")
+    @mixin(from: ".common_mixins", import: "CommonMixin") {
+    fieldB
+  }
+}
