@@ -91,7 +91,19 @@ def test_generate_creates_files_with_correct_imports(tmp_path):
         assert "from .client import Client" in init_content
         assert "from .async_base_client import AsyncBaseClient" in init_content
         assert "from .base_model import BaseModel" in init_content
-        assert '__all__ = ["AsyncBaseClient", "BaseModel", "Client"]' in init_content
+        expected_all = """
+            __all__ = [
+                "AsyncBaseClient",
+                "BaseModel",
+                "Client",
+                "GraphQLClientError",
+                "GraphQLClientGraphQLError",
+                "GraphQLClientGraphQLMultiError",
+                "GraphQLClientHttpError",
+                "GraphQlClientInvalidResponseError",
+            ]
+        """
+        assert dedent(expected_all) in init_content
 
     client_file_path = package_path / "client.py"
     with client_file_path.open() as client_file:

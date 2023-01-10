@@ -6,8 +6,8 @@ from pydantic import BaseModel
 
 from graphql_sdk_gen.generators.dependencies.async_base_client import AsyncBaseClient
 from graphql_sdk_gen.generators.dependencies.exceptions import (
-    GraphQLClientHttpError,
     GraphQLClientGraphQLMultiError,
+    GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
 
