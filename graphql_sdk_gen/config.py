@@ -20,7 +20,6 @@ class Settings:
     client_file_name: str = "client"
     base_client_name: Optional[str] = None
     base_client_file_path: Optional[str] = None
-    schema_types_module_name: str = "schema_types"
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     include_comments: bool = True
@@ -46,7 +45,6 @@ class Settings:
             Path(self.base_client_file_path), self.base_client_name
         )
 
-        self._assert_string_is_valid_python_identifier(self.schema_types_module_name)
         self._assert_string_is_valid_python_identifier(self.enums_module_name)
         self._assert_string_is_valid_python_identifier(self.input_types_module_name)
 
@@ -154,7 +152,6 @@ def get_used_settings_message(settings: Settings) -> str:
         Using '{settings.client_name}' as client name.
         Using '{settings.base_client_name}' as base client class.
         Coping base client class from '{settings.base_client_file_path}'.
-        Generating types into '{settings.schema_types_module_name}.py'.
         Generating enums into '{settings.enums_module_name}.py'.
         Generating inputs into '{settings.input_types_module_name}.py'.
         {comments_msg}

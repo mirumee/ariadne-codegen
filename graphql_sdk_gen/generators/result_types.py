@@ -45,8 +45,8 @@ from .constants import (
     UNION,
     UPDATE_FORWARD_REFS_METHOD,
 )
-from .fields import FieldNames, parse_operation_field
-from .types import CodegenFieldType
+from .result_fields import FieldNames, parse_operation_field
+from .types import CodegenResultFieldType
 from .utils import str_to_pascal_case, str_to_snake_case
 
 
@@ -156,7 +156,7 @@ class ResultTypesGenerator:
             name = self._process_field_name(org_name)
             field_definition = self._get_field_from_schema(type_name, org_name)
             annotation, field_types_names = parse_operation_field(
-                type_=cast(CodegenFieldType, field_definition.type),
+                type_=cast(CodegenResultFieldType, field_definition.type),
                 directives=field.directives,
                 class_name=class_name + str_to_pascal_case(name),
             )

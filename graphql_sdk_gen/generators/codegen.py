@@ -14,7 +14,7 @@ from graphql import (
 
 from ..exceptions import ParsingError
 from .constants import ANY, FIELD_CLASS, LIST, OPTIONAL, SIMPLE_TYPE_MAP, UNION
-from .types import Annotation, CodegenFieldType
+from .types import Annotation, CodegenResultFieldType
 
 
 def generate_import_from(
@@ -86,7 +86,9 @@ def generate_async_method_definition(
 
 
 def generate_class_def(
-    name: str, base_names: Optional[list[str]] = None
+    name: str,
+    base_names: Optional[list[str]] = None,
+    body: Optional[list[ast.stmt]] = None,
 ) -> ast.ClassDef:
     """Generate class definition."""
     bases = [ast.Name(id=name) for name in base_names] if base_names else []
@@ -94,7 +96,7 @@ def generate_class_def(
         name=name,
         bases=bases,
         keywords=[],
-        body=[],
+        body=body if body else [],
         decorator_list=[],
     )
 
@@ -182,7 +184,7 @@ def generate_return(value: Optional[ast.expr] = None) -> ast.Return:
 
 
 def parse_field_type(
-    type_: CodegenFieldType,
+    type_: CodegenResultFieldType,
     nullable: bool = True,
 ) -> Union[ast.Name, ast.Subscript]:
     """Parse graphql type and return generated annotation."""

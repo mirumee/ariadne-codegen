@@ -15,13 +15,20 @@ from graphql import (
 Annotation = Union[ast.Name, ast.Subscript]
 AnnotationSlice = Union[Annotation, ast.Tuple]
 
-CodegenFieldType = Union[
+CodegenResultFieldType = Union[
     GraphQLEnumType,
-    GraphQLInputObjectType,
     GraphQLInterfaceType,
     GraphQLList,
     GraphQLNonNull,
     GraphQLObjectType,
     GraphQLScalarType,
     GraphQLUnionType,
+]
+
+CodegenInputFieldType = Union[
+    GraphQLEnumType,
+    GraphQLList,
+    GraphQLNonNull,
+    GraphQLScalarType,
+    GraphQLInputObjectType,
 ]

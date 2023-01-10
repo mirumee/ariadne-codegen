@@ -5,7 +5,6 @@ from typing import Optional, Tuple, cast
 from graphql import (
     DirectiveNode,
     GraphQLEnumType,
-    GraphQLInputObjectType,
     GraphQLInterfaceType,
     GraphQLList,
     GraphQLNonNull,
@@ -28,13 +27,13 @@ from .constants import (
     SIMPLE_TYPE_MAP,
     SKIP_DIRECTIVE_NAME,
 )
-from .types import Annotation, CodegenFieldType
+from .types import Annotation, CodegenResultFieldType
 
 FieldNames = namedtuple("FieldNames", ["class_name", "type_name"])
 
 
 def parse_operation_field(
-    type_: CodegenFieldType,
+    type_: CodegenResultFieldType,
     directives: Optional[Tuple[DirectiveNode, ...]] = None,
     class_name: str = "",
 ) -> Tuple[Annotation, list[FieldNames]]:
@@ -50,7 +49,7 @@ def parse_operation_field(
 
 
 def parse_operation_field_type(
-    type_: CodegenFieldType,
+    type_: CodegenResultFieldType,
     nullable: bool = True,
     class_name: str = "",
     add_type_name: bool = False,
@@ -69,20 +68,13 @@ def parse_operation_field_type(
             GraphQLInterfaceType,
         ),
     ):
-
         name = class_name + type_.name if add_type_name else class_name
         return (
             generate_annotation_name('"' + name + '"', nullable),
             [FieldNames(name, type_.name)],
         )
 
-    if isinstance(
-        type_,
-        (
-            GraphQLInputObjectType,
-            GraphQLEnumType,
-        ),
-    ):
+    if isinstance(type_, GraphQLEnumType):
         return (
             generate_annotation_name(type_.name, nullable),
             [FieldNames(type_.name, type_.name)],
@@ -102,7 +94,7 @@ def parse_operation_field_type(
 
     if isinstance(type_, GraphQLList):
         slice_, names = parse_operation_field_type(
-            cast(CodegenFieldType, type_.of_type),
+            cast(CodegenResultFieldType, type_.of_type),
             nullable=nullable,
             class_name=class_name,
         )

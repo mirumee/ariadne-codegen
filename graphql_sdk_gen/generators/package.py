@@ -3,7 +3,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNode
+from graphql import (
+    FragmentDefinitionNode,
+    GraphQLEnumType,
+    GraphQLInputObjectType,
+    GraphQLSchema,
+    OperationDefinitionNode,
+)
 
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
@@ -15,9 +21,10 @@ from .constants import (
     SOURCE_COMMENT,
     TIMESTAMP_COMMENT,
 )
+from .enums import EnumsGenerator
 from .init_file import InitFileGenerator
+from .input_types import InputTypesGenerator
 from .result_types import ResultTypesGenerator
-from .schema_types import SchemaTypesGenerator
 from .utils import ast_to_str, str_to_pascal_case, str_to_snake_case
 
 
@@ -31,7 +38,6 @@ class PackageGenerator:
         client_file_name: str = "client",
         base_client_name: str = "AsyncBaseClient",
         base_client_file_path: Optional[str] = None,
-        schema_types_module_name: str = "schema_types",
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
         include_comments: bool = True,
@@ -43,7 +49,8 @@ class PackageGenerator:
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
         arguments_generator: Optional[ArgumentsGenerator] = None,
-        schema_types_generator: Optional[SchemaTypesGenerator] = None,
+        enums_generator: Optional[EnumsGenerator] = None,
+        input_types_generator: Optional[InputTypesGenerator] = None,
         files_to_include: Optional[list[str]] = None,
     ) -> None:
         self.package_name = package_name
@@ -62,7 +69,6 @@ class PackageGenerator:
             [Path(f) for f in files_to_include] if files_to_include else []
         )
 
-        self.schema_types_module_name = schema_types_module_name
         self.enums_module_name = enums_module_name
         self.input_types_module_name = input_types_module_name
         self.client_file_name = client_file_name
@@ -77,19 +83,27 @@ class PackageGenerator:
         self.client_generator = (
             client_generator
             if client_generator
-            else ClientGenerator(self.client_name, self.base_client_name)
+            else ClientGenerator(
+                name=self.client_name, base_client=self.base_client_name
+            )
         )
         self.arguments_generator = (
             arguments_generator
             if arguments_generator
-            else ArgumentsGenerator(self.convert_to_snake_case)
+            else ArgumentsGenerator(convert_to_snake_case=self.convert_to_snake_case)
         )
-        self.schema_types_generator = (
-            schema_types_generator
-            if schema_types_generator
-            else SchemaTypesGenerator(
-                schema, self.convert_to_snake_case, self.base_model_import
+        self.input_types_generator = (
+            input_types_generator
+            if input_types_generator
+            else InputTypesGenerator(
+                schema=self.schema,
+                enums_module=self.enums_module_name,
+                convert_to_snake_case=self.convert_to_snake_case,
+                base_model_import=self.base_model_import,
             )
+        )
+        self.enums_generator = (
+            enums_generator if enums_generator else EnumsGenerator(schema=self.schema)
         )
 
         if base_client_file_path:
@@ -115,7 +129,8 @@ class PackageGenerator:
         if not self.package_path.exists():
             self.package_path.mkdir()
         self._generate_client()
-        self._generate_schema_types()
+        self._generate_enums()
+        self._generate_input_types()
         self._generate_result_types()
         self._copy_files()
         self._generate_init()
@@ -164,7 +179,6 @@ class PackageGenerator:
                 f"{self.client_file_name}.py",
                 self.base_client_file_path.name,
                 self.base_model_file_path.name,
-                f"{self.schema_types_module_name}.py",
                 f"{self.enums_module_name}.py",
                 f"{self.input_types_module_name}.py",
             ]
@@ -183,9 +197,9 @@ class PackageGenerator:
         input_types = []
         enums = []
         for type_ in self.arguments_generator.used_types:
-            if type_ in self.schema_types_generator.input_types:
+            if isinstance(self.schema.type_map[type_], GraphQLInputObjectType):
                 input_types.append(type_)
-            elif type_ in self.schema_types_generator.enums:
+            elif isinstance(self.schema.type_map[type_], GraphQLEnumType):
                 enums.append(type_)
             else:
                 raise ParsingError(f"Argument type {type_} not found in schema.")
@@ -227,43 +241,28 @@ class PackageGenerator:
 
         return code
 
-    def _generate_schema_types(self):
-        (
-            enums_module,
-            input_types_module,
-            schema_types_module,
-        ) = self.schema_types_generator.generate()
-
-        schema_types_file_path = (
-            self.package_path / f"{self.schema_types_module_name}.py"
-        )
-        schema_types_code = self._proccess_generated_code(
-            ast_to_str(schema_types_module), self.schema_source
-        )
-        schema_types_file_path.write_text(schema_types_code)
-        self.generated_files.append(schema_types_file_path.name)
-        self.init_generator.add_import(
-            self.schema_types_generator.schema_types, self.schema_types_module_name, 1
-        )
-
+    def _generate_enums(self):
+        module = self.enums_generator.generate()
+        code = self._proccess_generated_code(ast_to_str(module), self.schema_source)
         enums_file_path = self.package_path / f"{self.enums_module_name}.py"
-        enums_code = self._proccess_generated_code(
-            ast_to_str(enums_module), self.schema_source
-        )
-        enums_file_path.write_text(enums_code)
+        enums_file_path.write_text(code)
         self.generated_files.append(enums_file_path.name)
         self.init_generator.add_import(
-            self.schema_types_generator.enums, self.enums_module_name, 1
+            self.enums_generator.get_generated_public_names(), self.enums_module_name, 1
         )
 
+    def _generate_input_types(self):
+        module = self.input_types_generator.generate()
         input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
         input_types_code = self._proccess_generated_code(
-            ast_to_str(input_types_module), self.schema_source
+            ast_to_str(module), self.schema_source
         )
         input_types_file_path.write_text(input_types_code)
         self.generated_files.append(input_types_file_path.name)
         self.init_generator.add_import(
-            self.schema_types_generator.input_types, self.input_types_module_name, 1
+            self.input_types_generator.get_generated_public_names(),
+            self.input_types_module_name,
+            1,
         )
 
     def _generate_result_types(self):
