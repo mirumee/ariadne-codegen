@@ -152,9 +152,9 @@ class ResultTypesGenerator:
             resolved_selection_set,
             start=1,
         ):
-            org_name = field.name.value
-            name = self._process_field_name(org_name)
-            field_definition = self._get_field_from_schema(type_name, org_name)
+            field_name = self._get_field_name(field)
+            name = self._process_field_name(field_name)
+            field_definition = self._get_field_from_schema(type_name, field.name.value)
             annotation, field_types_names = parse_operation_field(
                 type_=cast(CodegenResultFieldType, field_definition.type),
                 directives=field.directives,
@@ -166,8 +166,8 @@ class ResultTypesGenerator:
                 annotation=annotation,
                 lineno=lineno,
             )
-            if name != org_name:
-                field_implementation.value = generate_field_with_alias(org_name)
+            if name != field_name:
+                field_implementation.value = generate_field_with_alias(field_name)
 
             class_def.body.append(field_implementation)
 
@@ -214,6 +214,11 @@ class ResultTypesGenerator:
                 *selection_set.selections,
             )
         return resolved_fields, selection_set.selections
+
+    def _get_field_name(self, field: FieldNode) -> str:
+        if field.alias:
+            return field.alias.value
+        return field.name.value
 
     def _process_field_name(self, name: str) -> str:
         if self.convert_to_snake_case:
