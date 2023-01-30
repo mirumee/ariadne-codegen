@@ -6,7 +6,9 @@
 
 # Ariadne Code Generator
 
-A python code generator that takes graphql schema, queries and mutations to generate fully typed and asynchronous python client. Its available as `ariadne-codegen` command and reads configuration from `pyproject.toml` file:
+Python code generator that takes graphql schema, queries and mutations and generates Python package with fully typed and asynchronous GraphQL client.
+
+It's available as `ariadne-codegen` command and reads configuration from the `pyproject.toml` file:
 
 ```
 $ ariadne-codegen
@@ -111,6 +113,13 @@ Generated code requires:
 ## Example
 
 Example with simple schema and few queries and mutations is available [here](./EXAMPLE.md).
+
+
+## Contributing
+
+We welcome all contributions to Ariadne! If you've found a bug or issue, feel free to use [GitHub issues](https://github.com/mirumee/ariadne-codegen/issues). If you have any questions or feedback, don't hesitate to catch us on [GitHub discussions](https://github.com/mirumee/ariadne/discussions/).
+
+Also make sure you follow [@AriadneGraphQL](https://twitter.com/AriadneGraphQL) on Twitter for latest updates, news and random musings!
 
 
 ## **Crafted with ❤️ by [Mirumee Software](http://mirumee.com)** hello@mirumee.com
