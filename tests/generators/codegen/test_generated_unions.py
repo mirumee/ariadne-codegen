@@ -1,8 +1,8 @@
 import ast
 from typing import Union
 
-from graphql_sdk_gen.generators.codegen import generate_union_annotation
-from graphql_sdk_gen.generators.constants import OPTIONAL, UNION
+from ariadne_codegen.generators.codegen import generate_union_annotation
+from ariadne_codegen.generators.constants import OPTIONAL, UNION
 
 
 def test_generate_union_annotation_returns_union_annotation():

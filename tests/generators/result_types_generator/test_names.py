@@ -4,7 +4,7 @@ from typing import cast
 import pytest
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
-from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
+from ariadne_codegen.generators.result_types import ResultTypesGenerator
 
 from ...utils import compare_ast, get_class_def
 from .schema import SCHEMA_STR

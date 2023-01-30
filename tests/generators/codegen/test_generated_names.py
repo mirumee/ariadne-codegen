@@ -1,7 +1,7 @@
 import ast
 
-from graphql_sdk_gen.generators.codegen import generate_annotation_name, generate_name
-from graphql_sdk_gen.generators.constants import OPTIONAL
+from ariadne_codegen.generators.codegen import generate_annotation_name, generate_name
+from ariadne_codegen.generators.constants import OPTIONAL
 
 
 def test_generate_name_returns_name_object():

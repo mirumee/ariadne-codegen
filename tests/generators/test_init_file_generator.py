@@ -1,6 +1,6 @@
 import ast
 
-from graphql_sdk_gen.generators.init_file import InitFileGenerator
+from ariadne_codegen.generators.init_file import InitFileGenerator
 
 
 def test_add_import_adds_correct_objects_to_list():

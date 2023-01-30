@@ -3,8 +3,8 @@ import ast
 import pytest
 from graphql import build_ast_schema, parse
 
-from graphql_sdk_gen.generators.constants import BASE_MODEL_CLASS_NAME
-from graphql_sdk_gen.generators.input_types import InputTypesGenerator
+from ariadne_codegen.generators.constants import BASE_MODEL_CLASS_NAME
+from ariadne_codegen.generators.input_types import InputTypesGenerator
 
 from ...utils import compare_ast, filter_class_defs
 

@@ -1,8 +1,8 @@
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode
 
-from graphql_sdk_gen.exceptions import InvalidGraphqlSyntax
-from graphql_sdk_gen.schema import (
+from ariadne_codegen.exceptions import InvalidGraphqlSyntax
+from ariadne_codegen.schema import (
     get_graphql_queries,
     get_graphql_schema,
     load_graphql_files_from_path,

@@ -15,14 +15,14 @@ from graphql import (
     NameNode,
 )
 
-from graphql_sdk_gen.generators.constants import (
+from ariadne_codegen.generators.constants import (
     INCLUDE_DIRECTIVE_NAME,
     LIST,
     OPTIONAL,
     SKIP_DIRECTIVE_NAME,
     UNION,
 )
-from graphql_sdk_gen.generators.result_fields import (
+from ariadne_codegen.generators.result_fields import (
     FieldNames,
     is_nullable,
     parse_operation_field,

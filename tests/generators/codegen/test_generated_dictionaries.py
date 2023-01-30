@@ -1,6 +1,6 @@
 import ast
 
-from graphql_sdk_gen.generators.codegen import generate_dict
+from ariadne_codegen.generators.codegen import generate_dict
 
 
 def test_generate_dict_returns_dict_object():

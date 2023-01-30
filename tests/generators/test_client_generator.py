@@ -1,6 +1,6 @@
 import ast
 
-from graphql_sdk_gen.generators.client import ClientGenerator
+from ariadne_codegen.generators.client import ClientGenerator
 
 from ..utils import compare_ast, get_class_def
 

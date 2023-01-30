@@ -21,8 +21,8 @@ from graphql import (
     StringValueNode,
 )
 
-from graphql_sdk_gen.generators.constants import FIELD_CLASS, LIST, OPTIONAL
-from graphql_sdk_gen.generators.input_fields import (
+from ariadne_codegen.generators.constants import FIELD_CLASS, LIST, OPTIONAL
+from ariadne_codegen.generators.input_fields import (
     parse_input_const_value_node,
     parse_input_field_type,
 )

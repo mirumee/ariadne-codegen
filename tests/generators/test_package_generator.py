@@ -5,13 +5,13 @@ import pytest
 from freezegun import freeze_time
 from graphql import GraphQLSchema, build_ast_schema, parse
 
-from graphql_sdk_gen.exceptions import ParsingError
-from graphql_sdk_gen.generators.constants import (
+from ariadne_codegen.exceptions import ParsingError
+from ariadne_codegen.generators.constants import (
     COMMENT_DATETIME_FORMAT,
     SOURCE_COMMENT,
     TIMESTAMP_COMMENT,
 )
-from graphql_sdk_gen.generators.package import PackageGenerator
+from ariadne_codegen.generators.package import PackageGenerator
 
 SCHEMA_STR = """
 schema {

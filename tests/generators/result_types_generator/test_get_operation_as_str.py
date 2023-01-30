@@ -7,7 +7,7 @@ from graphql import (
     parse,
 )
 
-from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
+from ariadne_codegen.generators.result_types import ResultTypesGenerator
 
 from ...utils import format_graphql_str
 from .schema import SCHEMA_STR

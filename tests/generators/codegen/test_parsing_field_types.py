@@ -15,8 +15,8 @@ from graphql import (
     GraphQLUnionType,
 )
 
-from graphql_sdk_gen.generators.codegen import parse_field_type
-from graphql_sdk_gen.generators.constants import ANY, FIELD_CLASS, LIST, OPTIONAL, UNION
+from ariadne_codegen.generators.codegen import parse_field_type
+from ariadne_codegen.generators.constants import ANY, FIELD_CLASS, LIST, OPTIONAL, UNION
 
 
 @pytest.mark.parametrize(

@@ -99,7 +99,7 @@ def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
 
 
 def parse_config_file(
-    file_path: Path, section_key: str = "graphql-sdk-gen"
+    file_path: Path, section_key: str = "ariadne-codegen"
 ) -> Settings:
     """
     Parse configuration from toml file. Raise exception if section or key was not found.

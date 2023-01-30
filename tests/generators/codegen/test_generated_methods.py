@@ -1,6 +1,6 @@
 import ast
 
-from graphql_sdk_gen.generators.codegen import (
+from ariadne_codegen.generators.codegen import (
     generate_arg,
     generate_arguments,
     generate_async_method_definition,

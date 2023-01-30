@@ -4,12 +4,12 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from graphql_sdk_gen.exceptions import (
+from ariadne_codegen.exceptions import (
     InvalidConfiguration,
     MissingConfiguration,
     ParsingError,
 )
-from graphql_sdk_gen.main import main
+from ariadne_codegen.main import main
 
 
 @pytest.fixture(scope="function")

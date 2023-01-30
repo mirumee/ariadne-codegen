@@ -2,7 +2,7 @@ import ast
 
 from graphql import build_ast_schema, parse
 
-from graphql_sdk_gen.generators.input_types import InputTypesGenerator
+from ariadne_codegen.generators.input_types import InputTypesGenerator
 
 from ...utils import compare_ast, filter_imports
 

@@ -1,7 +1,7 @@
 import pytest
 
-from graphql_sdk_gen.config import Settings, get_config_file_path, parse_config_file
-from graphql_sdk_gen.exceptions import ConfigFileNotFound, MissingConfiguration
+from ariadne_codegen.config import Settings, get_config_file_path, parse_config_file
+from ariadne_codegen.exceptions import ConfigFileNotFound, MissingConfiguration
 
 SCHEMA_FILENAME = "schema.graphql"
 QUERIES_DIR = "queries"
@@ -16,7 +16,7 @@ def config_file(tmp_path_factory):
     queries_path.mkdir()
     config = "\n".join(
         [
-            "[graphql-sdk-gen]",
+            "[ariadne-codegen]",
             f'schema_path = "{schema_path.as_posix()}"',
             f'queries_path = "{queries_path.as_posix()}"',
         ]
@@ -36,13 +36,13 @@ def config_file_invalid_section(tmp_path_factory):
 @pytest.fixture
 def config_file_without_field(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
-    config = '[graphql-sdk-gen]\ninvalid_field = "."'
+    config = '[ariadne-codegen]\ninvalid_field = "."'
     file_.write_text(config, encoding="utf-8")
     return file_
 
 
 def mock_cwd(mocker, path):
-    mocker.patch("graphql_sdk_gen.config.Path.cwd", return_value=path)
+    mocker.patch("ariadne_codegen.config.Path.cwd", return_value=path)
 
 
 def test_get_config_file_path_finds_file_in_cwd(config_file, mocker):

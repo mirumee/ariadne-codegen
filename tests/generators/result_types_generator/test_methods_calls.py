@@ -3,8 +3,8 @@ from typing import cast
 
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
-from graphql_sdk_gen.generators.constants import UPDATE_FORWARD_REFS_METHOD
-from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
+from ariadne_codegen.generators.constants import UPDATE_FORWARD_REFS_METHOD
+from ariadne_codegen.generators.result_types import ResultTypesGenerator
 
 from ...utils import compare_ast
 from .schema import SCHEMA_STR

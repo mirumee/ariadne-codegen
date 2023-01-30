@@ -9,8 +9,8 @@ from graphql import (
     parse,
 )
 
-from graphql_sdk_gen.generators.constants import BASE_MODEL_CLASS_NAME, LIST, OPTIONAL
-from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
+from ariadne_codegen.generators.constants import BASE_MODEL_CLASS_NAME, LIST, OPTIONAL
+from ariadne_codegen.generators.result_types import ResultTypesGenerator
 
 from ...utils import compare_ast, filter_class_defs
 from .schema import SCHEMA_STR

@@ -1,6 +1,16 @@
-# graphql-sdk-gen
+[![Ariadne](https://ariadnegraphql.org/img/logo-horizontal-sm.png)](https://ariadnegraphql.org)
 
-`graphql-sdk-gen` is a code generator that takes graphql schema, queries and mutations to generate fully typed and asynchronous python client.
+[![Build Status](https://github.com/mirumee/ariadne-codegen/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/mirumee/ariadne-codegen/actions)
+
+- - - - -
+
+# Ariadne Code Generator
+
+A python code generator that takes graphql schema, queries and mutations to generate fully typed and asynchronous python client. Its available as `ariadne-codegen` command and reads configuration from `pyproject.toml` file:
+
+```
+$ ariadne-codegen
+```
 
 
 ## Features
@@ -12,29 +22,23 @@
 
 ## Installation
 
-graphql-sdk-gen can be installed by:
+Ariadne Code Generator can be installed with pip:
 
-using [poetry](https://python-poetry.org/)
 ```
-poetry add git+https://github.com/mirumee/graphql-sdk-gen.git@main
-```
-
-or using pip
-```
-pip install git+https://github.com/mirumee/graphql-sdk-gen.git@main
+$ pip install ariadne-codegen
 ```
 
 
 ## Configuration
 
-graphql-sdk-gen reads configuration from `pyproject.toml` from `[graphql-sdk-gen]` section.
+`ariadne-codegen` reads configuration from `[ariadne-codegen]` section in your `pyproject.toml`'.
 
-Required parameters:
+Required settings:
 
 - `schema_path` - path to file/directory with graphql schema
 - `queries_path` - path to file/directory with queries
 
-Optional parameters:
+Optional settings:
 
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
 - `target_package_path` (defaults to cwd) - path where to generate package
@@ -48,15 +52,6 @@ Optional parameters:
 - `convert_to_snake_case` (defaults to `True`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `async_client` (defaults to `True`) - a flag that specifies whether to generate client with async methods
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
-
-
-## Usage
-
-Command from below reads [configuration](#configuration) and generates files into `target_package_path/target_package_name` directory:
-
-```
-graphql-sdk-gen
-```
 
 
 ## Extending generated types
@@ -117,6 +112,5 @@ Generated code requires:
 
 Example with simple schema and few queries and mutations is available [here](./EXAMPLE.md).
 
-<br>
 
 ## **Crafted with ❤️ by [Mirumee Software](http://mirumee.com)** hello@mirumee.com

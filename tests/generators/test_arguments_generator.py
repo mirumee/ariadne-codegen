@@ -2,8 +2,8 @@ import ast
 
 from graphql import OperationDefinitionNode, parse
 
-from graphql_sdk_gen.generators.arguments import ArgumentsGenerator
-from graphql_sdk_gen.generators.constants import OPTIONAL
+from ariadne_codegen.generators.arguments import ArgumentsGenerator
+from ariadne_codegen.generators.constants import OPTIONAL
 
 from ..utils import compare_ast
 

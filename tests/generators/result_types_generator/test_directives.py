@@ -4,8 +4,8 @@ from typing import cast
 import pytest
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
-from graphql_sdk_gen.exceptions import ParsingError
-from graphql_sdk_gen.generators.constants import (
+from ariadne_codegen.exceptions import ParsingError
+from ariadne_codegen.generators.constants import (
     BASE_MODEL_CLASS_NAME,
     INCLUDE_DIRECTIVE_NAME,
     MIXIN_FROM_NAME,
@@ -14,7 +14,7 @@ from graphql_sdk_gen.generators.constants import (
     OPTIONAL,
     SKIP_DIRECTIVE_NAME,
 )
-from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
+from ariadne_codegen.generators.result_types import ResultTypesGenerator
 
 from ...utils import compare_ast, filter_imports, get_class_def
 from .schema import SCHEMA_STR

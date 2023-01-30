@@ -1,7 +1,7 @@
 import ast
 
-from graphql_sdk_gen.generators.codegen import generate_nullable_annotation
-from graphql_sdk_gen.generators.constants import OPTIONAL
+from ariadne_codegen.generators.codegen import generate_nullable_annotation
+from ariadne_codegen.generators.constants import OPTIONAL
 
 
 def test_generate_nullable_annotation_returns_subscript_with_correct_value():

@@ -2,8 +2,8 @@ import ast
 
 from graphql import build_ast_schema, parse
 
-from graphql_sdk_gen.generators.constants import ENUM_CLASS, ENUM_MODULE
-from graphql_sdk_gen.generators.enums import EnumsGenerator
+from ariadne_codegen.generators.constants import ENUM_CLASS, ENUM_MODULE
+from ariadne_codegen.generators.enums import EnumsGenerator
 
 from ..utils import compare_ast, filter_class_defs, get_class_def
 

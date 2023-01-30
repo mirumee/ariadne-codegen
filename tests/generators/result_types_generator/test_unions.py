@@ -3,7 +3,7 @@ from typing import cast
 
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
-from graphql_sdk_gen.generators.result_types import ResultTypesGenerator
+from ariadne_codegen.generators.result_types import ResultTypesGenerator
 
 from ...utils import compare_ast, filter_class_defs, format_graphql_str
 from .schema import SCHEMA_STR

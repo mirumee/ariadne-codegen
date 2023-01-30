@@ -4,8 +4,8 @@ import httpx
 import pytest
 from pydantic import BaseModel
 
-from graphql_sdk_gen.generators.dependencies.async_base_client import AsyncBaseClient
-from graphql_sdk_gen.generators.dependencies.exceptions import (
+from ariadne_codegen.generators.dependencies.async_base_client import AsyncBaseClient
+from ariadne_codegen.generators.dependencies.exceptions import (
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,

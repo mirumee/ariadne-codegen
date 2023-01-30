@@ -3,7 +3,7 @@ from textwrap import dedent
 
 import pytest
 
-from graphql_sdk_gen.generators.utils import (
+from ariadne_codegen.generators.utils import (
     ast_to_str,
     convert_to_multiline_string,
     format_multiline_strings,

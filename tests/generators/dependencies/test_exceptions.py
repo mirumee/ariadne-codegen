@@ -1,4 +1,4 @@
-from graphql_sdk_gen.generators.dependencies.exceptions import (
+from ariadne_codegen.generators.dependencies.exceptions import (
     GraphQLClientGraphQLError,
     GraphQLClientGraphQLMultiError,
 )

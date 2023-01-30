@@ -1,6 +1,6 @@
 import ast
 
-from graphql_sdk_gen.generators.codegen import generate_import_from
+from ariadne_codegen.generators.codegen import generate_import_from
 
 
 def test_generate_import_from_returns_correct_object():

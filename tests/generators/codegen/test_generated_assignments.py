@@ -1,6 +1,6 @@
 import ast
 
-from graphql_sdk_gen.generators.codegen import generate_ann_assign, generate_assign
+from ariadne_codegen.generators.codegen import generate_ann_assign, generate_assign
 
 
 def test_generate_assign_returns_objects_with_correct_targets_and_value():

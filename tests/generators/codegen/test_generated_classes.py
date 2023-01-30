@@ -1,6 +1,6 @@
 import ast
 
-from graphql_sdk_gen.generators.codegen import generate_class_def
+from ariadne_codegen.generators.codegen import generate_class_def
 
 
 def test_generate_class_def_returns_class_def_with_correct_bases():

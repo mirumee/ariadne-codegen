@@ -2,7 +2,7 @@ import ast
 
 import pytest
 
-from graphql_sdk_gen.generators.codegen import generate_constant
+from ariadne_codegen.generators.codegen import generate_constant
 
 
 @pytest.mark.parametrize("value", [1, "a", "xyz", True, None])
