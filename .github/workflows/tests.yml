@@ -25,7 +25,7 @@ jobs:
         pytest
     - name: Linters
       run: |
-        pylint graphql_sdk_gen tests
-        mypy graphql_sdk_gen --ignore-missing-imports
+        pylint ariadne_codegen tests
+        mypy ariadne_codegen --ignore-missing-imports
         black --check .
         isort . --check-only
