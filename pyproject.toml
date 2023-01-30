@@ -47,8 +47,11 @@ dev = [
 ariadne-codegen = "ariadne_codegen.main:main"
 
 [project.urls]
-"Homepage" = "https://github.com/mirumee/ariadne-codegen"
+"Homepage" = "https://ariadnegraphql.org/"
+"Repository" = "https://github.com/mirumee/ariadne-codegen"
 "Bug Tracker" = "https://github.com/mirumee/ariadne-codegen/issues"
+"Community" = "https://github.com/mirumee/ariadne/discussions"
+"Twitter" = "https://twitter.com/AriadneGraphQL"
 
 [tool.pylint.messages_control]
 max-line-length = 88
