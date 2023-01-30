@@ -25,7 +25,6 @@ jobs:
         pytest
     - name: Linters
       run: |
-        source .venv/bin/activate
         pylint graphql_sdk_gen tests
         mypy graphql_sdk_gen --ignore-missing-imports
         black --check .
