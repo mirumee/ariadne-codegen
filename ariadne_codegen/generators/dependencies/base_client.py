@@ -53,8 +53,9 @@ class BaseClient:
             raise GraphQlClientInvalidResponseError(response=response)
 
         data = response_json["data"]
+        errors = response_json.get("errors")
 
-        if errors := response_json.get("errors"):
+        if errors:
             raise GraphQLClientGraphQLMultiError.from_errors_dicts(
                 errors_dicts=errors, data=data
             )

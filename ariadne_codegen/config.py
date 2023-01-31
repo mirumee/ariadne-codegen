@@ -91,11 +91,11 @@ class Settings:
 def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
     """Get config file path. If not found raise exception."""
     directory = Path.cwd()
-    while not (file_path := directory.joinpath(file_name)).exists():
+    while not directory.joinpath(file_name).exists():
         if directory == directory.parent:
             raise ConfigFileNotFound(f"Config file {file_name} not found.")
         directory = directory.parent
-    return file_path.resolve()
+    return directory.joinpath(file_name).resolve()
 
 
 def parse_config_file(

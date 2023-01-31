@@ -143,7 +143,8 @@ class PackageGenerator:
         return sorted(self.generated_files)
 
     def add_operation(self, definition: OperationDefinitionNode):
-        if not (name := definition.name):
+        name = definition.name
+        if not name:
             raise ParsingError("Query without name.")
 
         return_type_name = str_to_pascal_case(name.value)
