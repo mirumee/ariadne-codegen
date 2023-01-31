@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Generator, Tuple
+from typing import Generator, List, Tuple
 
 from graphql import (
     DefinitionNode,
@@ -17,14 +17,14 @@ from .exceptions import InvalidGraphqlSyntax
 
 def filter_operations_definitions(
     definitions: Tuple[DefinitionNode, ...]
-) -> list[OperationDefinitionNode]:
+) -> List[OperationDefinitionNode]:
     """Return list including only operations definitions."""
     return [d for d in definitions if isinstance(d, OperationDefinitionNode)]
 
 
 def filter_fragments_definitions(
     definitions: Tuple[DefinitionNode, ...]
-) -> list[FragmentDefinitionNode]:
+) -> List[FragmentDefinitionNode]:
     """Return list including only fragments definitions."""
     return [d for d in definitions if isinstance(d, FragmentDefinitionNode)]
 

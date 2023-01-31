@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -6,7 +6,7 @@ from .base_model import BaseModel
 
 
 class ListAllUsers(BaseModel):
-    users: list["ListAllUsersUsers"]
+    users: List["ListAllUsersUsers"]
 
 
 class ListAllUsersUsers(BaseModel):

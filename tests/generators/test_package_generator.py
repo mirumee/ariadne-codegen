@@ -164,7 +164,7 @@ def test_generate_creates_file_with_query_types(tmp_path):
 
 
     class CustomQueryQuery1(BaseModel):
-        field1: Optional[list[Optional[str]]]
+        field1: Optional[List[Optional[str]]]
         field2: Optional["CustomQueryQuery1Field2"]
         field3: CustomEnum
 
@@ -462,7 +462,7 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
 
 
     class CustomQueryQuery1(BaseModel):
-        field1: Optional[list[Optional[str]]]
+        field1: Optional[List[Optional[str]]]
         field2: Optional["CustomQueryQuery1Field2"]
         field3: CustomEnum
 

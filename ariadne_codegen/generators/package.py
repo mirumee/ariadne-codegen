@@ -1,7 +1,7 @@
 import ast
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 
 from graphql import (
     FragmentDefinitionNode,
@@ -48,13 +48,13 @@ class PackageGenerator:
         schema_source: str = "",
         convert_to_snake_case: bool = True,
         async_client: bool = True,
-        fragments: Optional[list[FragmentDefinitionNode]] = None,
+        fragments: Optional[List[FragmentDefinitionNode]] = None,
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
         arguments_generator: Optional[ArgumentsGenerator] = None,
         enums_generator: Optional[EnumsGenerator] = None,
         input_types_generator: Optional[InputTypesGenerator] = None,
-        files_to_include: Optional[list[str]] = None,
+        files_to_include: Optional[List[str]] = None,
     ) -> None:
         self.package_name = package_name
         self.target_path = target_path
@@ -124,11 +124,11 @@ class PackageGenerator:
 
         self.fragments_definitions = {f.name.value: f for f in fragments or []}
 
-        self.result_types_files: dict[str, ast.Module] = {}
-        self.generated_files: list[str] = []
+        self.result_types_files: Dict[str, ast.Module] = {}
+        self.generated_files: List[str] = []
         self.include_exceptions_file = self._include_exceptions()
 
-    def generate(self) -> list[str]:
+    def generate(self) -> List[str]:
         """Generate package with graphql client."""
         self._validate_unique_file_names()
         if not self.package_path.exists():
@@ -143,7 +143,8 @@ class PackageGenerator:
         return sorted(self.generated_files)
 
     def add_operation(self, definition: OperationDefinitionNode):
-        if not (name := definition.name):
+        name = definition.name
+        if not name:
             raise ParsingError("Query without name.")
 
         return_type_name = str_to_pascal_case(name.value)

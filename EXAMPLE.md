@@ -113,18 +113,18 @@ fragment UserPersonalData on User {
 
 ## Running
 
-Add `[graphql-sdk-gen]` section to `pyproject.toml` with paths to files with [schema](#schema-file) and [queries/mutations](#queriesmutations-file).
+Add `[ariadne-codegen]` section to `pyproject.toml` with paths to files with [schema](#schema-file) and [queries/mutations](#queriesmutations-file).
 
 ```toml
-[graphql-sdk-gen]
+[ariadne-codegen]
 schema_path = "schema.graphql" 
 queries_path = "queries.graphql"
 ```
 
-Run command to generate code.
+Run command to generate code:
 
 ```
-graphql-sdk-gen
+$ ariadne-codegen
 ```
 
 
@@ -155,7 +155,7 @@ Generated client class inherits from `AsyncBaseClient` and has async method for 
 ```py
 # graphql_client/client.py
 
-from typing import Optional
+from typing import Any, List, Optional
 
 from .async_base_client import AsyncBaseClient
 from .create_user import CreateUser
@@ -246,7 +246,7 @@ Models are generated from inputs from provided schema. They are used as argument
 ```py
 # graphql_client/input_types.py
 
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -278,7 +278,7 @@ class UserPreferencesInput(BaseModel):
     lucky_number: Optional[int] = Field(alias="luckyNumber", default=7)
     favourite_word: Optional[str] = Field(alias="favouriteWord", default="word")
     color_opacity: Optional[float] = Field(alias="colorOpacity", default=1.0)
-    excluded_tags: Optional[list[str]] = Field(
+    excluded_tags: Optional[List[str]] = Field(
         alias="excludedTags", default_factory=lambda: ["offtop", "tag123"]
     )
     notifications_preferences: "NotificationsPreferencesInput" = Field(
@@ -348,7 +348,7 @@ CreateUserUserCreate.update_forward_refs()
 ```py
 # graphql_client/list_all_users.py
 
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -356,7 +356,7 @@ from .base_model import BaseModel
 
 
 class ListAllUsers(BaseModel):
-    users: list["ListAllUsersUsers"]
+    users: List["ListAllUsersUsers"]
 
 
 class ListAllUsersUsers(BaseModel):
@@ -379,7 +379,7 @@ ListAllUsersUsersLocation.update_forward_refs()
 ```py
 # graphql_client/list_users_by_country.py
 
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -388,7 +388,7 @@ from .enums import Color
 
 
 class ListUsersByCountry(BaseModel):
-    users: list["ListUsersByCountryUsers"]
+    users: List["ListUsersByCountryUsers"]
 
 
 class ListUsersByCountryUsers(BaseModel):

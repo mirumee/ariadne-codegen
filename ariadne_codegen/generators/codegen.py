@@ -1,5 +1,5 @@
 import ast
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 from graphql import (
     GraphQLEnumType,
@@ -18,7 +18,7 @@ from .types import Annotation, CodegenResultFieldType
 
 
 def generate_import_from(
-    names: list[str], from_: str, level: int = 0
+    names: List[str], from_: str, level: int = 0
 ) -> ast.ImportFrom:
     """Generate import from statement."""
     return ast.ImportFrom(
@@ -56,7 +56,7 @@ def generate_arg(
     return ast.arg(arg=name, annotation=annotation)
 
 
-def generate_arguments(args: Optional[list[ast.arg]] = None) -> ast.arguments:
+def generate_arguments(args: Optional[List[ast.arg]] = None) -> ast.arguments:
     """Generate arguments."""
     return ast.arguments(
         posonlyargs=[],
@@ -71,7 +71,7 @@ def generate_async_method_definition(
     name: str,
     arguments: ast.arguments,
     return_type: Union[ast.Name, ast.Subscript],
-    body: Optional[list[ast.stmt]] = None,
+    body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
 ) -> ast.AsyncFunctionDef:
     """Generate async function."""
@@ -87,8 +87,8 @@ def generate_async_method_definition(
 
 def generate_class_def(
     name: str,
-    base_names: Optional[list[str]] = None,
-    body: Optional[list[ast.stmt]] = None,
+    base_names: Optional[List[str]] = None,
+    body: Optional[List[ast.stmt]] = None,
 ) -> ast.ClassDef:
     """Generate class definition."""
     bases = [ast.Name(id=name) for name in base_names] if base_names else []
@@ -112,7 +112,7 @@ def generate_constant(value: Any) -> ast.Constant:
 
 
 def generate_assign(
-    targets: list[str], value: Union[ast.expr, list[ast.expr]], lineno: int = 1
+    targets: List[str], value: Union[ast.expr, List[ast.expr]], lineno: int = 1
 ) -> ast.Assign:
     """Generate assign object."""
     return ast.Assign(
@@ -137,7 +137,7 @@ def generate_ann_assign(
 
 
 def generate_union_annotation(
-    types: list[Union[ast.Name, ast.Subscript]], nullable: bool = True
+    types: List[Union[ast.Name, ast.Subscript]], nullable: bool = True
 ) -> ast.Subscript:
     """Generate union annotation."""
     result = ast.Subscript(value=ast.Name(id=UNION), slice=ast.Tuple(elts=types))
@@ -145,8 +145,8 @@ def generate_union_annotation(
 
 
 def generate_dict(
-    keys: Optional[list[ast.expr]] = None,
-    values: Optional[list[Optional[ast.expr]]] = None,
+    keys: Optional[List[ast.expr]] = None,
+    values: Optional[List[Optional[ast.expr]]] = None,
 ) -> ast.Dict:
     """Generate dict object."""
     return ast.Dict(keys=keys if keys else [], values=values if values else [])
@@ -159,8 +159,8 @@ def generate_await(value: ast.expr) -> ast.Await:
 
 def generate_call(
     func: ast.expr,
-    args: Optional[list[Union[ast.expr, list[ast.expr]]]] = None,
-    keywords: Optional[list[ast.keyword]] = None,
+    args: Optional[List[Union[ast.expr, List[ast.expr]]]] = None,
+    keywords: Optional[List[ast.keyword]] = None,
 ) -> ast.Call:
     """Generate call object."""
     return ast.Call(
@@ -218,7 +218,7 @@ def parse_field_type(
 
 
 def generate_method_call(
-    object_name: str, method_name: str, args: Optional[list[Optional[ast.expr]]] = None
+    object_name: str, method_name: str, args: Optional[List[Optional[ast.expr]]] = None
 ) -> ast.Call:
     """Generate object`s method call."""
     return ast.Call(
@@ -250,7 +250,7 @@ def generate_trivial_lambda(name: str, argument_name: str) -> ast.Assign:
     )
 
 
-def generate_list(elements: list[Optional[ast.expr]]) -> ast.List:
+def generate_list(elements: List[Optional[ast.expr]]) -> ast.List:
     """Generate list object."""
     return ast.List(elts=elements)
 
@@ -280,7 +280,7 @@ def generate_typename_field_definition():
     )
 
 
-def generate_module(body: list[ast.stmt]) -> ast.Module:
+def generate_module(body: List[ast.stmt]) -> ast.Module:
     return ast.Module(body=body, type_ignores=[])
 
 
@@ -288,7 +288,7 @@ def generate_subscript(value: ast.expr, slice_: ast.expr) -> ast.Subscript:
     return ast.Subscript(value=value, slice=slice_)
 
 
-def generate_tuple(elts: list[ast.expr]) -> ast.Tuple:
+def generate_tuple(elts: List[ast.expr]) -> ast.Tuple:
     return ast.Tuple(elts=elts)
 
 
@@ -296,7 +296,7 @@ def generate_method_definition(
     name: str,
     arguments: ast.arguments,
     return_type: Union[ast.Name, ast.Subscript],
-    body: Optional[list[ast.stmt]] = None,
+    body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
 ) -> ast.FunctionDef:
     return ast.FunctionDef(

@@ -1,11 +1,11 @@
 import ast
 from itertools import zip_longest
 from textwrap import dedent
-from typing import Optional, Union, cast
+from typing import List, Optional, Union, cast
 
 
 def compare_ast(
-    node1: Union[ast.AST, list[ast.AST]], node2: Union[ast.AST, list[ast.AST]]
+    node1: Union[ast.AST, List[ast.AST]], node2: Union[ast.AST, List[ast.AST]]
 ) -> bool:
     if type(node1) is not type(node2):
         return False
@@ -34,16 +34,16 @@ def get_class_def(module: ast.Module, class_index=0) -> Optional[ast.ClassDef]:
     return None
 
 
-def filter_ast_objects(module: ast.Module, ast_class) -> list[ast.AST]:
+def filter_ast_objects(module: ast.Module, ast_class) -> List[ast.AST]:
     return [expr for expr in module.body if isinstance(expr, ast_class)]
 
 
-def filter_class_defs(module: ast.Module) -> list[ast.ClassDef]:
-    return cast(list[ast.ClassDef], filter_ast_objects(module, ast.ClassDef))
+def filter_class_defs(module: ast.Module) -> List[ast.ClassDef]:
+    return cast(List[ast.ClassDef], filter_ast_objects(module, ast.ClassDef))
 
 
-def filter_imports(module: ast.Module) -> list[ast.ImportFrom]:
-    return cast(list[ast.ImportFrom], filter_ast_objects(module, ast.ImportFrom))
+def filter_imports(module: ast.Module) -> List[ast.ImportFrom]:
+    return cast(List[ast.ImportFrom], filter_ast_objects(module, ast.ImportFrom))
 
 
 def format_graphql_str(source: str) -> str:

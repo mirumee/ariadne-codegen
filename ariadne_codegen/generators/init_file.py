@@ -1,4 +1,5 @@
 import ast
+from typing import List
 
 from .codegen import generate_import_from
 
@@ -7,7 +8,7 @@ class InitFileGenerator:
     def __init__(self) -> None:
         self.imports: list = []
 
-    def add_import(self, names: list[str], from_: str, level: int = 0) -> None:
+    def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
         """Add import to be included in init file."""
         self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
@@ -15,7 +16,7 @@ class InitFileGenerator:
         """Generate init with imports and public api of package."""
         module = ast.Module(body=self.imports, type_ignores=[])
         if self.imports:
-            constants_names: list[str] = []
+            constants_names: List[str] = []
             for import_ in self.imports:
                 constants_names.extend([n.name for n in import_.names])
             constants_names.sort()

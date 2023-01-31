@@ -1,6 +1,6 @@
 import ast
 from collections import namedtuple
-from typing import Optional, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 from graphql import (
     DirectiveNode,
@@ -36,7 +36,7 @@ def parse_operation_field(
     type_: CodegenResultFieldType,
     directives: Optional[Tuple[DirectiveNode, ...]] = None,
     class_name: str = "",
-) -> Tuple[Annotation, list[FieldNames]]:
+) -> Tuple[Annotation, List[FieldNames]]:
     annotation, field_types_names = parse_operation_field_type(
         type_=type_, class_name=class_name
     )
@@ -53,7 +53,7 @@ def parse_operation_field_type(
     nullable: bool = True,
     class_name: str = "",
     add_type_name: bool = False,
-) -> Tuple[Annotation, list[FieldNames]]:
+) -> Tuple[Annotation, List[FieldNames]]:
     """Parse graphql type and return generated annotation."""
     if isinstance(type_, GraphQLScalarType):
         return (
