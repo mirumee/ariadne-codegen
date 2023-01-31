@@ -121,10 +121,10 @@ schema_path = "schema.graphql"
 queries_path = "queries.graphql"
 ```
 
-Run command to generate code.
+Run command to generate code:
 
 ```
-ariadne-codegen
+$ ariadne-codegen
 ```
 
 
