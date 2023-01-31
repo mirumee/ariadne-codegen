@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -7,7 +7,7 @@ from .enums import Color
 
 
 class ListUsersByCountry(BaseModel):
-    users: list["ListUsersByCountryUsers"]
+    users: List["ListUsersByCountryUsers"]
 
 
 class ListUsersByCountryUsers(BaseModel):

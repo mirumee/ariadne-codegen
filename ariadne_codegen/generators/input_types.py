@@ -1,6 +1,6 @@
 import ast
 from collections import defaultdict
-from typing import Optional, cast
+from typing import Dict, List, Optional, cast
 
 from graphql import GraphQLEnumType, GraphQLInputObjectType, GraphQLSchema
 
@@ -18,6 +18,7 @@ from .constants import (
     ANY,
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
+    LIST,
     OPTIONAL,
     PYDANTIC_MODULE,
     TYPING_MODULE,
@@ -41,14 +42,14 @@ class InputTypesGenerator:
         self.enums_module = enums_module
 
         self._imports = [
-            generate_import_from([OPTIONAL, ANY, UNION], TYPING_MODULE),
+            generate_import_from([OPTIONAL, ANY, UNION, LIST], TYPING_MODULE),
             generate_import_from([FIELD_CLASS], PYDANTIC_MODULE),
             base_model_import
             or generate_import_from([BASE_MODEL_CLASS_NAME], PYDANTIC_MODULE),
         ]
-        self._dependencies: dict[str, list[str]] = defaultdict(list)
-        self._used_enums: list[str] = []
-        self._class_defs: list[ast.ClassDef] = [
+        self._dependencies: Dict[str, List[str]] = defaultdict(list)
+        self._used_enums: List[str] = []
+        self._class_defs: List[ast.ClassDef] = [
             self._parse_input_definition(d) for d in self._filter_input_types()
         ]
 
@@ -63,17 +64,17 @@ class InputTypesGenerator:
             for c in sorted_class_defs
         ]
         module_body = (
-            cast(list[ast.stmt], self._imports)
-            + cast(list[ast.stmt], sorted_class_defs)
-            + cast(list[ast.stmt], update_forward_refs_calls)
+            cast(List[ast.stmt], self._imports)
+            + cast(List[ast.stmt], sorted_class_defs)
+            + cast(List[ast.stmt], update_forward_refs_calls)
         )
 
         return generate_module(body=module_body)
 
-    def get_generated_public_names(self) -> list[str]:
+    def get_generated_public_names(self) -> List[str]:
         return [c.name for c in self._class_defs]
 
-    def _filter_input_types(self) -> list[GraphQLInputObjectType]:
+    def _filter_input_types(self) -> List[GraphQLInputObjectType]:
         return [
             definition
             for name, definition in self.schema.type_map.items()
@@ -148,7 +149,7 @@ class InputTypesGenerator:
         elif isinstance(self.schema.type_map[field_type], GraphQLEnumType):
             self._used_enums.append(field_type)
 
-    def _get_sorted_class_defs(self) -> list[ast.ClassDef]:
+    def _get_sorted_class_defs(self) -> List[ast.ClassDef]:
         input_class_defs_dict_ = {c.name: c for c in self._class_defs}
 
         processed_names = []
@@ -160,7 +161,7 @@ class InputTypesGenerator:
         names_without_duplicates = self._get_list_without_duplicates(processed_names)
         return [input_class_defs_dict_[n] for n in names_without_duplicates]
 
-    def _get_dependant_names(self, name: str) -> list[str]:
+    def _get_dependant_names(self, name: str) -> List[str]:
         result = []
         for dependency_name in self._dependencies[name]:
             result.extend(self._get_dependant_names(dependency_name))

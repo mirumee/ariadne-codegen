@@ -2,7 +2,7 @@ from dataclasses import dataclass, field, fields
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
-from typing import Optional
+from typing import List, Optional
 
 import toml
 
@@ -24,7 +24,7 @@ class Settings:
     include_comments: bool = True
     convert_to_snake_case: bool = True
     async_client: bool = True
-    files_to_include: list[str] = field(default_factory=list)
+    files_to_include: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         self._set_default_base_client_data()

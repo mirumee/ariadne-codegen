@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import httpx
 from pydantic import BaseModel
@@ -31,9 +31,9 @@ class AsyncBaseClient:
         await self.http_client.aclose()
 
     async def execute(
-        self, query: str, variables: Optional[dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> httpx.Response:
-        payload: dict[str, Any] = {"query": query}
+        payload: Dict[str, Any] = {"query": query}
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
         return await self.http_client.post(url="/graphql/", json=payload)
@@ -62,7 +62,7 @@ class AsyncBaseClient:
 
         return data
 
-    def _convert_dict_to_json_serializable(self, dict_: dict[str, Any]):
+    def _convert_dict_to_json_serializable(self, dict_: Dict[str, Any]):
         return {
             key: value
             if not isinstance(value, BaseModel)

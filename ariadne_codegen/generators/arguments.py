@@ -1,5 +1,5 @@
 import ast
-from typing import Union
+from typing import List, Tuple, Union
 
 from graphql import (
     ListTypeNode,
@@ -26,7 +26,7 @@ from .utils import str_to_snake_case
 class ArgumentsGenerator:
     def __init__(self, convert_to_snake_case: bool = True) -> None:
         self.convert_to_snake_case = convert_to_snake_case
-        self.used_types: list[str] = []
+        self.used_types: List[str] = []
 
     def _parse_type_node(
         self,
@@ -64,8 +64,8 @@ class ArgumentsGenerator:
         return name
 
     def generate(
-        self, variable_definitions: tuple[VariableDefinitionNode, ...]
-    ) -> tuple[ast.arguments, ast.Dict]:
+        self, variable_definitions: Tuple[VariableDefinitionNode, ...]
+    ) -> Tuple[ast.arguments, ast.Dict]:
         """Generate arguments from given variable definitions."""
         arguments = generate_arguments([generate_arg("self")])
         dict_ = generate_dict()

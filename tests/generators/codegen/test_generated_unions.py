@@ -1,12 +1,12 @@
 import ast
-from typing import Union
+from typing import List, Union
 
 from ariadne_codegen.generators.codegen import generate_union_annotation
 from ariadne_codegen.generators.constants import OPTIONAL, UNION
 
 
 def test_generate_union_annotation_returns_union_annotation():
-    types: list[Union[ast.Name, ast.Subscript]] = [
+    types: List[Union[ast.Name, ast.Subscript]] = [
         ast.Name(id="Xyz1"),
         ast.Name(id="Xyz2"),
     ]
@@ -21,7 +21,7 @@ def test_generate_union_annotation_returns_union_annotation():
 
 
 def test_generate_union_annotation_returns_optional_union_annotation():
-    types: list[Union[ast.Name, ast.Subscript]] = [
+    types: List[Union[ast.Name, ast.Subscript]] = [
         ast.Name(id="Xyz1"),
         ast.Name(id="Xyz2"),
     ]

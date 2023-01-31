@@ -1,5 +1,5 @@
 import ast
-from typing import Optional, cast
+from typing import Dict, List, Optional, Tuple, cast
 
 from graphql import (
     DirectiveNode,
@@ -35,6 +35,7 @@ from .constants import (
     ANY,
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
+    LIST,
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
     MIXIN_NAME,
@@ -56,7 +57,7 @@ class ResultTypesGenerator:
         schema: GraphQLSchema,
         operation_definition: OperationDefinitionNode,
         enums_module_name: str,
-        fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
+        fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
         convert_to_snake_case: bool = True,
     ) -> None:
@@ -71,15 +72,15 @@ class ResultTypesGenerator:
         )
         self.convert_to_snake_case = convert_to_snake_case
 
-        self._imports: list[ast.ImportFrom] = [
-            generate_import_from([OPTIONAL, UNION, ANY], TYPING_MODULE),
+        self._imports: List[ast.ImportFrom] = [
+            generate_import_from([OPTIONAL, UNION, ANY, LIST], TYPING_MODULE),
             generate_import_from([FIELD_CLASS], PYDANTIC_MODULE),
             base_model_import
             or generate_import_from([BASE_MODEL_CLASS_NAME], PYDANTIC_MODULE),
         ]
-        self._public_names: list[str] = []
-        self._class_defs: list[ast.ClassDef] = []
-        self._used_enums: list[str] = []
+        self._public_names: List[str] = []
+        self._class_defs: List[ast.ClassDef] = []
+        self._used_enums: List[str] = []
         self._used_fragments_names: set[str] = set()
 
         self._class_defs = self._parse_type_definition(
@@ -100,9 +101,9 @@ class ResultTypesGenerator:
             for class_def in self._class_defs
         ]
         module_body = (
-            cast(list[ast.stmt], self._imports)
-            + cast(list[ast.stmt], self._class_defs)
-            + cast(list[ast.stmt], update_forward_refs_calls)
+            cast(List[ast.stmt], self._imports)
+            + cast(List[ast.stmt], self._class_defs)
+            + cast(List[ast.stmt], update_forward_refs_calls)
         )
 
         return generate_module(module_body)
@@ -117,7 +118,7 @@ class ResultTypesGenerator:
 
         return operation_str
 
-    def get_generated_public_names(self) -> list[str]:
+    def get_generated_public_names(self) -> List[str]:
         return self._public_names
 
     def _parse_type_definition(
@@ -126,8 +127,8 @@ class ResultTypesGenerator:
         type_name: str,
         selection_set: SelectionSetNode,
         add_typename: bool = False,
-        extra_bases: Optional[list[str]] = None,
-    ) -> list[ast.ClassDef]:
+        extra_bases: Optional[List[str]] = None,
+    ) -> List[ast.ClassDef]:
         class_bases = [BASE_MODEL_CLASS_NAME]
         if extra_bases:
             class_bases.extend(extra_bases)
@@ -181,7 +182,7 @@ class ResultTypesGenerator:
 
     def _resolve_selection_set(
         self, selection_set: SelectionSetNode, root_type: str = ""
-    ) -> list[FieldNode]:
+    ) -> List[FieldNode]:
         fields = []
         for selection in selection_set.selections:
             if isinstance(selection, FieldNode):
@@ -202,8 +203,8 @@ class ResultTypesGenerator:
         return fields
 
     def _add_typename_field_to_selections(
-        self, resolved_fields: list[FieldNode], selection_set: SelectionSetNode
-    ) -> tuple[list[FieldNode], tuple[SelectionNode, ...]]:
+        self, resolved_fields: List[FieldNode], selection_set: SelectionSetNode
+    ) -> Tuple[List[FieldNode], Tuple[SelectionNode, ...]]:
         field_names = {f.name.value for f in resolved_fields}
         if TYPENAME_FIELD_NAME not in field_names:
             typename_field = FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME))
@@ -239,13 +240,13 @@ class ResultTypesGenerator:
                 f"Field {field_name} not found in type {type_name}."
             ) from exc
 
-    def _parse_mixin_directives(self, field: FieldNode) -> list[str]:
+    def _parse_mixin_directives(self, field: FieldNode) -> List[str]:
         if not field.directives:
             return []
         directives = [
             d for d in field.directives if d.name and d.name.value == MIXIN_NAME
         ]
-        extra_base_classes: list[str] = []
+        extra_base_classes: List[str] = []
         for directive in directives:
             arguments = self._parse_mixin_arguments(directive)
             self._imports.append(
@@ -279,9 +280,9 @@ class ResultTypesGenerator:
     def _parse_field_selection_set_types(
         self,
         selection_set: Optional[SelectionSetNode],
-        field_types_names: list[FieldNames],
-        extra_bases: Optional[list[str]] = None,
-    ) -> list[ast.ClassDef]:
+        field_types_names: List[FieldNames],
+        extra_bases: Optional[List[str]] = None,
+    ) -> List[ast.ClassDef]:
         if selection_set:
             generated_classes = []
             add_typename = len(field_types_names) > 1
@@ -298,7 +299,7 @@ class ResultTypesGenerator:
             return generated_classes
         return []
 
-    def _save_used_enums(self, field_types_names: list[FieldNames]):
+    def _save_used_enums(self, field_types_names: List[FieldNames]):
         for field_type_names in field_types_names:
             if isinstance(
                 self.schema.type_map.get(field_type_names.type_name), GraphQLEnumType

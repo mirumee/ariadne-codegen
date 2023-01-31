@@ -1,4 +1,5 @@
 import ast
+from typing import List
 
 from .codegen import (
     generate_ann_assign,
@@ -16,14 +17,16 @@ from .codegen import (
     generate_return,
     generate_trivial_lambda,
 )
-from .constants import OPTIONAL, TYPING_MODULE
+from .constants import ANY, LIST, OPTIONAL, TYPING_MODULE
 
 
 class ClientGenerator:
     def __init__(self, name: str, base_client: str) -> None:
         self.name = name
         self.class_def = generate_class_def(name=name, base_names=[base_client])
-        self.imports: list = [generate_import_from([OPTIONAL], TYPING_MODULE)]
+        self.imports: list = [
+            generate_import_from([OPTIONAL, LIST, ANY], TYPING_MODULE)
+        ]
 
         self._gql_lambda_name = "gql"
         self._operation_str_variable = "query"
@@ -43,7 +46,7 @@ class ClientGenerator:
             type_ignores=[],
         )
 
-    def add_import(self, names: list[str], from_: str, level: int = 0) -> None:
+    def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
         """Add import to be included in init file."""
         self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
