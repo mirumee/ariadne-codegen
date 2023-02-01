@@ -4,7 +4,7 @@ from graphql import GraphQLSchema, OperationDefinitionNode
 from ariadne_codegen.exceptions import InvalidGraphqlSyntax
 from ariadne_codegen.schema import (
     get_graphql_queries,
-    get_graphql_schema,
+    get_graphql_schema_from_path,
     load_graphql_files_from_path,
     read_graphql_file,
     walk_graphql_files,
@@ -202,14 +202,16 @@ def test_load_graphql_files_from_path_returns_schema_from_nested_directory(
     indirect=True,
 )
 def test_get_graphql_schema_returns_graphql_schema(path_fixture):
-    assert isinstance(get_graphql_schema(path_fixture.as_posix()), GraphQLSchema)
+    assert isinstance(
+        get_graphql_schema_from_path(path_fixture.as_posix()), GraphQLSchema
+    )
 
 
 def test_get_graphql_schema_with_invalid_schema_raises_invalid_graphql_syntax_exception(
     incorrect_schema_file,
 ):
     with pytest.raises(InvalidGraphqlSyntax):
-        get_graphql_schema(incorrect_schema_file.as_posix())
+        get_graphql_schema_from_path(incorrect_schema_file.as_posix())
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_single_file(

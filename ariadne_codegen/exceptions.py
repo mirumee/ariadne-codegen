@@ -24,3 +24,7 @@ class NotSupported(CodeGenException):
 
 class ParsingError(CodeGenException):
     """Parsing error."""
+
+
+class IntrospectionError(CodeGenException):
+    """Introspection error."""

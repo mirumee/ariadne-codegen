@@ -1,18 +1,22 @@
 from pathlib import Path
-from typing import Generator, List, Tuple
+from typing import Dict, Generator, List, Optional, Tuple, cast
 
+import httpx
 from graphql import (
     DefinitionNode,
     FragmentDefinitionNode,
     GraphQLSchema,
     GraphQLSyntaxError,
+    IntrospectionQuery,
     OperationDefinitionNode,
     assert_valid_schema,
     build_ast_schema,
+    build_client_schema,
+    get_introspection_query,
     parse,
 )
 
-from .exceptions import InvalidGraphqlSyntax
+from .exceptions import IntrospectionError, InvalidGraphqlSyntax
 
 
 def filter_operations_definitions(
@@ -36,7 +40,50 @@ def get_graphql_queries(queries_path: str) -> Tuple[DefinitionNode, ...]:
     return queries_ast.definitions
 
 
-def get_graphql_schema(schema_path: str) -> GraphQLSchema:
+def get_graphql_schema_from_url(
+    url: str, headers: Optional[Dict[str, str]] = None
+) -> GraphQLSchema:
+    return build_client_schema(introspect_remote_schema(url=url, headers=headers))
+
+
+def introspect_remote_schema(
+    url: str, headers: Optional[Dict[str, str]] = None
+) -> IntrospectionQuery:
+    try:
+        response = httpx.post(
+            url,
+            json={"query": get_introspection_query(descriptions=False)},
+            headers=headers,
+        )
+    except httpx.InvalidURL as exc:
+        raise IntrospectionError(f"Invalid remote schema url: {url}") from exc
+
+    if not response.is_success:
+        raise IntrospectionError(
+            "Failure of remote schema introspection. "
+            f"HTTP status code: {response.status_code}"
+        )
+
+    try:
+        response_json = response.json()
+    except ValueError as exc:
+        raise IntrospectionError("Introspection result is not a valid json.") from exc
+
+    if (not isinstance(response_json, dict)) or ("data" not in response_json):
+        raise IntrospectionError("Invalid introspection result fromat.")
+
+    errors = response_json.get("errors")
+    if errors:
+        raise IntrospectionError(f"Introspection errors: {errors}")
+
+    data = response_json["data"]
+    if not isinstance(data, dict):
+        raise IntrospectionError("Missing data key in introspection result.")
+
+    return cast(IntrospectionQuery, data)
+
+
+def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
     """Get graphql schema build from provided path."""
     schema_str = load_graphql_files_from_path(Path(schema_path))
     graphql_ast = parse(schema_str)

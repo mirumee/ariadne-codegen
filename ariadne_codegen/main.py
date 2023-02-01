@@ -8,7 +8,8 @@ from .schema import (
     filter_fragments_definitions,
     filter_operations_definitions,
     get_graphql_queries,
-    get_graphql_schema,
+    get_graphql_schema_from_path,
+    get_graphql_schema_from_url,
 )
 
 
@@ -16,7 +17,15 @@ from .schema import (
 @click.version_option()
 def main():
     settings = get_settings()
-    schema = get_graphql_schema(settings.schema_path)
+    if settings.schema_path:
+        schema = get_graphql_schema_from_path(settings.schema_path)
+        schema_source = settings.schema_path
+    else:
+        schema = get_graphql_schema_from_url(
+            url=settings.remote_schema_url, headers=settings.remote_schema_headers
+        )
+        schema_source = settings.remote_schema_url   
+
     definitions = get_graphql_queries(settings.queries_path)
     queries = filter_operations_definitions(definitions)
     fragments = filter_fragments_definitions(definitions)
@@ -33,7 +42,7 @@ def main():
         base_client_file_path=settings.base_client_file_path,
         input_types_module_name=settings.input_types_module_name,
         queries_source=settings.queries_path,
-        schema_source=settings.schema_path,
+        schema_source=schema_source,
         include_comments=settings.include_comments,
         fragments=fragments,
         convert_to_snake_case=settings.convert_to_snake_case,
