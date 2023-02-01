@@ -24,7 +24,7 @@ def main():
         schema = get_graphql_schema_from_url(
             url=settings.remote_schema_url, headers=settings.remote_schema_headers
         )
-        schema_source = settings.remote_schema_url   
+        schema_source = settings.remote_schema_url
 
     definitions = get_graphql_queries(settings.queries_path)
     queries = filter_operations_definitions(definitions)
