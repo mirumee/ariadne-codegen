@@ -50,9 +50,9 @@ Optional settings:
 - `base_client_file_path` (defaults to `.../graphql_sdk_gen/generators/async_base_client.py`) - path to file where `base_client_name` is defined
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
-- `include_comments` (defaults to `True`) - a flag that specifies whether to include comments in generated files
-- `convert_to_snake_case` (defaults to `True`) - a flag that specifies whether to convert fields and arguments names to snake case
-- `async_client` (defaults to `True`) - a flag that specifies whether to generate client with async methods
+- `include_comments` (defaults to `true`) - a flag that specifies whether to include comments in generated files
+- `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
+- `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 
 
