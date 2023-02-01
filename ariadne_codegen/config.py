@@ -30,7 +30,7 @@ class Settings:
 
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:
-            raise MissingConfiguration(
+            raise InvalidConfiguration(
                 "Schema source not provided. Use schema_path or schema_url"
             )
 

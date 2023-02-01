@@ -1,10 +1,12 @@
+import httpx
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode
 
-from ariadne_codegen.exceptions import InvalidGraphqlSyntax
+from ariadne_codegen.exceptions import IntrospectionError, InvalidGraphqlSyntax
 from ariadne_codegen.schema import (
     get_graphql_queries,
     get_graphql_schema_from_path,
+    introspect_remote_schema,
     load_graphql_files_from_path,
     read_graphql_file,
     walk_graphql_files,
@@ -212,6 +214,135 @@ def test_get_graphql_schema_with_invalid_schema_raises_invalid_graphql_syntax_ex
 ):
     with pytest.raises(InvalidGraphqlSyntax):
         get_graphql_schema_from_path(incorrect_schema_file.as_posix())
+
+
+def test_introspect_remote_schema_called_with_invalid_url_raises_introspection_error(
+    mocker,
+):
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post", side_effect=httpx.InvalidURL("msg")
+    )
+
+    with pytest.raises(IntrospectionError):
+        introspect_remote_schema("invalid_url")
+
+
+def test_introspect_remote_schema_raises_introspection_error_for_not_success_response(
+    mocker,
+):
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(status_code=400),
+    )
+
+    with pytest.raises(IntrospectionError) as exc:
+        introspect_remote_schema("http://testserver/graphql/")
+
+    assert "400" in exc.value.args[0]
+
+
+def test_introspect_remote_schema_raises_introspection_error_for_not_json_response(
+    mocker,
+):
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(status_code=200, content="invalid_json"),
+    )
+
+    with pytest.raises(IntrospectionError):
+        introspect_remote_schema("http://testserver/graphql/")
+
+
+def test_introspect_remote_schema_raises_introspection_error_for_not_dict_response(
+    mocker,
+):
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(status_code=200, content="[]"),
+    )
+
+    with pytest.raises(IntrospectionError):
+        introspect_remote_schema("http://testserver/graphql/")
+
+
+def test_introspect_remote_schema_raises_introspection_error_for_json_without_data_key(
+    mocker,
+):
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(status_code=200, content='{"not_data": null}'),
+    )
+
+    with pytest.raises(IntrospectionError):
+        introspect_remote_schema("http://testserver/graphql/")
+
+
+def test_introspect_remote_schema_raises_introspection_error_for_graphql_errors(mocker):
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(
+            status_code=200,
+            content="""
+            {
+                "data": {},
+                "errors": {
+                    "message": "Error message",
+                    "locations": [{"line": 6, "column": 7}],
+                    "path": ["field1", "field2", 1, "id"]
+                }
+            }
+            """,
+        ),
+    )
+
+    with pytest.raises(IntrospectionError) as exc:
+        introspect_remote_schema("http://testserver/graphql/")
+
+    assert "Error message" in exc.value.args[0]
+
+
+def test_introspect_remote_schema_raises_introspection_error_for_invalid_data_value(
+    mocker,
+):
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(
+            status_code=200,
+            content='{"data": []}',
+        ),
+    )
+
+    with pytest.raises(IntrospectionError):
+        introspect_remote_schema("http://testserver/graphql/")
+
+
+def test_introspect_remote_schema_returns_introspection_result(mocker):
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(
+            status_code=200,
+            content='{"data": {"__schema": {}}}',
+        ),
+    )
+
+    result = introspect_remote_schema("http://testserver/graphql/")
+
+    assert result == {"__schema": {}}
+
+
+def test_introspect_remote_schema_uses_provided_headers(mocker):
+    mocked_post = mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(
+            status_code=200,
+            content='{"data": {"__schema": {}}}',
+        ),
+    )
+
+    introspect_remote_schema("http://testserver/graphql/", headers={"test": "value"})
+
+    assert mocked_post.called
+    assert mocked_post.called_with(headers={"test": "value"})
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_single_file(

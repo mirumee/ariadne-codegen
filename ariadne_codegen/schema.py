@@ -70,7 +70,7 @@ def introspect_remote_schema(
         raise IntrospectionError("Introspection result is not a valid json.") from exc
 
     if (not isinstance(response_json, dict)) or ("data" not in response_json):
-        raise IntrospectionError("Invalid introspection result fromat.")
+        raise IntrospectionError("Invalid introspection result format.")
 
     errors = response_json.get("errors")
     if errors:
@@ -78,7 +78,7 @@ def introspect_remote_schema(
 
     data = response_json["data"]
     if not isinstance(data, dict):
-        raise IntrospectionError("Missing data key in introspection result.")
+        raise IntrospectionError("Invalid data key in introspection result.")
 
     return cast(IntrospectionQuery, data)
 

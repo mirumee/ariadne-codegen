@@ -105,6 +105,29 @@ def test_settings_sets_correct_default_values_for_base_client_name_and_path(
     assert settings.base_client_file_path == expected_path.as_posix()
 
 
+def test_settings_without_schema_path_with_remote_schema_url_doesnt_raise_exception(
+    tmp_path,
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = Settings(
+        remote_schema_url="http://testserver/graphq/", queries_path=queries_path
+    )
+
+    assert settings.schema_path is None
+
+
+def test_settings_without_schema_path_or_remote_schema_url_raises_exception(
+    tmp_path,
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    with pytest.raises(InvalidConfiguration):
+        Settings(queries_path=queries_path)
+
+
 def test_get_used_settings_message_returns_string_with_data_from_given_settings(
     tmp_path,
 ):
