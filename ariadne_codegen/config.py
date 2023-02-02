@@ -31,7 +31,7 @@ class Settings:
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:
             raise InvalidConfiguration(
-                "Schema source not provided. Use schema_path or schema_url"
+                "Schema source not provided. Use schema_path or remote_schema_url"
             )
 
         self._set_default_base_client_data()
