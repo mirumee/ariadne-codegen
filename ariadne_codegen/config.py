@@ -11,8 +11,10 @@ from .exceptions import ConfigFileNotFound, InvalidConfiguration, MissingConfigu
 
 @dataclass
 class Settings:
-    schema_path: str
     queries_path: str
+    schema_path: Optional[str] = None
+    remote_schema_url: Optional[str] = None
+    remote_schema_headers: dict = field(default_factory=dict)
     target_package_name: str = "graphql_client"
     target_package_path: str = field(default_factory=lambda: Path.cwd().as_posix())
     client_name: str = "Client"
@@ -27,9 +29,15 @@ class Settings:
     files_to_include: List[str] = field(default_factory=list)
 
     def __post_init__(self):
+        if not self.schema_path and not self.remote_schema_url:
+            raise InvalidConfiguration(
+                "Schema source not provided. Use schema_path or remote_schema_url"
+            )
+
         self._set_default_base_client_data()
 
-        self._assert_path_exists(self.schema_path)
+        if self.schema_path:
+            self._assert_path_exists(self.schema_path)
         self._assert_path_exists(self.queries_path)
 
         self._assert_string_is_valid_python_identifier(self.target_package_name)
