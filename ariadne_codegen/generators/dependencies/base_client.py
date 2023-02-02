@@ -12,11 +12,18 @@ from .exceptions import (
 
 class BaseClient:
     def __init__(
-        self, base_url: str, http_client: Optional[httpx.Client] = None
+        self,
+        base_url: str = "",
+        headers: Optional[Dict[str, str]] = None,
+        http_client: Optional[httpx.Client] = None,
     ) -> None:
         self.base_url = base_url
+        self.headers = headers
+
         self.http_client = (
-            http_client if http_client else httpx.Client(base_url=base_url)
+            http_client
+            if http_client
+            else httpx.Client(base_url=base_url, headers=headers)
         )
 
     def __enter__(self):

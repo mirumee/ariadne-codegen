@@ -14,7 +14,7 @@ from ariadne_codegen.generators.dependencies.exceptions import (
 
 def test_execute_sends_post_to_correct_endpoint_with_correct_payload(mocker):
     fake_client = mocker.MagicMock()
-    client = BaseClient("base_url", fake_client)
+    client = BaseClient(base_url="base_url", http_client=fake_client)
     query_str = """
     query Abc($v: String!) {
         abc(v: $v) {
@@ -40,7 +40,7 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
         nested: TestModel1
 
     fake_client = mocker.MagicMock()
-    client = BaseClient("base_url", fake_client)
+    client = BaseClient(base_url="base_url", http_client=fake_client)
     query_str = """
     query Abc($v1: TestModel1!, $v2: TestModel2) {
         abc(v1: $v1, v2: $v2){
@@ -75,7 +75,7 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
 def test_get_data_raises_graphql_client_http_error(
     mocker, status_code, response_content
 ):
-    client = BaseClient("base_url", mocker.MagicMock())
+    client = BaseClient(base_url="base_url", http_client=mocker.MagicMock())
     response = httpx.Response(
         status_code=status_code, content=json.dumps(response_content)
     )
@@ -90,7 +90,7 @@ def test_get_data_raises_graphql_client_http_error(
 def test_get_data_raises_graphql_client_invalid_response_error(
     mocker, response_content
 ):
-    client = BaseClient("base_url", mocker.MagicMock())
+    client = BaseClient(base_url="base_url", http_client=mocker.MagicMock())
     response = httpx.Response(status_code=200, content=json.dumps(response_content))
 
     with pytest.raises(GraphQlClientInvalidResponseError) as exc:
@@ -129,7 +129,7 @@ def test_get_data_raises_graphql_client_invalid_response_error(
     ],
 )
 def test_get_data_raises_graphql_client_graphql_multi_error(mocker, response_content):
-    client = BaseClient("base_url", mocker.MagicMock())
+    client = BaseClient(base_url="base_url", http_client=mocker.MagicMock())
 
     with pytest.raises(GraphQLClientGraphQLMultiError):
         client.get_data(
@@ -142,7 +142,7 @@ def test_get_data_raises_graphql_client_graphql_multi_error(mocker, response_con
     [{"errors": [], "data": {}}, {"errors": None, "data": {}}, {"data": {}}],
 )
 def test_get_data_doesnt_raise_exception(mocker, response_content):
-    client = BaseClient("base_url", mocker.MagicMock())
+    client = BaseClient(base_url="base_url", http_client=mocker.MagicMock())
 
     data = client.get_data(
         httpx.Response(status_code=200, content=json.dumps(response_content))
@@ -153,7 +153,7 @@ def test_get_data_doesnt_raise_exception(mocker, response_content):
 
 def test_base_client_used_as_context_manager_closes_http_client(mocker):
     fake_client = mocker.MagicMock()
-    with BaseClient("base_url", fake_client) as base_client:
+    with BaseClient(base_url="base_url", http_client=fake_client) as base_client:
         base_client.execute("")
 
     assert fake_client.close.called

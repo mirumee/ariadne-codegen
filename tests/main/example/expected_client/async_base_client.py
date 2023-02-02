@@ -12,11 +12,18 @@ from .exceptions import (
 
 class AsyncBaseClient:
     def __init__(
-        self, base_url: str, http_client: Optional[httpx.AsyncClient] = None
+        self,
+        base_url: str = "",
+        headers: Optional[Dict[str, str]] = None,
+        http_client: Optional[httpx.AsyncClient] = None,
     ) -> None:
         self.base_url = base_url
+        self.headers = headers
+
         self.http_client = (
-            http_client if http_client else httpx.AsyncClient(base_url=base_url)
+            http_client
+            if http_client
+            else httpx.AsyncClient(base_url=base_url, headers=headers)
         )
 
     async def __aenter__(self):
