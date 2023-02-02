@@ -18,7 +18,7 @@ $ ariadne-codegen
 ## Features
 
 - Generate pydantic models from schema types, inputs and enums.
-- Generate pydnatic models for GraphQL results.
+- Generate pydantic models for GraphQL results.
 - Generate client package with each GraphQL operation available as async method.
 
 
@@ -37,11 +37,16 @@ $ pip install ariadne-codegen
 
 Required settings:
 
-- `schema_path` - path to file/directory with graphql schema
 - `queries_path` - path to file/directory with queries
+
+One of the following 2 parmeters is required, in case of providing both of them `schema_path` is prioritized:
+
+- `schema_path` - path to file/directory with graphql schema
+- `remote_schema_url` - url to graphql server, where introspection query can be perfomed
 
 Optional settings:
 
+- `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer: token"}`
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
 - `target_package_path` (defaults to cwd) - path where to generate package
 - `client_name` (defaults to `"Client"`) - name of generated client class
