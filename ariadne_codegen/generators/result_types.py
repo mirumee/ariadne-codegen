@@ -49,6 +49,7 @@ from .constants import (
 from .result_fields import FieldNames, parse_operation_field
 from .types import CodegenResultFieldType
 from .utils import str_to_pascal_case, str_to_snake_case
+from .scalars import ScalarData
 
 
 class ResultTypesGenerator:
@@ -60,6 +61,7 @@ class ResultTypesGenerator:
         fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
         convert_to_snake_case: bool = True,
+        custom_scalars: Optional[Dict[str, ScalarData]] = None,
     ) -> None:
         self.schema = schema
         self.operation_definition = operation_definition
@@ -70,6 +72,7 @@ class ResultTypesGenerator:
         self.fragments_definitions = (
             fragments_definitions if fragments_definitions else {}
         )
+        self.custom_scalars = custom_scalars if custom_scalars else {}
         self.convert_to_snake_case = convert_to_snake_case
 
         self._imports: List[ast.ImportFrom] = [
@@ -81,6 +84,7 @@ class ResultTypesGenerator:
         self._public_names: List[str] = []
         self._class_defs: List[ast.ClassDef] = []
         self._used_enums: List[str] = []
+        self._used_scalars: List[str] = []
         self._used_fragments_names: set[str] = set()
 
         self._class_defs = self._parse_type_definition(
@@ -94,6 +98,14 @@ class ResultTypesGenerator:
             self._imports.append(
                 generate_import_from(self._used_enums, self.enums_module_name, 1)
             )
+        if self._used_scalars:
+            for scalar_name in self._used_scalars:
+                for extra_import in self.custom_scalars[scalar_name].extra_imports:
+                    self._imports.append(
+                        generate_import_from(
+                            names=[extra_import.import_], from_=extra_import.from_
+                        )
+                    )
         update_forward_refs_calls = [
             generate_expr(
                 generate_method_call(class_def.name, UPDATE_FORWARD_REFS_METHOD)
@@ -158,6 +170,7 @@ class ResultTypesGenerator:
                 type_=cast(CodegenResultFieldType, field_definition.type),
                 directives=field.directives,
                 class_name=class_name + str_to_pascal_case(name),
+                custom_scalars=self.custom_scalars,
             )
 
             field_implementation = generate_ann_assign(
@@ -178,6 +191,7 @@ class ResultTypesGenerator:
                 )
             )
             self._save_used_enums(field_types_names)
+            self._save_used_scalars(field_types_names)
         return [class_def] + extra_classes
 
     def _resolve_selection_set(
@@ -300,8 +314,13 @@ class ResultTypesGenerator:
         return []
 
     def _save_used_enums(self, field_types_names: List[FieldNames]):
-        for field_type_names in field_types_names:
+        for field_type_name in field_types_names:
             if isinstance(
-                self.schema.type_map.get(field_type_names.type_name), GraphQLEnumType
+                self.schema.type_map.get(field_type_name.type_name), GraphQLEnumType
             ):
-                self._used_enums.append(field_type_names.type_name)
+                self._used_enums.append(field_type_name.type_name)
+
+    def _save_used_scalars(self, field_types_names: List[FieldNames]):
+        for field_type_name in field_types_names:
+            if field_type_name.type_name in self.custom_scalars:
+                self._used_scalars.append(field_type_name.type_name)

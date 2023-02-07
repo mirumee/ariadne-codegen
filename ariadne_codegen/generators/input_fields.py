@@ -1,5 +1,5 @@
 import ast
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 
 from graphql import (
     BooleanValueNode,
@@ -35,19 +35,32 @@ from .codegen import (
 )
 from .constants import ANY, FIELD_CLASS, SIMPLE_TYPE_MAP
 from .types import Annotation, CodegenInputFieldType
+from .scalars import ScalarData
 
 
 def parse_input_field_type(
     type_: CodegenInputFieldType,
     nullable: bool = True,
+    custom_scalars: Optional[Dict[str, ScalarData]] = None,
 ) -> Tuple[Annotation, str]:
     if isinstance(type_, GraphQLScalarType):
-        return (
-            generate_annotation_name(
-                name=SIMPLE_TYPE_MAP.get(type_.name, ANY), nullable=nullable
-            ),
-            "",
-        )
+        if type_.name in SIMPLE_TYPE_MAP:
+            return (
+                generate_annotation_name(
+                    name=SIMPLE_TYPE_MAP[type_.name], nullable=nullable
+                ),
+                "",
+            )
+
+        if custom_scalars and type_.name in custom_scalars:
+            return (
+                generate_annotation_name(
+                    name=custom_scalars[type_.name].type_name, nullable=nullable
+                ),
+                type_.name,
+            )
+
+        return generate_annotation_name(name=ANY, nullable=nullable), ""
 
     if isinstance(type_, GraphQLInputObjectType):
         return (
@@ -63,12 +76,14 @@ def parse_input_field_type(
 
     if isinstance(type_, GraphQLList):
         slice_, type_name = parse_input_field_type(
-            type_=type_.of_type, nullable=nullable
+            type_=type_.of_type, nullable=nullable, custom_scalars=custom_scalars
         )
         return generate_list_annotation(slice_=slice_, nullable=nullable), type_name
 
     if isinstance(type_, GraphQLNonNull):
-        return parse_input_field_type(type_=type_.of_type, nullable=False)
+        return parse_input_field_type(
+            type_=type_.of_type, nullable=False, custom_scalars=custom_scalars
+        )
 
     raise ParsingError("Invalid input field type.")
 

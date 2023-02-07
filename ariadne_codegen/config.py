@@ -2,7 +2,7 @@ from dataclasses import dataclass, field, fields
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import toml
 
@@ -27,6 +27,7 @@ class Settings:
     convert_to_snake_case: bool = True
     async_client: bool = True
     files_to_include: List[str] = field(default_factory=list)
+    custom_scalars: Dict = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:
