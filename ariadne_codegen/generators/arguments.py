@@ -2,6 +2,8 @@ import ast
 from typing import List, Tuple, Union
 
 from graphql import (
+    GraphQLScalarType,
+    GraphQLSchema,
     ListTypeNode,
     NamedTypeNode,
     NonNullTypeNode,
@@ -19,12 +21,15 @@ from .codegen import (
     generate_list_annotation,
     generate_name,
 )
-from .constants import SIMPLE_TYPE_MAP
+from .constants import ANY, SIMPLE_TYPE_MAP
 from .utils import str_to_snake_case
 
 
 class ArgumentsGenerator:
-    def __init__(self, convert_to_snake_case: bool = True) -> None:
+    def __init__(
+        self, schema: GraphQLSchema, convert_to_snake_case: bool = True
+    ) -> None:
+        self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
         self.used_types: List[str] = []
 
@@ -51,8 +56,8 @@ class ArgumentsGenerator:
     ) -> Union[ast.Name, ast.Subscript]:
         name = node.name.value
 
-        if name in SIMPLE_TYPE_MAP:
-            name = SIMPLE_TYPE_MAP[name]
+        if isinstance(self.schema.type_map[name], GraphQLScalarType):
+            name = SIMPLE_TYPE_MAP.get(name, ANY)
         else:
             self.used_types.append(name)
 

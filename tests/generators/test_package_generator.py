@@ -45,6 +45,8 @@ enum CustomEnum {
 input CustomInput {
     value: Int!
 }
+
+scalar CustomScalar
 """
 
 
@@ -485,6 +487,26 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
     with result_types_file_path.open() as result_types_file:
         result_types_content = result_types_file.read()
         assert dedent(expected_types) in result_types_content
+
+
+def test_generate_doesnt_raise_exception_for_custom_scalar_as_argument_type(tmp_path):
+    package_name = "test_graphql_client"
+    query_str = "query TestQuery($argument: CustomScalar!) { query1 { id } }"
+
+    query_def = parse(query_str).definitions[0]
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+    )
+
+    generator.add_operation(query_def)
+    generator.generate()
+
+    client_file_path = tmp_path / package_name / f"{generator.client_file_name}.py"
+    with client_file_path.open() as client_file:
+        client_file_content = client_file.read()
+        assert "(self, argument: Any)" in client_file_content
 
 
 def test_generate_returns_list_of_generated_files(tmp_path):
