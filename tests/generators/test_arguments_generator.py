@@ -1,11 +1,6 @@
 import ast
 
-from graphql import (
-    OperationDefinitionNode,
-    build_schema,
-    parse,
-    GraphQLSchema,
-)
+from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.generators.arguments import ArgumentsGenerator
 from ariadne_codegen.generators.constants import OPTIONAL
