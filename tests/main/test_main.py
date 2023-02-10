@@ -1,4 +1,5 @@
 import os
+from importlib.metadata import version
 from pathlib import Path
 
 import httpx
@@ -42,7 +43,7 @@ def test_main_shows_version():
     result = CliRunner().invoke(main, "--version")
 
     assert result.exit_code == 0
-    assert "0.2.0" in result.output
+    assert version("ariadne-codegen") in result.output
 
 
 @pytest.mark.parametrize(
