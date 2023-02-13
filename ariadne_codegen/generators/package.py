@@ -3,14 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from graphql import (
-    FragmentDefinitionNode,
-    GraphQLEnumType,
-    GraphQLInputObjectType,
-    GraphQLScalarType,
-    GraphQLSchema,
-    OperationDefinitionNode,
-)
+from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNode
 
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
@@ -211,24 +204,16 @@ class PackageGenerator:
     def _generate_client(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
 
-        input_types = []
-        enums = []
-        for type_name in self.arguments_generator.used_types:
-            type_ = self.schema.type_map.get(type_name)
-            if isinstance(type_, GraphQLInputObjectType):
-                input_types.append(type_name)
-            elif isinstance(type_, GraphQLEnumType):
-                enums.append(type_name)
-            elif not isinstance(type_, GraphQLScalarType):
-                raise ParsingError(f"Argument type {type_name} not found in schema.")
-
         self.client_generator.add_import(
-            names=input_types, from_=self.input_types_module_name, level=1
+            names=self.arguments_generator.get_used_inputs(),
+            from_=self.input_types_module_name,
+            level=1,
         )
         self.client_generator.add_import(
-            names=enums, from_=self.enums_module_name, level=1
+            names=self.arguments_generator.get_used_enums(),
+            from_=self.enums_module_name,
+            level=1,
         )
-
         self.client_generator.add_import(
             names=[self.base_client_name],
             from_=self.base_client_file_path.stem,
