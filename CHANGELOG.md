@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.2.1 (2023-02-13)
 
 - Fixed incorrectly raised exception when using custom scalar as query argument type.
 
