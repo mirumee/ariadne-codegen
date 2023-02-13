@@ -3,13 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from graphql import (
-    FragmentDefinitionNode,
-    GraphQLEnumType,
-    GraphQLInputObjectType,
-    GraphQLSchema,
-    OperationDefinitionNode,
-)
+from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNode
 
 from ..exceptions import ParsingError
 from .arguments import ArgumentsGenerator
@@ -98,7 +92,9 @@ class PackageGenerator:
         self.arguments_generator = (
             arguments_generator
             if arguments_generator
-            else ArgumentsGenerator(convert_to_snake_case=self.convert_to_snake_case)
+            else ArgumentsGenerator(
+                schema=self.schema, convert_to_snake_case=self.convert_to_snake_case
+            )
         )
         self.input_types_generator = (
             input_types_generator
@@ -208,23 +204,16 @@ class PackageGenerator:
     def _generate_client(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
 
-        input_types = []
-        enums = []
-        for type_ in self.arguments_generator.used_types:
-            if isinstance(self.schema.type_map[type_], GraphQLInputObjectType):
-                input_types.append(type_)
-            elif isinstance(self.schema.type_map[type_], GraphQLEnumType):
-                enums.append(type_)
-            else:
-                raise ParsingError(f"Argument type {type_} not found in schema.")
-
         self.client_generator.add_import(
-            names=input_types, from_=self.input_types_module_name, level=1
+            names=self.arguments_generator.get_used_inputs(),
+            from_=self.input_types_module_name,
+            level=1,
         )
         self.client_generator.add_import(
-            names=enums, from_=self.enums_module_name, level=1
+            names=self.arguments_generator.get_used_enums(),
+            from_=self.enums_module_name,
+            level=1,
         )
-
         self.client_generator.add_import(
             names=[self.base_client_name],
             from_=self.base_client_file_path.stem,

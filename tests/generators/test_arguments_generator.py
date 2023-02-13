@@ -1,9 +1,9 @@
 import ast
 
-from graphql import OperationDefinitionNode, parse
+from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.generators.arguments import ArgumentsGenerator
-from ariadne_codegen.generators.constants import OPTIONAL
+from ariadne_codegen.generators.constants import ANY, OPTIONAL
 
 from ..utils import compare_ast
 
@@ -16,7 +16,19 @@ def _get_variable_definitions_from_query_str(query: str):
 
 
 def test_generate_returns_arguments_with_correct_non_optional_names_and_annotations():
-    generator = ArgumentsGenerator()
+    schema_str = """
+    schema { query: Query }
+    type Query { _skip: ID! }
+
+    input CustomInputType {
+        fieldA: Int!
+        fieldB: Float!
+        fieldC: String!
+        fieldD: Boolean!
+    }
+    """
+    schema = build_schema(schema_str)
+    generator = ArgumentsGenerator(schema=schema)
     query = (
         "query q($id: ID!, $name: String!, $amount: Int!, $val: Float!, "
         "$flag: Boolean!, $custom_input: CustomInputType!) {r}"
@@ -43,7 +55,12 @@ def test_generate_returns_arguments_with_correct_non_optional_names_and_annotati
 
 
 def test_generate_returns_arguments_with_correct_optional_annotation():
-    generator = ArgumentsGenerator()
+    schema_str = """
+        schema { query: Query }
+        type Query { _skip: ID! }
+        """
+    schema = build_schema(schema_str)
+    generator = ArgumentsGenerator(schema=schema)
     query = "query q($id: ID) {r}"
     variable_definitions = _get_variable_definitions_from_query_str(query)
 
@@ -62,7 +79,7 @@ def test_generate_returns_arguments_with_correct_optional_annotation():
 
 
 def test_generate_returns_arguments_with_only_self_argument_without_annotation():
-    generator = ArgumentsGenerator()
+    generator = ArgumentsGenerator(schema=GraphQLSchema())
     query = "query q {r}"
     variable_definitions = _get_variable_definitions_from_query_str(query)
 
@@ -76,18 +93,27 @@ def test_generate_returns_arguments_with_only_self_argument_without_annotation()
 
 
 def test_generate_saves_used_non_scalar_types():
-    generator = ArgumentsGenerator()
+    schema_str = """
+        schema { query: Query }
+        type Query { _skip: String! }
+
+        input Type1 { fieldA: Int! }
+        input Type2 { fieldB: Int! }
+        """
+    schema = build_schema(schema_str)
+    generator = ArgumentsGenerator(schema=schema)
     query = "query q($a1: String!, $a2: String, $a3: Type1!, $a4: Type2) {r}"
     variable_definitions = _get_variable_definitions_from_query_str(query)
 
     generator.generate(variable_definitions)
 
-    assert len(generator.used_types) == 2
-    assert generator.used_types == ["Type1", "Type2"]
+    used_inputs = generator.get_used_inputs()
+    assert len(used_inputs) == 2
+    assert used_inputs == ["Type1", "Type2"]
 
 
 def test_generate_returns_arguments_and_dictionary_with_snake_case_names():
-    generator = ArgumentsGenerator(convert_to_snake_case=True)
+    generator = ArgumentsGenerator(schema=GraphQLSchema(), convert_to_snake_case=True)
     query = "query q($camelCase: String!, $snake_case: String!) {r}"
     variable_definitions = _get_variable_definitions_from_query_str(query)
 
@@ -107,6 +133,37 @@ def test_generate_returns_arguments_and_dictionary_with_snake_case_names():
     expected_arguments_dict = ast.Dict(
         keys=[ast.Constant(value="camelCase"), ast.Constant(value="snake_case")],
         values=[ast.Name(id="camel_case"), ast.Name(id="snake_case")],
+    )
+
+    assert compare_ast(arguments, expected_arguments)
+    assert compare_ast(arguments_dict, expected_arguments_dict)
+
+
+def test_generate_returns_arguments_with_used_custom_scalar():
+    schema_str = """
+        schema { query: Query }
+        type Query { _skip: String! }
+        scalar CustomScalar
+        """
+    generator = ArgumentsGenerator(schema=build_schema(schema_str))
+    query_str = "query q($arg: CustomScalar!) {r}"
+
+    expected_arguments = ast.arguments(
+        posonlyargs=[],
+        args=[
+            ast.arg(arg="self"),
+            ast.arg(arg="arg", annotation=ast.Name(id=ANY)),
+        ],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[],
+    )
+    expected_arguments_dict = ast.Dict(
+        keys=[ast.Constant(value="arg")], values=[ast.Name(id="arg")]
+    )
+
+    arguments, arguments_dict = generator.generate(
+        _get_variable_definitions_from_query_str(query_str)
     )
 
     assert compare_ast(arguments, expected_arguments)
