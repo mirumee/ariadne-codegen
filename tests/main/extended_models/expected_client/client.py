@@ -4,7 +4,9 @@ from .async_base_client import AsyncBaseClient
 from .get_query_a import GetQueryA
 from .get_query_b import GetQueryB
 
-gql = lambda q: q
+
+def gql(q: str) -> str:
+    return q
 
 
 class Client(AsyncBaseClient):
@@ -18,7 +20,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict = {}
+        variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetQueryA.parse_obj(data)
@@ -33,7 +35,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict = {}
+        variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetQueryB.parse_obj(data)

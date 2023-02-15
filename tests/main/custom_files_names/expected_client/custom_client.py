@@ -4,7 +4,9 @@ from .async_base_client import AsyncBaseClient
 from .custom_input_types import inputA
 from .get_query_a import GetQueryA
 
-gql = lambda q: q
+
+def gql(q: str) -> str:
+    return q
 
 
 class Client(AsyncBaseClient):
@@ -18,7 +20,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict = {"dataA": data_a}
+        variables: dict[str, object] = {"dataA": data_a}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetQueryA.parse_obj(data)

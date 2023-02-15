@@ -3,6 +3,8 @@ from typing import List
 
 from .codegen import (
     generate_ann_assign,
+    generate_arg,
+    generate_arguments,
     generate_assign,
     generate_async_method_definition,
     generate_attribute,
@@ -15,7 +17,8 @@ from .codegen import (
     generate_method_definition,
     generate_name,
     generate_return,
-    generate_trivial_lambda,
+    generate_subscript,
+    generate_tuple,
 )
 from .constants import ANY, LIST, OPTIONAL, TYPING_MODULE
 
@@ -28,7 +31,7 @@ class ClientGenerator:
             generate_import_from([OPTIONAL, LIST, ANY], TYPING_MODULE)
         ]
 
-        self._gql_lambda_name = "gql"
+        self._gql_func_name = "gql"
         self._operation_str_variable = "query"
         self._variables_dict_variable = "variables"
         self._response_variable = "response"
@@ -36,13 +39,13 @@ class ClientGenerator:
 
     def generate(self) -> ast.Module:
         """Generate module with class definistion of grahql client."""
-        gql_lambda = generate_trivial_lambda(self._gql_lambda_name, "q")
-        gql_lambda.lineno = len(self.imports) + 1
-        self.class_def.lineno = len(self.imports) + 2
+        gql_func = self._generate_gql_func()
+        gql_func.lineno = len(self.imports) + 1
+        self.class_def.lineno = len(self.imports) + 3
         if not self.class_def.body:
             self.class_def.body.append(ast.Pass())
         return ast.Module(
-            body=self.imports + [gql_lambda, self.class_def],
+            body=self.imports + [gql_func, self.class_def],
             type_ignores=[],
         )
 
@@ -128,7 +131,7 @@ class ClientGenerator:
         return generate_assign(
             targets=[self._operation_str_variable],
             value=generate_call(
-                func=ast.Name(id=self._gql_lambda_name),
+                func=ast.Name(id=self._gql_func_name),
                 args=[
                     [generate_constant(l + "\n") for l in operation_str.splitlines()]
                 ],
@@ -141,7 +144,10 @@ class ClientGenerator:
     ) -> ast.AnnAssign:
         return generate_ann_assign(
             target=self._variables_dict_variable,
-            annotation=generate_name("dict"),
+            annotation=generate_subscript(
+                generate_name("dict"),
+                generate_tuple([generate_name("str"), generate_name("object")]),
+            ),
             value=arguments_dict,
             lineno=lineno,
         )
@@ -186,4 +192,14 @@ class ClientGenerator:
                 func=generate_attribute(generate_name(return_type), "parse_obj"),
                 args=[generate_name(self._data_variable)],
             )
+        )
+
+    def _generate_gql_func(self) -> ast.FunctionDef:
+        str_name = generate_name("str")
+        arg = "q"
+        return generate_method_definition(
+            name=self._gql_func_name,
+            arguments=generate_arguments([generate_arg(arg, str_name)]),
+            return_type=str_name,
+            body=[generate_return(generate_name(arg))],
         )

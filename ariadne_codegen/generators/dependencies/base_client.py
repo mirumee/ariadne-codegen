@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TypeVar, cast
 
 import httpx
 from pydantic import BaseModel
@@ -8,6 +8,8 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+
+Self = TypeVar("Self", bound="BaseClient")
 
 
 class BaseClient:
@@ -26,14 +28,14 @@ class BaseClient:
             else httpx.Client(base_url=base_url, headers=headers)
         )
 
-    def __enter__(self):
+    def __enter__(self: Self) -> Self:
         return self
 
     def __exit__(
         self,
-        exc_type,
-        exc_val,
-        exc_tb,
+        exc_type: object,
+        exc_val: object,
+        exc_tb: object,
     ) -> None:
         self.http_client.close()
 
@@ -45,7 +47,7 @@ class BaseClient:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
         return self.http_client.post(url="/graphql/", json=payload)
 
-    def get_data(self, response: httpx.Response) -> dict:
+    def get_data(self, response: httpx.Response) -> dict[str, Any]:
         if not response.is_success:
             raise GraphQLClientHttpError(
                 status_code=response.status_code, response=response
@@ -67,9 +69,11 @@ class BaseClient:
                 errors_dicts=errors, data=data
             )
 
-        return data
+        return cast(dict[str, Any], data)
 
-    def _convert_dict_to_json_serializable(self, dict_: Dict[str, Any]):
+    def _convert_dict_to_json_serializable(
+        self, dict_: Dict[str, Any]
+    ) -> Dict[str, Any]:
         return {
             key: value
             if not isinstance(value, BaseModel)

@@ -3,7 +3,9 @@ from typing import Any, List, Optional
 from .async_base_client import AsyncBaseClient
 from .test import Test
 
-gql = lambda q: q
+
+def gql(q: str) -> str:
+    return q
 
 
 class Client(AsyncBaseClient):
@@ -15,7 +17,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict = {}
+        variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return Test.parse_obj(data)

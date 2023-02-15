@@ -286,7 +286,7 @@ def test_generate_creates_client_with_correctly_implemented_async_method(tmp_pat
                 }
                 """
             )
-            variables: dict = {"id": id, "param": param}
+            variables: dict[str, object] = {"id": id, "param": param}
             response = await self.execute(query=query, variables=variables)
             data = self.get_data(response)
             return CustomQuery.parse_obj(data)
@@ -357,7 +357,7 @@ def test_generate_creates_client_file_with_gql_lambda_definition(tmp_path):
     client_file_path = tmp_path / package_name / "client.py"
     with client_file_path.open() as client_file:
         client_content = client_file.read()
-        expected_gql_def = "gql = lambda q: q"
+        expected_gql_def = "def gql(q: str) -> str:\n    return q"
         assert expected_gql_def in client_content
 
 
