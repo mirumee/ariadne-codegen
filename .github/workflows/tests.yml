@@ -27,5 +27,8 @@ jobs:
       run: |
         pylint ariadne_codegen tests
         mypy ariadne_codegen --ignore-missing-imports
+        # these test outputs represent things that may be committed into other projects that may
+        # have strict mypy settings, and so they should be maximally annotated.
+        mypy --strict tests/main/*/expected_client
         black --check .
         isort . --check-only
