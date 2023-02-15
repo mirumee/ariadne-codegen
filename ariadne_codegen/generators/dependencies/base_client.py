@@ -16,6 +16,7 @@ class BaseClient:
         base_url: str = "",
         headers: Optional[Dict[str, str]] = None,
         http_client: Optional[httpx.Client] = None,
+        endpoint: str = "/graphql/",
     ) -> None:
         self.base_url = base_url
         self.headers = headers
@@ -25,6 +26,7 @@ class BaseClient:
             if http_client
             else httpx.Client(base_url=base_url, headers=headers)
         )
+        self.endpoint = endpoint
 
     def __enter__(self):
         return self
@@ -43,7 +45,7 @@ class BaseClient:
         payload: Dict[str, Any] = {"query": query}
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
-        return self.http_client.post(url="/graphql", json=payload)
+        return self.http_client.post(url=self.endpoint, json=payload)
 
     def get_data(self, response: httpx.Response) -> dict:
         if not response.is_success:

@@ -12,9 +12,17 @@ from ariadne_codegen.generators.dependencies.exceptions import (
 )
 
 
-def test_execute_sends_post_to_correct_endpoint_with_correct_payload(mocker):
+@pytest.mark.parametrize("endpoint", [None, "/some/custom/endpoint"])
+def test_execute_sends_post_to_correct_endpoint_with_correct_payload(mocker, endpoint):
     fake_client = mocker.MagicMock()
-    client = BaseClient(base_url="base_url", http_client=fake_client)
+    if endpoint is None:
+        client = BaseClient(base_url="base_url", http_client=fake_client)
+        expected_endpoint = "/graphql/"
+    else:
+        client = BaseClient(
+            base_url="base_url", http_client=fake_client, endpoint=endpoint
+        )
+        expected_endpoint = endpoint
     query_str = """
     query Abc($v: String!) {
         abc(v: $v) {
@@ -28,7 +36,7 @@ def test_execute_sends_post_to_correct_endpoint_with_correct_payload(mocker):
     assert fake_client.post.called
     assert len(fake_client.post.mock_calls) == 1
     call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["url"] == "/graphql"
+    assert call_kwargs["url"] == expected_endpoint
     assert call_kwargs["json"] == {"query": query_str, "variables": {"v": "Xyz"}}
 
 
@@ -56,7 +64,7 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
     assert fake_client.post.called
     assert len(fake_client.post.mock_calls) == 1
     call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["url"] == "/graphql"
+    assert call_kwargs["url"] == "/graphql/"
     assert call_kwargs["json"] == {
         "query": query_str,
         "variables": {"v1": {"a": 5}, "v2": {"nested": {"a": 10}}},
