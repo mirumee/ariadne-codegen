@@ -286,7 +286,7 @@ def test_generate_creates_client_with_correctly_implemented_async_method(tmp_pat
                 }
                 """
             )
-            variables: dict = {"id": id, "param": param}
+            variables: dict[str, object] = {"id": id, "param": param}
             response = await self.execute(query=query, variables=variables)
             data = self.get_data(response)
             return CustomQuery.parse_obj(data)

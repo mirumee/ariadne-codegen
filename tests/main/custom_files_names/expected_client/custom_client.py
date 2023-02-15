@@ -20,7 +20,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict = {"dataA": data_a}
+        variables: dict[str, object] = {"dataA": data_a}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetQueryA.parse_obj(data)

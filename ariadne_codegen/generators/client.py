@@ -17,6 +17,8 @@ from .codegen import (
     generate_method_definition,
     generate_name,
     generate_return,
+    generate_subscript,
+    generate_tuple,
 )
 from .constants import ANY, LIST, OPTIONAL, TYPING_MODULE
 
@@ -142,7 +144,10 @@ class ClientGenerator:
     ) -> ast.AnnAssign:
         return generate_ann_assign(
             target=self._variables_dict_variable,
-            annotation=generate_name("dict"),
+            annotation=generate_subscript(
+                generate_name("dict"),
+                generate_tuple([generate_name("str"), generate_name("object")]),
+            ),
             value=arguments_dict,
             lineno=lineno,
         )
