@@ -4,7 +4,9 @@ from .async_base_client import AsyncBaseClient
 from .get_query_a import GetQueryA
 from .get_query_b import GetQueryB
 
-gql = lambda q: q
+
+def gql(q: str) -> str:
+    return q
 
 
 class Client(AsyncBaseClient):

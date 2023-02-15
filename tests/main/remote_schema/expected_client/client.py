@@ -3,7 +3,9 @@ from typing import Any, List, Optional
 from .async_base_client import AsyncBaseClient
 from .test import Test
 
-gql = lambda q: q
+
+def gql(q: str) -> str:
+    return q
 
 
 class Client(AsyncBaseClient):

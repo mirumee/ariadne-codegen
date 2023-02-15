@@ -4,7 +4,9 @@ from .custom_base_client import CustomAsyncBaseClient
 from .get_query_a import GetQueryA
 from .input_types import inputA
 
-gql = lambda q: q
+
+def gql(q: str) -> str:
+    return q
 
 
 class Client(CustomAsyncBaseClient):

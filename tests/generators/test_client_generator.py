@@ -18,25 +18,27 @@ def test_generate_returns_module_with_correct_class_name():
 
 def test_generate_returns_module_with_gql_lambda_definition():
     generator = ClientGenerator("ClientXyz", "BaseClient")
-    expected_assign = ast.Assign(
-        targets=[ast.Name(id="gql")],
-        value=ast.Lambda(
-            args=ast.arguments(
-                posonlyargs=[],
-                args=[ast.arg(arg="q")],
-                kwonlyargs=[],
-                kw_defaults=[],
-                defaults=[],
-            ),
-            body=ast.Name(id="q"),
+    expected_def = ast.FunctionDef(
+        name="gql",
+        args=ast.arguments(
+            posonlyargs=[],
+            args=[ast.arg(arg="q", annotation=ast.Name(id="str"))],
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
         ),
+        body=[ast.Return(value=ast.Name(id="q"))],
+        returns=ast.Name(id="str"),
+        decorator_list=[],
     )
 
     module = generator.generate()
 
-    assign = next(filter(lambda expr: isinstance(expr, ast.Assign), module.body), None)
+    assign = next(
+        filter(lambda expr: isinstance(expr, ast.FunctionDef), module.body), None
+    )
     assert assign
-    assert compare_ast(assign, expected_assign)
+    assert compare_ast(assign, expected_def)
 
 
 def test_add_import_adds_import_to_generated_module():
