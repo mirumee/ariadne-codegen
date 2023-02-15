@@ -28,7 +28,7 @@ def test_execute_sends_post_to_correct_endpoint_with_correct_payload(mocker):
     assert fake_client.post.called
     assert len(fake_client.post.mock_calls) == 1
     call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["url"] == "/graphql/"
+    assert call_kwargs["url"] == "/graphql"
     assert call_kwargs["json"] == {"query": query_str, "variables": {"v": "Xyz"}}
 
 
@@ -56,7 +56,7 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
     assert fake_client.post.called
     assert len(fake_client.post.mock_calls) == 1
     call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["url"] == "/graphql/"
+    assert call_kwargs["url"] == "/graphql"
     assert call_kwargs["json"] == {
         "query": query_str,
         "variables": {"v1": {"a": 5}, "v2": {"nested": {"a": 10}}},

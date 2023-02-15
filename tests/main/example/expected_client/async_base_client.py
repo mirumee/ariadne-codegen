@@ -43,7 +43,7 @@ class AsyncBaseClient:
         payload: Dict[str, Any] = {"query": query}
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
-        return await self.http_client.post(url="/graphql/", json=payload)
+        return await self.http_client.post(url="/graphql", json=payload)
 
     def get_data(self, response: httpx.Response) -> dict:
         if not response.is_success:
