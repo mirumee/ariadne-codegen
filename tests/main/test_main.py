@@ -35,7 +35,6 @@ def assert_the_same_files_in_directories(dir1: Path, dir2: Path):
 
     for file_ in files1:
         content1 = file_.read_text()
-        # dir2.joinpath(file_.name).write_text(content1)
         content2 = dir2.joinpath(file_.name).read_text()
         assert content1 == content2, file_.name
 
