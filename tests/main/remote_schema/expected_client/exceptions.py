@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 
@@ -43,7 +43,7 @@ class GraphQLClientGraphQLError(GraphQLClientError):
         return self.message
 
     @classmethod
-    def from_dict(cls, error: dict):
+    def from_dict(cls, error: dict[str, Any]) -> "GraphQLClientGraphQLError":
         return cls(
             message=error["message"],
             locations=error.get("locations"),
@@ -54,7 +54,7 @@ class GraphQLClientGraphQLError(GraphQLClientError):
 
 
 class GraphQLClientGraphQLMultiError(GraphQLClientError):
-    def __init__(self, errors: List[GraphQLClientGraphQLError], data: dict):
+    def __init__(self, errors: List[GraphQLClientGraphQLError], data: dict[str, Any]):
         self.errors = errors
         self.data = data
 
@@ -62,7 +62,9 @@ class GraphQLClientGraphQLMultiError(GraphQLClientError):
         return "; ".join(str(e) for e in self.errors)
 
     @classmethod
-    def from_errors_dicts(cls, errors_dicts: List[dict], data: dict):
+    def from_errors_dicts(
+        cls, errors_dicts: List[dict[str, Any]], data: dict[str, Any]
+    ) -> "GraphQLClientGraphQLMultiError":
         return cls(
             errors=[GraphQLClientGraphQLError.from_dict(e) for e in errors_dicts],
             data=data,
