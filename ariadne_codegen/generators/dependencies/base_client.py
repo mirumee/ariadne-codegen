@@ -13,20 +13,14 @@ from .exceptions import (
 class BaseClient:
     def __init__(
         self,
-        base_url: str = "",
+        url: str = "",
         headers: Optional[Dict[str, str]] = None,
         http_client: Optional[httpx.Client] = None,
-        endpoint: str = "/graphql/",
     ) -> None:
-        self.base_url = base_url
+        self.url = url
         self.headers = headers
 
-        self.http_client = (
-            http_client
-            if http_client
-            else httpx.Client(base_url=base_url, headers=headers)
-        )
-        self.endpoint = endpoint
+        self.http_client = http_client if http_client else httpx.Client(headers=headers)
 
     def __enter__(self):
         return self
@@ -45,7 +39,7 @@ class BaseClient:
         payload: Dict[str, Any] = {"query": query}
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
-        return self.http_client.post(url=self.endpoint, json=payload)
+        return self.http_client.post(url=self.url, json=payload)
 
     def get_data(self, response: httpx.Response) -> dict:
         if not response.is_success:

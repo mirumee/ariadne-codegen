@@ -13,20 +13,16 @@ from .exceptions import (
 class AsyncBaseClient:
     def __init__(
         self,
-        base_url: str = "",
+        url: str = "",
         headers: Optional[Dict[str, str]] = None,
         http_client: Optional[httpx.AsyncClient] = None,
-        endpoint: str = "/graphql/",
     ) -> None:
-        self.base_url = base_url
+        self.url = url
         self.headers = headers
 
         self.http_client = (
-            http_client
-            if http_client
-            else httpx.AsyncClient(base_url=base_url, headers=headers)
+            http_client if http_client else httpx.AsyncClient(headers=headers)
         )
-        self.endpoint = endpoint
 
     async def __aenter__(self):
         return self
@@ -45,7 +41,7 @@ class AsyncBaseClient:
         payload: Dict[str, Any] = {"query": query}
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
-        return await self.http_client.post(url=self.endpoint, json=payload)
+        return await self.http_client.post(url=self.url, json=payload)
 
     def get_data(self, response: httpx.Response) -> dict:
         if not response.is_success:
