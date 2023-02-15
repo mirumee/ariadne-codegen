@@ -23,7 +23,7 @@ from .init_file import InitFileGenerator
 from .input_types import InputTypesGenerator
 from .result_types import ResultTypesGenerator
 from .utils import ast_to_str, str_to_pascal_case, str_to_snake_case
-from .scalars import ScalarData
+from .scalars import ScalarData, ScalarsDefinitionsGenerator
 
 
 class PackageGenerator:
@@ -130,6 +130,11 @@ class PackageGenerator:
         self.generated_files: List[str] = []
         self.include_exceptions_file = self._include_exceptions()
 
+        self.scalars_definitions_generator = ScalarsDefinitionsGenerator(
+            scalars_data=list(self.custom_scalars.values())
+        )
+        self.scalars_definitions_file_name = "scalars"
+
     def generate(self) -> List[str]:
         """Generate package with graphql client."""
         self._validate_unique_file_names()
@@ -140,6 +145,7 @@ class PackageGenerator:
         self._generate_input_types()
         self._generate_result_types()
         self._copy_files()
+        self._generate_scalars_definitions()
         self._generate_init()
 
         return sorted(self.generated_files)
@@ -196,6 +202,7 @@ class PackageGenerator:
                 self.base_model_file_path.name,
                 f"{self.enums_module_name}.py",
                 f"{self.input_types_module_name}.py",
+                f"{self.scalars_definitions_file_name}.py",
             ]
             + list(self.result_types_files.keys())
             + [f.name for f in self.files_to_include]
@@ -319,6 +326,15 @@ class PackageGenerator:
             from_=self.base_model_file_path.stem,
             level=1,
         )
+
+    def _generate_scalars_definitions(self):
+        module = self.scalars_definitions_generator.generate()
+        scalars_file_path = (
+            self.package_path / f"{self.scalars_definitions_file_name}.py"
+        )
+        code = self._proccess_generated_code(ast_to_str(module))
+        scalars_file_path.write_text(code)
+        self.generated_files.append(scalars_file_path.name)
 
     def _generate_init(self):
         init_file_path = self.package_path / "__init__.py"

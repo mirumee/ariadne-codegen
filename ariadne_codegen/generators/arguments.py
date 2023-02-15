@@ -18,7 +18,6 @@ from .codegen import (
     generate_annotation_name,
     generate_arg,
     generate_arguments,
-    generate_attribute,
     generate_call,
     generate_constant,
     generate_dict,
@@ -64,19 +63,10 @@ class ArgumentsGenerator:
             if used_custom_scalar:
                 self._used_custom_scalars.append(used_custom_scalar)
                 scalar_data = self.custom_scalars[used_custom_scalar]
-                if scalar_data.serialize_method:
+                if scalar_data.serialize:
                     dict_.values.append(
                         generate_call(
-                            func=generate_attribute(
-                                value=generate_name(name),
-                                attr=scalar_data.serialize_method,
-                            )
-                        )
-                    )
-                elif scalar_data.serialize_function:
-                    dict_.values.append(
-                        generate_call(
-                            func=generate_name(scalar_data.serialize_function),
+                            func=generate_name(scalar_data.serialize),
                             args=[generate_name(name)],
                         )
                     )
@@ -137,7 +127,7 @@ class ArgumentsGenerator:
                 name = SIMPLE_TYPE_MAP.get(name, ANY)
             else:
                 used_custom_scalar = name
-                name = self.custom_scalars[name].type_name
+                name = self.custom_scalars[name].type
         else:
             raise ParsingError(f"Incorrect argument type {name}")
 
