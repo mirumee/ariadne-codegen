@@ -39,7 +39,7 @@ Required settings:
 
 - `queries_path` - path to file/directory with queries
 
-One of the following 2 parmeters is required, in case of providing both of them `schema_path` is prioritized:
+One of the following 2 parameters is required, in case of providing both of them `schema_path` is prioritized:
 
 - `schema_path` - path to file/directory with graphql schema
 - `remote_schema_url` - url to graphql server, where introspection query can be perfomed
