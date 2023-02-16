@@ -21,7 +21,7 @@ class BaseModel(PydanticBaseModel):
             return decode(value)
         return value
 
-    def dict(self, **kwargs) -> Dict[str, Any]:
+    def dict(self, **kwargs: Any) -> Dict[str, Any]:
         dict_ = super().dict(**kwargs)
         for key, value in dict_.items():
             serialize = SCALARS_SERIALIZE_FUNCTIONS.get(type(value))

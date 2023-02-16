@@ -514,7 +514,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             f"{generator.input_types_module_name}.py",
             f"{generator.enums_module_name}.py",
             "custom_query.py",
-            f"{generator.scalars_definitions_file_name}.py"
+            f"{generator.scalars_definitions_file_name}.py",
         ]
     )
 

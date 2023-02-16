@@ -6,6 +6,7 @@ from .codegen import (
     generate_ann_assign,
     generate_dict,
     generate_import_from,
+    generate_list,
     generate_module,
     generate_name,
     generate_subscript,
@@ -66,21 +67,48 @@ class ScalarsDefinitionsGenerator:
                 [
                     self._imports,
                     self._generate_dict_assignment(
-                        SCALARS_PARSE_DICT_NAME, self._parse_dict
+                        name=SCALARS_PARSE_DICT_NAME,
+                        dict_=self._parse_dict,
+                        callable_annotation=generate_tuple(
+                            [
+                                generate_list([generate_name("str")]),
+                                generate_name(ANY),
+                            ]
+                        ),
                     ),
                     self._generate_dict_assignment(
-                        name=SCALARS_SERIALIZE_DICT_NAME, dict_=self._serialize_dict
+                        name=SCALARS_SERIALIZE_DICT_NAME,
+                        dict_=self._serialize_dict,
+                        callable_annotation=generate_tuple(
+                            [
+                                generate_list([generate_name(ANY)]),
+                                generate_name("str"),
+                            ]
+                        ),
                     ),
                 ],
             )
         )
 
-    def _generate_dict_assignment(self, name: str, dict_: ast.Dict) -> ast.AnnAssign:
+    def _generate_dict_assignment(
+        self,
+        name: str,
+        dict_: ast.Dict,
+        callable_annotation: ast.Tuple,
+    ) -> ast.AnnAssign:
         return generate_ann_assign(
             target=generate_name(name),
             annotation=generate_subscript(
                 value=generate_name(DICT),
-                slice_=generate_tuple([generate_name(ANY), generate_name(CALLABLE)]),
+                slice_=generate_tuple(
+                    [
+                        generate_name(ANY),
+                        generate_subscript(
+                            value=generate_name(CALLABLE),
+                            slice_=callable_annotation,
+                        ),
+                    ]
+                ),
             ),
             value=dict_,
         )
