@@ -82,6 +82,9 @@ class ArgumentsGenerator:
     def get_used_inputs(self) -> List[str]:
         return self._used_inputs
 
+    def get_used_custom_scalars(self) -> List[str]:
+        return self._used_custom_scalars
+
     def _process_name(self, name: str) -> str:
         if self.convert_to_snake_case:
             return str_to_snake_case(name)
