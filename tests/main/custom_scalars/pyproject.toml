@@ -1,0 +1,19 @@
+[ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+include_comments = false
+target_package_name = "custom_scalars_client"
+files_to_include = ["custom_scalars.py"]
+
+[ariadne-codegen.scalars.ID]
+type = "str"
+
+[ariadne-codegen.scalars.DATETIME]
+type = "datetime"
+import = "datetime"
+
+[ariadne-codegen.scalars.CODE]
+type = "Code"
+serialize = "serialize_code"
+parse = "parse_code"
+import = ".custom_scalars"

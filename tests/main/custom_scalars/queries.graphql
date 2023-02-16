@@ -1,0 +1,14 @@
+query getTest(
+  $date: DATETIME!
+  $code: CODE!
+  $id: ID!
+  $input: TestInput!
+  $other: NOTMAPPED!
+) {
+  testQuery(date: $date, code: $code, id: $id, input: $input, other: $other) {
+    date
+    code
+    id
+    other
+  }
+}
