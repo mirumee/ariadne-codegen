@@ -27,8 +27,8 @@ from .constants import (
     SIMPLE_TYPE_MAP,
     SKIP_DIRECTIVE_NAME,
 )
-from .types import Annotation, CodegenResultFieldType
 from .scalars import ScalarData
+from .types import Annotation, CodegenResultFieldType
 
 FieldNames = namedtuple("FieldNames", ["class_name", "type_name"])
 
@@ -50,6 +50,7 @@ def parse_operation_field(
     return annotation, field_types_names
 
 
+# pylint: disable=too-many-return-statements
 def parse_operation_field_type(
     type_: CodegenResultFieldType,
     nullable: bool = True,
@@ -63,10 +64,8 @@ def parse_operation_field_type(
             return (generate_annotation_name(SIMPLE_TYPE_MAP[type_.name], nullable), [])
         if custom_scalars and type_.name in custom_scalars:
             return (
-                generate_annotation_name(
-                    custom_scalars[type_.name].type, nullable
-                ),
-                [FieldNames(custom_scalars[type_.name].type, type_.name)],
+                generate_annotation_name(custom_scalars[type_.name].type_, nullable),
+                [FieldNames(custom_scalars[type_.name].type_, type_.name)],
             )
         return (generate_annotation_name(ANY, nullable), [])
 

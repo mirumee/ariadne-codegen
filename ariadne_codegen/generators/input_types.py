@@ -70,10 +70,11 @@ class InputTypesGenerator:
 
         if self._used_scalars:
             for scalar_name in self._used_scalars:
-                for extra_import in self.custom_scalars[scalar_name].extra_imports:
+                scalar_data = self.custom_scalars[scalar_name]
+                if scalar_data.import_:
                     self._imports.append(
                         generate_import_from(
-                            names=[extra_import.import_], from_=extra_import.from_
+                            names=scalar_data.names_to_import, from_=scalar_data.import_
                         )
                     )
         sorted_class_defs = self._get_sorted_class_defs()

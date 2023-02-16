@@ -1,5 +1,5 @@
 import ast
-from typing import Optional, Tuple, Dict
+from typing import Dict, Optional, Tuple
 
 from graphql import (
     BooleanValueNode,
@@ -34,10 +34,11 @@ from .codegen import (
     generate_name,
 )
 from .constants import ANY, FIELD_CLASS, SIMPLE_TYPE_MAP
-from .types import Annotation, CodegenInputFieldType
 from .scalars import ScalarData
+from .types import Annotation, CodegenInputFieldType
 
 
+# pylint: disable=too-many-return-statements
 def parse_input_field_type(
     type_: CodegenInputFieldType,
     nullable: bool = True,
@@ -55,7 +56,7 @@ def parse_input_field_type(
         if custom_scalars and type_.name in custom_scalars:
             return (
                 generate_annotation_name(
-                    name=custom_scalars[type_.name].type, nullable=nullable
+                    name=custom_scalars[type_.name].type_, nullable=nullable
                 ),
                 type_.name,
             )

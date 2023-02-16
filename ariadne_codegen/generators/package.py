@@ -22,8 +22,8 @@ from .enums import EnumsGenerator
 from .init_file import InitFileGenerator
 from .input_types import InputTypesGenerator
 from .result_types import ResultTypesGenerator
-from .utils import ast_to_str, str_to_pascal_case, str_to_snake_case
 from .scalars import ScalarData, ScalarsDefinitionsGenerator
+from .utils import ast_to_str, str_to_pascal_case, str_to_snake_case
 
 
 class PackageGenerator:
@@ -230,9 +230,10 @@ class PackageGenerator:
         )
 
         for custom_scalar_name in self.arguments_generator.get_used_custom_scalars():
-            for extra_import in self.custom_scalars[custom_scalar_name].extra_imports:
+            scalar_data = self.custom_scalars[custom_scalar_name]
+            if scalar_data.import_:
                 self.client_generator.add_import(
-                    names=[extra_import.import_], from_=extra_import.from_
+                    names=scalar_data.names_to_import, from_=scalar_data.import_
                 )
 
         self.client_generator.add_import(

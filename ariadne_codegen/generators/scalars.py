@@ -1,5 +1,5 @@
 import ast
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional, cast
 
 from .codegen import (
@@ -22,24 +22,15 @@ from .constants import (
 
 
 @dataclass
-class ExtraImportData:
-    from_: str
-    import_: str
-
-
-@dataclass
 class ScalarData:
-    type: str
+    type_: str
     serialize: Optional[str] = None
     parse: Optional[str] = None
-    extra_imports: List[ExtraImportData] = field(default_factory=list)
+    import_: Optional[str] = None
 
-    def __post_init__(self):
-        imports_data = []
-        for extra_import in self.extra_imports:
-            if isinstance(extra_import, dict):
-                imports_data.append(ExtraImportData(**extra_import))
-        self.extra_imports = imports_data
+    @property
+    def names_to_import(self) -> List[str]:
+        return [name for name in (self.type_, self.serialize, self.parse) if name]
 
 
 class ScalarsDefinitionsGenerator:
@@ -56,20 +47,17 @@ class ScalarsDefinitionsGenerator:
 
     def add_scalar(self, data: ScalarData) -> None:
         if data.parse:
-            self._parse_dict.keys.append(generate_name(data.type))
+            self._parse_dict.keys.append(generate_name(data.type_))
             self._parse_dict.values.append(generate_name(data.parse))
 
         if data.serialize:
-            self._serialize_dict.keys.append(generate_name(data.type))
+            self._serialize_dict.keys.append(generate_name(data.type_))
             self._serialize_dict.values.append(generate_name(data.serialize))
 
-        if (data.parse or data.serialize) and data.extra_imports:
-            for extra_import in data.extra_imports:
-                self._imports.append(
-                    generate_import_from(
-                        names=[extra_import.import_], from_=extra_import.from_
-                    )
-                )
+        if (data.parse or data.serialize) and data.import_:
+            self._imports.append(
+                generate_import_from(names=data.names_to_import, from_=data.import_)
+            )
 
     def generate(self) -> ast.Module:
         return generate_module(

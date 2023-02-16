@@ -4,7 +4,6 @@ import click
 
 from .config import get_settings, get_used_settings_message
 from .generators.package import PackageGenerator
-from .generators.scalars import ScalarData
 from .schema import (
     filter_fragments_definitions,
     filter_operations_definitions,
@@ -33,9 +32,6 @@ def main():
 
     sys.stdout.write(get_used_settings_message(settings))
 
-    custom_scalars = {
-        name: ScalarData(**v) for name, v in settings.custom_scalars.items()
-    }
     package_generator = PackageGenerator(
         package_name=settings.target_package_name,
         target_path=settings.target_package_path,
@@ -52,7 +48,7 @@ def main():
         convert_to_snake_case=settings.convert_to_snake_case,
         async_client=settings.async_client,
         files_to_include=settings.files_to_include,
-        custom_scalars=custom_scalars,
+        custom_scalars=settings.scalars,
     )
     for query in queries:
         package_generator.add_operation(query)

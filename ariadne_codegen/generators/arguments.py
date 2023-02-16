@@ -25,8 +25,8 @@ from .codegen import (
     generate_name,
 )
 from .constants import ANY, SIMPLE_TYPE_MAP
-from .utils import str_to_snake_case
 from .scalars import ScalarData
+from .utils import str_to_snake_case
 
 
 class ArgumentsGenerator:
@@ -127,7 +127,7 @@ class ArgumentsGenerator:
                 name = SIMPLE_TYPE_MAP.get(name, ANY)
             else:
                 used_custom_scalar = name
-                name = self.custom_scalars[name].type
+                name = self.custom_scalars[name].type_
         else:
             raise ParsingError(f"Incorrect argument type {name}")
 

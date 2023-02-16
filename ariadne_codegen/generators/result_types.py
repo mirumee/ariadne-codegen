@@ -47,9 +47,9 @@ from .constants import (
     UPDATE_FORWARD_REFS_METHOD,
 )
 from .result_fields import FieldNames, parse_operation_field
+from .scalars import ScalarData
 from .types import CodegenResultFieldType
 from .utils import str_to_pascal_case, str_to_snake_case
-from .scalars import ScalarData
 
 
 class ResultTypesGenerator:
@@ -100,10 +100,11 @@ class ResultTypesGenerator:
             )
         if self._used_scalars:
             for scalar_name in self._used_scalars:
-                for extra_import in self.custom_scalars[scalar_name].extra_imports:
+                scalar_data = self.custom_scalars[scalar_name]
+                if scalar_data.import_:
                     self._imports.append(
                         generate_import_from(
-                            names=[extra_import.import_], from_=extra_import.from_
+                            names=scalar_data.names_to_import, from_=scalar_data.import_
                         )
                     )
         update_forward_refs_calls = [

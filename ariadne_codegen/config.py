@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 import toml
 
 from .exceptions import ConfigFileNotFound, InvalidConfiguration, MissingConfiguration
+from .generators.scalars import ScalarData
 
 
 @dataclass
@@ -27,7 +28,7 @@ class Settings:
     convert_to_snake_case: bool = True
     async_client: bool = True
     files_to_include: List[str] = field(default_factory=list)
-    custom_scalars: Dict = field(default_factory=dict)
+    scalars: Dict[str, ScalarData] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:
@@ -116,9 +117,25 @@ def parse_config_file(
     config = toml.load(file_path)
     if section_key not in config:
         raise MissingConfiguration(f"File {file_path} has no [{section_key}] section.")
+    section = config[section_key]
 
     try:
-        return Settings(**config[section_key])
+        section["scalars"] = {
+            name: ScalarData(
+                type_=data["type"],
+                serialize=data.get("serialize"),
+                parse=data.get("parse"),
+                import_=data.get("import"),
+            )
+            for name, data in section.get("scalars", {}).items()
+        }
+    except KeyError as exc:
+        raise MissingConfiguration(
+            "Missing 'type' field for scalar definition"
+        ) from exc
+
+    try:
+        return Settings(**section)
     except TypeError as exc:
         expected_fields = {f.name for f in fields(Settings)}
         missing_fields = expected_fields.difference(config[section_key])

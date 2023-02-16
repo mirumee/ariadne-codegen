@@ -1,7 +1,8 @@
 from typing import Any, Dict
 
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import ModelField, validator
+from pydantic.class_validators import validator
+from pydantic.fields import ModelField
 
 from .scalars import SCALARS_PARSE_FUNCTIONS, SCALARS_SERIALIZE_FUNCTIONS
 
