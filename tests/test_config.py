@@ -19,6 +19,11 @@ def config_file(tmp_path_factory):
             "[ariadne-codegen]",
             f'schema_path = "{schema_path.as_posix()}"',
             f'queries_path = "{queries_path.as_posix()}"',
+            "[ariadne-codegen.scalars.ID]",
+            'type = "str"',
+            'parse = "parse_id"',
+            'serialize = "serialize_id"',
+            'import = ".custom_scalars"',
         ]
     )
     file_.write_text(config, encoding="utf-8")
@@ -37,6 +42,26 @@ def config_file_invalid_section(tmp_path_factory):
 def config_file_without_field(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
     config = '[ariadne-codegen]\ninvalid_field = "."'
+    file_.write_text(config, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def config_file_invalid_scalar(tmp_path_factory):
+    file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
+    schema_path = file_.parent.joinpath(SCHEMA_FILENAME)
+    schema_path.touch()
+    queries_path = file_.parent.joinpath(QUERIES_DIR)
+    queries_path.mkdir()
+    config = "\n".join(
+        [
+            "[ariadne-codegen]",
+            f'schema_path = "{schema_path.as_posix()}"',
+            f'queries_path = "{queries_path.as_posix()}"',
+            "[ariadne-codegen.scalars.ID]",
+            'invalid_key = "str"',
+        ]
+    )
     file_.write_text(config, encoding="utf-8")
     return file_
 
@@ -85,3 +110,11 @@ def test_parse_config_file_without_needed_field_raises_missing_configuration_exc
     mock_cwd(mocker, config_file_without_field.parent)
     with pytest.raises(MissingConfiguration):
         parse_config_file(config_file_without_field)
+
+
+def test_parse_config_file_with_invalid_scalar_section_raises_missing_configuration(
+    config_file_invalid_scalar, mocker
+):
+    mock_cwd(mocker, config_file_invalid_scalar.parent)
+    with pytest.raises(MissingConfiguration):
+        parse_config_file(config_file_invalid_scalar)

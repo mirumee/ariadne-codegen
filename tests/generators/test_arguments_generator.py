@@ -4,6 +4,7 @@ from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.generators.arguments import ArgumentsGenerator
 from ariadne_codegen.generators.constants import ANY, OPTIONAL
+from ariadne_codegen.generators.scalars import ScalarData
 
 from ..utils import compare_ast
 
@@ -139,7 +140,7 @@ def test_generate_returns_arguments_and_dictionary_with_snake_case_names():
     assert compare_ast(arguments_dict, expected_arguments_dict)
 
 
-def test_generate_returns_arguments_with_used_custom_scalar():
+def test_generate_returns_arguments_with_not_mapped_custom_scalar():
     schema_str = """
         schema { query: Query }
         type Query { _skip: String! }
@@ -160,6 +161,48 @@ def test_generate_returns_arguments_with_used_custom_scalar():
     )
     expected_arguments_dict = ast.Dict(
         keys=[ast.Constant(value="arg")], values=[ast.Name(id="arg")]
+    )
+
+    arguments, arguments_dict = generator.generate(
+        _get_variable_definitions_from_query_str(query_str)
+    )
+
+    assert compare_ast(arguments, expected_arguments)
+    assert compare_ast(arguments_dict, expected_arguments_dict)
+
+
+def test_generate_returns_arguments_with_custom_scalar_and_used_serialize_method():
+    schema_str = """
+        schema { query: Query }
+        type Query { _skip: String! }
+        scalar SCALARABC
+        """
+    query_str = "query q($arg: SCALARABC!) {r}"
+    generator = ArgumentsGenerator(
+        schema=build_schema(schema_str),
+        custom_scalars={
+            "SCALARABC": ScalarData(type_="ScalarABC", serialize="serialize_abc")
+        },
+    )
+    expected_arguments = ast.arguments(
+        posonlyargs=[],
+        args=[
+            ast.arg(arg="self"),
+            ast.arg(arg="arg", annotation=ast.Name(id="ScalarABC")),
+        ],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[],
+    )
+    expected_arguments_dict = ast.Dict(
+        keys=[ast.Constant(value="arg")],
+        values=[
+            ast.Call(
+                func=ast.Name(id="serialize_abc"),
+                args=[ast.Name(id="arg")],
+                keywords=[],
+            )
+        ],
     )
 
     arguments, arguments_dict = generator.generate(

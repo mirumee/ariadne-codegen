@@ -26,6 +26,7 @@ from ariadne_codegen.generators.input_fields import (
     parse_input_const_value_node,
     parse_input_field_type,
 )
+from ariadne_codegen.generators.scalars import ScalarData
 
 from ..utils import compare_ast
 
@@ -72,6 +73,33 @@ def test_parse_input_field_type_returns_annotation_for_scalar(
 
     assert compare_ast(annotation, expected_annotation)
     assert type_name == ""
+
+
+@pytest.mark.parametrize(
+    "type_, expected_annotation",
+    [
+        (GraphQLNonNull(GraphQLScalarType("SCALARXYZ")), ast.Name(id="ScalarXYZ")),
+        (
+            GraphQLScalarType("SCALARXYZ"),
+            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="ScalarXYZ")),
+        ),
+        (
+            GraphQLNonNull(
+                GraphQLList(type_=GraphQLNonNull(GraphQLScalarType("SCALARXYZ")))
+            ),
+            ast.Subscript(value=ast.Name(id=LIST), slice=ast.Name("ScalarXYZ")),
+        ),
+    ],
+)
+def test_parse_input_field_type_returns_annotation_for_custom_scalar(
+    type_, expected_annotation
+):
+    annotation, type_name = parse_input_field_type(
+        type_=type_, custom_scalars={"SCALARXYZ": ScalarData(type_="ScalarXYZ")}
+    )
+
+    assert compare_ast(annotation, expected_annotation)
+    assert type_name == "SCALARXYZ"
 
 
 @pytest.mark.parametrize(

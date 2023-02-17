@@ -12,6 +12,7 @@ from ariadne_codegen.generators.constants import (
     TIMESTAMP_COMMENT,
 )
 from ariadne_codegen.generators.package import PackageGenerator
+from ariadne_codegen.generators.scalars import ScalarData
 
 SCHEMA_STR = """
 schema {
@@ -19,9 +20,7 @@ schema {
 }
 
 type Query {
-    query1(
-        id: ID!
-    ): CustomType
+    query1(id: ID!, param: SCALARABC): CustomType
     query2: [CustomType!]
     query3(val: CustomEnum!): [CustomType]
 }
@@ -45,6 +44,8 @@ enum CustomEnum {
 input CustomInput {
     value: Int!
 }
+
+scalar SCALARABC
 """
 
 
@@ -544,3 +545,29 @@ def test_generate_copies_files_to_include(tmp_path):
         assert file1_content in copied_file1.read()
     with package_path.joinpath("file2.py").open() as copied_file2:
         assert file2_content in copied_file2.read()
+
+
+def test_generate_creates_client_with_custom_scalars_imports(tmp_path):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        custom_scalars={"SCALARABC": ScalarData(type_="ScalarABC", import_=".abc")},
+    )
+    query_str = """
+    query CustomQuery($id: ID!, $param: SCALARABC) {
+        query1(id: $id, param: $param) {
+            field1
+        }
+    }
+    """
+
+    generator.add_operation(parse(query_str).definitions[0])
+    generator.generate()
+
+    package_path = tmp_path / "test_graphql_client"
+    with package_path.joinpath(
+        f"{generator.client_file_name}.py"
+    ).open() as client_file:
+        assert "from .abc import ScalarABC" in client_file.read()
