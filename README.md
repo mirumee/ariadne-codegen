@@ -142,7 +142,7 @@ Generated code requires:
 
 ## Example
 
-Example with simple schema and few queries and mutations is available [here](./EXAMPLE.md).
+Example with simple schema and few queries and mutations is available [here](https://github.com/mirumee/ariadne-codegen/blob/main/EXAMPLE.md).
 
 
 ## Contributing
