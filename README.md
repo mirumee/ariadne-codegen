@@ -97,6 +97,7 @@ serialize = "function used to serialize scalar"
 parse = "function used to create scalar instance from serialized form"
 import = "module to import from"
 ```
+
 All occurences of `{graphql scalar name}` will be represented as `type`. If provided, `serialize` and `parse` will be used for serialization and deserialization. In all files which use `type`/`serialize`/`parse` there will be added extra import `from {import} import {type}, {serialize}, {parse}`
 
 
