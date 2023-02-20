@@ -4,6 +4,7 @@
 
 - Changed generated code to pass `mypy --strict`.
 - Changed base clients to get full url from user.
+- Added support for custom scalars.
 
 
 ## 0.2.1 (2023-02-13)
