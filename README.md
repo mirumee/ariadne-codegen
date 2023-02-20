@@ -114,6 +114,7 @@ type = "str"
 ### Example with type supported by pydantic
 
 In this scenario scalar is represented as `datetime`, so it needs to be imported. Pydantic handles serialization and deserialization so custom `parse` and `serialize` is not necessary.
+
 ```toml
 [ariadne-codegen.scalars.DATETIME]
 type = "datetime"
