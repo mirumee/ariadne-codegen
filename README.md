@@ -77,7 +77,7 @@ from graphql_client.client import Client
 
 Client (with default base client), takes passed headers and attaches them to every sent request.
 ```py
-client = Client("https://example.com", {"Authorization": "Bearer token"})
+client = Client("https://example.com/graphql", {"Authorization": "Bearer token"})
 ```
 
 For more complex scenarios, you can pass your own http client:
