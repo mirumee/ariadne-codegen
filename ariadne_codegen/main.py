@@ -48,6 +48,7 @@ def main():
         convert_to_snake_case=settings.convert_to_snake_case,
         async_client=settings.async_client,
         files_to_include=settings.files_to_include,
+        custom_scalars=settings.scalars,
     )
     for query in queries:
         package_generator.add_operation(query)

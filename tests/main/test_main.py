@@ -30,8 +30,10 @@ def project_dir(request, tmp_path):
 
 
 def assert_the_same_files_in_directories(dir1: Path, dir2: Path):
-    files1 = list(dir1.glob("*"))
-    assert [f.name for f in files1] == [f.name for f in dir2.glob("*")]
+    files1 = [f for f in dir1.glob("*") if f.name != "__pycache__"]
+    assert [f.name for f in files1] == [
+        f.name for f in dir2.glob("*") if f.name != "__pycache__"
+    ]
 
     for file_ in files1:
         content1 = file_.read_text()
@@ -98,6 +100,18 @@ def test_main_shows_version():
             ),
             "custom_base_client",
             Path(__file__).parent / "custom_base_client" / "expected_client",
+        ),
+        (
+            (
+                Path(__file__).parent / "custom_scalars" / "pyproject.toml",
+                (
+                    Path(__file__).parent / "custom_scalars" / "queries.graphql",
+                    Path(__file__).parent / "custom_scalars" / "schema.graphql",
+                    Path(__file__).parent / "custom_scalars" / "custom_scalars.py",
+                ),
+            ),
+            "custom_scalars_client",
+            Path(__file__).parent / "custom_scalars" / "expected_client",
         ),
     ],
     indirect=["project_dir"],

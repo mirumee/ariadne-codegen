@@ -1,0 +1,32 @@
+schema {
+  query: Query
+}
+
+type Query {
+  testQuery(
+    date: DATETIME!
+    code: CODE!
+    id: CUSTOMID!
+    input: TestInput!
+    other: NOTMAPPED!
+  ): TestType!
+}
+
+type TestType {
+  date: DATETIME!
+  code: CODE!
+  id: CUSTOMID!
+  other: NOTMAPPED!
+}
+
+input TestInput {
+  a: DATETIME!
+  b: CODE!
+  c: CUSTOMID!
+  d: NOTMAPPED!
+}
+
+scalar DATETIME
+scalar CODE
+scalar CUSTOMID
+scalar NOTMAPPED

@@ -1,6 +1,6 @@
 import ast
 from collections import namedtuple
-from typing import List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple, cast
 
 from graphql import (
     DirectiveNode,
@@ -27,6 +27,7 @@ from .constants import (
     SIMPLE_TYPE_MAP,
     SKIP_DIRECTIVE_NAME,
 )
+from .scalars import ScalarData
 from .types import Annotation, CodegenResultFieldType
 
 FieldNames = namedtuple("FieldNames", ["class_name", "type_name"])
@@ -36,9 +37,10 @@ def parse_operation_field(
     type_: CodegenResultFieldType,
     directives: Optional[Tuple[DirectiveNode, ...]] = None,
     class_name: str = "",
+    custom_scalars: Optional[Dict[str, ScalarData]] = None,
 ) -> Tuple[Annotation, List[FieldNames]]:
     annotation, field_types_names = parse_operation_field_type(
-        type_=type_, class_name=class_name
+        type_=type_, class_name=class_name, custom_scalars=custom_scalars
     )
     if not (is_nullable(annotation)) and directives:
         nullable_directives = [INCLUDE_DIRECTIVE_NAME, SKIP_DIRECTIVE_NAME]
@@ -48,18 +50,24 @@ def parse_operation_field(
     return annotation, field_types_names
 
 
+# pylint: disable=too-many-return-statements
 def parse_operation_field_type(
     type_: CodegenResultFieldType,
     nullable: bool = True,
     class_name: str = "",
     add_type_name: bool = False,
+    custom_scalars: Optional[Dict[str, ScalarData]] = None,
 ) -> Tuple[Annotation, List[FieldNames]]:
     """Parse graphql type and return generated annotation."""
     if isinstance(type_, GraphQLScalarType):
-        return (
-            generate_annotation_name(SIMPLE_TYPE_MAP.get(type_.name, ANY), nullable),
-            [],
-        )
+        if type_.name in SIMPLE_TYPE_MAP:
+            return (generate_annotation_name(SIMPLE_TYPE_MAP[type_.name], nullable), [])
+        if custom_scalars and type_.name in custom_scalars:
+            return (
+                generate_annotation_name(custom_scalars[type_.name].type_, nullable),
+                [FieldNames(custom_scalars[type_.name].type_, type_.name)],
+            )
+        return (generate_annotation_name(ANY, nullable), [])
 
     if isinstance(
         type_,
@@ -85,7 +93,11 @@ def parse_operation_field_type(
         names = []
         for subtype in type_.types:
             sub_annotation, sub_names = parse_operation_field_type(
-                subtype, nullable=False, class_name=class_name, add_type_name=True
+                subtype,
+                nullable=False,
+                class_name=class_name,
+                add_type_name=True,
+                custom_scalars=custom_scalars,
             )
             annotations.append(sub_annotation)
             names.extend(sub_names)
@@ -97,12 +109,16 @@ def parse_operation_field_type(
             cast(CodegenResultFieldType, type_.of_type),
             nullable=nullable,
             class_name=class_name,
+            custom_scalars=custom_scalars,
         )
         return (generate_list_annotation(slice_=slice_, nullable=nullable), names)
 
     if isinstance(type_, GraphQLNonNull):
         return parse_operation_field_type(
-            type_.of_type, nullable=False, class_name=class_name
+            type_.of_type,
+            nullable=False,
+            class_name=class_name,
+            custom_scalars=custom_scalars,
         )
 
     raise ParsingError("Invalid field type.")

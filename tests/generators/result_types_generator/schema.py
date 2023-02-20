@@ -23,6 +23,7 @@ type CustomType {
     field1: CustomType1!
     field2: CustomType2
     field3: CustomEnum!
+    scalarField: SCALARA
 }
 
 type CustomType1 {
@@ -44,4 +45,6 @@ enum CustomEnum {
 }
 
 union UnionType = CustomType1 | CustomType2
+
+scalar SCALARA
 """

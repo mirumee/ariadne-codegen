@@ -2,7 +2,12 @@ import ast
 from collections import defaultdict
 from typing import Dict, List, Optional, cast
 
-from graphql import GraphQLEnumType, GraphQLInputObjectType, GraphQLSchema
+from graphql import (
+    GraphQLEnumType,
+    GraphQLInputObjectType,
+    GraphQLScalarType,
+    GraphQLSchema,
+)
 
 from .codegen import (
     generate_ann_assign,
@@ -26,6 +31,7 @@ from .constants import (
     UPDATE_FORWARD_REFS_METHOD,
 )
 from .input_fields import parse_input_field_default_value, parse_input_field_type
+from .scalars import ScalarData
 from .utils import str_to_snake_case
 
 
@@ -36,10 +42,12 @@ class InputTypesGenerator:
         enums_module: str,
         convert_to_snake_case: bool = True,
         base_model_import: Optional[ast.ImportFrom] = None,
+        custom_scalars: Optional[Dict[str, ScalarData]] = None,
     ) -> None:
         self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
         self.enums_module = enums_module
+        self.custom_scalars = custom_scalars if custom_scalars else {}
 
         self._imports = [
             generate_import_from([OPTIONAL, ANY, UNION, LIST], TYPING_MODULE),
@@ -49,6 +57,7 @@ class InputTypesGenerator:
         ]
         self._dependencies: Dict[str, List[str]] = defaultdict(list)
         self._used_enums: List[str] = []
+        self._used_scalars: List[str] = []
         self._class_defs: List[ast.ClassDef] = [
             self._parse_input_definition(d) for d in self._filter_input_types()
         ]
@@ -58,6 +67,16 @@ class InputTypesGenerator:
             self._imports.append(
                 generate_import_from(self._used_enums, self.enums_module, 1)
             )
+
+        if self._used_scalars:
+            for scalar_name in self._used_scalars:
+                scalar_data = self.custom_scalars[scalar_name]
+                if scalar_data.import_:
+                    self._imports.append(
+                        generate_import_from(
+                            names=scalar_data.names_to_import, from_=scalar_data.import_
+                        )
+                    )
         sorted_class_defs = self._get_sorted_class_defs()
         update_forward_refs_calls = [
             generate_expr(generate_method_call(c.name, UPDATE_FORWARD_REFS_METHOD))
@@ -91,7 +110,9 @@ class InputTypesGenerator:
 
         for lineno, (org_name, field) in enumerate(definition.fields.items(), start=1):
             name = self._process_field_name(org_name)
-            annotation, field_type = parse_input_field_type(field.type)
+            annotation, field_type = parse_input_field_type(
+                field.type, custom_scalars=self.custom_scalars
+            )
             field_implementation = generate_ann_assign(
                 target=name,
                 annotation=annotation,
@@ -106,7 +127,7 @@ class InputTypesGenerator:
                 )
 
             class_def.body.append(field_implementation)
-            self._save_used_enums_and_dependencies(
+            self._save_used_enums_scalars_and_dependencies(
                 class_name=class_def.name, field_type=field_type
             )
 
@@ -139,7 +160,7 @@ class InputTypesGenerator:
                 )
         return field_with_alias
 
-    def _save_used_enums_and_dependencies(
+    def _save_used_enums_scalars_and_dependencies(
         self, class_name: str, field_type: str = ""
     ) -> None:
         if not field_type:
@@ -148,6 +169,8 @@ class InputTypesGenerator:
             self._dependencies[class_name].append(field_type)
         elif isinstance(self.schema.type_map[field_type], GraphQLEnumType):
             self._used_enums.append(field_type)
+        elif isinstance(self.schema.type_map[field_type], GraphQLScalarType):
+            self._used_scalars.append(field_type)
 
     def _get_sorted_class_defs(self) -> List[ast.ClassDef]:
         input_class_defs_dict_ = {c.name: c for c in self._class_defs}

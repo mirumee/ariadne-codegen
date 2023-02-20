@@ -85,6 +85,59 @@ For more complex scenarios, you can pass your own http client:
 client = Client(http_client=CustomComplexHttpClient())
 ```
 
+## Custom scalars
+
+By default, not built-in scalars are represented as `typing.Any` in generated client.
+You can provide information about specific scalar by adding section to `pyproject.toml`:
+
+```toml
+[ariadne-codegen.scalars.{graphql scalar name}]
+type = "(required) python type name"
+serialize = "function used to serialize scalar"
+parse = "function used to create scalar instance from serialized form"
+import = "module to import from"
+```
+
+All occurences of `{graphql scalar name}` will be represented as `type`. If provided, `serialize` and `parse` will be used for serialization and deserialization. In all files which use `type`/`serialize`/`parse` there will be added extra import `from {import} import {type}, {serialize}, {parse}`
+
+
+### Example with scalar mapped to built-in type
+
+In this case scalar is mapped to built-in `str` which doesn\`t require custom `serialize ` and `parse` methods. 
+
+```toml
+[ariadne-codegen.scalars.SCALARA]
+type = "str"
+```
+
+
+### Example with type supported by pydantic
+
+In this scenario scalar is represented as `datetime`, so it needs to be imported. Pydantic handles serialization and deserialization so custom `parse` and `serialize` is not necessary.
+
+```toml
+[ariadne-codegen.scalars.DATETIME]
+type = "datetime"
+import = "datetime"
+```
+
+
+### Example with fully custom type
+
+In this example scalar is represented as class `TypeB`. Pydantic can\`t handle  serialization and deserialization so custom `parse` and `serialize` is necessary. To provide `type`, `parse` and `serialize` implementation we can use `files_to_include` to copy `type_b.py` file.
+
+```toml
+[ariadne-codegen]
+...
+files_to_include = [".../type_b.py"]
+
+[ariadne-codegen.scalars.SCALARB]
+type = "TypeB"
+parse = "parse_b"
+serialize = "serialize_b"
+import = ".type_b"
+```
+
 
 ## Extending generated types
 
@@ -142,7 +195,7 @@ Generated code requires:
 
 ## Example
 
-Example with simple schema and few queries and mutations is available [here](./EXAMPLE.md).
+Example with simple schema and few queries and mutations is available [here](https://github.com/mirumee/ariadne-codegen/blob/main/EXAMPLE.md).
 
 
 ## Contributing

@@ -146,6 +146,7 @@ grapql_client/
     input_types.py
     list_all_users.py
     list_users_by_country.py
+    scalars.py
 ```
 
 ### Client class
@@ -163,7 +164,9 @@ from .input_types import UserCreateInput
 from .list_all_users import ListAllUsers
 from .list_users_by_country import ListUsersByCountry
 
-gql = lambda q: q
+
+def gql(q: str) -> str:
+    return q
 
 
 class Client(AsyncBaseClient):
@@ -177,7 +180,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict = {"userData": user_data}
+        variables: dict[str, object] = {"userData": user_data}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return CreateUser.parse_obj(data)
@@ -198,7 +201,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict = {}
+        variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListAllUsers.parse_obj(data)
@@ -225,7 +228,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict = {"country": country}
+        variables: dict[str, object] = {"country": country}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListUsersByCountry.parse_obj(data)
