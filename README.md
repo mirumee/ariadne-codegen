@@ -104,6 +104,7 @@ All occurences of `{graphql scalar name}` will be represented as `type`. If prov
 ### Example with scalar mapped to built-in type
 
 In this case scalar is mapped to built-in `str` which doesn\`t require custom `serialize ` and `parse` methods. 
+
 ```toml
 [ariadne-codegen.scalars.SCALARA]
 type = "str"
