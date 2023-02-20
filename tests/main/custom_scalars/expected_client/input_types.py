@@ -8,7 +8,7 @@ from .custom_scalars import Code
 class TestInput(BaseModel):
     a: datetime
     b: Code
-    c: str
+    c: int
     d: Any
 
 

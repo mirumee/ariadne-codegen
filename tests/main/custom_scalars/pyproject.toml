@@ -5,8 +5,8 @@ include_comments = false
 target_package_name = "custom_scalars_client"
 files_to_include = ["custom_scalars.py"]
 
-[ariadne-codegen.scalars.ID]
-type = "str"
+[ariadne-codegen.scalars.CUSTOMID]
+type = "int"
 
 [ariadne-codegen.scalars.DATETIME]
 type = "datetime"

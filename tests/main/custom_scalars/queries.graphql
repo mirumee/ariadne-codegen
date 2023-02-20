@@ -1,7 +1,7 @@
 query getTest(
   $date: DATETIME!
   $code: CODE!
-  $id: ID!
+  $id: CUSTOMID!
   $input: TestInput!
   $other: NOTMAPPED!
 ) {

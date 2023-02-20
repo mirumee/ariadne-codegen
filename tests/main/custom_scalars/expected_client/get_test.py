@@ -14,7 +14,7 @@ class GetTest(BaseModel):
 class GetTestTestQuery(BaseModel):
     date: datetime
     code: Code
-    id: str
+    id: int
     other: Any
 
 

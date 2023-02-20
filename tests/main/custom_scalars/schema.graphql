@@ -6,7 +6,7 @@ type Query {
   testQuery(
     date: DATETIME!
     code: CODE!
-    id: ID!
+    id: CUSTOMID!
     input: TestInput!
     other: NOTMAPPED!
   ): TestType!
@@ -15,18 +15,18 @@ type Query {
 type TestType {
   date: DATETIME!
   code: CODE!
-  id: ID!
+  id: CUSTOMID!
   other: NOTMAPPED!
 }
 
 input TestInput {
   a: DATETIME!
   b: CODE!
-  c: ID!
+  c: CUSTOMID!
   d: NOTMAPPED!
 }
 
 scalar DATETIME
 scalar CODE
-scalar ID
+scalar CUSTOMID
 scalar NOTMAPPED

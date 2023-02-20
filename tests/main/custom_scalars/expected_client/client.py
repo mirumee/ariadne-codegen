@@ -13,11 +13,11 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def get_test(
-        self, date: datetime, code: Code, id: str, input: TestInput, other: Any
+        self, date: datetime, code: Code, id: int, input: TestInput, other: Any
     ) -> GetTest:
         query = gql(
             """
-            query getTest($date: DATETIME!, $code: CODE!, $id: ID!, $input: TestInput!, $other: NOTMAPPED!) {
+            query getTest($date: DATETIME!, $code: CODE!, $id: CUSTOMID!, $input: TestInput!, $other: NOTMAPPED!) {
               testQuery(date: $date, code: $code, id: $id, input: $input, other: $other) {
                 date
                 code
