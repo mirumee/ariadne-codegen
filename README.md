@@ -125,6 +125,7 @@ import = "datetime"
 ### Example with fully custom type
 
 In this example scalar is represented as class `TypeB`. Pydantic can\`t handle  serialization and deserialization so custom `parse` and `serialize` is necessary. To provide `type`, `parse` and `serialize` implementation we can use `files_to_include` to copy `type_b.py` file.
+
 ```toml
 [ariadne-codegen]
 ...
