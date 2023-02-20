@@ -89,6 +89,7 @@ client = Client(http_client=CustomComplexHttpClient())
 
 By default, not built-in scalars are represented as `typing.Any` in generated client.
 You can provide information about specific scalar by adding section to `pyproject.toml`:
+
 ```toml
 [ariadne-codegen.scalars.{graphql scalar name}]
 type = "(required) python type name"
