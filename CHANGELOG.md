@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.3.0 (2023-02-21)
 
 - Changed generated code to pass `mypy --strict`.
 - Changed base clients to get full url from user.
