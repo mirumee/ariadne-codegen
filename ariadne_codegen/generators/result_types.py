@@ -168,6 +168,7 @@ class ResultTypesGenerator:
             name = self._process_field_name(field_name)
             field_definition = self._get_field_from_schema(type_name, field.name.value)
             annotation, field_types_names = parse_operation_field(
+                field=field,
                 type_=cast(CodegenResultFieldType, field_definition.type),
                 directives=field.directives,
                 class_name=class_name + str_to_pascal_case(name),

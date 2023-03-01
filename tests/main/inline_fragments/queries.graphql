@@ -1,0 +1,53 @@
+query InterfaceA {
+  queryI {
+    id
+    ... on TypeA {
+      fieldA
+    }
+    ... on TypeB {
+      fieldB
+    }
+  }
+}
+
+query InterfaceB {
+  queryI {
+    id
+    ... on TypeA {
+      fieldA
+    }
+  }
+}
+
+query InterfaceC {
+  queryI {
+    id
+  }
+}
+
+query UnionA {
+  queryU {
+    id
+    ... on TypeA {
+      fieldA
+    }
+    ... on TypeB {
+      fieldB
+    }
+  }
+}
+
+query UnionB {
+  queryU {
+    id
+    ... on TypeA {
+      fieldA
+    }
+  }
+}
+
+query UnionC {
+  queryU {
+    id
+  }
+}
