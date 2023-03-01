@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## UNRELEASED
+
+- Fixed generating models from interfaces with inline fragments.
+
+
 ## 0.3.0 (2023-02-21)
 
 - Changed generated code to pass `mypy --strict`.
