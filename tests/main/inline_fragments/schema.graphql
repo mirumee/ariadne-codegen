@@ -1,0 +1,24 @@
+schema {
+  query: Query
+}
+
+type Query {
+  queryI: Interface!
+  queryU: Union!
+}
+
+interface Interface {
+  id: String!
+}
+
+type TypeA implements Interface {
+  id: String!
+  fieldA: String!
+}
+
+type TypeB implements Interface {
+  id: String!
+  fieldB: String!
+}
+
+union Union = TypeA | TypeB

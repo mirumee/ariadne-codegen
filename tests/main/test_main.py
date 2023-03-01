@@ -113,6 +113,17 @@ def test_main_shows_version():
             "custom_scalars_client",
             Path(__file__).parent / "custom_scalars" / "expected_client",
         ),
+        (
+            (
+                Path(__file__).parent / "inline_fragments" / "pyproject.toml",
+                (
+                    Path(__file__).parent / "inline_fragments" / "queries.graphql",
+                    Path(__file__).parent / "inline_fragments" / "schema.graphql",
+                ),
+            ),
+            "inline_fragments_client",
+            Path(__file__).parent / "inline_fragments" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
