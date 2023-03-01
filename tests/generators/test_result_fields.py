@@ -4,6 +4,7 @@ from typing import cast
 import pytest
 from graphql import (
     DirectiveNode,
+    FieldNode,
     GraphQLEnumType,
     GraphQLEnumValueMap,
     GraphQLInterfaceType,
@@ -62,6 +63,7 @@ def test_parse_operation_field_returns_optional_annotation_if_given_nullable_dir
     directive, type_, expected_annotation
 ):
     annotation, _ = parse_operation_field(
+        field=FieldNode(),
         type_=type_,
         directives=(DirectiveNode(name=NameNode(value=directive), arguments=()),),
     )
@@ -107,7 +109,7 @@ def test_parse_operation_field_returns_optional_annotation_if_given_nullable_dir
 def test_parse_operation_field_type_returns_annotation_for_scalar(
     type_, expected_annotation
 ):
-    annotation, names = parse_operation_field_type(type_=type_)
+    annotation, names = parse_operation_field_type(field=FieldNode(), type_=type_)
 
     assert compare_ast(annotation, expected_annotation)
     assert names == []
@@ -133,7 +135,9 @@ def test_parse_operation_field_type_returns_annotation_for_custom_scalar(
     type_, expected_annotation
 ):
     annotation, names = parse_operation_field_type(
-        type_=type_, custom_scalars={"SCALARXYZ": ScalarData(type_="ScalarXYZ")}
+        field=FieldNode(),
+        type_=type_,
+        custom_scalars={"SCALARXYZ": ScalarData(type_="ScalarXYZ")},
     )
 
     assert compare_ast(annotation, expected_annotation)
@@ -176,7 +180,9 @@ def test_parse_operation_field_type_returns_annotation_for_custom_scalar(
 def test_parse_operation_field_type_returns_annotation_for_objects_and_interfaces(
     type_, class_name, expected_annotation, expected_names
 ):
-    annotation, names = parse_operation_field_type(type_=type_, class_name=class_name)
+    annotation, names = parse_operation_field_type(
+        field=FieldNode(), type_=type_, class_name=class_name
+    )
 
     assert compare_ast(annotation, expected_annotation)
     assert names == expected_names
@@ -202,7 +208,7 @@ def test_parse_operation_field_type_returns_annotation_for_objects_and_interface
 def test_parse_operation_field_type_returns_annotation_for_enums(
     type_, expected_annotation, expected_names
 ):
-    annotation, names = parse_operation_field_type(type_=type_)
+    annotation, names = parse_operation_field_type(field=FieldNode(), type_=type_)
 
     assert compare_ast(annotation, expected_annotation)
     assert names == expected_names
@@ -233,7 +239,7 @@ def test_parse_operation_field_type_returns_annotation_and_names_for_union():
     ]
 
     annotation, names = parse_operation_field_type(
-        type_=type_, class_name="TestQueryField"
+        field=FieldNode(), type_=type_, class_name="TestQueryField"
     )
 
     assert compare_ast(annotation, expected_annotation)
@@ -253,7 +259,7 @@ def test_parse_operation_field_type_returns_annotation_for_list():
     ]
 
     annotation, names = parse_operation_field_type(
-        type_=type_, class_name="TestQueryField"
+        field=FieldNode(), type_=type_, class_name="TestQueryField"
     )
 
     assert compare_ast(annotation, expected_annotation)
