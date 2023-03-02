@@ -38,7 +38,7 @@ class ClientGenerator:
         self._data_variable = "data"
 
     def generate(self) -> ast.Module:
-        """Generate module with class definistion of grahql client."""
+        """Generate module with class definition of grahql client."""
         gql_func = self._generate_gql_func()
         gql_func.lineno = len(self.imports) + 1
         self.class_def.lineno = len(self.imports) + 3
@@ -50,7 +50,7 @@ class ClientGenerator:
         )
 
     def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
-        """Add import to be included in init file."""
+        """Add import to be included in module file."""
         self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
     def add_method(
@@ -63,23 +63,14 @@ class ClientGenerator:
         async_: bool = True,
     ):
         """Add method to client."""
-        method_def = (
-            self._generate_async_method(
-                name=name,
-                return_type=return_type,
-                arguments=arguments,
-                arguments_dict=arguments_dict,
-                operation_str=operation_str,
-            )
-            if async_
-            else self._generate_method(
-                name=name,
-                return_type=return_type,
-                arguments=arguments,
-                arguments_dict=arguments_dict,
-                operation_str=operation_str,
-            )
-        )
+        kwargs = {
+            "name": name,
+            "return_type": return_type,
+            "arguments": arguments,
+            "arguments_dict": arguments_dict,
+            "operation_str": operation_str,
+        }
+        method_def = (self._generate_async_method if async_ else self._generate_method)(**kwargs)
         method_def.lineno = len(self.class_def.body) + 1
         self.class_def.body.append(method_def)
 
