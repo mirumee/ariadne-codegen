@@ -122,7 +122,7 @@ class ClientGenerator:
         return generate_assign(
             targets=[self._operation_str_variable],
             value=generate_call(
-                func=ast.Name(id=self._gql_func_name),
+                func=generate_name(self._gql_func_name),
                 args=[
                     [generate_constant(l + "\n") for l in operation_str.splitlines()]
                 ],
