@@ -63,14 +63,23 @@ class ClientGenerator:
         async_: bool = True,
     ):
         """Add method to client."""
-        kwargs = {
-            "name": name,
-            "return_type": return_type,
-            "arguments": arguments,
-            "arguments_dict": arguments_dict,
-            "operation_str": operation_str,
-        }
-        method_def = (self._generate_async_method if async_ else self._generate_method)(**kwargs)
+        method_def = (
+            self._generate_async_method(
+                name=name,
+                return_type=return_type,
+                arguments=arguments,
+                arguments_dict=arguments_dict,
+                operation_str=operation_str,
+            )
+            if async_
+            else self._generate_method(
+                name=name,
+                return_type=return_type,
+                arguments=arguments,
+                arguments_dict=arguments_dict,
+                operation_str=operation_str,
+            )
+        )
         method_def.lineno = len(self.class_def.body) + 1
         self.class_def.body.append(method_def)
 
