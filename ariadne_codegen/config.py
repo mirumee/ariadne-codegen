@@ -28,6 +28,7 @@ class Settings:
     convert_to_snake_case: bool = True
     async_client: bool = True
     files_to_include: List[str] = field(default_factory=list)
+    plugins: List[str] = field(default_factory=list)
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
 
     def __post_init__(self):
