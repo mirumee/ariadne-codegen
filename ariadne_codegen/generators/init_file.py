@@ -36,5 +36,5 @@ class InitFileGenerator:
                     lineno=len(self.imports) + 1,
                 )
             )
-        module = self.plugins_manager.generate_init_file(module)
+        module = self.plugins_manager.generate_init_module(module)
         return module

@@ -14,8 +14,8 @@ class PluginsManager:
     ) -> None:
         self.plugins: List[BasePlugin] = [cls(schema) for cls in plugins_classes or []]
 
-    def generate_init_file(self, module: ast.Module) -> ast.Module:
+    def generate_init_module(self, module: ast.Module) -> ast.Module:
         modified_module = module
         for plugin in self.plugins:
-            modified_module = plugin.generate_init_file(modified_module)
+            modified_module = plugin.generate_init_module(modified_module)
         return modified_module

@@ -41,3 +41,12 @@ def test_generate_with_added_imports_returns_module():
     assert [n.id for n in assign_stmt.targets] == ["__all__"]
     assert isinstance(assign_stmt.value, ast.List)
     assert [c.value for c in assign_stmt.value.elts] == [name1, name2]
+
+
+def test_generate_triggers_generate_init_module_from_plugins_manager(mocker):
+    mocked_plugins_manager = mocker.MagicMock()
+    generator = InitFileGenerator(plugins_manager=mocked_plugins_manager)
+
+    generator.generate()
+
+    assert mocked_plugins_manager.generate_init_module.called
