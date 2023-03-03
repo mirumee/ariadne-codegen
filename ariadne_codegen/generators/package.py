@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNode
 
 from ..exceptions import ParsingError
+from ..plugins.manager import PluginsManager
 from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
 from .codegen import generate_import_from
@@ -51,6 +52,7 @@ class PackageGenerator:
         input_types_generator: Optional[InputTypesGenerator] = None,
         files_to_include: Optional[List[str]] = None,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        plugins_manager: Optional[PluginsManager] = None,
     ) -> None:
         self.package_name = package_name
         self.target_path = target_path
@@ -59,6 +61,8 @@ class PackageGenerator:
         self.client_name = client_name
         self.base_client_name = base_client_name
         self.custom_scalars = custom_scalars if custom_scalars else {}
+
+        self.plugins_manager = plugins_manager if plugins_manager else PluginsManager()
 
         self.base_model_file_path = (
             Path(__file__).parent / "dependencies" / "base_model.py"
@@ -84,7 +88,11 @@ class PackageGenerator:
         self.convert_to_snake_case = convert_to_snake_case
         self.async_client = async_client
 
-        self.init_generator = init_generator if init_generator else InitFileGenerator()
+        self.init_generator = (
+            init_generator
+            if init_generator
+            else InitFileGenerator(plugins_manager=self.plugins_manager)
+        )
         self.client_generator = (
             client_generator
             if client_generator

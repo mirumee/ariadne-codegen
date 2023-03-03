@@ -1,12 +1,14 @@
 import ast
-from typing import List
+from typing import List, Optional
 
 from .codegen import generate_import_from
+from ..plugins.manager import PluginsManager
 
 
 class InitFileGenerator:
-    def __init__(self) -> None:
+    def __init__(self, plugins_manager: Optional[PluginsManager] = None) -> None:
         self.imports: list = []
+        self.plugins_manager = plugins_manager if plugins_manager else PluginsManager()
 
     def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
         """Add import to be included in init file."""
@@ -34,4 +36,5 @@ class InitFileGenerator:
                     lineno=len(self.imports) + 1,
                 )
             )
+        module = self.plugins_manager.generate_init_file(module)
         return module
