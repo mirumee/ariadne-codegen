@@ -38,7 +38,7 @@ class ClientGenerator:
         self._data_variable = "data"
 
     def generate(self) -> ast.Module:
-        """Generate module with class definistion of grahql client."""
+        """Generate module with class definition of grahql client."""
         gql_func = self._generate_gql_func()
         gql_func.lineno = len(self.imports) + 1
         self.class_def.lineno = len(self.imports) + 3
@@ -50,7 +50,7 @@ class ClientGenerator:
         )
 
     def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
-        """Add import to be included in init file."""
+        """Add import to be included in module file."""
         self.imports.append(generate_import_from(names=names, from_=from_, level=level))
 
     def add_method(
@@ -131,7 +131,7 @@ class ClientGenerator:
         return generate_assign(
             targets=[self._operation_str_variable],
             value=generate_call(
-                func=ast.Name(id=self._gql_func_name),
+                func=generate_name(self._gql_func_name),
                 args=[
                     [generate_constant(l + "\n") for l in operation_str.splitlines()]
                 ],
