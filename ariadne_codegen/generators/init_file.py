@@ -1,8 +1,8 @@
 import ast
 from typing import List, Optional
 
-from .codegen import generate_import_from
 from ..plugins.manager import PluginsManager
+from .codegen import generate_import_from
 
 
 class InitFileGenerator:
