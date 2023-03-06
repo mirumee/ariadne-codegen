@@ -10,14 +10,14 @@ from .base import BasePlugin
 def get_plugins_classes(plugins_strs: List[str]) -> List[type]:
     classes = []
     for plugin_str in plugins_strs:
-        if is_module(plugin_str):
+        if is_module_str(plugin_str):
             classes.extend(get_plugins_classes_from_module(module_str=plugin_str))
         else:
             classes.append(get_plugin_class(plugin_str))
     return classes
 
 
-def is_module(plugin_str: str) -> bool:
+def is_module_str(plugin_str: str) -> bool:
     try:
         spec = importlib.util.find_spec(plugin_str)
         return spec is not None
@@ -58,6 +58,6 @@ def get_plugin_class(class_str: str) -> type:
         ) from exc
 
     if not is_plugin(class_obj):
-        raise PluginImportError()
+        raise PluginImportError(f"Selected object {class_str} is not a plugin class.")
 
     return class_obj
