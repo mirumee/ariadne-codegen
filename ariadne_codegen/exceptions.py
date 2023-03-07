@@ -31,4 +31,4 @@ class IntrospectionError(CodeGenException):
 
 
 class PluginImportError(CodeGenException):
-    """Error occured during looking for plugin class."""
+    """Error occurred during the plugin lookup."""

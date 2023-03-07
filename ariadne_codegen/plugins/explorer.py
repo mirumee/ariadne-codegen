@@ -39,7 +39,7 @@ def is_plugin(obj: Any) -> bool:
 def get_plugin_class(class_str: str) -> type:
     last_dot_index = class_str.rfind(".")
     if last_dot_index < 0:
-        raise PluginImportError("Incorrect plugin class str. Use abosolute path.")
+        raise PluginImportError("Incorrect plugin path. Use an absolute import path.")
     module_str, class_name = (
         class_str[:last_dot_index],
         class_str[last_dot_index + 1 :],
