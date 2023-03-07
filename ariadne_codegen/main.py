@@ -4,7 +4,7 @@ import click
 
 from .config import get_settings, get_used_settings_message
 from .generators.package import PackageGenerator
-from .plugins.explorer import get_plugins_classes
+from .plugins.explorer import get_plugins_types
 from .plugins.manager import PluginManager
 from .schema import (
     filter_fragments_definitions,
@@ -52,7 +52,7 @@ def main():
         files_to_include=settings.files_to_include,
         custom_scalars=settings.scalars,
         plugin_manager=PluginManager(
-            schema=schema, plugins_classes=get_plugins_classes(settings.plugins)
+            schema=schema, plugins_types=get_plugins_types(settings.plugins)
         ),
     )
     for query in queries:
