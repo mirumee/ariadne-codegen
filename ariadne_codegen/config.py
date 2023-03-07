@@ -109,16 +109,21 @@ def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
     return directory.joinpath(file_name).resolve()
 
 
-def parse_config_file(
-    file_path: Path, section_key: str = "ariadne-codegen"
+def get_config_dict() -> Dict:
+    """Get config dict."""
+    config_path = get_config_file_path()
+    return toml.load(config_path)
+
+
+def parse_config_dict(
+    config_dict: Dict, section_key: str = "ariadne-codegen"
 ) -> Settings:
     """
     Parse configuration from toml file. Raise exception if section or key was not found.
     """
-    config = toml.load(file_path)
-    if section_key not in config:
-        raise MissingConfiguration(f"File {file_path} has no [{section_key}] section.")
-    section = config[section_key]
+    if section_key not in config_dict:
+        raise MissingConfiguration(f"Config has no [{section_key}] section.")
+    section = config_dict[section_key]
 
     try:
         section["scalars"] = {
@@ -139,7 +144,7 @@ def parse_config_file(
         return Settings(**section)
     except TypeError as exc:
         expected_fields = {f.name for f in fields(Settings)}
-        missing_fields = expected_fields.difference(config[section_key])
+        missing_fields = expected_fields.difference(config_dict[section_key])
         raise MissingConfiguration(
             f"Missing configuration fields: {', '.join(missing_fields)}"
         ) from exc
@@ -179,7 +184,3 @@ def get_used_settings_message(settings: Settings) -> str:
         Coping following files into package: {files_to_include_list}
         """
     )
-
-
-def get_settings() -> Settings:
-    return parse_config_file(get_config_file_path())

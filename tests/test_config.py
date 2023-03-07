@@ -1,68 +1,30 @@
+from textwrap import dedent
+
 import pytest
 
-from ariadne_codegen.config import Settings, get_config_file_path, parse_config_file
+from ariadne_codegen.config import (
+    Settings,
+    get_config_dict,
+    get_config_file_path,
+    parse_config_dict,
+)
 from ariadne_codegen.exceptions import ConfigFileNotFound, MissingConfiguration
-
-SCHEMA_FILENAME = "schema.graphql"
-QUERIES_DIR = "queries"
+from ariadne_codegen.generators.scalars import ScalarData
 
 
 @pytest.fixture
 def config_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
-    schema_path = file_.parent.joinpath(SCHEMA_FILENAME)
+    schema_path = file_.parent.joinpath("schema.graphql")
     schema_path.touch()
-    queries_path = file_.parent.joinpath(QUERIES_DIR)
+    queries_path = file_.parent.joinpath("queries")
     queries_path.mkdir()
-    config = "\n".join(
-        [
-            "[ariadne-codegen]",
-            f'schema_path = "{schema_path.as_posix()}"',
-            f'queries_path = "{queries_path.as_posix()}"',
-            "[ariadne-codegen.scalars.ID]",
-            'type = "str"',
-            'parse = "parse_id"',
-            'serialize = "serialize_id"',
-            'import = ".custom_scalars"',
-        ]
-    )
-    file_.write_text(config, encoding="utf-8")
-    return file_
-
-
-@pytest.fixture
-def config_file_invalid_section(tmp_path_factory):
-    file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
-    config = '[invalid-section]\nschema_path = "."'
-    file_.write_text(config, encoding="utf-8")
-    return file_
-
-
-@pytest.fixture
-def config_file_without_field(tmp_path_factory):
-    file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
-    config = '[ariadne-codegen]\ninvalid_field = "."'
-    file_.write_text(config, encoding="utf-8")
-    return file_
-
-
-@pytest.fixture
-def config_file_invalid_scalar(tmp_path_factory):
-    file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
-    schema_path = file_.parent.joinpath(SCHEMA_FILENAME)
-    schema_path.touch()
-    queries_path = file_.parent.joinpath(QUERIES_DIR)
-    queries_path.mkdir()
-    config = "\n".join(
-        [
-            "[ariadne-codegen]",
-            f'schema_path = "{schema_path.as_posix()}"',
-            f'queries_path = "{queries_path.as_posix()}"',
-            "[ariadne-codegen.scalars.ID]",
-            'invalid_key = "str"',
-        ]
-    )
-    file_.write_text(config, encoding="utf-8")
+    config = """
+        [ariadne-codegen]
+        schema_path = "schema.graphql"
+        queries_path = "queries"
+    """
+    file_.write_text(dedent(config), encoding="utf-8")
     return file_
 
 
@@ -89,32 +51,76 @@ def test_get_config_file_path_raises_config_file_not_found_exception_if_file_not
         get_config_file_path("invalid.toml")
 
 
-def test_parse_config_file_returns_settings_object(config_file, mocker):
+def test_get_config_dict_returns_file_content_as_dict(config_file, mocker):
     mock_cwd(mocker, config_file.parent)
-    settings = parse_config_file(config_file)
+
+    config_dict = get_config_dict()
+
+    assert isinstance(config_dict, dict)
+
+
+def test_parse_config_dict_returns_settings_object(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    config_dict = {
+        "ariadne-codegen": {
+            "schema_path": schema_path.as_posix(),
+            "queries_path": queries_path.as_posix(),
+            "scalars": {
+                "ID": {
+                    "type": "str",
+                    "parse": "parse_id",
+                    "serialize": "serialize_id",
+                    "import": ".custom_scalars",
+                }
+            },
+        }
+    }
+    settings = parse_config_dict(config_dict)
+
     assert isinstance(settings, Settings)
-    assert settings.schema_path.endswith(SCHEMA_FILENAME)
+    assert settings.schema_path == schema_path.as_posix()
+    assert settings.queries_path == queries_path.as_posix()
+    assert settings.scalars == {
+        "ID": ScalarData(
+            type_="str",
+            serialize="serialize_id",
+            parse="parse_id",
+            import_=".custom_scalars",
+        )
+    }
 
 
-def test_parse_config_file_without_section_raises_missing_configuration_exception(
-    config_file_invalid_section, mocker
-):
-    mock_cwd(mocker, config_file_invalid_section.parent)
+def test_parse_config_dict_without_section_raises_missing_configuration_exception():
+    config_dict = {"invalid-section": {"schema_path": "."}}
+
     with pytest.raises(MissingConfiguration):
-        parse_config_file(config_file_invalid_section)
+        parse_config_dict(config_dict)
 
 
-def test_parse_config_file_without_needed_field_raises_missing_configuration_exception(
-    config_file_without_field, mocker
-):
-    mock_cwd(mocker, config_file_without_field.parent)
+def test_parse_config_dict_without_field_raises_missing_configuration_exception():
+    config_dict = {"ariadne-codegen": {"invalid_field": "."}}
+
     with pytest.raises(MissingConfiguration):
-        parse_config_file(config_file_without_field)
+        parse_config_dict(config_dict)
 
 
-def test_parse_config_file_with_invalid_scalar_section_raises_missing_configuration(
-    config_file_invalid_scalar, mocker
+def test_parse_config_dict_with_invalid_scalar_section_raises_missing_configuration(
+    tmp_path,
 ):
-    mock_cwd(mocker, config_file_invalid_scalar.parent)
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    config_dict = {
+        "ariadne-codegen": {
+            "schema_path": schema_path.as_posix(),
+            "queries_path": queries_path.as_posix(),
+            "scalars": {"ID": {"invalid_key": "str"}},
+        }
+    }
+
     with pytest.raises(MissingConfiguration):
-        parse_config_file(config_file_invalid_scalar)
+        parse_config_dict(config_dict)
