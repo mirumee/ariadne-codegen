@@ -53,7 +53,9 @@ def main():
         files_to_include=settings.files_to_include,
         custom_scalars=settings.scalars,
         plugin_manager=PluginManager(
-            schema=schema, plugins_types=get_plugins_types(settings.plugins)
+            schema=schema,
+            config_dict=config_dict,
+            plugins_types=get_plugins_types(settings.plugins),
         ),
     )
     for query in queries:

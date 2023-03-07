@@ -1,5 +1,5 @@
 import ast
-from typing import List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 from graphql import GraphQLSchema
 
@@ -10,9 +10,14 @@ class PluginManager:
     def __init__(
         self,
         schema: GraphQLSchema,
+        config_dict: Optional[Dict] = None,
         plugins_types: Optional[List[Type[Plugin]]] = None,
     ) -> None:
-        self.plugins: List[Plugin] = [cls(schema) for cls in plugins_types or []]
+
+        self.plugins: List[Plugin] = [
+            cls(schema=schema, config_dict=config_dict or {})
+            for cls in plugins_types or []
+        ]
 
     def generate_init_module(self, module: ast.Module) -> ast.Module:
         modified_module = module
