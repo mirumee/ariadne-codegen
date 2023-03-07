@@ -5,7 +5,7 @@ import click
 from .config import get_settings, get_used_settings_message
 from .generators.package import PackageGenerator
 from .plugins.explorer import get_plugins_classes
-from .plugins.manager import PluginsManager
+from .plugins.manager import PluginManager
 from .schema import (
     filter_fragments_definitions,
     filter_operations_definitions,
@@ -51,7 +51,7 @@ def main():
         async_client=settings.async_client,
         files_to_include=settings.files_to_include,
         custom_scalars=settings.scalars,
-        plugins_manager=PluginsManager(
+        plugin_manager=PluginManager(
             schema=schema, plugins_classes=get_plugins_classes(settings.plugins)
         ),
     )

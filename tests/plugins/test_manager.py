@@ -3,14 +3,14 @@ import ast
 from graphql import GraphQLSchema
 
 from ariadne_codegen.plugins.base import BasePlugin
-from ariadne_codegen.plugins.manager import PluginsManager
+from ariadne_codegen.plugins.manager import PluginManager
 
 
 def test_init_creates_plugins_instances():
     class TestPlugin(BasePlugin):
         pass
 
-    manager = PluginsManager(schema=GraphQLSchema(), plugins_classes=[TestPlugin])
+    manager = PluginManager(schema=GraphQLSchema(), plugins_classes=[TestPlugin])
 
     assert len(manager.plugins) == 1
     assert isinstance(manager.plugins[0], TestPlugin)
@@ -19,7 +19,7 @@ def test_init_creates_plugins_instances():
 def test_generate_init_module_calls_all_plugins(mocker):
     mocked_plugin_class1 = mocker.MagicMock()
     mocked_plugin_class2 = mocker.MagicMock()
-    manager = PluginsManager(
+    manager = PluginManager(
         schema=GraphQLSchema(),
         plugins_classes=[mocked_plugin_class1, mocked_plugin_class2],
     )

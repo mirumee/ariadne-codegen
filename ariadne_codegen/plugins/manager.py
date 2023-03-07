@@ -6,7 +6,7 @@ from graphql import GraphQLSchema
 from .base import BasePlugin
 
 
-class PluginsManager:
+class PluginManager:
     def __init__(
         self,
         schema: Optional[GraphQLSchema] = None,
