@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from graphql import GraphQLSchema
 
-from .base import BasePlugin
+from .base import Plugin
 
 
 class PluginManager:
@@ -12,7 +12,7 @@ class PluginManager:
         schema: Optional[GraphQLSchema] = None,
         plugins_classes: Optional[List[type]] = None,
     ) -> None:
-        self.plugins: List[BasePlugin] = [cls(schema) for cls in plugins_classes or []]
+        self.plugins: List[Plugin] = [cls(schema) for cls in plugins_classes or []]
 
     def generate_init_module(self, module: ast.Module) -> ast.Module:
         modified_module = module

@@ -4,7 +4,7 @@ import inspect
 from typing import Any, List
 
 from ..exceptions import PluginImportError
-from .base import BasePlugin
+from .base import Plugin
 
 
 def get_plugins_classes(plugins_strs: List[str]) -> List[type]:
@@ -27,13 +27,11 @@ def is_module_str(plugin_str: str) -> bool:
 
 def get_plugins_classes_from_module(module_str: str) -> List[type]:
     module = importlib.import_module(module_str)
-    return [obj for _, obj in inspect.getmembers(module) if is_plugin(obj)]
+    return [obj for _, obj in inspect.getmembers(module) if is_plugin_type(obj)]
 
 
-def is_plugin(obj: Any) -> bool:
-    return (
-        inspect.isclass(obj) and obj is not BasePlugin and issubclass(obj, BasePlugin)
-    )
+def is_plugin_type(obj: Any) -> bool:
+    return inspect.isclass(obj) and obj is not Plugin and issubclass(obj, Plugin)
 
 
 def get_plugin_class(class_str: str) -> type:
@@ -57,7 +55,7 @@ def get_plugin_class(class_str: str) -> type:
             f"Class {class_name} not found in module {module_str}"
         ) from exc
 
-    if not is_plugin(class_obj):
+    if not is_plugin_type(class_obj):
         raise PluginImportError(f"Selected object {class_str} is not a plugin class.")
 
     return class_obj

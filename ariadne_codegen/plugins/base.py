@@ -3,7 +3,7 @@ import ast
 from graphql import GraphQLSchema
 
 
-class BasePlugin:
+class Plugin:
     def __init__(self, schema: GraphQLSchema) -> None:
         self.schema = schema
 

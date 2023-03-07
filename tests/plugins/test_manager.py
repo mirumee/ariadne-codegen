@@ -2,12 +2,12 @@ import ast
 
 from graphql import GraphQLSchema
 
-from ariadne_codegen.plugins.base import BasePlugin
+from ariadne_codegen.plugins.base import Plugin
 from ariadne_codegen.plugins.manager import PluginManager
 
 
 def test_init_creates_plugins_instances():
-    class TestPlugin(BasePlugin):
+    class TestPlugin(Plugin):
         pass
 
     manager = PluginManager(schema=GraphQLSchema(), plugins_classes=[TestPlugin])

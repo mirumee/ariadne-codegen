@@ -1,3 +1,3 @@
-from .plugins.base import BasePlugin
+from .plugins.base import Plugin
 
-__all__ = ["BasePlugin"]
+__all__ = ["Plugin"]

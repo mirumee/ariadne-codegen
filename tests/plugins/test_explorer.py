@@ -6,13 +6,13 @@ from textwrap import dedent
 import pytest
 
 from ariadne_codegen.exceptions import PluginImportError
-from ariadne_codegen.plugins.base import BasePlugin
+from ariadne_codegen.plugins.base import Plugin
 from ariadne_codegen.plugins.explorer import (
     get_plugin_class,
     get_plugins_classes,
     get_plugins_classes_from_module,
     is_module_str,
-    is_plugin,
+    is_plugin_type,
 )
 
 
@@ -46,15 +46,15 @@ def test_get_plugins_classes_returns_plugin_classes_from_all_modules(tmp_path_cw
     __all__ = ["PluginX", "PluginY"]
     """
     x_content = """
-    from ariadne_codegen import BasePlugin
+    from ariadne_codegen import Plugin
 
-    class PluginX(BasePlugin):
+    class PluginX(Plugin):
         pass
     """
     y_content = """
-    from ariadne_codegen.plugins.base import BasePlugin
+    from ariadne_codegen.plugins.base import Plugin
 
-    class PluginY(BasePlugin):
+    class PluginY(Plugin):
         pass
     """
     module_xyz_path.joinpath("__init__.py").write_text(dedent(init_xyz_content))
@@ -63,15 +63,15 @@ def test_get_plugins_classes_returns_plugin_classes_from_all_modules(tmp_path_cw
 
     module_abc_path = create_module_dir(tmp_path_cwd, "module_abc")
     a_content = """
-    from ariadne_codegen import BasePlugin
+    from ariadne_codegen import Plugin
 
-    class PluginA(BasePlugin):
+    class PluginA(Plugin):
         pass
     """
     b_content = """
-    from ariadne_codegen.plugins.base import BasePlugin
+    from ariadne_codegen.plugins.base import Plugin
 
-    class PluginB(BasePlugin):
+    class PluginB(Plugin):
         pass
     """
     module_abc_path.joinpath("a.py").write_text(dedent(a_content))
@@ -119,15 +119,15 @@ def test_get_plugins_classes_from_module_returns_all_public_plugins(tmp_path_cwd
     __all__ = ["PluginA", "PluginB"]
     """
     a_content = """
-    from ariadne_codegen import BasePlugin
+    from ariadne_codegen import Plugin
 
-    class PluginA(BasePlugin):
+    class PluginA(Plugin):
         pass
     """
     b_content = """
-    from ariadne_codegen.plugins.base import BasePlugin
+    from ariadne_codegen.plugins.base import Plugin
 
-    class PluginB(BasePlugin):
+    class PluginB(Plugin):
         pass
     """
     module_path.joinpath("__init__.py").write_text(dedent(init_content))
@@ -145,34 +145,34 @@ def test_get_plugins_classes_from_module_returns_all_public_plugins(tmp_path_cwd
     } == {f"{c.__module__}.{c.__name__}" for c in classes}
 
 
-def test_is_plugin_returns_false_for_not_class():
-    assert not is_plugin(lambda: None)
+def test_is_plugin_type_returns_false_for_not_class():
+    assert not is_plugin_type(lambda: None)
 
 
-def test_is_plugin_returns_false_for_base_plugin_class():
-    assert not is_plugin(BasePlugin)
+def test_is_plugin_type_returns_false_for_base_plugin_class():
+    assert not is_plugin_type(Plugin)
 
 
-def test_is_plugin_returns_false_for_class_not_inheriting_from_base_plugin():
+def test_is_plugin_type_returns_false_for_class_not_inheriting_from_base_plugin():
     class InvalidPlugin:
         pass
 
-    assert not is_plugin(InvalidPlugin)
+    assert not is_plugin_type(InvalidPlugin)
 
 
-def test_is_plugin_returns_true_for_class_inheriting_from_base_plugin():
-    class ValidPlugin(BasePlugin):
+def test_is_plugin_type_returns_true_for_class_inheriting_from_base_plugin():
+    class ValidPlugin(Plugin):
         pass
 
-    assert is_plugin(ValidPlugin)
+    assert is_plugin_type(ValidPlugin)
 
 
 def test_get_plugin_class_returns_plugin_class(tmp_path_cwd):
     module_path = create_module_dir(tmp_path_cwd, "test_module")
     file_content = """
-    from ariadne_codegen import BasePlugin
+    from ariadne_codegen import Plugin
 
-    class TestPlugin(BasePlugin):
+    class TestPlugin(Plugin):
         pass
     """
     module_path.joinpath("xyz.py").write_text(dedent(file_content))
@@ -209,7 +209,7 @@ def test_get_plugin_class_raises_plugin_import_error_for_not_existing_class(
     [
         ("class Test:\n    pass", "Test"),
         ("def test():\n    pass", "test"),
-        ("from ariadne_codegen import BasePlugin", "BasePlugin"),
+        ("from ariadne_codegen import Plugin", "Plugin"),
     ],
 )
 def test_get_plugin_class_raises_plugin_import_error_for_not_plugin(
