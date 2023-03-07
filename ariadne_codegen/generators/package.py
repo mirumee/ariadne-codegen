@@ -62,7 +62,7 @@ class PackageGenerator:
         self.base_client_name = base_client_name
         self.custom_scalars = custom_scalars if custom_scalars else {}
 
-        self.plugin_manager = plugin_manager if plugin_manager else PluginManager()
+        self.plugin_manager = plugin_manager
 
         self.base_model_file_path = (
             Path(__file__).parent / "dependencies" / "base_model.py"

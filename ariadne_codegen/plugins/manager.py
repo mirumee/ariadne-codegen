@@ -9,7 +9,7 @@ from .base import Plugin
 class PluginManager:
     def __init__(
         self,
-        schema: Optional[GraphQLSchema] = None,
+        schema: GraphQLSchema,
         plugins_types: Optional[List[Type[Plugin]]] = None,
     ) -> None:
         self.plugins: List[Plugin] = [cls(schema) for cls in plugins_types or []]
