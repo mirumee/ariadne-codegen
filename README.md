@@ -64,7 +64,7 @@ Optional settings:
 
 ## Plugins
 
-Ariadne Codegen implements a plugin system that enables further customization and fine-tuning of generated Python code. It’s documentation is available separately in [PLUGINS.md](https://github.com/mirumee/ariadne-codegen/blob/main/PLUGINS.md).
+Ariadne Codegen implements a plugin system that enables further customization and fine-tuning of generated Python code. It’s documentation is available separately in the [PLUGINS.md](https://github.com/mirumee/ariadne-codegen/blob/main/PLUGINS.md) file.
 
 
 ## Using generated client
