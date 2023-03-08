@@ -59,6 +59,12 @@ Optional settings:
 - `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
+- `plugins` (defaults to `[]`) - list of plugins to use during generation
+
+
+## Plugins
+
+Ariadne Codegen implements a plugin system that enables further customization and fine-tuning of generated Python code. It’s documentation is available separately in the [PLUGINS.md](https://github.com/mirumee/ariadne-codegen/blob/main/PLUGINS.md) file.
 
 
 ## Using generated client

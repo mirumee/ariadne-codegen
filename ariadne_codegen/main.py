@@ -2,8 +2,10 @@ import sys
 
 import click
 
-from .config import get_settings, get_used_settings_message
+from .config import get_config_dict, get_used_settings_message, parse_config_dict
 from .generators.package import PackageGenerator
+from .plugins.explorer import get_plugins_types
+from .plugins.manager import PluginManager
 from .schema import (
     filter_fragments_definitions,
     filter_operations_definitions,
@@ -16,7 +18,8 @@ from .schema import (
 @click.command()
 @click.version_option()
 def main():
-    settings = get_settings()
+    config_dict = get_config_dict()
+    settings = parse_config_dict(config_dict)
     if settings.schema_path:
         schema = get_graphql_schema_from_path(settings.schema_path)
         schema_source = settings.schema_path
@@ -49,6 +52,11 @@ def main():
         async_client=settings.async_client,
         files_to_include=settings.files_to_include,
         custom_scalars=settings.scalars,
+        plugin_manager=PluginManager(
+            schema=schema,
+            config_dict=config_dict,
+            plugins_types=get_plugins_types(settings.plugins),
+        ),
     )
     for query in queries:
         package_generator.add_operation(query)

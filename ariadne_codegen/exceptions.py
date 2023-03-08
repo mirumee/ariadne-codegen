@@ -28,3 +28,7 @@ class ParsingError(CodeGenException):
 
 class IntrospectionError(CodeGenException):
     """Introspection error."""
+
+
+class PluginImportError(CodeGenException):
+    """Error occurred during the plugin lookup."""

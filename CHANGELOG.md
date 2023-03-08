@@ -4,6 +4,7 @@
 
 - Fixed generating models from interfaces with inline fragments.
 - Added default `None` values for generated methods optional arguments.
+- Added basic plugin system.
 
 
 ## 0.3.0 (2023-02-21)
