@@ -48,10 +48,12 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return ListAllUsers.parse_obj(data)
 
-    async def list_users_by_country(self, country: str) -> ListUsersByCountry:
+    async def list_users_by_country(
+        self, country: Optional[str] = None
+    ) -> ListUsersByCountry:
         query = gql(
             """
-            query ListUsersByCountry($country: String!) {
+            query ListUsersByCountry($country: String) {
               users(country: $country) {
                 ...BasicUser
                 ...UserPersonalData
