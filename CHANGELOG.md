@@ -3,7 +3,7 @@
 ## UNRELEASED
 
 - Fixed generating models from interfaces with inline fragments.
-- Added default `None` values for optional operation arguments.
+- Added default `None` values for generated methods optional arguments.
 
 
 ## 0.3.0 (2023-02-21)
