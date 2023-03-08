@@ -79,6 +79,45 @@ def test_generate_returns_arguments_with_correct_optional_annotation():
     assert id_arg.annotation.slice.id == "str"
 
 
+def test_generate_returns_arguments_with_default_none_for_optional_args():
+    schema_str = """
+        schema { query: Query }
+        type Query { q(a: String, b: Float!, c: Int, d: Boolean!): Result! }
+        type Result { r: String}
+        """
+    schema = build_schema(schema_str)
+    generator = ArgumentsGenerator(schema=schema)
+    query = "query q($a: String, $b: Float!, $c: Int, $d: Boolean!) {r}"
+    variable_definitions = _get_variable_definitions_from_query_str(query)
+    expected_arguments = ast.arguments(
+        posonlyargs=[],
+        args=[
+            ast.arg(arg="self"),
+            ast.arg(arg="b", annotation=ast.Name(id="float")),
+            ast.arg(arg="d", annotation=ast.Name(id="bool")),
+            ast.arg(
+                arg="a",
+                annotation=ast.Subscript(
+                    value=ast.Name(OPTIONAL), slice=ast.Name(id="str")
+                ),
+            ),
+            ast.arg(
+                arg="c",
+                annotation=ast.Subscript(
+                    value=ast.Name(OPTIONAL), slice=ast.Name(id="int")
+                ),
+            ),
+        ],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[ast.Constant(None), ast.Constant(None)],
+    )
+
+    arguments, _ = generator.generate(variable_definitions)
+
+    assert compare_ast(arguments, expected_arguments)
+
+
 def test_generate_returns_arguments_with_only_self_argument_without_annotation():
     generator = ArgumentsGenerator(schema=GraphQLSchema())
     query = "query q {r}"

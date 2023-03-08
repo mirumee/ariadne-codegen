@@ -16,7 +16,7 @@ query ListAllUsers {
     }
 }
 
-query ListUsersByCountry($country: String!) {
+query ListUsersByCountry($country: String) {
     users(country: $country) {
         ...BasicUser
         ...UserPersonalData
