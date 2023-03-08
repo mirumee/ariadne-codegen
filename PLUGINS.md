@@ -29,7 +29,7 @@ Every element of the list can enable plugins in 2 ways:
 def generate_init_module(self, module: ast.Module) -> ast.Module:
 ```
 
-Hook executed on generation of init module. Module has list of public, generated classes and reimports them all. Later this module will be saved as `__init__.p
+Hook executed on generation of init module. Module has list of public, generated classes and reimports them all. Later this module will be saved as `__init__.py`.
 
 
 ## Example
