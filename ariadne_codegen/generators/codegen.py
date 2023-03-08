@@ -56,14 +56,16 @@ def generate_arg(
     return ast.arg(arg=name, annotation=annotation)
 
 
-def generate_arguments(args: Optional[List[ast.arg]] = None) -> ast.arguments:
+def generate_arguments(
+    args: Optional[List[ast.arg]] = None, defaults: Optional[List[ast.Constant]] = None
+) -> ast.arguments:
     """Generate arguments."""
     return ast.arguments(
         posonlyargs=[],
         args=args if args else [],
         kwonlyargs=[],
         kw_defaults=[],
-        defaults=[],
+        defaults=defaults or [],
     )
 
 

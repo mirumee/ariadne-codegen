@@ -24,7 +24,7 @@ from .codegen import (
     generate_list_annotation,
     generate_name,
 )
-from .constants import ANY, SIMPLE_TYPE_MAP
+from .constants import ANY, OPTIONAL, SIMPLE_TYPE_MAP
 from .scalars import ScalarData
 from .utils import str_to_snake_case
 
@@ -48,7 +48,8 @@ class ArgumentsGenerator:
         self, variable_definitions: Tuple[VariableDefinitionNode, ...]
     ) -> Tuple[ast.arguments, ast.Dict]:
         """Generate arguments from given variable definitions."""
-        arguments = generate_arguments([generate_arg("self")])
+        required_args: List[ast.arg] = [generate_arg("self")]
+        optional_args: List[ast.arg] = []
         dict_ = generate_dict()
         for variable_definition in variable_definitions:
             org_name = variable_definition.variable.name.value
@@ -57,23 +58,19 @@ class ArgumentsGenerator:
                 variable_definition.type
             )
 
-            arguments.args.append(generate_arg(name, annotation))
+            arg = generate_arg(name, annotation)
+            if self.is_nullable(annotation):
+                optional_args.append(arg)
+            else:
+                required_args.append(arg)
 
             dict_.keys.append(generate_constant(org_name))
-            if used_custom_scalar:
-                self._used_custom_scalars.append(used_custom_scalar)
-                scalar_data = self.custom_scalars[used_custom_scalar]
-                if scalar_data.serialize:
-                    dict_.values.append(
-                        generate_call(
-                            func=generate_name(scalar_data.serialize),
-                            args=[generate_name(name)],
-                        )
-                    )
-                else:
-                    dict_.values.append(generate_name(name))
-            else:
-                dict_.values.append(generate_name(name))
+            dict_.values.append(self._get_dict_value(name, used_custom_scalar))
+
+        arguments = generate_arguments(
+            args=required_args + optional_args,
+            defaults=[generate_constant(None) for _ in optional_args],
+        )
         return arguments, dict_
 
     def get_used_enums(self) -> List[str]:
@@ -135,3 +132,24 @@ class ArgumentsGenerator:
             raise ParsingError(f"Incorrect argument type {name}")
 
         return generate_annotation_name(name, nullable), used_custom_scalar
+
+    def is_nullable(self, annotation: Union[ast.Name, ast.Subscript]) -> bool:
+        return (
+            isinstance(annotation, ast.Subscript)
+            and isinstance(annotation.value, ast.Name)
+            and annotation.value.id == OPTIONAL
+        )
+
+    def _get_dict_value(
+        self, name: str, used_custom_scalar: Optional[str]
+    ) -> Union[ast.Name, ast.Call]:
+        if used_custom_scalar:
+            self._used_custom_scalars.append(used_custom_scalar)
+            scalar_data = self.custom_scalars[used_custom_scalar]
+            if scalar_data.serialize:
+                return generate_call(
+                    func=generate_name(scalar_data.serialize),
+                    args=[generate_name(name)],
+                )
+
+        return generate_name(name)
