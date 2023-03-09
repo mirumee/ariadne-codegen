@@ -11,3 +11,7 @@ class Plugin:
 
     def generate_init_module(self, module: ast.Module) -> ast.Module:
         return module
+
+    def generate_init_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
+        return import_
+

@@ -31,6 +31,14 @@ def generate_init_module(self, module: ast.Module) -> ast.Module:
 
 Hook executed on generation of init module. Module has list of public, generated classes and reimports them all. Later this module will be saved as `__init__.py`.
 
+### generate_init_import
+
+```py
+def generate_init_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
+```
+
+Hook executed on addition of import to init module. Later this import will be placed in `__init__.py`.
+
 
 ## Example
 

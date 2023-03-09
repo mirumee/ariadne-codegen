@@ -24,3 +24,10 @@ class PluginManager:
         for plugin in self.plugins:
             modified_module = plugin.generate_init_module(modified_module)
         return modified_module
+
+    def generate_init_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
+        modified_import = import_
+        for plugin in self.plugins:
+            modified_import = plugin.generate_init_import(modified_import)
+        return modified_import
+
