@@ -5,6 +5,7 @@
 - Fixed generating models from interfaces with inline fragments.
 - Added default `None` values for generated methods optional arguments.
 - Added basic plugin system.
+- Added hooks to `InitFileGenerator`, `EnumsGenerator`, `ClientGenerator` and `ArgumentsGenerator`
 
 
 ## 0.3.0 (2023-02-21)
