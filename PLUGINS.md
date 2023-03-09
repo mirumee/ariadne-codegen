@@ -98,6 +98,30 @@ def generate_client_method(
 Hook executed on generation of client's method, which represents single graphql operation. Depends on the configuration method can be either async or not.
 
 
+### generate_arguments
+
+```py
+def generate_arguments(
+    self,
+    arguments: ast.arguments,
+    variable_definitions: Tuple[VariableDefinitionNode, ...],
+) -> ast.arguments:
+```
+
+Hook executed on generation of arguments for specific client's method.
+
+### generate_arguments_dict
+
+```py
+def generate_arguments_dict(
+    self,
+    dict_: ast.Dict,
+    variable_definitions: Tuple[VariableDefinitionNode, ...],
+) -> ast.Dict:
+```
+
+Hook executed on generation of dictionary with arguments of graphql operation. Serialized dictionary is later used as variables payload. 
+
 
 ## Example
 

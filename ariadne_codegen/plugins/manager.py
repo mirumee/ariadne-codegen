@@ -1,7 +1,7 @@
 import ast
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
-from graphql import GraphQLEnumType, GraphQLSchema
+from graphql import GraphQLEnumType, GraphQLSchema, VariableDefinitionNode
 
 from .base import Plugin
 
@@ -76,3 +76,27 @@ class PluginManager:
         for plugin in self.plugins:
             modified_method = plugin.generate_client_method(modified_method)
         return modified_method
+
+    def generate_arguments(
+        self,
+        arguments: ast.arguments,
+        variable_definitions: Tuple[VariableDefinitionNode, ...],
+    ) -> ast.arguments:
+        modified_arguments = arguments
+        for plugin in self.plugins:
+            modified_arguments = plugin.generate_arguments(
+                modified_arguments, variable_definitions=variable_definitions
+            )
+        return modified_arguments
+
+    def generate_arguments_dict(
+        self,
+        dict_: ast.Dict,
+        variable_definitions: Tuple[VariableDefinitionNode, ...],
+    ) -> ast.Dict:
+        modified_dict = dict_
+        for plugin in self.plugins:
+            modified_dict = plugin.generate_arguments_dict(
+                modified_dict, variable_definitions=variable_definitions
+            )
+        return modified_dict

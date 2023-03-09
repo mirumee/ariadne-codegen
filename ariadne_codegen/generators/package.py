@@ -109,6 +109,7 @@ class PackageGenerator:
                 schema=self.schema,
                 convert_to_snake_case=self.convert_to_snake_case,
                 custom_scalars=self.custom_scalars,
+                plugin_manager=self.plugin_manager,
             )
         )
         self.input_types_generator = (

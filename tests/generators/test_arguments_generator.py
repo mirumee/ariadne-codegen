@@ -250,3 +250,37 @@ def test_generate_returns_arguments_with_custom_scalar_and_used_serialize_method
 
     assert compare_ast(arguments, expected_arguments)
     assert compare_ast(arguments_dict, expected_arguments_dict)
+
+
+def test_generate_triggers_generate_arguments_hook(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    schema_str = """
+        schema { query: Query }
+        type Query { _skip: String! }
+        """
+    generator = ArgumentsGenerator(
+        schema=build_schema(schema_str), plugin_manager=mocked_plugin_manager
+    )
+
+    generator.generate(
+        _get_variable_definitions_from_query_str("query q($arg: String!) { _skip }")
+    )
+
+    assert mocked_plugin_manager.generate_arguments.called
+
+
+def test_generate_triggers_generate_arguments_dict_hook(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    schema_str = """
+        schema { query: Query }
+        type Query { _skip: String! }
+        """
+    generator = ArgumentsGenerator(
+        schema=build_schema(schema_str), plugin_manager=mocked_plugin_manager
+    )
+
+    generator.generate(
+        _get_variable_definitions_from_query_str("query q($arg: String!) { _skip }")
+    )
+
+    assert mocked_plugin_manager.generate_arguments_dict.called

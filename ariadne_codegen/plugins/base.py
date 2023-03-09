@@ -1,7 +1,7 @@
 import ast
-from typing import Dict, Union
+from typing import Dict, Tuple, Union
 
-from graphql import GraphQLEnumType, GraphQLSchema
+from graphql import GraphQLEnumType, GraphQLSchema, VariableDefinitionNode
 
 
 class Plugin:
@@ -39,3 +39,17 @@ class Plugin:
         self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
     ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
         return method_def
+
+    def generate_arguments(
+        self,
+        arguments: ast.arguments,
+        variable_definitions: Tuple[VariableDefinitionNode, ...],
+    ) -> ast.arguments:
+        return arguments
+
+    def generate_arguments_dict(
+        self,
+        dict_: ast.Dict,
+        variable_definitions: Tuple[VariableDefinitionNode, ...],
+    ) -> ast.Dict:
+        return dict_

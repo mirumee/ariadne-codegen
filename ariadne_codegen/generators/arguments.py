@@ -14,6 +14,7 @@ from graphql import (
 )
 
 from ..exceptions import ParsingError
+from ..plugins.manager import PluginManager
 from .codegen import (
     generate_annotation_name,
     generate_arg,
@@ -35,10 +36,13 @@ class ArgumentsGenerator:
         schema: GraphQLSchema,
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
         self.custom_scalars = custom_scalars if custom_scalars else {}
+        self.plugin_manager = plugin_manager
+
         self.used_types: List[str] = []
         self._used_enums: List[str] = []
         self._used_inputs: List[str] = []
@@ -71,6 +75,14 @@ class ArgumentsGenerator:
             args=required_args + optional_args,
             defaults=[generate_constant(None) for _ in optional_args],
         )
+
+        if self.plugin_manager:
+            arguments = self.plugin_manager.generate_arguments(
+                arguments, variable_definitions=variable_definitions
+            )
+            dict_ = self.plugin_manager.generate_arguments_dict(
+                dict_, variable_definitions=variable_definitions
+            )
         return arguments, dict_
 
     def get_used_enums(self) -> List[str]:
