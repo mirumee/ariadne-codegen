@@ -15,6 +15,7 @@ class Plugin:
     def generate_init_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
         return import_
 
+    # pylint: disable=unused-argument
     def generate_enum(
         self, class_def: ast.ClassDef, enum_type: GraphQLEnumType
     ) -> ast.ClassDef:
@@ -40,6 +41,7 @@ class Plugin:
     ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
         return method_def
 
+    # pylint: disable=unused-argument
     def generate_arguments(
         self,
         arguments: ast.arguments,
@@ -47,6 +49,7 @@ class Plugin:
     ) -> ast.arguments:
         return arguments
 
+    # pylint: disable=unused-argument
     def generate_arguments_dict(
         self,
         dict_: ast.Dict,

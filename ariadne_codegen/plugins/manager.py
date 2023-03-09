@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from graphql import GraphQLEnumType, GraphQLSchema, VariableDefinitionNode
 
@@ -19,84 +19,62 @@ class PluginManager:
             for cls in plugins_types or []
         ]
 
-    def generate_init_module(self, module: ast.Module) -> ast.Module:
-        modified_module = module
+    def _apply_plugins_on_object(
+        self, method_name: str, obj: Any, *args, **kwargs
+    ) -> Any:
+        modified_obj = obj
         for plugin in self.plugins:
-            modified_module = plugin.generate_init_module(modified_module)
-        return modified_module
+            method = getattr(plugin, method_name)
+            modified_obj = method(modified_obj, *args, **kwargs)
+        return modified_obj
+
+    def generate_init_module(self, module: ast.Module) -> ast.Module:
+        return self._apply_plugins_on_object("generate_init_module", module)
 
     def generate_init_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
-        modified_import = import_
-        for plugin in self.plugins:
-            modified_import = plugin.generate_init_import(modified_import)
-        return modified_import
+        return self._apply_plugins_on_object("generate_init_import", import_)
 
     def generate_enum(
         self, class_def: ast.ClassDef, enum_type: GraphQLEnumType
     ) -> ast.ClassDef:
-        modified_class = class_def
-        for plugin in self.plugins:
-            modified_class = plugin.generate_enum(modified_class, enum_type=enum_type)
-        return modified_class
+        return self._apply_plugins_on_object(
+            "generate_enum", class_def, enum_type=enum_type
+        )
 
     def generate_enums_module(self, module: ast.Module) -> ast.Module:
-        modified_module = module
-        for plugin in self.plugins:
-            modified_module = plugin.generate_init_module(modified_module)
-        return modified_module
+        return self._apply_plugins_on_object("generate_enums_module", module)
 
     def generate_client_module(self, module: ast.Module) -> ast.Module:
-        modified_module = module
-        for plugin in self.plugins:
-            modified_module = plugin.generate_client_module(modified_module)
-        return modified_module
+        return self._apply_plugins_on_object("generate_client_module", module)
 
     def generate_gql_function(self, function_def: ast.FunctionDef) -> ast.FunctionDef:
-        modified_function = function_def
-        for plugin in self.plugins:
-            modified_function = plugin.generate_gql_function(modified_function)
-        return modified_function
+        return self._apply_plugins_on_object("generate_gql_function", function_def)
 
     def generate_client_class(self, class_def: ast.ClassDef) -> ast.ClassDef:
-        modified_class = class_def
-        for plugin in self.plugins:
-            modified_class = plugin.generate_client_class(modified_class)
-        return modified_class
+        return self._apply_plugins_on_object("generate_client_class", class_def)
 
     def generate_client_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
-        modified_import = import_
-        for plugin in self.plugins:
-            modified_import = plugin.generate_client_import(modified_import)
-        return modified_import
+        return self._apply_plugins_on_object("generate_client_import", import_)
 
     def generate_client_method(
         self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
     ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
-        modified_method = method_def
-        for plugin in self.plugins:
-            modified_method = plugin.generate_client_method(modified_method)
-        return modified_method
+        return self._apply_plugins_on_object("generate_client_method", method_def)
 
     def generate_arguments(
         self,
         arguments: ast.arguments,
         variable_definitions: Tuple[VariableDefinitionNode, ...],
     ) -> ast.arguments:
-        modified_arguments = arguments
-        for plugin in self.plugins:
-            modified_arguments = plugin.generate_arguments(
-                modified_arguments, variable_definitions=variable_definitions
-            )
-        return modified_arguments
+        return self._apply_plugins_on_object(
+            "generate_arguments", arguments, variable_definitions=variable_definitions
+        )
 
     def generate_arguments_dict(
         self,
         dict_: ast.Dict,
         variable_definitions: Tuple[VariableDefinitionNode, ...],
     ) -> ast.Dict:
-        modified_dict = dict_
-        for plugin in self.plugins:
-            modified_dict = plugin.generate_arguments_dict(
-                modified_dict, variable_definitions=variable_definitions
-            )
-        return modified_dict
+        return self._apply_plugins_on_object(
+            "generate_arguments_dict", dict_, variable_definitions=variable_definitions
+        )
