@@ -97,7 +97,9 @@ class PackageGenerator:
             client_generator
             if client_generator
             else ClientGenerator(
-                name=self.client_name, base_client=self.base_client_name
+                name=self.client_name,
+                base_client=self.base_client_name,
+                plugin_manager=self.plugin_manager,
             )
         )
         self.arguments_generator = (

@@ -41,6 +41,39 @@ def test_generate_returns_module_with_gql_lambda_definition():
     assert compare_ast(assign, expected_def)
 
 
+def test_generate_triggers_generate_gql_function_hook(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    generator = ClientGenerator(
+        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+    )
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_gql_function.called
+
+
+def test_generate_triggers_generate_client_class_hook(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    generator = ClientGenerator(
+        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+    )
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_client_class.called
+
+
+def test_generate_triggers_generate_client_module_hook(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    generator = ClientGenerator(
+        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+    )
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_client_module.called
+
+
 def test_add_import_adds_import_to_generated_module():
     generator = ClientGenerator("Client", "BaseClient")
     name = "Xyz"
@@ -54,6 +87,17 @@ def test_add_import_adds_import_to_generated_module():
     assert isinstance(generated_import, ast.ImportFrom)
     assert generated_import.module == from_
     assert [n.name for n in generated_import.names] == [name]
+
+
+def test_add_import_triggers_generate_client_import_hook(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    generator = ClientGenerator(
+        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+    )
+
+    generator.add_import(["TestType"], "test", level=1)
+
+    assert mocked_plugin_manager.generate_client_import.called
 
 
 def test_add_method_adds_async_method_definition():
@@ -304,3 +348,28 @@ def test_add_method_generates_correct_method_body():
     method_def = class_def.body[0]
     assert isinstance(method_def, ast.FunctionDef)
     assert compare_ast(method_def.body, expected_method_body)
+
+
+def test_add_method_triggers_generate_client_method_hook(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    generator = ClientGenerator(
+        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+    )
+
+    generator.add_method(
+        name="list_xyz",
+        return_type="ListXyz",
+        arguments=ast.arguments(
+            posonlyargs=[],
+            args=[ast.arg(arg="self")],
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
+        ),
+        arguments_dict=ast.Dict(keys=[], values=[]),
+        operation_str="",
+        async_=False,
+    )
+    generator.add_import(["TestType"], "test", level=1)
+
+    assert mocked_plugin_manager.generate_client_method.called

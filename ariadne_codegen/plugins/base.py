@@ -1,5 +1,5 @@
 import ast
-from typing import Dict
+from typing import Dict, Union
 
 from graphql import GraphQLEnumType, GraphQLSchema
 
@@ -23,3 +23,19 @@ class Plugin:
     def generate_enums_module(self, module: ast.Module) -> ast.Module:
         return module
 
+    def generate_client_module(self, module: ast.Module) -> ast.Module:
+        return module
+
+    def generate_gql_function(self, function_def: ast.FunctionDef) -> ast.FunctionDef:
+        return function_def
+
+    def generate_client_class(self, class_def: ast.ClassDef) -> ast.ClassDef:
+        return class_def
+
+    def generate_client_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
+        return import_
+
+    def generate_client_method(
+        self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
+    ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
+        return method_def

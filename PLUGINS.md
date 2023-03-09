@@ -55,6 +55,49 @@ def generate_enums_module(self, module: ast.Module) -> ast.Module:
 
 Hook executed on generation of enums module. Module has all classes representing enums from schema. Later this module will be saved as `{enums_module_name}.py`, `enums_module_name` is taken from config.
 
+### generate_client_module
+
+```py
+def generate_client_module(self, module: ast.Module) -> ast.Module:
+```
+
+Hook executed on generation of client module. Module contains `gql` function definition and client class. Later this module will be saved as `{client_file_name}.py`, `client_file_name` is taken from config.
+
+### generate_gql_function
+
+```py
+def generate_gql_function(self, function_def: ast.FunctionDef) -> ast.FunctionDef:
+```
+
+Hook executed on generation of `gql` function. 
+
+### generate_client_class
+
+```py
+def generate_client_class(self, class_def: ast.ClassDef) -> ast.ClassDef:
+```
+
+Hook executed on generation of client class. Class contains method for every graphql operation.
+
+### generate_client_import
+
+```py
+def generate_client_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
+```
+
+Hook executed on addition of import to client module. Later this import will be placed in `{client_file_name}.py`, `client_file_name` is taken from config.
+
+### generate_client_method
+
+```py
+def generate_client_method(
+        self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
+) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
+```
+
+Hook executed on generation of client's method, which represents single graphql operation. Depends on the configuration method can be either async or not.
+
+
 
 ## Example
 

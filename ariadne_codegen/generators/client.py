@@ -1,6 +1,7 @@
 import ast
-from typing import List
+from typing import List, Optional, Union, cast
 
+from ..plugins.manager import PluginManager
 from .codegen import (
     generate_ann_assign,
     generate_arg,
@@ -15,6 +16,7 @@ from .codegen import (
     generate_import_from,
     generate_keyword,
     generate_method_definition,
+    generate_module,
     generate_name,
     generate_return,
     generate_subscript,
@@ -24,8 +26,14 @@ from .constants import ANY, LIST, OPTIONAL, TYPING_MODULE
 
 
 class ClientGenerator:
-    def __init__(self, name: str, base_client: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        base_client: str,
+        plugin_manager: Optional[PluginManager] = None,
+    ) -> None:
         self.name = name
+        self.plugin_manager = plugin_manager
         self.class_def = generate_class_def(name=name, base_names=[base_client])
         self.imports: list = [
             generate_import_from([OPTIONAL, LIST, ANY], TYPING_MODULE)
@@ -38,20 +46,31 @@ class ClientGenerator:
         self._data_variable = "data"
 
     def generate(self) -> ast.Module:
-        """Generate module with class definition of grahql client."""
+        """Generate module with class definition of graphql client."""
         gql_func = self._generate_gql_func()
         gql_func.lineno = len(self.imports) + 1
+        if self.plugin_manager:
+            gql_func = self.plugin_manager.generate_gql_function(gql_func)
+
         self.class_def.lineno = len(self.imports) + 3
         if not self.class_def.body:
             self.class_def.body.append(ast.Pass())
-        return ast.Module(
+        if self.plugin_manager:
+            self.class_def = self.plugin_manager.generate_client_class(self.class_def)
+
+        module = generate_module(
             body=self.imports + [gql_func, self.class_def],
-            type_ignores=[],
         )
+        if self.plugin_manager:
+            module = self.plugin_manager.generate_client_module(module)
+        return module
 
     def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
         """Add import to be included in module file."""
-        self.imports.append(generate_import_from(names=names, from_=from_, level=level))
+        import_ = generate_import_from(names=names, from_=from_, level=level)
+        if self.plugin_manager:
+            import_ = self.plugin_manager.generate_client_import(import_)
+        self.imports.append(import_)
 
     def add_method(
         self,
@@ -81,6 +100,10 @@ class ClientGenerator:
             )
         )
         method_def.lineno = len(self.class_def.body) + 1
+        if self.plugin_manager:
+            method_def = self.plugin_manager.generate_client_method(
+                cast(Union[ast.FunctionDef, ast.AsyncFunctionDef], method_def)
+            )
         self.class_def.body.append(method_def)
 
     def _generate_async_method(
