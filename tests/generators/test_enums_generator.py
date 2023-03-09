@@ -1,6 +1,6 @@
 import ast
 
-from graphql import build_ast_schema, parse
+from graphql import GraphQLEnumType, GraphQLSchema, build_ast_schema, parse
 
 from ariadne_codegen.generators.constants import ENUM_CLASS, ENUM_MODULE
 from ariadne_codegen.generators.enums import EnumsGenerator
@@ -129,3 +129,41 @@ def test_generate_returns_module_with_enum_class_definition_for_every_enum():
     ]
     class_defs = filter_class_defs(module)
     assert compare_ast(class_defs, expected_class_defs)
+
+
+def test_generate_triggers_generate_enums_module_hook(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    generator = EnumsGenerator(
+        schema=GraphQLSchema(), plugin_manager=mocked_plugin_manager
+    )
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_enums_module.called
+
+
+def test_generate_triggers_generate_enum_hook_for_every_definition(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    schema_str = """
+    enum TestEnumAB {
+        A
+        B
+    }
+    enum TestEnumCD {
+        C
+        D
+    }
+    """
+    generator = EnumsGenerator(
+        schema=build_ast_schema(parse(schema_str)), plugin_manager=mocked_plugin_manager
+    )
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_enum.call_count == 2
+    _, call0_enum_type = mocked_plugin_manager.generate_enum.mock_calls[0].args
+    _, call1_enum_type = mocked_plugin_manager.generate_enum.mock_calls[1].args
+    assert isinstance(call0_enum_type, GraphQLEnumType)
+    assert call0_enum_type.name == "TestEnumAB"
+    assert isinstance(call1_enum_type, GraphQLEnumType)
+    assert call1_enum_type.name == "TestEnumCD"

@@ -1,8 +1,9 @@
 import ast
-from typing import List, cast
+from typing import List, Optional, cast
 
 from graphql import GraphQLEnumType, GraphQLSchema
 
+from ..plugins.manager import PluginManager
 from .codegen import (
     generate_assign,
     generate_class_def,
@@ -14,8 +15,11 @@ from .constants import ENUM_CLASS, ENUM_MODULE
 
 
 class EnumsGenerator:
-    def __init__(self, schema: GraphQLSchema) -> None:
+    def __init__(
+        self, schema: GraphQLSchema, plugin_manager: Optional[PluginManager] = None
+    ) -> None:
         self.schema = schema
+        self.plugin_manager = plugin_manager
 
         self._imports: List[ast.ImportFrom] = [
             generate_import_from([ENUM_CLASS], ENUM_MODULE)
@@ -25,11 +29,13 @@ class EnumsGenerator:
         ]
 
     def generate(self) -> ast.Module:
-        module_body = cast(List[ast.stmt], self._imports) + cast(
-            List[ast.stmt], self._class_defs
+        module = generate_module(
+            body=cast(List[ast.stmt], self._imports)
+            + cast(List[ast.stmt], self._class_defs)
         )
-
-        return generate_module(body=module_body)
+        if self.plugin_manager:
+            module = self.plugin_manager.generate_enums_module(module)
+        return module
 
     def get_generated_public_names(self) -> List[str]:
         return [c.name for c in self._class_defs]
@@ -49,8 +55,11 @@ class EnumsGenerator:
             )
         ]
 
-        return generate_class_def(
+        class_def = generate_class_def(
             name=definition.name,
             base_names=["str", ENUM_CLASS],
             body=cast(List[ast.stmt], fields),
         )
+        if self.plugin_manager:
+            class_def = self.plugin_manager.generate_enum(class_def, definition)
+        return class_def

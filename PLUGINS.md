@@ -39,6 +39,22 @@ def generate_init_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
 
 Hook executed on addition of import to init module. Later this import will be placed in `__init__.py`.
 
+### generate_enum
+
+```py
+def generate_enum(self, class_def: ast.ClassDef, enum_type: GraphQLEnumType) -> ast.ClassDef:
+```
+
+Hook executed on generation of class definition of single enum.
+
+### generate_enums_module
+
+```py
+def generate_enums_module(self, module: ast.Module) -> ast.Module:
+```
+
+Hook executed on generation of enums module. Module has all classes representing enums from schema. Later this module will be saved as `{enums_module_name}.py`, `enums_module_name` is taken from config.
+
 
 ## Example
 

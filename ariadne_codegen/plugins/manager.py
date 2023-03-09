@@ -31,3 +31,17 @@ class PluginManager:
             modified_import = plugin.generate_init_import(modified_import)
         return modified_import
 
+    def generate_enum(
+        self, class_def: ast.ClassDef, enum_type: GraphQLEnumType
+    ) -> ast.ClassDef:
+        modified_class = class_def
+        for plugin in self.plugins:
+            modified_class = plugin.generate_enum(modified_class, enum_type=enum_type)
+        return modified_class
+
+    def generate_enums_module(self, module: ast.Module) -> ast.Module:
+        modified_module = module
+        for plugin in self.plugins:
+            modified_module = plugin.generate_init_module(modified_module)
+        return modified_module
+

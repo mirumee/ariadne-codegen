@@ -121,7 +121,9 @@ class PackageGenerator:
             )
         )
         self.enums_generator = (
-            enums_generator if enums_generator else EnumsGenerator(schema=self.schema)
+            enums_generator
+            if enums_generator
+            else EnumsGenerator(schema=self.schema, plugin_manager=self.plugin_manager)
         )
 
         if base_client_file_path:
