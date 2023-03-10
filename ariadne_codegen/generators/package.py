@@ -97,7 +97,9 @@ class PackageGenerator:
             client_generator
             if client_generator
             else ClientGenerator(
-                name=self.client_name, base_client=self.base_client_name
+                name=self.client_name,
+                base_client=self.base_client_name,
+                plugin_manager=self.plugin_manager,
             )
         )
         self.arguments_generator = (
@@ -107,6 +109,7 @@ class PackageGenerator:
                 schema=self.schema,
                 convert_to_snake_case=self.convert_to_snake_case,
                 custom_scalars=self.custom_scalars,
+                plugin_manager=self.plugin_manager,
             )
         )
         self.input_types_generator = (
@@ -121,7 +124,9 @@ class PackageGenerator:
             )
         )
         self.enums_generator = (
-            enums_generator if enums_generator else EnumsGenerator(schema=self.schema)
+            enums_generator
+            if enums_generator
+            else EnumsGenerator(schema=self.schema, plugin_manager=self.plugin_manager)
         )
 
         if base_client_file_path:

@@ -18,6 +18,15 @@ def test_add_import_adds_correct_objects_to_list():
     assert import_.level == 1
 
 
+def test_add_import_triggers_generate_init_import_hook_method(mocker):
+    mocked_plugin_manager = mocker.MagicMock()
+    generator = InitFileGenerator(plugin_manager=mocked_plugin_manager)
+
+    generator.add_import(names=["TestClass"], from_="test", level=1)
+
+    assert mocked_plugin_manager.generate_init_import.called
+
+
 def test_generate_without_imports_returns_empty_module():
     generator = InitFileGenerator()
 
