@@ -69,7 +69,7 @@ Hook executed on generation of client module. Module contains `gql` function def
 def generate_gql_function(self, function_def: ast.FunctionDef) -> ast.FunctionDef:
 ```
 
-Hook executed on generation of `gql` function. 
+Hook executed on generation of `gql` function.
 
 ### generate_client_class
 
@@ -120,7 +120,38 @@ def generate_arguments_dict(
 ) -> ast.Dict:
 ```
 
-Hook executed on generation of dictionary with arguments of graphql operation. Serialized dictionary is later used as variables payload. 
+Hook executed on generation of dictionary with arguments of graphql operation. Serialized dictionary is later used as variables payload.
+
+### generate_inputs_module
+
+```py
+def generate_inputs_module(self, module: ast.Module) -> ast.Module:
+```
+
+Hook executed on generation of inputs module. Module has all classes representing inputs from schema. Later this module will be saved as `{input_types_module_name}.py`, `input_types_module_name` is taken from config.
+
+### generate_input_class
+
+```py
+def generate_input_class(
+    self, class_def: ast.ClassDef, input_type: GraphQLInputObjectType
+) -> ast.ClassDef:
+```
+
+Hook executed on generation of class definition for input from schema.
+
+### generate_input_field
+
+```py
+    def generate_input_field(
+        self,
+        field_implementation: ast.AnnAssign,
+        input_field: GraphQLInputField,
+        field_name: str,
+    ) -> ast.AnnAssign:
+```
+
+Hook executed on generation of representation for input field.
 
 
 ## Example
@@ -154,4 +185,4 @@ class VersionPlugin(Plugin):
 ```toml
 [tools.version_plugin]
 version = 0.21
-``` 
+```

@@ -9,6 +9,7 @@ from graphql import (
     GraphQLSchema,
 )
 
+from ..plugins.manager import PluginManager
 from .codegen import (
     generate_ann_assign,
     generate_class_def,
@@ -43,11 +44,13 @@ class InputTypesGenerator:
         convert_to_snake_case: bool = True,
         base_model_import: Optional[ast.ImportFrom] = None,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
         self.enums_module = enums_module
         self.custom_scalars = custom_scalars if custom_scalars else {}
+        self.plugin_manager = plugin_manager
 
         self._imports = [
             generate_import_from([OPTIONAL, ANY, UNION, LIST], TYPING_MODULE),
@@ -87,8 +90,10 @@ class InputTypesGenerator:
             + cast(List[ast.stmt], sorted_class_defs)
             + cast(List[ast.stmt], update_forward_refs_calls)
         )
-
-        return generate_module(body=module_body)
+        module = generate_module(body=module_body)
+        if self.plugin_manager:
+            module = self.plugin_manager.generate_inputs_module(module)
+        return module
 
     def get_generated_public_names(self) -> List[str]:
         return [c.name for c in self._class_defs]
@@ -126,9 +131,18 @@ class InputTypesGenerator:
                     field_implementation=field_implementation, alias=org_name
                 )
 
+            if self.plugin_manager:
+                field_implementation = self.plugin_manager.generate_input_field(
+                    field_implementation, input_field=field, field_name=org_name
+                )
             class_def.body.append(field_implementation)
             self._save_used_enums_scalars_and_dependencies(
                 class_name=class_def.name, field_type=field_type
+            )
+
+        if self.plugin_manager:
+            class_def = self.plugin_manager.generate_input_class(
+                class_def, input_type=definition
             )
 
         return class_def

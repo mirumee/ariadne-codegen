@@ -121,6 +121,7 @@ class PackageGenerator:
                 convert_to_snake_case=self.convert_to_snake_case,
                 base_model_import=self.base_model_import,
                 custom_scalars=self.custom_scalars,
+                plugin_manager=self.plugin_manager,
             )
         )
         self.enums_generator = (

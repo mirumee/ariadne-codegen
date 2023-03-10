@@ -5,6 +5,8 @@ import pytest
 from graphql import (
     GraphQLEnumType,
     GraphQLEnumValueMap,
+    GraphQLInputField,
+    GraphQLInputObjectType,
     GraphQLSchema,
     VariableDefinitionNode,
 )
@@ -129,3 +131,32 @@ def test_generate_arguments_dict_calls_plugins_generate_arguments_dict(
 
     assert mocked_plugin_manager.plugins[0].generate_arguments_dict.called
     assert mocked_plugin_manager.plugins[1].generate_arguments_dict.called
+
+
+def test_generate_inputs_module_calls_plugins_generate_inputs_module(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_inputs_module(ast.Module())
+
+    assert mocked_plugin_manager.plugins[0].generate_inputs_module.called
+    assert mocked_plugin_manager.plugins[1].generate_inputs_module.called
+
+
+def test_generate_input_class_calls_plugins_generate_input_class(mocked_plugin_manager):
+    mocked_plugin_manager.generate_input_class(
+        ast.ClassDef(), input_type=GraphQLInputObjectType("TestInput", fields={})
+    )
+
+    assert mocked_plugin_manager.plugins[0].generate_input_class.called
+    assert mocked_plugin_manager.plugins[1].generate_input_class.called
+
+
+def test_generate_input_field_calls_plugins_generate_input_field(mocked_plugin_manager):
+    mocked_plugin_manager.generate_input_field(
+        ast.AnnAssign(),
+        input_field=GraphQLInputField(GraphQLInputObjectType("TestInput", fields={})),
+        field_name="fieldA",
+    )
+
+    assert mocked_plugin_manager.plugins[0].generate_input_field.called
+    assert mocked_plugin_manager.plugins[1].generate_input_field.called

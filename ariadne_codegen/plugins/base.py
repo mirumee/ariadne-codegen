@@ -1,7 +1,13 @@
 import ast
 from typing import Dict, Tuple, Union
 
-from graphql import GraphQLEnumType, GraphQLSchema, VariableDefinitionNode
+from graphql import (
+    GraphQLEnumType,
+    GraphQLInputField,
+    GraphQLInputObjectType,
+    GraphQLSchema,
+    VariableDefinitionNode,
+)
 
 
 class Plugin:
@@ -56,3 +62,21 @@ class Plugin:
         variable_definitions: Tuple[VariableDefinitionNode, ...],
     ) -> ast.Dict:
         return dict_
+
+    def generate_inputs_module(self, module: ast.Module) -> ast.Module:
+        return module
+
+    # pylint: disable=unused-argument
+    def generate_input_class(
+        self, class_def: ast.ClassDef, input_type: GraphQLInputObjectType
+    ) -> ast.ClassDef:
+        return class_def
+
+    # pylint: disable=unused-argument
+    def generate_input_field(
+        self,
+        field_implementation: ast.AnnAssign,
+        input_field: GraphQLInputField,
+        field_name: str,
+    ) -> ast.AnnAssign:
+        return field_implementation

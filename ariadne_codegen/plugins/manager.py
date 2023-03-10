@@ -1,7 +1,13 @@
 import ast
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from graphql import GraphQLEnumType, GraphQLSchema, VariableDefinitionNode
+from graphql import (
+    GraphQLEnumType,
+    GraphQLInputField,
+    GraphQLInputObjectType,
+    GraphQLSchema,
+    VariableDefinitionNode,
+)
 
 from .base import Plugin
 
@@ -77,4 +83,27 @@ class PluginManager:
     ) -> ast.Dict:
         return self._apply_plugins_on_object(
             "generate_arguments_dict", dict_, variable_definitions=variable_definitions
+        )
+
+    def generate_inputs_module(self, module: ast.Module) -> ast.Module:
+        return self._apply_plugins_on_object("generate_inputs_module", module)
+
+    def generate_input_class(
+        self, class_def: ast.ClassDef, input_type: GraphQLInputObjectType
+    ) -> ast.ClassDef:
+        return self._apply_plugins_on_object(
+            "generate_input_class", class_def, input_type=input_type
+        )
+
+    def generate_input_field(
+        self,
+        field_implementation: ast.AnnAssign,
+        input_field: GraphQLInputField,
+        field_name: str,
+    ) -> ast.AnnAssign:
+        return self._apply_plugins_on_object(
+            "generate_input_field",
+            field_implementation,
+            input_field=input_field,
+            field_name=field_name,
         )
