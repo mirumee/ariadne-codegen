@@ -6,6 +6,7 @@
 - Added default `None` values for generated methods optional arguments.
 - Added basic plugin system.
 - Added `InitFileGenerator`, `EnumsGenerator`, `ClientGenerator` and `ArgumentsGenerator` plugin hooks.
+- Added `InputTypesGenerator` and `ResultTypesGenerator` plugin hooks.
 
 
 ## 0.3.0 (2023-02-21)
