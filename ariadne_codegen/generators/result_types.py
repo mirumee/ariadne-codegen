@@ -22,6 +22,7 @@ from graphql import (
 )
 
 from ..exceptions import NotSupported, ParsingError
+from ..plugins.manager import PluginManager
 from .codegen import (
     generate_ann_assign,
     generate_class_def,
@@ -62,6 +63,7 @@ class ResultTypesGenerator:
         base_model_import: Optional[ast.ImportFrom] = None,
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.schema = schema
         self.operation_definition = operation_definition
@@ -74,6 +76,7 @@ class ResultTypesGenerator:
         )
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.convert_to_snake_case = convert_to_snake_case
+        self.plugin_manager = plugin_manager
 
         self._imports: List[ast.ImportFrom] = [
             generate_import_from([OPTIONAL, UNION, ANY, LIST], TYPING_MODULE),
@@ -119,7 +122,12 @@ class ResultTypesGenerator:
             + cast(List[ast.stmt], update_forward_refs_calls)
         )
 
-        return generate_module(module_body)
+        module = generate_module(module_body)
+        if self.plugin_manager:
+            module = self.plugin_manager.generate_result_types_module(
+                module, operation_definition=self.operation_definition
+            )
+        return module
 
     def get_operation_as_str(self) -> str:
         operation_str = print_ast(self.operation_definition)
@@ -129,6 +137,10 @@ class ResultTypesGenerator:
                     self.fragments_definitions[used_fragment]
                 )
 
+        if self.plugin_manager:
+            operation_str = self.plugin_manager.generate_operation_str(
+                operation_str, operation_definition=self.operation_definition
+            )
         return operation_str
 
     def get_generated_public_names(self) -> List[str]:
@@ -183,6 +195,13 @@ class ResultTypesGenerator:
             if name != field_name:
                 field_implementation.value = generate_field_with_alias(field_name)
 
+            if self.plugin_manager:
+                field_implementation = self.plugin_manager.generate_result_field(
+                    field_implementation,
+                    operation_definition=self.operation_definition,
+                    field=field,
+                )
+
             class_def.body.append(field_implementation)
 
             extra_classes.extend(
@@ -194,6 +213,13 @@ class ResultTypesGenerator:
             )
             self._save_used_enums(field_types_names)
             self._save_used_scalars(field_types_names)
+
+            if self.plugin_manager:
+                class_def = self.plugin_manager.generate_result_class(
+                    class_def,
+                    operation_definition=self.operation_definition,
+                    selection_set=selection_set,
+                )
         return [class_def] + extra_classes
 
     def _resolve_selection_set(
