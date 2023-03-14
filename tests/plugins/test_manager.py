@@ -211,3 +211,30 @@ def test_generate_result_field_calls_plugins_generate_result_field(
 
     assert mocked_plugin_manager.plugins[0].generate_result_field.called
     assert mocked_plugin_manager.plugins[1].generate_result_field.called
+
+
+def test_generate_scalars_module_calls_plugins_generate_scalars_module(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_scalars_module(ast.Module())
+
+    assert mocked_plugin_manager.plugins[0].generate_scalars_module.called
+    assert mocked_plugin_manager.plugins[1].generate_scalars_module.called
+
+
+def test_generate_scalars_parse_dict_calls_plugins_generate_scalars_parse_dict(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_scalars_parse_dict(ast.Dict())
+
+    assert mocked_plugin_manager.plugins[0].generate_scalars_parse_dict.called
+    assert mocked_plugin_manager.plugins[1].generate_scalars_parse_dict.called
+
+
+def test_generate_scalars_serialize_dict_calls_plugins_generate_scalars_serialize_dict(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_scalars_serialize_dict(ast.Dict())
+
+    assert mocked_plugin_manager.plugins[0].generate_scalars_serialize_dict.called
+    assert mocked_plugin_manager.plugins[1].generate_scalars_serialize_dict.called

@@ -2,6 +2,7 @@ import ast
 from dataclasses import dataclass
 from typing import List, Optional, cast
 
+from ..plugins.manager import PluginManager
 from .codegen import (
     generate_ann_assign,
     generate_dict,
@@ -35,16 +36,21 @@ class ScalarData:
 
 
 class ScalarsDefinitionsGenerator:
-    def __init__(self, scalars_data: Optional[List[ScalarData]] = None) -> None:
+    def __init__(
+        self,
+        scalars_data: Optional[List[ScalarData]] = None,
+        plugin_manager: Optional[PluginManager] = None,
+    ) -> None:
+        self.plugin_manager = plugin_manager
+
         self._imports: List[ast.ImportFrom] = [
             generate_import_from(names=[DICT, ANY, CALLABLE], from_=TYPING_MODULE)
         ]
         self._serialize_dict: ast.Dict = generate_dict()
         self._parse_dict: ast.Dict = generate_dict()
 
-        if scalars_data:
-            for data in scalars_data:
-                self.add_scalar(data)
+        for data in scalars_data or []:
+            self.add_scalar(data)
 
     def add_scalar(self, data: ScalarData) -> None:
         if data.parse:
@@ -61,7 +67,14 @@ class ScalarsDefinitionsGenerator:
             )
 
     def generate(self) -> ast.Module:
-        return generate_module(
+        if self.plugin_manager:
+            self._parse_dict = self.plugin_manager.generate_scalars_parse_dict(
+                self._parse_dict
+            )
+            self._serialize_dict = self.plugin_manager.generate_scalars_serialize_dict(
+                self._serialize_dict
+            )
+        module = generate_module(
             body=cast(
                 List[ast.stmt],
                 [
@@ -70,25 +83,22 @@ class ScalarsDefinitionsGenerator:
                         name=SCALARS_PARSE_DICT_NAME,
                         dict_=self._parse_dict,
                         callable_annotation=generate_tuple(
-                            [
-                                generate_list([generate_name("str")]),
-                                generate_name(ANY),
-                            ]
+                            [generate_list([generate_name("str")]), generate_name(ANY)]
                         ),
                     ),
                     self._generate_dict_assignment(
                         name=SCALARS_SERIALIZE_DICT_NAME,
                         dict_=self._serialize_dict,
                         callable_annotation=generate_tuple(
-                            [
-                                generate_list([generate_name(ANY)]),
-                                generate_name("str"),
-                            ]
+                            [generate_list([generate_name(ANY)]), generate_name("str")]
                         ),
                     ),
                 ],
             )
         )
+        if self.plugin_manager:
+            module = self.plugin_manager.generate_scalars_module(module)
+        return module
 
     def _generate_dict_assignment(
         self,

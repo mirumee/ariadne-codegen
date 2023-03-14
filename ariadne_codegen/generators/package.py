@@ -145,7 +145,8 @@ class PackageGenerator:
         self.include_exceptions_file = self._include_exceptions()
 
         self.scalars_definitions_generator = ScalarsDefinitionsGenerator(
-            scalars_data=list(self.custom_scalars.values())
+            scalars_data=list(self.custom_scalars.values()),
+            plugin_manager=self.plugin_manager,
         )
         self.scalars_definitions_file_name = "scalars"
 

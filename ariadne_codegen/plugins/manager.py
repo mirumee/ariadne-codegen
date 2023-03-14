@@ -15,6 +15,7 @@ from graphql import (
 from .base import Plugin
 
 
+# pylint: disable=too-many-public-methods
 class PluginManager:
     def __init__(
         self,
@@ -154,3 +155,12 @@ class PluginManager:
             operation_definition=operation_definition,
             field=field,
         )
+
+    def generate_scalars_module(self, module: ast.Module) -> ast.Module:
+        return self._apply_plugins_on_object("generate_scalars_module", module)
+
+    def generate_scalars_parse_dict(self, dict_: ast.Dict) -> ast.Dict:
+        return self._apply_plugins_on_object("generate_scalars_parse_dict", dict_)
+
+    def generate_scalars_serialize_dict(self, dict_: ast.Dict) -> ast.Dict:
+        return self._apply_plugins_on_object("generate_scalars_serialize_dict", dict_)
