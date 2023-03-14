@@ -3,9 +3,14 @@ from typing import cast
 
 import pytest
 from graphql import (
+    FieldNode,
     GraphQLEnumType,
     GraphQLEnumValueMap,
+    GraphQLInputField,
+    GraphQLInputObjectType,
     GraphQLSchema,
+    OperationDefinitionNode,
+    SelectionSetNode,
     VariableDefinitionNode,
 )
 
@@ -129,3 +134,80 @@ def test_generate_arguments_dict_calls_plugins_generate_arguments_dict(
 
     assert mocked_plugin_manager.plugins[0].generate_arguments_dict.called
     assert mocked_plugin_manager.plugins[1].generate_arguments_dict.called
+
+
+def test_generate_inputs_module_calls_plugins_generate_inputs_module(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_inputs_module(ast.Module())
+
+    assert mocked_plugin_manager.plugins[0].generate_inputs_module.called
+    assert mocked_plugin_manager.plugins[1].generate_inputs_module.called
+
+
+def test_generate_input_class_calls_plugins_generate_input_class(mocked_plugin_manager):
+    mocked_plugin_manager.generate_input_class(
+        ast.ClassDef(), input_type=GraphQLInputObjectType("TestInput", fields={})
+    )
+
+    assert mocked_plugin_manager.plugins[0].generate_input_class.called
+    assert mocked_plugin_manager.plugins[1].generate_input_class.called
+
+
+def test_generate_input_field_calls_plugins_generate_input_field(mocked_plugin_manager):
+    mocked_plugin_manager.generate_input_field(
+        ast.AnnAssign(),
+        input_field=GraphQLInputField(GraphQLInputObjectType("TestInput", fields={})),
+        field_name="fieldA",
+    )
+
+    assert mocked_plugin_manager.plugins[0].generate_input_field.called
+    assert mocked_plugin_manager.plugins[1].generate_input_field.called
+
+
+def test_generate_result_types_module_calls_plugins_generate_result_types_module(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_result_types_module(
+        ast.Module(), operation_definition=OperationDefinitionNode()
+    )
+
+    assert mocked_plugin_manager.plugins[0].generate_result_types_module.called
+    assert mocked_plugin_manager.plugins[1].generate_result_types_module.called
+
+
+def test_generate_operation_str_calls_plugins_generate_operation_str(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_operation_str(
+        "", operation_definition=OperationDefinitionNode()
+    )
+
+    assert mocked_plugin_manager.plugins[0].generate_operation_str.called
+    assert mocked_plugin_manager.plugins[1].generate_operation_str.called
+
+
+def test_generate_result_class_calls_plugins_generate_result_class(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_result_class(
+        ast.ClassDef(),
+        operation_definition=OperationDefinitionNode(),
+        selection_set=SelectionSetNode(),
+    )
+
+    assert mocked_plugin_manager.plugins[0].generate_result_class.called
+    assert mocked_plugin_manager.plugins[1].generate_result_class.called
+
+
+def test_generate_result_field_calls_plugins_generate_result_field(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_result_field(
+        ast.AnnAssign(),
+        operation_definition=OperationDefinitionNode(),
+        field=FieldNode(),
+    )
+
+    assert mocked_plugin_manager.plugins[0].generate_result_field.called
+    assert mocked_plugin_manager.plugins[1].generate_result_field.called

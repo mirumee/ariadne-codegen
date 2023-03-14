@@ -69,7 +69,7 @@ Hook executed on generation of client module. Module contains `gql` function def
 def generate_gql_function(self, function_def: ast.FunctionDef) -> ast.FunctionDef:
 ```
 
-Hook executed on generation of `gql` function. 
+Hook executed on generation of `gql` function.
 
 ### generate_client_class
 
@@ -96,8 +96,7 @@ def generate_client_method(
 ```
 
 Hook executed on generation of client's method, which represents single graphql operation. Depends on the configuration method can be either async or not.
-
-
+`
 ### generate_arguments
 
 ```py
@@ -120,7 +119,85 @@ def generate_arguments_dict(
 ) -> ast.Dict:
 ```
 
-Hook executed on generation of dictionary with arguments of graphql operation. Serialized dictionary is later used as variables payload. 
+Hook executed on generation of dictionary with arguments of graphql operation. Serialized dictionary is later used as variables payload.
+
+### generate_inputs_module
+
+```py
+def generate_inputs_module(self, module: ast.Module) -> ast.Module:
+```
+
+Hook executed on generation of inputs module. Module has all classes representing inputs from schema. Later this module will be saved as `{input_types_module_name}.py`, `input_types_module_name` is taken from config.
+
+### generate_input_class
+
+```py
+def generate_input_class(
+    self, class_def: ast.ClassDef, input_type: GraphQLInputObjectType
+) -> ast.ClassDef:
+```
+
+Hook executed on generation of class definition for input from schema.
+
+### generate_input_field
+
+```py
+    def generate_input_field(
+        self,
+        field_implementation: ast.AnnAssign,
+        input_field: GraphQLInputField,
+        field_name: str,
+    ) -> ast.AnnAssign:
+```
+
+Hook executed on generation of representation for input field.
+
+### generate_result_types_module
+
+```py
+def generate_result_types_module(
+    self, module: ast.Module, operation_definition: OperationDefinitionNode
+) -> ast.Module:
+```
+
+Hook executed on generation of module with models reprenting result of given operation.
+
+### generate_operation_str
+
+```py
+def generate_operation_str(
+    self, operation_str: str, operation_definition: OperationDefinitionNode
+) -> str:
+```
+
+Hook executed on generation of string representation of given operation. Result is later used by generated client as part of payload sent to graphql server.
+
+### generate_result_class
+
+```py
+def generate_result_class(
+    self,
+    class_def: ast.ClassDef,
+    operation_definition: OperationDefinitionNode,
+    selection_set: SelectionSetNode,
+) -> ast.ClassDef:
+```
+
+Hook executed on generation of single model, part of result of given query or mutation. 
+
+
+### generate_result_field
+
+```py
+def generate_result_field(
+    self,
+    field_implementation: ast.AnnAssign,
+    operation_definition: OperationDefinitionNode,
+    field: FieldNode,
+) -> ast.AnnAssign:
+```
+
+Hook executed on generation of single model field.
 
 
 ## Example
@@ -154,4 +231,4 @@ class VersionPlugin(Plugin):
 ```toml
 [tools.version_plugin]
 version = 0.21
-``` 
+```

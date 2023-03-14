@@ -121,6 +121,7 @@ class PackageGenerator:
                 convert_to_snake_case=self.convert_to_snake_case,
                 base_model_import=self.base_model_import,
                 custom_scalars=self.custom_scalars,
+                plugin_manager=self.plugin_manager,
             )
         )
         self.enums_generator = (
@@ -181,6 +182,7 @@ class PackageGenerator:
             base_model_import=self.base_model_import,
             convert_to_snake_case=self.convert_to_snake_case,
             custom_scalars=self.custom_scalars,
+            plugin_manager=self.plugin_manager,
         )
         self.result_types_files[file_name] = query_types_generator.generate()
         operation_str = query_types_generator.get_operation_as_str()
