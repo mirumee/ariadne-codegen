@@ -262,6 +262,8 @@ class PackageGenerator:
         code = self._proccess_generated_code(
             ast_to_str(client_module), self.queries_source
         )
+        if self.plugin_manager:
+            code = self.plugin_manager.generate_client_code(code)
         client_file_path.write_text(code)
         self.generated_files.append(client_file_path.name)
 
@@ -285,6 +287,8 @@ class PackageGenerator:
     def _generate_enums(self):
         module = self.enums_generator.generate()
         code = self._proccess_generated_code(ast_to_str(module), self.schema_source)
+        if self.plugin_manager:
+            code = self.plugin_manager.generate_enums_code(code)
         enums_file_path = self.package_path / f"{self.enums_module_name}.py"
         enums_file_path.write_text(code)
         self.generated_files.append(enums_file_path.name)
@@ -295,10 +299,10 @@ class PackageGenerator:
     def _generate_input_types(self):
         module = self.input_types_generator.generate()
         input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
-        input_types_code = self._proccess_generated_code(
-            ast_to_str(module), self.schema_source
-        )
-        input_types_file_path.write_text(input_types_code)
+        code = self._proccess_generated_code(ast_to_str(module), self.schema_source)
+        if self.plugin_manager:
+            code = self.plugin_manager.generate_inputs_code(code)
+        input_types_file_path.write_text(code)
         self.generated_files.append(input_types_file_path.name)
         self.init_generator.add_import(
             self.input_types_generator.get_generated_public_names(),
@@ -312,6 +316,8 @@ class PackageGenerator:
             code = self._proccess_generated_code(
                 ast_to_str(module), self.queries_source
             )
+            if self.plugin_manager:
+                code = self.plugin_manager.generate_result_types_code(code)
             file_path.write_text(code)
             self.generated_files.append(file_path.name)
 
@@ -329,6 +335,8 @@ class PackageGenerator:
             )
         for source_path in files_to_copy:
             code = self._proccess_generated_code(source_path.read_text())
+            if self.plugin_manager:
+                code = self.plugin_manager.copy_code(code)
             target_path = self.package_path / source_path.name
             target_path.write_text(code)
             self.generated_files.append(target_path.name)
@@ -350,6 +358,8 @@ class PackageGenerator:
             self.package_path / f"{self.scalars_definitions_file_name}.py"
         )
         code = self._proccess_generated_code(ast_to_str(module))
+        if self.plugin_manager:
+            code = self.plugin_manager.generate_scalars_code(code)
         scalars_file_path.write_text(code)
         self.generated_files.append(scalars_file_path.name)
 
@@ -357,5 +367,7 @@ class PackageGenerator:
         init_file_path = self.package_path / "__init__.py"
         init_module = self.init_generator.generate()
         code = self._proccess_generated_code(ast_to_str(init_module, False))
+        if self.plugin_manager:
+            code = self.plugin_manager.generate_init_code(code)
         init_file_path.write_text(code)
         self.generated_files.append(init_file_path.name)

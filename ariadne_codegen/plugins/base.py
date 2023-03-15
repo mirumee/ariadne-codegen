@@ -123,3 +123,24 @@ class Plugin:
 
     def generate_scalars_serialize_dict(self, dict_: ast.Dict) -> ast.Dict:
         return dict_
+
+    def generate_client_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def generate_enums_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def generate_inputs_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def generate_result_types_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def copy_code(self, copied_code: str) -> str:
+        return copied_code
+
+    def generate_scalars_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def generate_init_code(self, generated_code: str) -> str:
+        return generated_code
