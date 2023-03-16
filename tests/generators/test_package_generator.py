@@ -49,6 +49,19 @@ scalar SCALARABC
 """
 
 
+@pytest.fixture
+def mocked_plugin_manager(mocker):
+    manager = mocker.MagicMock()
+    manager.generate_client_code.return_value = ""
+    manager.generate_enums_code.return_value = ""
+    manager.generate_inputs_code.return_value = ""
+    manager.generate_result_types_code.return_value = ""
+    manager.copy_code.return_value = ""
+    manager.generate_scalars_code.return_value = ""
+    manager.generate_init_code.return_value = ""
+    return manager
+
+
 def test_generate_creates_directory_and_files(tmp_path):
     package_name = "test_graphql_client"
     generator = PackageGenerator(package_name, tmp_path.as_posix(), GraphQLSchema())
@@ -570,3 +583,104 @@ def test_generate_creates_client_with_custom_scalars_imports(tmp_path):
         f"{generator.client_file_name}.py"
     ).open() as client_file:
         assert "from .abc import ScalarABC" in client_file.read()
+
+
+def test_generate_triggers_generate_client_code_hook(mocked_plugin_manager, tmp_path):
+    PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+    ).generate()
+
+    assert mocked_plugin_manager.generate_client_code.called
+
+
+def test_generate_triggers_generate_enums_code_hook(mocked_plugin_manager, tmp_path):
+    PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+    ).generate()
+
+    assert mocked_plugin_manager.generate_enums_code.called
+
+
+def test_generate_triggers_generate_inputs_code_hook(mocked_plugin_manager, tmp_path):
+    PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+    ).generate()
+
+    assert mocked_plugin_manager.generate_inputs_code.called
+
+
+def test_generate_triggers_generate_result_types_code_hook_for_every_added_operation(
+    mocked_plugin_manager, tmp_path
+):
+    generator = PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+    )
+    generator.add_operation(parse("query A { query2 { id } }").definitions[0])
+    generator.add_operation(parse("query B { query2 { id } }").definitions[0])
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_result_types_code.call_count == 2
+
+
+def test_generate_triggers_copy_code_hook_for_every_attached_dependency_file(
+    mocked_plugin_manager, tmp_path
+):
+    PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+    ).generate()
+
+    assert mocked_plugin_manager.copy_code.call_count == 3
+
+
+def test_generate_triggers_copy_code_hook_for_every_file_to_include(
+    mocked_plugin_manager, tmp_path
+):
+    test_file_path = tmp_path / "xyz.py"
+    test_file_path.touch()
+    PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+        files_to_include=[test_file_path.as_posix()],
+    ).generate()
+
+    assert mocked_plugin_manager.copy_code.call_count == 4
+
+
+def test_generate_triggers_generate_scalars_code_hook(mocked_plugin_manager, tmp_path):
+    PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+    ).generate()
+
+    assert mocked_plugin_manager.generate_scalars_code.called
+
+
+def test_generate_triggers_generate_init_code_hook(mocked_plugin_manager, tmp_path):
+    PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+    ).generate()
+
+    assert mocked_plugin_manager.generate_init_code.called

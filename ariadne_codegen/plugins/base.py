@@ -13,6 +13,7 @@ from graphql import (
 )
 
 
+# pylint: disable=too-many-public-methods
 class Plugin:
     def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
         self.schema = schema
@@ -113,3 +114,33 @@ class Plugin:
         field: FieldNode,
     ) -> ast.AnnAssign:
         return field_implementation
+
+    def generate_scalars_module(self, module: ast.Module) -> ast.Module:
+        return module
+
+    def generate_scalars_parse_dict(self, dict_: ast.Dict) -> ast.Dict:
+        return dict_
+
+    def generate_scalars_serialize_dict(self, dict_: ast.Dict) -> ast.Dict:
+        return dict_
+
+    def generate_client_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def generate_enums_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def generate_inputs_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def generate_result_types_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def copy_code(self, copied_code: str) -> str:
+        return copied_code
+
+    def generate_scalars_code(self, generated_code: str) -> str:
+        return generated_code
+
+    def generate_init_code(self, generated_code: str) -> str:
+        return generated_code

@@ -199,6 +199,91 @@ def generate_result_field(
 
 Hook executed on generation of single model field.
 
+### generate_scalars_module
+
+```py
+def generate_scalars_module(self, module: ast.Module) -> ast.Module:
+```
+
+Hook executed on generation of module with mappings for custom scalars. Later is saved as `scalars.py`.
+
+### generate_scalars_parse_dict
+
+```py
+def generate_scalars_parse_dict(self, dict_: ast.Dict) -> ast.Dict:
+```
+
+Hook executed on generation of dictionary with custom scalars parse methods.
+
+### generate_scalars_serialize_dict
+
+```py
+def generate_scalars_serialize_dict(self, dict_: ast.Dict) -> ast.Dict:
+```
+
+Hook executed on generation of dictionary with custom scalars serialize methods.
+
+### generate_client_code
+
+```py
+def generate_client_code(self, generated_code: str) -> str:
+```
+
+Hook executed on generation of client code. Result is used as content of `{client_file_name}.py`, `client_file_name` is taken from config.
+
+### generate_enums_code
+
+```py
+def generate_enums_code(self, generated_code: str) -> str:
+```
+
+Hook executed on generation of enums code. Result is used as content of `{enums_module_name}.py`, `enums_module_name` is taken from config.
+
+### generate_inputs_code
+
+```py
+def generate_inputs_code(self, generated_code: str) -> str:
+```
+
+Hook executed on generation of input models code. Result is used as content of `{input_types_module_name}.py`, `input_types_module_name` is taken from config.
+
+### generate_result_types_code
+
+```py    
+def generate_result_types_code(self, generated_code: str) -> str:
+```
+
+Hook executed on generation of result models code for one operation. Result is used as content of `{operation_name}.py`.
+
+### copy_code
+
+```py
+def copy_code(self, copied_code: str) -> str:
+```
+
+Hook executed on coping file's content to result package.
+Files hook is called for:
+- `base_client.py` or `async_base_client.py` or custom base client `base_client_file_path`
+- `base_model.py`
+- `exceptions.py`
+- all files from config's `files_to_include`
+
+### generate_scalars_code
+
+```py
+def generate_scalars_code(self, generated_code: str) -> str:
+```
+
+Hook executed on generation of scalars mappings code. Result is used as content of `scalars.py`.
+
+### generate_init_code
+
+```py
+def generate_init_code(self, generated_code: str) -> str:
+```
+
+Hook executed on generation of init code. Result is used as content of `__init__.py`.
+
 
 ## Example
 

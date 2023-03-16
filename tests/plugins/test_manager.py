@@ -211,3 +211,89 @@ def test_generate_result_field_calls_plugins_generate_result_field(
 
     assert mocked_plugin_manager.plugins[0].generate_result_field.called
     assert mocked_plugin_manager.plugins[1].generate_result_field.called
+
+
+def test_generate_scalars_module_calls_plugins_generate_scalars_module(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_scalars_module(ast.Module())
+
+    assert mocked_plugin_manager.plugins[0].generate_scalars_module.called
+    assert mocked_plugin_manager.plugins[1].generate_scalars_module.called
+
+
+def test_generate_scalars_parse_dict_calls_plugins_generate_scalars_parse_dict(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_scalars_parse_dict(ast.Dict())
+
+    assert mocked_plugin_manager.plugins[0].generate_scalars_parse_dict.called
+    assert mocked_plugin_manager.plugins[1].generate_scalars_parse_dict.called
+
+
+def test_generate_scalars_serialize_dict_calls_plugins_generate_scalars_serialize_dict(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_scalars_serialize_dict(ast.Dict())
+
+    assert mocked_plugin_manager.plugins[0].generate_scalars_serialize_dict.called
+    assert mocked_plugin_manager.plugins[1].generate_scalars_serialize_dict.called
+
+
+def test_generate_client_code_calls_plugins_generate_client_code(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_client_code("")
+
+    assert mocked_plugin_manager.plugins[0].generate_client_code.called
+    assert mocked_plugin_manager.plugins[1].generate_client_code.called
+
+
+def test_generate_enums_code_calls_plugins_generate_enums_code(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_enums_code("")
+
+    assert mocked_plugin_manager.plugins[0].generate_enums_code.called
+    assert mocked_plugin_manager.plugins[1].generate_enums_code.called
+
+
+def test_generate_inputs_code_calls_plugins_generate_inputs_code(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_inputs_code("")
+
+    assert mocked_plugin_manager.plugins[0].generate_inputs_code.called
+    assert mocked_plugin_manager.plugins[1].generate_inputs_code.called
+
+
+def test_generate_result_types_code_calls_plugins_generate_result_types_code(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_result_types_code("")
+
+    assert mocked_plugin_manager.plugins[0].generate_result_types_code.called
+    assert mocked_plugin_manager.plugins[1].generate_result_types_code.called
+
+
+def test_copy_code_calls_plugins_copy_code(mocked_plugin_manager):
+    mocked_plugin_manager.copy_code("")
+
+    assert mocked_plugin_manager.plugins[0].copy_code.called
+    assert mocked_plugin_manager.plugins[1].copy_code.called
+
+
+def test_generate_scalars_code_calls_plugins_generate_scalars_code(
+    mocked_plugin_manager,
+):
+    mocked_plugin_manager.generate_scalars_code("")
+
+    assert mocked_plugin_manager.plugins[0].generate_scalars_code.called
+    assert mocked_plugin_manager.plugins[1].generate_scalars_code.called
+
+
+def test_generate_init_code_calls_plugins_generate_init_code(mocked_plugin_manager):
+    mocked_plugin_manager.generate_init_code("")
+
+    assert mocked_plugin_manager.plugins[0].generate_init_code.called
+    assert mocked_plugin_manager.plugins[1].generate_init_code.called

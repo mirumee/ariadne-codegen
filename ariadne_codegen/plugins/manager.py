@@ -15,6 +15,7 @@ from graphql import (
 from .base import Plugin
 
 
+# pylint: disable=too-many-public-methods
 class PluginManager:
     def __init__(
         self,
@@ -154,3 +155,35 @@ class PluginManager:
             operation_definition=operation_definition,
             field=field,
         )
+
+    def generate_scalars_module(self, module: ast.Module) -> ast.Module:
+        return self._apply_plugins_on_object("generate_scalars_module", module)
+
+    def generate_scalars_parse_dict(self, dict_: ast.Dict) -> ast.Dict:
+        return self._apply_plugins_on_object("generate_scalars_parse_dict", dict_)
+
+    def generate_scalars_serialize_dict(self, dict_: ast.Dict) -> ast.Dict:
+        return self._apply_plugins_on_object("generate_scalars_serialize_dict", dict_)
+
+    def generate_client_code(self, generated_code: str) -> str:
+        return self._apply_plugins_on_object("generate_client_code", generated_code)
+
+    def generate_enums_code(self, generated_code: str) -> str:
+        return self._apply_plugins_on_object("generate_enums_code", generated_code)
+
+    def generate_inputs_code(self, generated_code: str) -> str:
+        return self._apply_plugins_on_object("generate_inputs_code", generated_code)
+
+    def generate_result_types_code(self, generated_code: str) -> str:
+        return self._apply_plugins_on_object(
+            "generate_result_types_code", generated_code
+        )
+
+    def copy_code(self, copied_code: str) -> str:
+        return self._apply_plugins_on_object("copy_code", copied_code)
+
+    def generate_scalars_code(self, generated_code: str) -> str:
+        return self._apply_plugins_on_object("generate_scalars_code", generated_code)
+
+    def generate_init_code(self, generated_code: str) -> str:
+        return self._apply_plugins_on_object("generate_init_code", generated_code)
