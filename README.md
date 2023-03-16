@@ -33,7 +33,7 @@ $ pip install ariadne-codegen
 
 ## Configuration
 
-`ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`'.
+`ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`'. You can change file, configuration is read from, using `--config` option, eg. `ariadne-codegen --config custom_file.toml`
 
 Required settings:
 
@@ -188,6 +188,15 @@ from .mixins import UsersMixin
 ...
 class ListUsersUsers(BaseModel, UsersMixin):
     ...
+```
+
+
+## Multiple clients
+
+To generate multiple different clients you can store config for each in different file, then provide path to config file by `--config` option, eg.
+```
+ariadne-codegen --config clientA.toml
+ariadne-codegen --config clientB.toml
 ```
 
 
