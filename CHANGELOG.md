@@ -10,6 +10,7 @@
 - Added `ScalarsDefinitionsGenerator` and `PackageGenerator` plugin hooks.
 - Added support for `[tool.ariadne-codegen]` section key. Deprecated `[ariadne-codegen]`.
 - Added support for environment variables to remote schema headers values.
+- Added `--config` argument to `ariadne-codegen` script, to support reading configuration from custom path.
 
 
 ## 0.3.0 (2023-02-21)
