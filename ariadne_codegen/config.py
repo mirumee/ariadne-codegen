@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field, fields
 from keyword import iskeyword
 from pathlib import Path
@@ -64,6 +65,8 @@ class Settings:
         for file_path in self.files_to_include:
             self._assert_path_is_valid_file(file_path)
 
+        self._resolve_remote_schema_headers()
+
     def _set_default_base_client_data(self):
         if not self.base_client_name and not self.base_client_file_path:
             generators_path = Path(__file__).parent / "generators" / "dependencies"
@@ -100,6 +103,25 @@ class Settings:
         file_content = file_path.read_text()
         if f"class {class_name}" not in file_content:
             raise InvalidConfiguration(f"Cannot import {class_name} from {file_path}")
+
+    def _resolve_remote_schema_headers(self):
+        self.remote_schema_headers = {
+            key: self._get_header_value(value)
+            for key, value in self.remote_schema_headers.items()
+        }
+
+    def _get_header_value(self, value: str) -> str:
+        env_var_prefix = "$"
+        if value.startswith(env_var_prefix):
+            env_var_name = value.lstrip(env_var_prefix)
+            var_value = os.environ.get(env_var_name)
+            if not var_value:
+                raise InvalidConfiguration(
+                    f"Environment variable {env_var_name} not found."
+                )
+            return var_value
+
+        return value
 
 
 def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
