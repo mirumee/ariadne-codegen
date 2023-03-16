@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from textwrap import dedent
 
@@ -126,6 +127,47 @@ def test_settings_without_schema_path_or_remote_schema_url_raises_exception(
 
     with pytest.raises(InvalidConfiguration):
         Settings(queries_path=queries_path)
+
+
+def test_settings_resolves_env_variable_for_remote_schema_header_value_with_prefix(
+    tmp_path, mocker
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    mocker.patch.dict(os.environ, {"TEST_VAR": "test_value"})
+
+    settings = Settings(
+        queries_path=queries_path,
+        remote_schema_url="https://test",
+        remote_schema_headers={"Authorization": "$TEST_VAR"},
+    )
+
+    assert settings.remote_schema_headers["Authorization"] == "test_value"
+
+
+def test_settings_doesnt_resolve_remote_schema_header_without_prefix(tmp_path):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = Settings(
+        queries_path=queries_path,
+        remote_schema_url="https://test",
+        remote_schema_headers={"Authorization": "no_prefix"},
+    )
+
+    assert settings.remote_schema_headers["Authorization"] == "no_prefix"
+
+
+def test_settings_raises_invalid_configuration_for_not_found_env_variable(tmp_path):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    with pytest.raises(InvalidConfiguration):
+        Settings(
+            queries_path=queries_path,
+            remote_schema_url="https://test",
+            remote_schema_headers={"Authorization": "$TEST_VAR"},
+        )
 
 
 def test_get_used_settings_message_returns_string_with_data_from_given_settings(

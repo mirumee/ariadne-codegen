@@ -9,6 +9,7 @@
 - Added `InputTypesGenerator` and `ResultTypesGenerator` plugin hooks.
 - Added `ScalarsDefinitionsGenerator` and `PackageGenerator` plugin hooks.
 - Added support for `[tool.ariadne-codegen]` section key. Deprecated `[ariadne-codegen]`.
+- Added support for environment variables to remote schema headers values.
 
 
 ## 0.3.0 (2023-02-21)
