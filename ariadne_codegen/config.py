@@ -187,7 +187,7 @@ def get_section(config_dict: Dict) -> Dict:
             "and will be dropped in future release. "
             f"Instead use [{tool_key}.{codegen_key}].",
             DeprecationWarning,
-            stacklevel=3,
+            stacklevel=2,
         )
         return config_dict[codegen_key]
 
