@@ -8,6 +8,7 @@
 - Added `InitFileGenerator`, `EnumsGenerator`, `ClientGenerator` and `ArgumentsGenerator` plugin hooks.
 - Added `InputTypesGenerator` and `ResultTypesGenerator` plugin hooks.
 - Added `ScalarsDefinitionsGenerator` and `PackageGenerator` plugin hooks.
+- Added support for `[tool.ariadne-codegen]` section key. Deprecated `[ariadne-codegen]`.
 
 
 ## 0.3.0 (2023-02-21)

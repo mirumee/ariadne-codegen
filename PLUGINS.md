@@ -314,6 +314,6 @@ class VersionPlugin(Plugin):
 `VersionPlugin` reads version from parsed `pyproject.toml`, eg. following entry will produce `__version__ = "0.21"`.
 
 ```toml
-[tools.version_plugin]
+[tool.version_plugin]
 version = 0.21
 ```

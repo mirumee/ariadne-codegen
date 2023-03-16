@@ -6,6 +6,7 @@ from ariadne_codegen.config import (
     Settings,
     get_config_dict,
     get_config_file_path,
+    get_section,
     parse_config_dict,
 )
 from ariadne_codegen.exceptions import ConfigFileNotFound, MissingConfiguration
@@ -20,7 +21,7 @@ def config_file(tmp_path_factory):
     queries_path = file_.parent.joinpath("queries")
     queries_path.mkdir()
     config = """
-        [ariadne-codegen]
+        [tool.ariadne-codegen]
         schema_path = "schema.graphql"
         queries_path = "queries"
     """
@@ -65,17 +66,19 @@ def test_parse_config_dict_returns_settings_object(tmp_path):
     queries_path = tmp_path / "queries.graphql"
     queries_path.touch()
     config_dict = {
-        "ariadne-codegen": {
-            "schema_path": schema_path.as_posix(),
-            "queries_path": queries_path.as_posix(),
-            "scalars": {
-                "ID": {
-                    "type": "str",
-                    "parse": "parse_id",
-                    "serialize": "serialize_id",
-                    "import": ".custom_scalars",
-                }
-            },
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "queries_path": queries_path.as_posix(),
+                "scalars": {
+                    "ID": {
+                        "type": "str",
+                        "parse": "parse_id",
+                        "serialize": "serialize_id",
+                        "import": ".custom_scalars",
+                    }
+                },
+            }
         }
     }
     settings = parse_config_dict(config_dict)
@@ -101,7 +104,7 @@ def test_parse_config_dict_without_section_raises_missing_configuration_exceptio
 
 
 def test_parse_config_dict_without_field_raises_missing_configuration_exception():
-    config_dict = {"ariadne-codegen": {"invalid_field": "."}}
+    config_dict = {"tool": {"ariadne-codegen": {"invalid_field": "."}}}
 
     with pytest.raises(MissingConfiguration):
         parse_config_dict(config_dict)
@@ -115,12 +118,31 @@ def test_parse_config_dict_with_invalid_scalar_section_raises_missing_configurat
     queries_path = tmp_path / "queries.graphql"
     queries_path.touch()
     config_dict = {
-        "ariadne-codegen": {
-            "schema_path": schema_path.as_posix(),
-            "queries_path": queries_path.as_posix(),
-            "scalars": {"ID": {"invalid_key": "str"}},
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "queries_path": queries_path.as_posix(),
+                "scalars": {"ID": {"invalid_key": "str"}},
+            }
         }
     }
 
     with pytest.raises(MissingConfiguration):
         parse_config_dict(config_dict)
+
+
+def test_get_section_returns_correct_dictionary_from_tool_key():
+    section_dict = {"schema_path": ".", "queries_path": "."}
+    config_dict = {"tool": {"ariadne-codegen": section_dict}}
+
+    assert get_section(config_dict) == section_dict
+
+
+def test_get_section_returns_dict_from_codegen_key_and_raises_deprecation_warning():
+    section_dict = {"schema_path": ".", "queries_path": "."}
+    config_dict = {"ariadne-codegen": section_dict}
+
+    with pytest.deprecated_call():
+        result = get_section(config_dict)
+
+    assert result == section_dict

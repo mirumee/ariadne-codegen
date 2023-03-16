@@ -1,4 +1,4 @@
-[ariadne-codegen]
+[tool.ariadne-codegen]
 schema_path = "schema.graphql"
 queries_path = "not_valid_query.graphql"
 include_comments = false

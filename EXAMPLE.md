@@ -113,10 +113,10 @@ fragment UserPersonalData on User {
 
 ## Running
 
-Add `[ariadne-codegen]` section to `pyproject.toml` with paths to files with [schema](#schema-file) and [queries/mutations](#queriesmutations-file).
+Add `[tool.ariadne-codegen]` section to `pyproject.toml` with paths to files with [schema](#schema-file) and [queries/mutations](#queriesmutations-file).
 
 ```toml
-[ariadne-codegen]
+[tool.ariadne-codegen]
 schema_path = "schema.graphql" 
 queries_path = "queries.graphql"
 ```
