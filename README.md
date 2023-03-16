@@ -33,7 +33,7 @@ $ pip install ariadne-codegen
 
 ## Configuration
 
-`ariadne-codegen` reads configuration from `[ariadne-codegen]` section in your `pyproject.toml`'.
+`ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`'.
 
 Required settings:
 
@@ -97,7 +97,7 @@ By default, not built-in scalars are represented as `typing.Any` in generated cl
 You can provide information about specific scalar by adding section to `pyproject.toml`:
 
 ```toml
-[ariadne-codegen.scalars.{graphql scalar name}]
+[tool.ariadne-codegen.scalars.{graphql scalar name}]
 type = "(required) python type name"
 serialize = "function used to serialize scalar"
 parse = "function used to create scalar instance from serialized form"
@@ -112,7 +112,7 @@ All occurences of `{graphql scalar name}` will be represented as `type`. If prov
 In this case scalar is mapped to built-in `str` which doesn\`t require custom `serialize ` and `parse` methods. 
 
 ```toml
-[ariadne-codegen.scalars.SCALARA]
+[tool.ariadne-codegen.scalars.SCALARA]
 type = "str"
 ```
 
@@ -122,7 +122,7 @@ type = "str"
 In this scenario scalar is represented as `datetime`, so it needs to be imported. Pydantic handles serialization and deserialization so custom `parse` and `serialize` is not necessary.
 
 ```toml
-[ariadne-codegen.scalars.DATETIME]
+[tool.ariadne-codegen.scalars.DATETIME]
 type = "datetime"
 import = "datetime"
 ```
@@ -133,11 +133,11 @@ import = "datetime"
 In this example scalar is represented as class `TypeB`. Pydantic can\`t handle  serialization and deserialization so custom `parse` and `serialize` is necessary. To provide `type`, `parse` and `serialize` implementation we can use `files_to_include` to copy `type_b.py` file.
 
 ```toml
-[ariadne-codegen]
+[tool.ariadne-codegen]
 ...
 files_to_include = [".../type_b.py"]
 
-[ariadne-codegen.scalars.SCALARB]
+[tool.ariadne-codegen.scalars.SCALARB]
 type = "TypeB"
 parse = "parse_b"
 serialize = "serialize_b"
