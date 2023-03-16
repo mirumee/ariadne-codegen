@@ -82,7 +82,3 @@ include = [
 exclude = [
   "tests",
 ]
-
-[ariadne-codegen]
-schema_path = "."
-queries_path = "."

@@ -3,11 +3,14 @@ from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Optional
+from warnings import simplefilter, warn
 
 import toml
 
 from .exceptions import ConfigFileNotFound, InvalidConfiguration, MissingConfiguration
 from .generators.scalars import ScalarData
+
+simplefilter("default", DeprecationWarning)
 
 
 @dataclass
@@ -115,16 +118,11 @@ def get_config_dict() -> Dict:
     return toml.load(config_path)
 
 
-def parse_config_dict(
-    config_dict: Dict, section_key: str = "ariadne-codegen"
-) -> Settings:
+def parse_config_dict(config_dict: Dict) -> Settings:
     """
     Parse configuration from toml file. Raise exception if section or key was not found.
     """
-    if section_key not in config_dict:
-        raise MissingConfiguration(f"Config has no [{section_key}] section.")
-    section = config_dict[section_key]
-
+    section = get_section(config_dict)
     try:
         section["scalars"] = {
             name: ScalarData(
@@ -144,10 +142,30 @@ def parse_config_dict(
         return Settings(**section)
     except TypeError as exc:
         expected_fields = {f.name for f in fields(Settings)}
-        missing_fields = expected_fields.difference(config_dict[section_key])
+        missing_fields = expected_fields.difference(section)
         raise MissingConfiguration(
             f"Missing configuration fields: {', '.join(missing_fields)}"
         ) from exc
+
+
+def get_section(config_dict: Dict) -> Dict:
+    """Get section from config dict."""
+    tool_key = "tool"
+    codegen_key = "ariadne-codegen"
+    if tool_key in config_dict and codegen_key in config_dict.get(tool_key, {}):
+        return config_dict[tool_key][codegen_key]
+
+    if codegen_key in config_dict:
+        warn(
+            f"Support for [{codegen_key}] section has been deprecated "
+            "and will be dropped in future release. "
+            f"Instead use [{tool_key}.{codegen_key}].",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return config_dict[codegen_key]
+
+    raise MissingConfiguration(f"Config has no [{tool_key}.{codegen_key}] section.")
 
 
 def get_used_settings_message(settings: Settings) -> str:
