@@ -60,6 +60,15 @@ def test_get_config_dict_returns_file_content_as_dict(config_file, mocker):
     assert isinstance(config_dict, dict)
 
 
+def test_get_config_dict_reads_file_with_provided_name(config_file, mocker):
+    mock_cwd(mocker, config_file.parent)
+    config_file.rename(config_file.parent / "test.toml")
+
+    config_dict = get_config_dict("test.toml")
+
+    assert isinstance(config_dict, dict)
+
+
 def test_parse_config_dict_returns_settings_object(tmp_path):
     schema_path = tmp_path / "schema.graphql"
     schema_path.touch()

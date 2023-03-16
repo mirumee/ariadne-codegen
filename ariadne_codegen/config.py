@@ -134,10 +134,14 @@ def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
     return directory.joinpath(file_name).resolve()
 
 
-def get_config_dict() -> Dict:
+def get_config_dict(config_file_name: Optional[str] = None) -> Dict:
     """Get config dict."""
-    config_path = get_config_file_path()
-    return toml.load(config_path)
+    if config_file_name:
+        config_file_path = get_config_file_path(config_file_name)
+    else:
+        config_file_path = get_config_file_path()
+
+    return toml.load(config_file_path)
 
 
 def parse_config_dict(config_dict: Dict) -> Settings:
@@ -183,7 +187,7 @@ def get_section(config_dict: Dict) -> Dict:
             "and will be dropped in future release. "
             f"Instead use [{tool_key}.{codegen_key}].",
             DeprecationWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
         return config_dict[codegen_key]
 
