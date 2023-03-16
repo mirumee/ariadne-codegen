@@ -17,7 +17,7 @@ from .schema import (
 
 @click.command()
 @click.version_option()
-@click.option("--config", default=None, help="Path to custom configuration path.")
+@click.option("--config", default=None, help="Path to custom configuration file.")
 def main(config=None):
     config_dict = get_config_dict(config)
     settings = parse_config_dict(config_dict)
