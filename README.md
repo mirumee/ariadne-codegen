@@ -33,7 +33,7 @@ $ pip install ariadne-codegen
 
 ## Configuration
 
-`ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`'. You can change file, configuration is read from, using `--config` option, eg. `ariadne-codegen --config custom_file.toml`
+`ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`'. You can use other configuration file with `--config` option, eg. `ariadne-codegen --config custom_file.toml`
 
 Required settings:
 
