@@ -1,6 +1,7 @@
 import os
 from importlib.metadata import version
 from pathlib import Path
+from typing import List
 
 import httpx
 import pytest
@@ -18,8 +19,7 @@ from ariadne_codegen.main import main
 def project_dir(request, tmp_path):
     pyproject_path, files_to_copy = request.param
     tmp_path.joinpath("pyproject.toml").write_text(pyproject_path.read_text())
-    for file_ in files_to_copy:
-        tmp_path.joinpath(file_.name).write_text(file_.read_text())
+    copy_files(files_to_copy, tmp_path)
 
     old_cwd = Path.cwd()
     os.chdir(tmp_path)
@@ -27,6 +27,11 @@ def project_dir(request, tmp_path):
     yield tmp_path
 
     os.chdir(old_cwd)
+
+
+def copy_files(files_to_copy: List[Path], target_dir: Path):
+    for file_ in files_to_copy:
+        target_dir.joinpath(file_.name).write_text(file_.read_text())
 
 
 def assert_the_same_files_in_directories(dir1: Path, dir2: Path):
@@ -209,3 +214,28 @@ def test_main_uses_remote_schema_url_and_remote_schema_headers(
     assert mocked_post.called_with(
         url="http://test/graphql/", headers={"header1": "value1", "header2": "value2"}
     )
+
+
+def test_main_can_read_config_from_provided_file(tmp_path):
+    old_cwd = Path.cwd()
+    files_to_copy = (
+        Path(__file__).parent / "custom_config_file" / "config.toml",
+        Path(__file__).parent / "custom_config_file" / "queries.graphql",
+        Path(__file__).parent / "custom_config_file" / "schema.graphql",
+    )
+    copy_files(files_to_copy, tmp_path)
+    expected_client_path = (
+        Path(__file__).parent / "custom_config_file" / "expected_client"
+    )
+    package_name = "custom_config_client"
+
+    os.chdir(tmp_path)
+    result = CliRunner().invoke(
+        main, args="--config config.toml", catch_exceptions=False
+    )
+    os.chdir(old_cwd)
+
+    assert result.exit_code == 0
+    package_path = tmp_path / package_name
+    assert package_path.is_dir()
+    assert_the_same_files_in_directories(package_path, expected_client_path)

@@ -17,8 +17,9 @@ from .schema import (
 
 @click.command()
 @click.version_option()
-def main():
-    config_dict = get_config_dict()
+@click.option("--config", default=None, help="Path to custom configuration file.")
+def main(config=None):
+    config_dict = get_config_dict(config)
     settings = parse_config_dict(config_dict)
     if settings.schema_path:
         schema = get_graphql_schema_from_path(settings.schema_path)
