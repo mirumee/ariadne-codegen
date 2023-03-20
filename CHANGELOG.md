@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.4.0 (2023-03-20)
 
 - Fixed generating models from interfaces with inline fragments.
 - Added default `None` values for generated methods optional arguments.
