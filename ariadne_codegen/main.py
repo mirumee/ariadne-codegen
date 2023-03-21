@@ -2,8 +2,8 @@ import sys
 
 import click
 
+from .client_generators.package import PackageGenerator
 from .config import get_config_dict, get_used_settings_message, parse_config_dict
-from .generators.package import PackageGenerator
 from .plugins.explorer import get_plugins_types
 from .plugins.manager import PluginManager
 from .schema import (

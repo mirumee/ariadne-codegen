@@ -2,6 +2,7 @@ from textwrap import dedent
 
 import pytest
 
+from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.config import (
     Settings,
     get_config_dict,
@@ -10,7 +11,6 @@ from ariadne_codegen.config import (
     parse_config_dict,
 )
 from ariadne_codegen.exceptions import ConfigFileNotFound, MissingConfiguration
-from ariadne_codegen.generators.scalars import ScalarData
 
 
 @pytest.fixture

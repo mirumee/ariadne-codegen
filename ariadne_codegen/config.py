@@ -8,8 +8,12 @@ from warnings import simplefilter, warn
 
 import toml
 
+from .client_generators.constants import (
+    DEFAULT_ASYNC_BASE_CLIENT_PATH,
+    DEFAULT_BASE_CLIENT_PATH,
+)
+from .client_generators.scalars import ScalarData
 from .exceptions import ConfigFileNotFound, InvalidConfiguration, MissingConfiguration
-from .generators.scalars import ScalarData
 
 simplefilter("default", DeprecationWarning)
 
@@ -69,16 +73,11 @@ class Settings:
 
     def _set_default_base_client_data(self):
         if not self.base_client_name and not self.base_client_file_path:
-            generators_path = Path(__file__).parent / "generators" / "dependencies"
             if self.async_client:
-                self.base_client_file_path = generators_path.joinpath(
-                    "async_base_client.py"
-                ).as_posix()
+                self.base_client_file_path = DEFAULT_ASYNC_BASE_CLIENT_PATH.as_posix()
                 self.base_client_name = "AsyncBaseClient"
             else:
-                self.base_client_file_path = generators_path.joinpath(
-                    "base_client.py"
-                ).as_posix()
+                self.base_client_file_path = DEFAULT_BASE_CLIENT_PATH.as_posix()
                 self.base_client_name = "BaseClient"
 
     def _assert_path_exists(self, path: str):

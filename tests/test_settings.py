@@ -4,8 +4,8 @@ from textwrap import dedent
 
 import pytest
 
-import ariadne_codegen.generators.dependencies.async_base_client
-import ariadne_codegen.generators.dependencies.base_client
+import ariadne_codegen.client_generators.dependencies.async_base_client
+import ariadne_codegen.client_generators.dependencies.base_client
 from ariadne_codegen.config import Settings, get_used_settings_message
 from ariadne_codegen.exceptions import InvalidConfiguration
 
@@ -81,12 +81,14 @@ def test_settings_with_base_client_not_defined_in_file_raises_configuration_exce
         (
             True,
             "AsyncBaseClient",
-            Path(ariadne_codegen.generators.dependencies.async_base_client.__file__),
+            Path(
+                ariadne_codegen.client_generators.dependencies.async_base_client.__file__
+            ),
         ),
         (
             False,
             "BaseClient",
-            Path(ariadne_codegen.generators.dependencies.base_client.__file__),
+            Path(ariadne_codegen.client_generators.dependencies.base_client.__file__),
         ),
     ],
 )
