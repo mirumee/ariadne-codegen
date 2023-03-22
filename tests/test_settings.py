@@ -76,24 +76,22 @@ def test_settings_with_base_client_not_defined_in_file_raises_configuration_exce
 
 
 @pytest.mark.parametrize(
-    "async_client,expected_name,expected_path",
+    "async_client,expected_name,file_path",
     [
         (
             True,
             "AsyncBaseClient",
-            Path(
-                ariadne_codegen.client_generators.dependencies.async_base_client.__file__
-            ),
+            ariadne_codegen.client_generators.dependencies.async_base_client.__file__,
         ),
         (
             False,
             "BaseClient",
-            Path(ariadne_codegen.client_generators.dependencies.base_client.__file__),
+            ariadne_codegen.client_generators.dependencies.base_client.__file__,
         ),
     ],
 )
 def test_settings_sets_correct_default_values_for_base_client_name_and_path(
-    tmp_path, async_client, expected_name, expected_path
+    tmp_path, async_client, expected_name, file_path
 ):
     schema_path = tmp_path / "schema.graphql"
     schema_path.touch()
@@ -105,7 +103,7 @@ def test_settings_sets_correct_default_values_for_base_client_name_and_path(
     )
 
     assert settings.base_client_name == expected_name
-    assert settings.base_client_file_path == expected_path.as_posix()
+    assert settings.base_client_file_path == Path(file_path).as_posix()
 
 
 def test_settings_without_schema_path_with_remote_schema_url_doesnt_raise_exception(

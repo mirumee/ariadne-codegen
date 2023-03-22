@@ -21,7 +21,6 @@ from graphql import (
 
 from ..codegen import (
     generate_annotation_name,
-    generate_arguments,
     generate_call,
     generate_constant,
     generate_dict,
@@ -142,7 +141,7 @@ def parse_input_const_value_node(
                 keywords=[
                     generate_keyword(
                         arg="default_factory",
-                        value=generate_lambda(args=generate_arguments(), body=list_),
+                        value=generate_lambda(body=list_),
                     )
                 ],
             )

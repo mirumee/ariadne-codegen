@@ -264,9 +264,9 @@ def generate_list(elements: List[Optional[ast.expr]]) -> ast.List:
     return ast.List(elts=elements)
 
 
-def generate_lambda(args: ast.arguments, body: ast.expr) -> ast.Lambda:
+def generate_lambda(body: ast.expr, args: Optional[ast.arguments] = None) -> ast.Lambda:
     """Generate lambda definition."""
-    return ast.Lambda(args=args, body=body)
+    return ast.Lambda(args=args or generate_arguments(), body=body)
 
 
 def generate_field_with_alias(name):
