@@ -21,6 +21,3 @@ STANDARD_SCALARS = {
     "Boolean": "GraphQLBoolean",
     "ID": "GraphQLID",
 }
-
-DEFAULT_TYPE_MAP_NAME = "type_map"
-DEFAULT_SCHEMA_VARIABLE_NAME = "schema"

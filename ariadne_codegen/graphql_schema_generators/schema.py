@@ -17,21 +17,22 @@ from ..codegen import (
     generate_name,
 )
 from ..utils import ast_to_str
-from .constants import (
-    DEFAULT_SCHEMA_VARIABLE_NAME,
-    DEFAULT_TYPE_MAP_NAME,
-    STANDARD_TYPES,
-)
+from .constants import STANDARD_TYPES
 from .directives import generate_directive
 from .named_types import generate_named_type
 from .utils import get_optional_named_type
 
 
-def generate_graphql_schema(schema: GraphQLSchema, target_file_path: str):
+def generate_graphql_schema(
+    schema: GraphQLSchema,
+    target_file_path: str,
+    type_map_name: str,
+    schema_variable_name: str,
+):
     module = generate_schema_module(
         schema,
-        type_map_name=DEFAULT_TYPE_MAP_NAME,
-        schema_variable_name=DEFAULT_SCHEMA_VARIABLE_NAME,
+        type_map_name=type_map_name,
+        schema_variable_name=schema_variable_name,
     )
     code = ast_to_str(module)
     Path(target_file_path).write_text(code, encoding="UTF-8")
@@ -73,7 +74,7 @@ def generate_schema_module(
                 names=["TypeMap"],
                 from_="graphql.type.schema",
             ),
-            generate_import_from(names=["cast"], from_="typing"),
+            generate_import_from(names=["cast", "List"], from_="typing"),
             generate_ann_assign(
                 target=type_map_name,
                 annotation=generate_name("TypeMap"),

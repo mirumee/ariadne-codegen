@@ -4,17 +4,17 @@ import pytest
 
 from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.config import (
-    Settings,
+    ClientSettings,
     get_config_dict,
     get_config_file_path,
     get_section,
-    parse_config_dict,
+    get_client_settings,
 )
 from ariadne_codegen.exceptions import ConfigFileNotFound, MissingConfiguration
 
 
 @pytest.fixture
-def config_file(tmp_path_factory):
+def client_config_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("project").joinpath("pyproject.toml")
     schema_path = file_.parent.joinpath("schema.graphql")
     schema_path.touch()
@@ -33,43 +33,45 @@ def mock_cwd(mocker, path):
     mocker.patch("ariadne_codegen.config.Path.cwd", return_value=path)
 
 
-def test_get_config_file_path_finds_file_in_cwd(config_file, mocker):
-    mock_cwd(mocker, config_file.parent)
-    assert get_config_file_path("pyproject.toml") == config_file
+def test_get_config_file_path_finds_file_in_cwd(client_config_file, mocker):
+    mock_cwd(mocker, client_config_file.parent)
+    assert get_config_file_path("pyproject.toml") == client_config_file
 
 
-def test_get_config_file_path_finds_file_in_parent_directory(config_file, mocker):
-    nested_dir = config_file.parent.joinpath("nested")
+def test_get_config_file_path_finds_file_in_parent_directory(
+    client_config_file, mocker
+):
+    nested_dir = client_config_file.parent.joinpath("nested")
     mock_cwd(mocker, nested_dir)
-    assert get_config_file_path("pyproject.toml") == config_file
+    assert get_config_file_path("pyproject.toml") == client_config_file
 
 
 def test_get_config_file_path_raises_config_file_not_found_exception_if_file_not_found(
-    config_file, mocker
+    client_config_file, mocker
 ):
-    mock_cwd(mocker, config_file.parent)
+    mock_cwd(mocker, client_config_file.parent)
     with pytest.raises(ConfigFileNotFound):
         get_config_file_path("invalid.toml")
 
 
-def test_get_config_dict_returns_file_content_as_dict(config_file, mocker):
-    mock_cwd(mocker, config_file.parent)
+def test_get_config_dict_returns_file_content_as_dict(client_config_file, mocker):
+    mock_cwd(mocker, client_config_file.parent)
 
     config_dict = get_config_dict()
 
     assert isinstance(config_dict, dict)
 
 
-def test_get_config_dict_reads_file_with_provided_name(config_file, mocker):
-    mock_cwd(mocker, config_file.parent)
-    config_file.rename(config_file.parent / "test.toml")
+def test_get_config_dict_reads_file_with_provided_name(client_config_file, mocker):
+    mock_cwd(mocker, client_config_file.parent)
+    client_config_file.rename(client_config_file.parent / "test.toml")
 
     config_dict = get_config_dict("test.toml")
 
     assert isinstance(config_dict, dict)
 
 
-def test_parse_config_dict_returns_settings_object(tmp_path):
+def test_get_client_settings_returns_client_settings_object(tmp_path):
     schema_path = tmp_path / "schema.graphql"
     schema_path.touch()
     queries_path = tmp_path / "queries.graphql"
@@ -90,9 +92,9 @@ def test_parse_config_dict_returns_settings_object(tmp_path):
             }
         }
     }
-    settings = parse_config_dict(config_dict)
+    settings = get_client_settings(config_dict)
 
-    assert isinstance(settings, Settings)
+    assert isinstance(settings, ClientSettings)
     assert settings.schema_path == schema_path.as_posix()
     assert settings.queries_path == queries_path.as_posix()
     assert settings.scalars == {
@@ -105,21 +107,21 @@ def test_parse_config_dict_returns_settings_object(tmp_path):
     }
 
 
-def test_parse_config_dict_without_section_raises_missing_configuration_exception():
+def test_get_client_settings_without_section_raises_missing_configuration_exception():
     config_dict = {"invalid-section": {"schema_path": "."}}
 
     with pytest.raises(MissingConfiguration):
-        parse_config_dict(config_dict)
+        get_client_settings(config_dict)
 
 
-def test_parse_config_dict_without_field_raises_missing_configuration_exception():
+def testget_client_settings_without_field_raises_missing_configuration_exception():
     config_dict = {"tool": {"ariadne-codegen": {"invalid_field": "."}}}
 
     with pytest.raises(MissingConfiguration):
-        parse_config_dict(config_dict)
+        get_client_settings(config_dict)
 
 
-def test_parse_config_dict_with_invalid_scalar_section_raises_missing_configuration(
+def test_get_client_settings_with_invalid_scalar_section_raises_missing_configuration(
     tmp_path,
 ):
     schema_path = tmp_path / "schema.graphql"
@@ -137,7 +139,30 @@ def test_parse_config_dict_with_invalid_scalar_section_raises_missing_configurat
     }
 
     with pytest.raises(MissingConfiguration):
-        parse_config_dict(config_dict)
+        get_client_settings(config_dict)
+
+
+def test_get_client_settings_returns_client_settings_object_ignoring_extra_fields(
+    tmp_path,
+):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    config_dict = {
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "queries_path": queries_path.as_posix(),
+                "extra_key": "extra",
+            }
+        }
+    }
+    settings = get_client_settings(config_dict)
+
+    assert isinstance(settings, ClientSettings)
+    assert settings.schema_path == schema_path.as_posix()
+    assert settings.queries_path == queries_path.as_posix()
 
 
 def test_get_section_returns_correct_dictionary_from_tool_key():
