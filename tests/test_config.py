@@ -4,13 +4,14 @@ import pytest
 
 from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.config import (
-    ClientSettings,
+    get_client_settings,
     get_config_dict,
     get_config_file_path,
     get_section,
-    get_client_settings,
+    get_graphql_schema_settings,
 )
 from ariadne_codegen.exceptions import ConfigFileNotFound, MissingConfiguration
+from ariadne_codegen.settings import GraphQLSchemaSettings, ClientSettings
 
 
 @pytest.fixture
@@ -180,3 +181,32 @@ def test_get_section_returns_dict_from_codegen_key_and_raises_deprecation_warnin
         result = get_section(config_dict)
 
     assert result == section_dict
+
+
+def test_get_graphql_schema_settings_returns_graphql_schema_settings_object(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    config_dict = {"tool": {"ariadne-codegen": {"schema_path": schema_path.as_posix()}}}
+    settings = get_graphql_schema_settings(config_dict)
+
+    assert isinstance(settings, GraphQLSchemaSettings)
+    assert settings.schema_path == schema_path.as_posix()
+
+
+def test_get_graphql_schema_settings_returns_settings_object_ignoring_extra_fields(
+    tmp_path,
+):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    config_dict = {
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "extra_field": "extra",
+            }
+        }
+    }
+    settings = get_graphql_schema_settings(config_dict)
+
+    assert isinstance(settings, GraphQLSchemaSettings)
+    assert settings.schema_path == schema_path.as_posix()

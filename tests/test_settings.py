@@ -6,7 +6,7 @@ import pytest
 
 import ariadne_codegen.client_generators.dependencies.async_base_client
 import ariadne_codegen.client_generators.dependencies.base_client
-from ariadne_codegen.config import ClientSettings
+from ariadne_codegen.config import ClientSettings, GraphQLSchemaSettings
 from ariadne_codegen.exceptions import InvalidConfiguration
 
 
@@ -201,3 +201,46 @@ def test_client_settings_used_settings_message_returns_string_with_summary_of_da
     assert settings.base_client_file_path in result
     assert settings.enums_module_name in result
     assert settings.input_types_module_name in result
+
+
+def test_graphq_schema_settings_without_remote_schema_url_with_schema_path_is_valid(
+    tmp_path,
+):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+
+    settings = GraphQLSchemaSettings(schema_path=schema_path.as_posix())
+
+    assert settings.remote_schema_url is None
+
+
+def test_graphq_schema_settings_without_schema_path_with_remote_schema_url_is_valid():
+    settings = GraphQLSchemaSettings(remote_schema_url="http://testserver/graphq/")
+
+    assert settings.schema_path is None
+
+
+def test_graphq_schema_settings_without_schema_path_or_remote_schema_url_is_not_valid():
+    with pytest.raises(InvalidConfiguration):
+        GraphQLSchemaSettings()
+
+
+def test_graphql_schema_settings_raises_invalid_configuration_for_invalid_schema_path():
+    with pytest.raises(InvalidConfiguration):
+        GraphQLSchemaSettings(schema_path="not_exisitng.graphql")
+
+
+def test_graphql_schema_settings_with_invalid_schema_variable_name_raises_exception():
+    with pytest.raises(InvalidConfiguration):
+        GraphQLSchemaSettings(
+            remote_schema_url="http://testserver/graphq/",
+            schema_variable_name="!schema?",
+        )
+
+
+def test_graphql_schema_settings_with_invalid_type_map_variable_name_raises_exception():
+    with pytest.raises(InvalidConfiguration):
+        GraphQLSchemaSettings(
+            remote_schema_url="http://testserver/graphq/",
+            type_map_variable_name="1type_map",
+        )
