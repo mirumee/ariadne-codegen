@@ -39,7 +39,7 @@ def generate_field_map(
     fields: GraphQLFieldMap, type_map_name: str
 ) -> Union[ast.Lambda, ast.Constant]:
     if not fields:
-        return generate_constant([])
+        return generate_constant({})
 
     fields_dict = generate_dict()
     for name, field in fields.items():
