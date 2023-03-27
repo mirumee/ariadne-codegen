@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## UNRELEASED
+
+- Added generation of graphql schema's python representation.
+
+
 ## 0.4.0 (2023-03-20)
 
 - Fixed generating models from interfaces with inline fragments.
