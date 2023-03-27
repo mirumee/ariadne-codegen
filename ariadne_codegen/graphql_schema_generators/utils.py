@@ -13,24 +13,6 @@ from ..codegen import (
 )
 
 
-def get_optional_named_type(
-    type_: Optional[GraphQLNamedType], type_map_name: str
-) -> Union[ast.Constant, ast.Call]:
-    if not type_:
-        return generate_constant(None)
-
-    return generate_call(
-        func=generate_name("cast"),
-        args=[
-            generate_name(type_.__class__.__name__),
-            generate_subscript(
-                value=generate_name(type_map_name),
-                slice_=generate_constant(type_.name),
-            ),
-        ],
-    )
-
-
 def get_named_type(type_: GraphQLNamedType, type_map_name: str) -> ast.Call:
     return generate_call(
         func=generate_name("cast"),
@@ -42,6 +24,15 @@ def get_named_type(type_: GraphQLNamedType, type_map_name: str) -> ast.Call:
             ),
         ],
     )
+
+
+def get_optional_named_type(
+    type_: Optional[GraphQLNamedType], type_map_name: str
+) -> Union[ast.Constant, ast.Call]:
+    if not type_:
+        return generate_constant(None)
+
+    return get_named_type(type_=type_, type_map_name=type_map_name)
 
 
 def get_list_of_named_types(
