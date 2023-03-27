@@ -20,11 +20,26 @@ class Strategy(str, enum.Enum):
 
 
 @dataclass
-class ClientSettings:
-    queries_path: str
+class BaseSettings:
     schema_path: Optional[str] = None
     remote_schema_url: Optional[str] = None
     remote_schema_headers: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        if not self.schema_path and not self.remote_schema_url:
+            raise InvalidConfiguration(
+                "Schema source not provided. Use schema_path or remote_schema_url"
+            )
+
+        if self.schema_path:
+            assert_path_exists(self.schema_path)
+
+        self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
+
+
+@dataclass
+class ClientSettings(BaseSettings):
+    queries_path: str = ""
     target_package_name: str = "graphql_client"
     target_package_path: str = field(default_factory=lambda: Path.cwd().as_posix())
     client_name: str = "Client"
@@ -41,15 +56,11 @@ class ClientSettings:
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
 
     def __post_init__(self):
-        if not self.schema_path and not self.remote_schema_url:
-            raise InvalidConfiguration(
-                "Schema source not provided. Use schema_path or remote_schema_url"
-            )
+        if not self.queries_path:
+            raise TypeError("__init__ missing 1 required argument: 'queries_path'")
+        super().__post_init__()
 
         self._set_default_base_client_data()
-
-        if self.schema_path:
-            assert_path_exists(self.schema_path)
         assert_path_exists(self.queries_path)
 
         assert_string_is_valid_python_identifier(self.target_package_name)
@@ -69,8 +80,6 @@ class ClientSettings:
 
         for file_path in self.files_to_include:
             assert_path_is_valid_file(file_path)
-
-        self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
 
     def _set_default_base_client_data(self):
         if not self.base_client_name and not self.base_client_file_path:
@@ -132,26 +141,15 @@ class ClientSettings:
 
 
 @dataclass
-class GraphQLSchemaSettings:
-    schema_path: Optional[str] = None
-    remote_schema_url: Optional[str] = None
-    remote_schema_headers: dict = field(default_factory=dict)
+class GraphQLSchemaSettings(BaseSettings):
     target_file_path: str = "schema.py"
     schema_variable_name: str = "schema"
     type_map_variable_name: str = "type_map"
 
     def __post_init__(self):
-        if not self.schema_path and not self.remote_schema_url:
-            raise InvalidConfiguration(
-                "Schema source not provided. Use schema_path or remote_schema_url"
-            )
-
-        if self.schema_path:
-            assert_path_exists(self.schema_path)
+        super().__post_init__()
         assert_string_is_valid_python_identifier(self.schema_variable_name)
         assert_string_is_valid_python_identifier(self.type_map_variable_name)
-
-        self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
 
     @property
     def used_settings_message(self):
