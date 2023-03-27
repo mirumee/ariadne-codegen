@@ -3,8 +3,9 @@ import ast
 from graphql import GraphQLNamedType
 
 from ariadne_codegen.graphql_schema_generators.utils import (
+    get_list_of_named_types,
     get_named_type,
-    get_optional_named_type, get_list_of_named_types
+    get_optional_named_type,
 )
 
 from ..utils import compare_ast

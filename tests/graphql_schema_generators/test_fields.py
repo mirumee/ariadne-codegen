@@ -129,8 +129,6 @@ def test_generate_field_map_returns_correct_lambda():
         ),
     )
 
-    a = generate_field_map(field_map, "type_map")
-
     assert compare_ast(generate_field_map(field_map, "type_map"), expected_ast)
 
 

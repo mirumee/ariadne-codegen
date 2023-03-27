@@ -7,11 +7,11 @@ from ariadne_codegen.config import (
     get_client_settings,
     get_config_dict,
     get_config_file_path,
-    get_section,
     get_graphql_schema_settings,
+    get_section,
 )
 from ariadne_codegen.exceptions import ConfigFileNotFound, MissingConfiguration
-from ariadne_codegen.settings import GraphQLSchemaSettings, ClientSettings
+from ariadne_codegen.settings import ClientSettings, GraphQLSchemaSettings
 
 
 @pytest.fixture

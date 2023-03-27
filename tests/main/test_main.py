@@ -17,6 +17,7 @@ from ariadne_codegen.main import main
 CLIENTS_PATH = Path(__file__).parent / "clients"
 GRAPHQL_SCHEMAS_PATH = Path(__file__).parent / "graphql_schemas"
 
+
 @pytest.fixture(scope="function")
 def project_dir(request, tmp_path):
     pyproject_path, files_to_copy = request.param
