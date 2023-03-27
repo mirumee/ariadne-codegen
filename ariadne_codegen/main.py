@@ -4,7 +4,7 @@ import click
 
 from .client_generators.package import PackageGenerator
 from .config import get_client_settings, get_config_dict, get_graphql_schema_settings
-from .graphql_schema_generators.schema import generate_graphql_schema
+from .graphql_schema_generators.schema import generate_graphql_schema_file
 from .plugins.explorer import get_plugins_types
 from .plugins.manager import PluginManager
 from .schema import (
@@ -94,7 +94,7 @@ def graphql_schema(config_dict):
         )
     )
 
-    generate_graphql_schema(
+    generate_graphql_schema_file(
         schema=schema,
         target_file_path=settings.target_file_path,
         type_map_name=settings.type_map_variable_name,

@@ -23,7 +23,7 @@ from .named_types import generate_named_type
 from .utils import get_optional_named_type
 
 
-def generate_graphql_schema(
+def generate_graphql_schema_file(
     schema: GraphQLSchema,
     target_file_path: str,
     type_map_name: str,
