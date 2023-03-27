@@ -235,3 +235,34 @@ def test_main_can_read_config_from_provided_file(tmp_path):
     package_path = tmp_path / package_name
     assert package_path.is_dir()
     assert_the_same_files_in_directories(package_path, expected_client_path)
+
+
+@pytest.mark.parametrize(
+    "project_dir, file_name, expected_file_path",
+    [
+        (
+            (
+                GRAPHQL_SCHEMAS_PATH / "example" / "pyproject.toml",
+                (GRAPHQL_SCHEMAS_PATH / "example" / "schema.graphql",),
+            ),
+            "example_schema.py",
+            GRAPHQL_SCHEMAS_PATH / "example" / "expected_schema.py",
+        ),
+        (
+            (
+                GRAPHQL_SCHEMAS_PATH / "all_types" / "pyproject.toml",
+                (GRAPHQL_SCHEMAS_PATH / "all_types" / "schema.graphql",),
+            ),
+            "schema.py",
+            GRAPHQL_SCHEMAS_PATH / "all_types" / "expected_schema.py",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_generates_correct_schema_file(project_dir, file_name, expected_file_path):
+    result = CliRunner().invoke(main, "graphqlschema")
+
+    assert result.exit_code == 0
+    schema_path = project_dir / file_name
+
+    assert schema_path.read_text() == expected_file_path.read_text()

@@ -1,0 +1,45 @@
+directive @testDirective on FIELD_DEFINITION
+
+schema {
+  query: QueryType
+  mutation: MutationType
+  subscription: SubscriptionType
+}
+
+type QueryType {
+  _query: String!
+}
+
+type MutationType {
+  _mutation: String!
+}
+
+type SubscriptionType {
+  _subscription: String!
+}
+
+input InputA {
+  fieldA: Int!
+}
+
+interface InterfaceB {
+  id: ID!
+}
+
+type TypeC implements InterfaceB {
+  id: ID!
+  fieldC: Float!
+}
+
+type TypeD {
+  fieldD: Boolean!
+}
+
+union UnionE = TypeC | TypeD
+
+enum EnumF {
+  F1
+  F2
+}
+
+scalar ScalarG
