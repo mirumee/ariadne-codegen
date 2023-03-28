@@ -33,6 +33,7 @@ jobs:
         mypy ariadne_codegen --ignore-missing-imports
         # these test outputs represent things that may be committed into other projects that may
         # have strict mypy settings, and so they should be maximally annotated.
-        mypy --strict tests/main/*/expected_client
+        mypy --strict tests/main/clients/*/expected_client
+        mypy --strict tests/main/graphql_schemas/*/expected_schema.py
         black --check .
         isort . --check-only

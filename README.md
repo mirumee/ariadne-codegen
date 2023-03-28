@@ -213,6 +213,26 @@ Generated code requires:
 Example with simple schema and few queries and mutations is available [here](https://github.com/mirumee/ariadne-codegen/blob/main/EXAMPLE.md).
 
 
+## Generating graphql schema's python representation
+
+Instead of generating client, you can generate file with a copy of GraphQL schema as `GraphQLSchema` declaration. To do this call `ariadne-codegen` with `graphqlschema` argument:
+```
+ariadne-codegen graphqlschema
+```
+
+`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers` options with addition to some extra options specific to it:    
+
+- `target_file_path` (defaults to `"schema.py"`) - destination path for generated file
+- `schema_variable_name` (defaults to `"schema"`) - name for schema variable, must be valid python identifier
+- `type_map_variable_name` (defaults to `"type_map"`) - name for type map variable, must be valid python identifier
+
+Generated file contains:
+
+- Necessary imports
+- Type map declaration `{type_map_variable_name}: TypeMap = {...}`
+- Schema declaration `{schema_variable_name}: GraphQLSchema = GraphQLSchema(...)` 
+
+
 ## Contributing
 
 We welcome all contributions to Ariadne! If you've found a bug or issue, feel free to use [GitHub issues](https://github.com/mirumee/ariadne-codegen/issues). If you have any questions or feedback, don't hesitate to catch us on [GitHub discussions](https://github.com/mirumee/ariadne/discussions/).

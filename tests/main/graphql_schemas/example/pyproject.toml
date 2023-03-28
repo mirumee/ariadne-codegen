@@ -1,0 +1,5 @@
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+target_file_path = "example_schema.py"
+schema_variable_name = "example_schema"
+type_map_variable_name = "example_type_map"
