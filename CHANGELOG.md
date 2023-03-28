@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-- Added generation of graphql schema's python representation.
+- Added generation of GraphQL schema's Python representation.
 
 
 ## 0.4.0 (2023-03-20)
