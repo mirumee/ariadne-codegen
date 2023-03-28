@@ -291,24 +291,60 @@ def test_parse_operation_field_type_returns_annotation_and_names_for_union():
     assert names == expected_names
 
 
-def test_parse_operation_field_type_returns_annotation_for_list():
-    type_ = GraphQLNonNull(
-        GraphQLList(type_=GraphQLNonNull(GraphQLObjectType("TestType", fields={})))
-    )
-    expected_annotation = ast.Subscript(
-        value=ast.Name(id=LIST), slice=ast.Name('"TestQueryField"')
-    )
-
-    expected_names = [
-        FieldNames(class_name="TestQueryField", type_name="TestType"),
-    ]
-
+@pytest.mark.parametrize(
+    "type_, expected_annotation",
+    [
+        (
+            GraphQLNonNull(
+                GraphQLList(
+                    type_=GraphQLNonNull(GraphQLObjectType("TestType", fields={}))
+                )
+            ),
+            ast.Subscript(value=ast.Name(id=LIST), slice=ast.Name('"TestQueryField"')),
+        ),
+        (
+            GraphQLNonNull(GraphQLList(type_=GraphQLObjectType("TestType", fields={}))),
+            ast.Subscript(
+                value=ast.Name(id=LIST),
+                slice=ast.Subscript(
+                    value=ast.Name(OPTIONAL), slice=ast.Name('"TestQueryField"')
+                ),
+            ),
+        ),
+        (
+            GraphQLList(type_=GraphQLNonNull(GraphQLObjectType("TestType", fields={}))),
+            ast.Subscript(
+                value=ast.Name(OPTIONAL),
+                slice=ast.Subscript(
+                    value=ast.Name(id=LIST), slice=ast.Name('"TestQueryField"')
+                ),
+            ),
+        ),
+        (
+            GraphQLList(type_=GraphQLObjectType("TestType", fields={})),
+            ast.Subscript(
+                value=ast.Name(OPTIONAL),
+                slice=ast.Subscript(
+                    value=ast.Name(id=LIST),
+                    slice=ast.Subscript(
+                        value=ast.Name(OPTIONAL), slice=ast.Name('"TestQueryField"')
+                    ),
+                ),
+            ),
+        ),
+    ],
+)
+def test_parse_operation_field_type_returns_annotation_for_list(
+    type_, expected_annotation
+):
     annotation, names = parse_operation_field_type(
         field=FieldNode(), type_=type_, class_name="TestQueryField"
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == expected_names
+    assert names == [
+        FieldNames(class_name="TestQueryField", type_name="TestType"),
+    ]
 
 
 @pytest.mark.parametrize(
