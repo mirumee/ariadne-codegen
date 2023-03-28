@@ -156,7 +156,7 @@ Generated client class inherits from `AsyncBaseClient` and has async method for 
 ```py
 # graphql_client/client.py
 
-from typing import Any, List, Optional
+from typing import Optional
 
 from .async_base_client import AsyncBaseClient
 from .create_user import CreateUser

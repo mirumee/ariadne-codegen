@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
-from .custom_scalars import Code, parse_code, serialize_code
+from .custom_scalars import Code, serialize_code
 from .get_test import GetTest
 from .input_types import TestInput
 
