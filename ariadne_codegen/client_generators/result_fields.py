@@ -133,7 +133,6 @@ def parse_operation_field_type(
         slice_, names = parse_operation_field_type(
             field=field,
             type_=cast(CodegenResultFieldType, type_.of_type),
-            nullable=nullable,
             class_name=class_name,
             custom_scalars=custom_scalars,
         )
