@@ -67,6 +67,8 @@ class ClientGenerator:
 
     def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
         """Add import to be included in module file."""
+        if not names:
+            return
         import_ = generate_import_from(names=names, from_=from_, level=level)
         if self.plugin_manager:
             import_ = self.plugin_manager.generate_client_import(import_)

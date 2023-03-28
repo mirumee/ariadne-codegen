@@ -2,6 +2,8 @@ import ast
 
 from ariadne_codegen.client_generators.init_file import InitFileGenerator
 
+from ..utils import filter_imports
+
 
 def test_add_import_adds_correct_objects_to_list():
     from_ = "file_name"
@@ -25,6 +27,16 @@ def test_add_import_triggers_generate_init_import_hook_method(mocker):
     generator.add_import(names=["TestClass"], from_="test", level=1)
 
     assert mocked_plugin_manager.generate_init_import.called
+
+
+def test_add_import_with_empty_names_list_doesnt_add_invalid_import():
+    generator = InitFileGenerator()
+
+    generator.add_import(names=[], from_="abcd", level=1)
+    module = generator.generate()
+
+    imports = filter_imports(module)
+    assert not imports
 
 
 def test_generate_without_imports_returns_empty_module():

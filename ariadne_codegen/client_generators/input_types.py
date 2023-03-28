@@ -74,7 +74,7 @@ class InputTypesGenerator:
         if self._used_scalars:
             for scalar_name in self._used_scalars:
                 scalar_data = self.custom_scalars[scalar_name]
-                if scalar_data.import_:
+                if scalar_data.import_ and scalar_data.names_to_import:
                     self._imports.append(
                         generate_import_from(
                             names=scalar_data.names_to_import, from_=scalar_data.import_
