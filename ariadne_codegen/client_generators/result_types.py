@@ -15,6 +15,7 @@ from graphql import (
     InlineFragmentNode,
     NameNode,
     OperationDefinitionNode,
+    OperationType,
     SelectionNode,
     SelectionSetNode,
     StringValueNode,
@@ -92,9 +93,20 @@ class ResultTypesGenerator:
 
         self._class_defs = self._parse_type_definition(
             class_name=str_to_pascal_case(self.operation_definition.name.value),
-            type_name=self.operation_definition.operation.value.capitalize(),
+            type_name=self._get_operation_type_name(
+                self.operation_definition.operation
+            ),
             selection_set=self.operation_definition.selection_set,
         )
+
+    def _get_operation_type_name(self, operation_type: OperationType) -> str:
+        if operation_type == OperationType.QUERY and self.schema.query_type:
+            return self.schema.query_type.name
+
+        if operation_type == OperationType.MUTATION and self.schema.mutation_type:
+            return self.schema.mutation_type.name
+
+        raise NotSupported(f"Not supported operation type: {operation_type}")
 
     def generate(self) -> ast.Module:
         if self._used_enums:

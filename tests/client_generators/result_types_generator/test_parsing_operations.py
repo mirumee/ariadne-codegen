@@ -2,12 +2,7 @@ import ast
 from typing import Tuple, cast
 
 import pytest
-from graphql import (
-    FragmentDefinitionNode,
-    OperationDefinitionNode,
-    build_ast_schema,
-    parse,
-)
+from graphql import FragmentDefinitionNode, OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.client_generators.constants import (
     BASE_MODEL_CLASS_NAME,
@@ -162,7 +157,7 @@ def test_generate_returns_module_with_generated_result_types_from_query(
         OperationDefinitionNode, parse(query_str).definitions[0]
     )
     generator = ResultTypesGenerator(
-        schema=build_ast_schema(parse(SCHEMA_STR)),
+        schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
     )
@@ -217,7 +212,7 @@ def test_generate_returns_module_with_types_generated_from_mutation():
         ),
     ]
     generator = ResultTypesGenerator(
-        schema=build_ast_schema(parse(SCHEMA_STR)),
+        schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
     )
@@ -255,7 +250,7 @@ def test_generate_returns_module_with_class_per_every_field():
         "CustomQueryQuery3Field2",
     ]
     generator = ResultTypesGenerator(
-        schema=build_ast_schema(parse(SCHEMA_STR)),
+        schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
     )
@@ -314,7 +309,7 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
         decorator_list=[],
     )
     generator = ResultTypesGenerator(
-        schema=build_ast_schema(parse(SCHEMA_STR)),
+        schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
         fragments_definitions={"TestFragment": fragment_def},
@@ -397,7 +392,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
         ),
     ]
     generator = ResultTypesGenerator(
-        schema=build_ast_schema(parse(SCHEMA_STR)),
+        schema=build_schema(SCHEMA_STR),
         operation_definition=cast(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
@@ -408,3 +403,68 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
 
     class_defs = filter_class_defs(module)
     assert compare_ast(class_defs, expected_class_defs)
+
+
+@pytest.mark.parametrize(
+    "operation_str, expected_class_def",
+    [
+        (
+            "query TestQuery { testQ }",
+            ast.ClassDef(
+                name="TestQuery",
+                bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+                decorator_list=[],
+                keywords=[],
+                body=[
+                    ast.AnnAssign(
+                        target=ast.Name(id="testQ"),
+                        annotation=ast.Name(id="str"),
+                        simple=1,
+                    )
+                ],
+            ),
+        ),
+        (
+            "mutation TestMutation { testM }",
+            ast.ClassDef(
+                name="TestMutation",
+                bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+                decorator_list=[],
+                keywords=[],
+                body=[
+                    ast.AnnAssign(
+                        target=ast.Name(id="testM"),
+                        annotation=ast.Name(id="str"),
+                        simple=1,
+                    )
+                ],
+            ),
+        ),
+    ],
+)
+def test_generate_returns_module_for_schema_with_custom_operation_type_name(
+    operation_str, expected_class_def
+):
+    schema_str = """
+    schema {
+        query: CustomQueryType
+        mutation: CustomMutationType
+    }
+    type CustomQueryType { testQ: String! }
+    type CustomMutationType { testM: String! }
+    """
+    generator = ResultTypesGenerator(
+        schema=build_schema(schema_str),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(operation_str).definitions[0]
+        ),
+        enums_module_name="enums",
+        convert_to_snake_case=False,
+    )
+
+    module = generator.generate()
+
+    assert isinstance(module, ast.Module)
+    class_defs = filter_class_defs(module)
+    assert len(class_defs) == 1
+    assert compare_ast(class_defs[0], expected_class_def)
