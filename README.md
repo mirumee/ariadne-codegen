@@ -221,7 +221,7 @@ Instead of generating client, you can generate file with a copy of GraphQL schem
 ariadne-codegen graphqlschema
 ```
 
-`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers`, `remote_schema_verify_ssl` options with addition to some extra options specific to it:    
+`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers` and `remote_schema_verify_ssl` options with addition to some extra options specific to it:    
 
 - `target_file_path` (defaults to `"schema.py"`) - destination path for generated file
 - `schema_variable_name` (defaults to `"schema"`) - name for schema variable, must be valid python identifier
