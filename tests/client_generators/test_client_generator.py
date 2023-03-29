@@ -2,7 +2,7 @@ import ast
 
 from ariadne_codegen.client_generators.client import ClientGenerator
 
-from ..utils import compare_ast, get_class_def
+from ..utils import compare_ast, filter_imports, get_class_def
 
 
 def test_generate_returns_module_with_correct_class_name():
@@ -87,6 +87,17 @@ def test_add_import_adds_import_to_generated_module():
     assert isinstance(generated_import, ast.ImportFrom)
     assert generated_import.module == from_
     assert [n.name for n in generated_import.names] == [name]
+
+
+def test_add_import_with_empty_names_list_doesnt_add_invalid_import():
+    generator = ClientGenerator("Client", "BaseClient")
+    number_of_pre_existing_imports = len(generator.imports)
+
+    generator.add_import([], from_="abc")
+    module = generator.generate()
+
+    imports = filter_imports(module)
+    assert len(imports) == number_of_pre_existing_imports
 
 
 def test_add_import_triggers_generate_client_import_hook(mocker):

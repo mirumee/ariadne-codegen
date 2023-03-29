@@ -358,7 +358,6 @@ def test_get_graphql_queries_returns_schema_definitions_from_single_file(
 def test_get_graphql_queries_returns_schema_definitions_from_directory(
     queries_directory,
 ):
-
     queries = get_graphql_queries(queries_directory.as_posix())
     assert len(queries) == 2
     assert isinstance(queries[0], OperationDefinitionNode)

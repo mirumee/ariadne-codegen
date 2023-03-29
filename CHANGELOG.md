@@ -5,6 +5,7 @@
 - Added generation of GraphQL schema's Python representation.
 - Fixed annotations for lists.
 - Fixed support of custom operation types names.
+- Unlocked versions of black, isort, autoflake and dev dependencies
 
 
 ## 0.4.0 (2023-03-20)
