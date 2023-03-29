@@ -6,6 +6,7 @@
 - Fixed annotations for lists.
 - Fixed support of custom operation types names.
 - Unlocked versions of black, isort, autoflake and dev dependencies
+- Added `remote_schema_verify_ssl` option.
 
 
 ## 0.4.0 (2023-03-20)
