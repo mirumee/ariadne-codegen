@@ -23,7 +23,6 @@ class PluginManager:
         config_dict: Optional[Dict] = None,
         plugins_types: Optional[List[Type[Plugin]]] = None,
     ) -> None:
-
         self.plugins: List[Plugin] = [
             cls(schema=schema, config_dict=config_dict or {})
             for cls in plugins_types or []

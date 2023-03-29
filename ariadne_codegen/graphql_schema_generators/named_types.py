@@ -132,7 +132,6 @@ def generate_enum_type(type_: GraphQLEnumType, *_) -> ast.Call:
 def generate_input_object_type(
     type_: GraphQLInputObjectType, type_map_name: str
 ) -> ast.Call:
-
     return generate_call(
         func=generate_name("GraphQLInputObjectType"),
         keywords=[
