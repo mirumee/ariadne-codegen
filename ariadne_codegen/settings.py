@@ -24,6 +24,7 @@ class BaseSettings:
     schema_path: Optional[str] = None
     remote_schema_url: Optional[str] = None
     remote_schema_headers: dict = field(default_factory=dict)
+    remote_schema_verify_ssl: bool = True
 
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:

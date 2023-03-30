@@ -42,7 +42,9 @@ def client(config_dict):
         schema_source = settings.schema_path
     else:
         schema = get_graphql_schema_from_url(
-            url=settings.remote_schema_url, headers=settings.remote_schema_headers
+            url=settings.remote_schema_url,
+            headers=settings.remote_schema_headers,
+            verify_ssl=settings.remote_schema_verify_ssl,
         )
         schema_source = settings.remote_schema_url
 
@@ -90,7 +92,9 @@ def graphql_schema(config_dict):
         get_graphql_schema_from_path(settings.schema_path)
         if settings.schema_path
         else get_graphql_schema_from_url(
-            url=settings.remote_schema_url, headers=settings.remote_schema_headers
+            url=settings.remote_schema_url,
+            headers=settings.remote_schema_headers,
+            verify_ssl=settings.remote_schema_verify_ssl,
         )
     )
 
