@@ -136,9 +136,7 @@ class InputTypesGenerator:
                     field_implementation, input_field=field, field_name=org_name
                 )
             class_def.body.append(field_implementation)
-            self._save_used_enums_scalars_and_dependencies(
-                class_name=class_def.name, field_type=field_type
-            )
+            self._save_used_enums_and_scalars(field_type=field_type)
 
         if self.plugin_manager:
             class_def = self.plugin_manager.generate_input_class(
@@ -174,14 +172,10 @@ class InputTypesGenerator:
                 )
         return field_with_alias
 
-    def _save_used_enums_scalars_and_dependencies(
-        self, class_name: str, field_type: str = ""
-    ) -> None:
+    def _save_used_enums_and_scalars(self, field_type: str = "") -> None:
         if not field_type:
             return
-        if isinstance(self.schema.type_map[field_type], GraphQLInputObjectType):
-            self._dependencies[class_name].append(field_type)
-        elif isinstance(self.schema.type_map[field_type], GraphQLEnumType):
+        if isinstance(self.schema.type_map[field_type], GraphQLEnumType):
             self._used_enums.append(field_type)
         elif isinstance(self.schema.type_map[field_type], GraphQLScalarType):
             self._used_scalars.append(field_type)
