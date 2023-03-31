@@ -282,17 +282,48 @@ def test_parse_input_const_value_node_given_list_returns_correct_method_call(
             ),
             "TestInput",
             ast.Call(
-                func=ast.Attribute(value=ast.Name(id="TestInput"), attr="parse_obj"),
-                args=[
-                    ast.Dict(
-                        keys=[
-                            ast.Constant(value="fieldA"),
-                            ast.Constant(value="fieldB"),
-                        ],
-                        values=[ast.Constant(value="a"), ast.Constant(value="B")],
+                func=ast.Name(id="Field"),
+                args=[],
+                keywords=[
+                    ast.keyword(
+                        arg="default_factory",
+                        value=ast.Lambda(
+                            args=ast.arguments(
+                                posonlyargs=[],
+                                args=[],
+                                kwonlyargs=[],
+                                kw_defaults=[],
+                                defaults=[],
+                            ),
+                            body=ast.Call(
+                                func=ast.Attribute(
+                                    value=ast.Subscript(
+                                        value=ast.Call(
+                                            func=ast.Name(id="globals"),
+                                            args=[],
+                                            keywords=[],
+                                        ),
+                                        slice=ast.Constant(value="TestInput"),
+                                    ),
+                                    attr="parse_obj",
+                                ),
+                                args=[
+                                    ast.Dict(
+                                        keys=[
+                                            ast.Constant(value="fieldA"),
+                                            ast.Constant(value="fieldB"),
+                                        ],
+                                        values=[
+                                            ast.Constant(value="a"),
+                                            ast.Constant(value="B"),
+                                        ],
+                                    )
+                                ],
+                                keywords=[],
+                            ),
+                        ),
                     )
                 ],
-                keywords=[],
             ),
         ),
         (
@@ -313,19 +344,47 @@ def test_parse_input_const_value_node_given_list_returns_correct_method_call(
             ),
             "TestInput",
             ast.Call(
-                func=ast.Attribute(value=ast.Name(id="TestInput"), attr="parse_obj"),
-                args=[
-                    ast.Dict(
-                        keys=[ast.Constant(value="nestedField")],
-                        values=[
-                            ast.Dict(
-                                keys=[ast.Constant(value="fieldA")],
-                                values=[ast.Constant(value="a")],
-                            )
-                        ],
+                func=ast.Name(id="Field"),
+                args=[],
+                keywords=[
+                    ast.keyword(
+                        arg="default_factory",
+                        value=ast.Lambda(
+                            args=ast.arguments(
+                                posonlyargs=[],
+                                args=[],
+                                kwonlyargs=[],
+                                kw_defaults=[],
+                                defaults=[],
+                            ),
+                            body=ast.Call(
+                                func=ast.Attribute(
+                                    value=ast.Subscript(
+                                        value=ast.Call(
+                                            func=ast.Name(id="globals"),
+                                            args=[],
+                                            keywords=[],
+                                        ),
+                                        slice=ast.Constant(value="TestInput"),
+                                    ),
+                                    attr="parse_obj",
+                                ),
+                                args=[
+                                    ast.Dict(
+                                        keys=[ast.Constant(value="nestedField")],
+                                        values=[
+                                            ast.Dict(
+                                                keys=[ast.Constant(value="fieldA")],
+                                                values=[ast.Constant(value="a")],
+                                            )
+                                        ],
+                                    )
+                                ],
+                                keywords=[],
+                            ),
+                        ),
                     )
                 ],
-                keywords=[],
             ),
         ),
     ],
@@ -333,6 +392,7 @@ def test_parse_input_const_value_node_given_list_returns_correct_method_call(
 def test_parse_input_const_value_node_given_object_returns_correct_method_call(
     node, field_type, expected_result
 ):
+    a = parse_input_const_value_node(node=node, field_type=field_type)
     assert compare_ast(
         parse_input_const_value_node(node=node, field_type=field_type), expected_result
     )

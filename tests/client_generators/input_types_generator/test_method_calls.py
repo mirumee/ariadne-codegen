@@ -35,7 +35,7 @@ def test_generate_returns_modules_with_update_forward_refs_calls():
         ast.Expr(
             value=ast.Call(
                 func=ast.Attribute(
-                    value=ast.Name(id="NestedInput"), attr=UPDATE_FORWARD_REFS_METHOD
+                    value=ast.Name(id="TestInput"), attr=UPDATE_FORWARD_REFS_METHOD
                 ),
                 args=[],
                 keywords=[],
@@ -44,7 +44,7 @@ def test_generate_returns_modules_with_update_forward_refs_calls():
         ast.Expr(
             value=ast.Call(
                 func=ast.Attribute(
-                    value=ast.Name(id="TestInput"), attr=UPDATE_FORWARD_REFS_METHOD
+                    value=ast.Name(id="NestedInput"), attr=UPDATE_FORWARD_REFS_METHOD
                 ),
                 args=[],
                 keywords=[],

@@ -6,11 +6,6 @@ from .base_model import BaseModel
 from .enums import Color
 
 
-class LocationInput(BaseModel):
-    city: Optional[str]
-    country: Optional[str]
-
-
 class UserCreateInput(BaseModel):
     first_name: Optional[str] = Field(alias="firstName")
     last_name: Optional[str] = Field(alias="lastName")
@@ -19,11 +14,9 @@ class UserCreateInput(BaseModel):
     location: Optional["LocationInput"]
 
 
-class NotificationsPreferencesInput(BaseModel):
-    receive_mails: bool = Field(alias="receiveMails")
-    receive_push_notifications: bool = Field(alias="receivePushNotifications")
-    receive_sms: bool = Field(alias="receiveSms")
-    title: str
+class LocationInput(BaseModel):
+    city: Optional[str]
+    country: Optional[str]
 
 
 class UserPreferencesInput(BaseModel):
@@ -35,7 +28,7 @@ class UserPreferencesInput(BaseModel):
     )
     notifications_preferences: "NotificationsPreferencesInput" = Field(
         alias="notificationsPreferences",
-        default=NotificationsPreferencesInput.parse_obj(
+        default_factory=lambda: globals()["NotificationsPreferencesInput"].parse_obj(
             {
                 "receiveMails": True,
                 "receivePushNotifications": True,
@@ -46,7 +39,14 @@ class UserPreferencesInput(BaseModel):
     )
 
 
-LocationInput.update_forward_refs()
+class NotificationsPreferencesInput(BaseModel):
+    receive_mails: bool = Field(alias="receiveMails")
+    receive_push_notifications: bool = Field(alias="receivePushNotifications")
+    receive_sms: bool = Field(alias="receiveSms")
+    title: str
+
+
 UserCreateInput.update_forward_refs()
-NotificationsPreferencesInput.update_forward_refs()
+LocationInput.update_forward_refs()
 UserPreferencesInput.update_forward_refs()
+NotificationsPreferencesInput.update_forward_refs()
