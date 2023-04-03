@@ -7,6 +7,7 @@
 - Fixed support of custom operation types names.
 - Unlocked versions of black, isort, autoflake and dev dependencies
 - Added `remote_schema_verify_ssl` option.
+- Changed how default values for inputs are generated to handle potential cycles.
 
 
 ## 0.4.0 (2023-03-20)
