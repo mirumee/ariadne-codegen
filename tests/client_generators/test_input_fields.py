@@ -392,7 +392,6 @@ def test_parse_input_const_value_node_given_list_returns_correct_method_call(
 def test_parse_input_const_value_node_given_object_returns_correct_method_call(
     node, field_type, expected_result
 ):
-    a = parse_input_const_value_node(node=node, field_type=field_type)
     assert compare_ast(
         parse_input_const_value_node(node=node, field_type=field_type), expected_result
     )
