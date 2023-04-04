@@ -80,14 +80,13 @@ class InputTypesGenerator:
                             names=scalar_data.names_to_import, from_=scalar_data.import_
                         )
                     )
-        sorted_class_defs = self._get_sorted_class_defs()
         update_forward_refs_calls = [
             generate_expr(generate_method_call(c.name, UPDATE_FORWARD_REFS_METHOD))
-            for c in sorted_class_defs
+            for c in self._class_defs
         ]
         module_body = (
             cast(List[ast.stmt], self._imports)
-            + cast(List[ast.stmt], sorted_class_defs)
+            + cast(List[ast.stmt], self._class_defs)
             + cast(List[ast.stmt], update_forward_refs_calls)
         )
         module = generate_module(body=module_body)
@@ -136,9 +135,7 @@ class InputTypesGenerator:
                     field_implementation, input_field=field, field_name=org_name
                 )
             class_def.body.append(field_implementation)
-            self._save_used_enums_scalars_and_dependencies(
-                class_name=class_def.name, field_type=field_type
-            )
+            self._save_used_enums_and_scalars(field_type=field_type)
 
         if self.plugin_manager:
             class_def = self.plugin_manager.generate_input_class(
@@ -174,40 +171,10 @@ class InputTypesGenerator:
                 )
         return field_with_alias
 
-    def _save_used_enums_scalars_and_dependencies(
-        self, class_name: str, field_type: str = ""
-    ) -> None:
+    def _save_used_enums_and_scalars(self, field_type: str = "") -> None:
         if not field_type:
             return
-        if isinstance(self.schema.type_map[field_type], GraphQLInputObjectType):
-            self._dependencies[class_name].append(field_type)
-        elif isinstance(self.schema.type_map[field_type], GraphQLEnumType):
+        if isinstance(self.schema.type_map[field_type], GraphQLEnumType):
             self._used_enums.append(field_type)
         elif isinstance(self.schema.type_map[field_type], GraphQLScalarType):
             self._used_scalars.append(field_type)
-
-    def _get_sorted_class_defs(self) -> List[ast.ClassDef]:
-        input_class_defs_dict_ = {c.name: c for c in self._class_defs}
-
-        processed_names = []
-        for class_ in self._class_defs:
-            if class_.name not in processed_names:
-                processed_names.extend(self._get_dependant_names(class_.name))
-                processed_names.append(class_.name)
-
-        names_without_duplicates = self._get_list_without_duplicates(processed_names)
-        return [input_class_defs_dict_[n] for n in names_without_duplicates]
-
-    def _get_dependant_names(self, name: str) -> List[str]:
-        result = []
-        for dependency_name in self._dependencies[name]:
-            result.extend(self._get_dependant_names(dependency_name))
-            result.append(dependency_name)
-        return result
-
-    def _get_list_without_duplicates(self, list_: list) -> list:
-        result = []
-        for element in list_:
-            if not element in result:
-                result.append(element)
-        return result

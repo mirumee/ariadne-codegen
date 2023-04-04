@@ -148,19 +148,49 @@ def test_generate_returns_module_with_parsed_inputs_object_field_with_default_va
     }
     """
     expected_field_value = ast.Call(
-        func=ast.Attribute(value=ast.Name(id="SecondInput"), attr="parse_obj"),
-        args=[
-            ast.Dict(keys=[ast.Constant(value="val")], values=[ast.Constant(value=5)])
+        func=ast.Name(id="Field"),
+        args=[],
+        keywords=[
+            ast.keyword(
+                arg="default_factory",
+                value=ast.Lambda(
+                    args=ast.arguments(
+                        posonlyargs=[],
+                        args=[],
+                        kwonlyargs=[],
+                        kw_defaults=[],
+                        defaults=[],
+                    ),
+                    body=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Subscript(
+                                value=ast.Call(
+                                    func=ast.Name(id="globals"), args=[], keywords=[]
+                                ),
+                                slice=ast.Constant(value="SecondInput"),
+                            ),
+                            attr="parse_obj",
+                        ),
+                        args=[
+                            ast.Dict(
+                                keys=[ast.Constant(value="val")],
+                                values=[ast.Constant(value=5)],
+                            )
+                        ],
+                        keywords=[],
+                    ),
+                ),
+            )
         ],
-        keywords=[],
     )
+
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)), enums_module="enums"
     )
 
     module = generator.generate()
 
-    class_def = get_class_def(module, 1)
+    class_def = get_class_def(module, 0)
     assert isinstance(class_def, ast.ClassDef)
     assert class_def.name == "TestInput"
     assert len(class_def.body) == 1
@@ -185,19 +215,45 @@ def test_generate_returns_module_with_parsed_nested_object_as_default_value():
     }
     """
     expected_field_value = ast.Call(
-        func=ast.Attribute(value=ast.Name(id="SecondInput"), attr="parse_obj"),
-        args=[
-            ast.Dict(
-                keys=[ast.Constant(value="nested")],
-                values=[
-                    ast.Dict(
-                        keys=[ast.Constant(value="val")],
-                        values=[ast.Constant(value=1.5)],
-                    )
-                ],
+        func=ast.Name(id="Field"),
+        args=[],
+        keywords=[
+            ast.keyword(
+                arg="default_factory",
+                value=ast.Lambda(
+                    args=ast.arguments(
+                        posonlyargs=[],
+                        args=[],
+                        kwonlyargs=[],
+                        kw_defaults=[],
+                        defaults=[],
+                    ),
+                    body=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Subscript(
+                                value=ast.Call(
+                                    func=ast.Name(id="globals"), args=[], keywords=[]
+                                ),
+                                slice=ast.Constant(value="SecondInput"),
+                            ),
+                            attr="parse_obj",
+                        ),
+                        args=[
+                            ast.Dict(
+                                keys=[ast.Constant(value="nested")],
+                                values=[
+                                    ast.Dict(
+                                        keys=[ast.Constant(value="val")],
+                                        values=[ast.Constant(value=1.5)],
+                                    )
+                                ],
+                            )
+                        ],
+                        keywords=[],
+                    ),
+                ),
             )
         ],
-        keywords=[],
     )
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)), enums_module="enums"
@@ -205,7 +261,7 @@ def test_generate_returns_module_with_parsed_nested_object_as_default_value():
 
     module = generator.generate()
 
-    class_def = get_class_def(module, 2)
+    class_def = get_class_def(module, 0)
     assert isinstance(class_def, ast.ClassDef)
     assert class_def.name == "TestInput"
     assert len(class_def.body) == 1

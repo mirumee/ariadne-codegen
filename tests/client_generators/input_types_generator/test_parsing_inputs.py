@@ -25,19 +25,6 @@ from ...utils import compare_ast, filter_class_defs
             """,
             [
                 ast.ClassDef(
-                    name="CustomInput2",
-                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
-                    keywords=[],
-                    decorator_list=[],
-                    body=[
-                        ast.AnnAssign(
-                            target=ast.Name(id="field"),
-                            annotation=ast.Name(id="int"),
-                            simple=1,
-                        )
-                    ],
-                ),
-                ast.ClassDef(
                     name="CustomInput",
                     bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
@@ -53,6 +40,19 @@ from ...utils import compare_ast, filter_class_defs
                             annotation=ast.Name(id="int"),
                             simple=1,
                         ),
+                    ],
+                ),
+                ast.ClassDef(
+                    name="CustomInput2",
+                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+                    keywords=[],
+                    decorator_list=[],
+                    body=[
+                        ast.AnnAssign(
+                            target=ast.Name(id="field"),
+                            annotation=ast.Name(id="int"),
+                            simple=1,
+                        )
                     ],
                 ),
             ],
@@ -72,7 +72,7 @@ def test_generate_returns_module_with_parsed_input_types(
     assert compare_ast(class_defs, expected_class_defs)
 
 
-def test_generate_returns_module_with_correct_order_of_classes():
+def test_generate_returns_module_with_classes_in_the_same_order_as_declared():
     schema_str = """
     input BeforeInput {
         field: Boolean!
@@ -96,9 +96,9 @@ def test_generate_returns_module_with_correct_order_of_classes():
     """
     expected_order = [
         "BeforeInput",
-        "NestedInput",
-        "SecondInput",
         "TestInput",
+        "SecondInput",
+        "NestedInput",
         "AfterInput",
     ]
     generator = InputTypesGenerator(

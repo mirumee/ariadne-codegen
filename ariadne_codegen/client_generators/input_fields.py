@@ -21,6 +21,7 @@ from graphql import (
 
 from ..codegen import (
     generate_annotation_name,
+    generate_attribute,
     generate_call,
     generate_constant,
     generate_dict,
@@ -28,8 +29,8 @@ from ..codegen import (
     generate_lambda,
     generate_list,
     generate_list_annotation,
-    generate_method_call,
     generate_name,
+    generate_subscript,
 )
 from ..exceptions import ParsingError
 from .constants import ANY, FIELD_CLASS, SIMPLE_TYPE_MAP
@@ -161,7 +162,28 @@ def parse_input_const_value_node(
             ],
         )
         if not nested_object:
-            return generate_method_call(field_type, "parse_obj", [dict_])
+            return generate_call(
+                func=generate_name(FIELD_CLASS),
+                keywords=[
+                    generate_keyword(
+                        arg="default_factory",
+                        value=generate_lambda(
+                            body=generate_call(
+                                func=generate_attribute(
+                                    value=generate_subscript(
+                                        value=generate_call(
+                                            func=generate_name("globals")
+                                        ),
+                                        slice_=generate_constant(field_type),
+                                    ),
+                                    attr="parse_obj",
+                                ),
+                                args=[dict_],
+                            )
+                        ),
+                    )
+                ],
+            )
         return dict_
 
     return None
