@@ -37,8 +37,14 @@ class BaseModel(PydanticBaseModel):
 
     def dict(self, **kwargs: Any) -> Dict[str, Any]:
         dict_ = super().dict(**kwargs)
-        for key, value in dict_.items():
-            serialize = SCALARS_SERIALIZE_FUNCTIONS.get(type(value))
-            if serialize and callable(serialize):
-                dict_[key] = serialize(value)
-        return dict_
+        return {key: self._serialize_value(value) for key, value in dict_.items()}
+
+    def _serialize_value(self, value: Any) -> Any:
+        serialize = SCALARS_SERIALIZE_FUNCTIONS.get(type(value))
+        if serialize and callable(serialize):
+            return serialize(value)
+
+        if isinstance(value, list):
+            return [self._serialize_value(item) for item in value]
+
+        return value
