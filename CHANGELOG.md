@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.5.0 (2023-04-05)
 
 - Added generation of GraphQL schema's Python representation.
 - Fixed annotations for lists.
