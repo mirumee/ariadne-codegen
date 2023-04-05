@@ -30,7 +30,7 @@ class BaseModel(PydanticBaseModel):
             return cls._parse_custom_scalar_value(value, sub_type)
 
         decode = SCALARS_PARSE_FUNCTIONS.get(type_)
-        if decode and callable(decode):
+        if value and decode and callable(decode):
             return decode(value)
 
         return value

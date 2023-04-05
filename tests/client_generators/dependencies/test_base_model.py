@@ -8,39 +8,40 @@ from ariadne_codegen.client_generators.dependencies.base_model import BaseModel
 @pytest.mark.parametrize(
     "annotation, value, expected_args",
     [
-        (str, "a", ["a"]),
-        (Optional[str], "a", ["a"]),
-        (Optional[str], None, [None]),
-        (List[str], ["a", "b"], ["a", "b"]),
-        (List[Optional[str]], ["a", None], ["a", None]),
-        (Optional[List[str]], ["a", "b"], ["a", "b"]),
-        (Optional[List[str]], None, []),
-        (Optional[List[Optional[str]]], ["a", None], ["a", None]),
-        (List[List[str]], [["a", "b"], ["c", "d"]], ["a", "b", "c", "d"]),
-        (Optional[List[List[str]]], [["a", "b"], ["c", "d"]], ["a", "b", "c", "d"]),
-        (Optional[List[List[str]]], None, []),
+        (str, "a", {"a"}),
+        (Optional[str], "a", {"a"}),
+        (Optional[str], None, set()),
+        (List[str], ["a", "b"], {"a", "b"}),
+        (List[Optional[str]], ["a", None], {"a"}),
+        (Optional[List[str]], ["a", "b"], {"a", "b"}),
+        (Optional[List[str]], None, set()),
+        (Optional[List[Optional[str]]], ["a", None], {"a"}),
+        (Optional[List[Optional[str]]], None, set()),
+        (List[List[str]], [["a", "b"], ["c", "d"]], {"a", "b", "c", "d"}),
+        (Optional[List[List[str]]], [["a", "b"], ["c", "d"]], {"a", "b", "c", "d"}),
+        (Optional[List[List[str]]], None, set()),
         (
             Optional[List[Optional[List[str]]]],
             [["a", "b"], ["c", "d"]],
-            ["a", "b", "c", "d"],
+            {"a", "b", "c", "d"},
         ),
-        (Optional[List[Optional[List[str]]]], None, []),
-        (Optional[List[Optional[List[str]]]], [["a", "b"], None], ["a", "b"]),
+        (Optional[List[Optional[List[str]]]], None, set()),
+        (Optional[List[Optional[List[str]]]], [["a", "b"], None], {"a", "b"}),
         (
             Optional[List[Optional[List[Optional[str]]]]],
             [["a", "b"], ["c", "d"]],
-            ["a", "b", "c", "d"],
+            {"a", "b", "c", "d"},
         ),
-        (Optional[List[Optional[List[Optional[str]]]]], None, []),
-        (Optional[List[Optional[List[Optional[str]]]]], [["a", "b"], None], ["a", "b"]),
+        (Optional[List[Optional[List[Optional[str]]]]], None, set()),
+        (Optional[List[Optional[List[Optional[str]]]]], [["a", "b"], None], {"a", "b"}),
         (
             Optional[List[Optional[List[Optional[str]]]]],
             [["a", None], ["b", None]],
-            ["a", None, "b", None],
+            {"a", "b"},
         ),
     ],
 )
-def test_parse_obj_applies_parse_on_every_element(
+def test_parse_obj_applies_parse_on_every_list_element(
     annotation, value, expected_args, mocker
 ):
     mocked_parse = mocker.MagicMock(side_effect=lambda s: s)
@@ -56,7 +57,7 @@ def test_parse_obj_applies_parse_on_every_element(
     TestModel.parse_obj({"field": value})
 
     assert mocked_parse.call_count == len(expected_args)
-    assert [c.args[0] for c in mocked_parse.call_args_list] == expected_args
+    assert {c.args[0] for c in mocked_parse.call_args_list} == expected_args
 
 
 def test_parse_obj_doesnt_apply_parse_on_not_matching_type(mocker):
@@ -93,6 +94,34 @@ def test_parse_obj_doesnt_apply_parse_on_not_matching_type(mocker):
     )
 
     assert not mocked_parse.called
+
+
+def test_parse_obj_applies_parse_only_once_for_every_element(mocker):
+    mocked_parse = mocker.MagicMock(side_effect=lambda s: s)
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.base_model."
+        "SCALARS_PARSE_FUNCTIONS",
+        {str: mocked_parse},
+    )
+
+    class TestModelC(BaseModel):
+        value: str
+
+    class TestModelB(BaseModel):
+        value: str
+        field_c: TestModelC
+
+    class TestModelA(BaseModel):
+        value: str
+        field_b: TestModelB
+
+    TestModelA.parse_obj(
+        {"value": "a", "field_b": {"value": "b", "field_c": {"value": "c"}}}
+    ).dict()
+
+    assert mocked_parse.call_count == 3
+    assert {c.args[0] for c in mocked_parse.call_args_list} == {"a", "b", "c"}
+
 
 @pytest.mark.parametrize(
     "annotation, value, expected_args",
