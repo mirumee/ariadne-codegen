@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in contributing to Ariadne Code Generator!
+Thank you for your interest in contributing to Ariadne Codegen!
 
 We welcome bug reports, questions, pull requests, and general feedback.
 
