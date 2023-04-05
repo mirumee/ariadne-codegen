@@ -8,6 +8,7 @@
 - Unlocked versions of black, isort, autoflake and dev dependencies
 - Added `remote_schema_verify_ssl` option.
 - Changed how default values for inputs are generated to handle potential cycles.
+- Changed `BaseModel` to apply `parse` and `serialize` methods on every list element.
 
 
 ## 0.4.0 (2023-03-20)
