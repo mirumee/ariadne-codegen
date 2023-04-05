@@ -117,7 +117,7 @@ def test_parse_obj_applies_parse_only_once_for_every_element(mocker):
 
     TestModelA.parse_obj(
         {"value": "a", "field_b": {"value": "b", "field_c": {"value": "c"}}}
-    ).dict()
+    )
 
     assert mocked_parse.call_count == 3
     assert {c.args[0] for c in mocked_parse.call_args_list} == {"a", "b", "c"}
