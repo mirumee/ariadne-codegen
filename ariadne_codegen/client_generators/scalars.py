@@ -1,6 +1,7 @@
 import ast
 from dataclasses import dataclass
 from typing import List, Optional, cast
+from warnings import warn
 
 from ..codegen import (
     generate_ann_assign,
@@ -34,6 +35,53 @@ class ScalarData:
     def names_to_import(self) -> List[str]:
         return [name for name in (self.type_, self.serialize, self.parse) if name]
 
+    @property
+    def type_name(self) -> str:
+        return self._get_object_name(self.type_)
+
+    @property
+    def parse_name(self) -> Optional[str]:
+        if not self.parse:
+            return None
+
+        return self._get_object_name(self.parse)
+
+    @property
+    def serialize_name(self) -> Optional[str]:
+        if not self.serialize:
+            return None
+
+        return self._get_object_name(self.serialize)
+
+    def _get_object_name(self, name: str) -> str:
+        if "." in name:
+            _, object_name = name.rsplit(".", maxsplit=1)
+            return object_name
+        return name
+
+
+def generate_scalar_imports(data: ScalarData) -> List[ast.ImportFrom]:
+    names_to_import = data.names_to_import
+    if data.import_:
+        warn(
+            'Support for "import" key has been deprecated '
+            "and will be dropped in future release. "
+            "Instead provide module in type/serialize/parse string.",
+            DeprecationWarning,
+        )
+        return (
+            [generate_import_from(names=names_to_import, from_=data.import_)]
+            if names_to_import
+            else []
+        )
+
+    imports = []
+    for name in names_to_import:
+        if "." in name:
+            module_name, object_name = name.rsplit(".", maxsplit=1)
+            imports.append(generate_import_from(names=[object_name], from_=module_name))
+    return imports
+
 
 class ScalarsDefinitionsGenerator:
     def __init__(
@@ -53,18 +101,16 @@ class ScalarsDefinitionsGenerator:
             self.add_scalar(data)
 
     def add_scalar(self, data: ScalarData) -> None:
-        if data.parse:
-            self._parse_dict.keys.append(generate_name(data.type_))
-            self._parse_dict.values.append(generate_name(data.parse))
+        if data.parse_name:
+            self._parse_dict.keys.append(generate_name(data.type_name))
+            self._parse_dict.values.append(generate_name(data.parse_name))
 
-        if data.serialize:
-            self._serialize_dict.keys.append(generate_name(data.type_))
-            self._serialize_dict.values.append(generate_name(data.serialize))
+        if data.serialize_name:
+            self._serialize_dict.keys.append(generate_name(data.type_name))
+            self._serialize_dict.values.append(generate_name(data.serialize_name))
 
-        if (data.parse or data.serialize) and data.import_:
-            self._imports.append(
-                generate_import_from(names=data.names_to_import, from_=data.import_)
-            )
+        if data.parse or data.serialize:
+            self._imports.extend(generate_scalar_imports(data))
 
     def generate(self) -> ast.Module:
         if self.plugin_manager:
@@ -77,8 +123,8 @@ class ScalarsDefinitionsGenerator:
         module = generate_module(
             body=cast(
                 List[ast.stmt],
-                [
-                    self._imports,
+                self._imports
+                + [
                     self._generate_dict_assignment(
                         name=SCALARS_PARSE_DICT_NAME,
                         dict_=self._parse_dict,

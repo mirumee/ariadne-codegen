@@ -74,6 +74,12 @@ class ClientGenerator:
             import_ = self.plugin_manager.generate_client_import(import_)
         self.imports.append(import_)
 
+    def add_imports(self, imports: List[ast.ImportFrom]):
+        for import_ in imports:
+            if self.plugin_manager:
+                import_ = self.plugin_manager.generate_client_import(import_)
+            self.imports.append(import_)
+
     def add_method(
         self,
         name: str,

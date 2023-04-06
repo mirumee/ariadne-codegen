@@ -139,7 +139,7 @@ class ArgumentsGenerator:
                 name = SIMPLE_TYPE_MAP.get(name, ANY)
             else:
                 used_custom_scalar = name
-                name = self.custom_scalars[name].type_
+                name = self.custom_scalars[name].type_name
         else:
             raise ParsingError(f"Incorrect argument type {name}")
 
@@ -158,9 +158,9 @@ class ArgumentsGenerator:
         if used_custom_scalar:
             self._used_custom_scalars.append(used_custom_scalar)
             scalar_data = self.custom_scalars[used_custom_scalar]
-            if scalar_data.serialize:
+            if scalar_data.serialize_name:
                 return generate_call(
-                    func=generate_name(scalar_data.serialize),
+                    func=generate_name(scalar_data.serialize_name),
                     args=[generate_name(name)],
                 )
 

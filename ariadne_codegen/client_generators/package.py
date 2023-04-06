@@ -24,7 +24,7 @@ from .enums import EnumsGenerator
 from .init_file import InitFileGenerator
 from .input_types import InputTypesGenerator
 from .result_types import ResultTypesGenerator
-from .scalars import ScalarData, ScalarsDefinitionsGenerator
+from .scalars import ScalarData, ScalarsDefinitionsGenerator, generate_scalar_imports
 
 
 class PackageGenerator:
@@ -247,10 +247,7 @@ class PackageGenerator:
 
         for custom_scalar_name in self.arguments_generator.get_used_custom_scalars():
             scalar_data = self.custom_scalars[custom_scalar_name]
-            if scalar_data.import_:
-                self.client_generator.add_import(
-                    names=scalar_data.names_to_import, from_=scalar_data.import_
-                )
+            self.client_generator.add_imports(generate_scalar_imports(scalar_data))
 
         self.client_generator.add_import(
             names=[self.base_client_name],

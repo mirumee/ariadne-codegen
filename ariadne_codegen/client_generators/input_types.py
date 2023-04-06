@@ -33,7 +33,7 @@ from .constants import (
     UPDATE_FORWARD_REFS_METHOD,
 )
 from .input_fields import parse_input_field_default_value, parse_input_field_type
-from .scalars import ScalarData
+from .scalars import ScalarData, generate_scalar_imports
 
 
 class InputTypesGenerator:
@@ -74,12 +74,8 @@ class InputTypesGenerator:
         if self._used_scalars:
             for scalar_name in self._used_scalars:
                 scalar_data = self.custom_scalars[scalar_name]
-                if scalar_data.import_ and scalar_data.names_to_import:
-                    self._imports.append(
-                        generate_import_from(
-                            names=scalar_data.names_to_import, from_=scalar_data.import_
-                        )
-                    )
+                self._imports.extend(generate_scalar_imports(scalar_data))
+
         update_forward_refs_calls = [
             generate_expr(generate_method_call(c.name, UPDATE_FORWARD_REFS_METHOD))
             for c in self._class_defs

@@ -56,7 +56,7 @@ def parse_input_field_type(
         if custom_scalars and type_.name in custom_scalars:
             return (
                 generate_annotation_name(
-                    name=custom_scalars[type_.name].type_, nullable=nullable
+                    name=custom_scalars[type_.name].type_name, nullable=nullable
                 ),
                 type_.name,
             )
