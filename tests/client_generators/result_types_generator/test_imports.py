@@ -52,9 +52,7 @@ def test_generate_returns_module_with_used_custom_scalars_imports():
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        custom_scalars={
-            "SCALARA": ScalarData(type_="ScalarA", import_=".custom_scalars")
-        },
+        custom_scalars={"SCALARA": ScalarData(type_=".custom_scalars.ScalarA")},
     )
     expected_import = ast.ImportFrom(
         module=".custom_scalars", names=[ast.alias("ScalarA")], level=0

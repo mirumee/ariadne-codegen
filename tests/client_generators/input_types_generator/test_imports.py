@@ -43,9 +43,7 @@ def test_generate_returns_module_with_used_custom_scalars_imports():
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        custom_scalars={
-            "SCALARA": ScalarData(type_="ScalarA", import_=".custom_scalars")
-        },
+        custom_scalars={"SCALARA": ScalarData(type_=".custom_scalars.ScalarA")},
     )
     expected_import = ast.ImportFrom(
         module=".custom_scalars", names=[ast.alias("ScalarA")], level=0
