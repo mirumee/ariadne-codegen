@@ -31,27 +31,18 @@ class ScalarData:
     parse: Optional[str] = None
     import_: Optional[str] = None
 
-    @property
-    def names_to_import(self) -> List[str]:
-        return [name for name in (self.type_, self.serialize, self.parse) if name]
+    def __post_init__(self):
+        self.type_name: str = self._get_object_name(self.type_)
+        self.parse_name: Optional[str] = (
+            self._get_object_name(self.parse) if self.parse else None
+        )
+        self.serialize_name: Optional[str] = (
+            self._get_object_name(self.serialize) if self.serialize else None
+        )
 
-    @property
-    def type_name(self) -> str:
-        return self._get_object_name(self.type_)
-
-    @property
-    def parse_name(self) -> Optional[str]:
-        if not self.parse:
-            return None
-
-        return self._get_object_name(self.parse)
-
-    @property
-    def serialize_name(self) -> Optional[str]:
-        if not self.serialize:
-            return None
-
-        return self._get_object_name(self.serialize)
+        self.names_to_import: List[str] = [
+            name for name in (self.type_, self.serialize, self.parse) if name
+        ]
 
     def _get_object_name(self, name: str) -> str:
         if "." in name:
@@ -109,7 +100,7 @@ class ScalarsDefinitionsGenerator:
             self._serialize_dict.keys.append(generate_name(data.type_name))
             self._serialize_dict.values.append(generate_name(data.serialize_name))
 
-        if data.parse or data.serialize:
+        if data.parse_name or data.serialize_name:
             self._imports.extend(generate_scalar_imports(data))
 
     def generate(self) -> ast.Module:
