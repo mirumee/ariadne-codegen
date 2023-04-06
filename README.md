@@ -33,7 +33,7 @@ $ pip install ariadne-codegen
 
 ## Configuration
 
-`ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`'. You can use other configuration file with `--config` option, eg. `ariadne-codegen --config custom_file.toml`
+`ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`. You can use other configuration file with `--config` option, eg. `ariadne-codegen --config custom_file.toml`
 
 Required settings:
 
@@ -105,7 +105,7 @@ parse = "function used to create scalar instance from serialized form"
 import = "module to import from"
 ```
 
-All occurences of `{graphql scalar name}` will be represented as `type`. If provided, `serialize` and `parse` will be used for serialization and deserialization. In all files which use `type`/`serialize`/`parse` there will be added extra import `from {import} import {type}, {serialize}, {parse}`
+All occurrences of `{graphql scalar name}` will be represented as `type`. If provided, `serialize` and `parse` will be used for serialization and deserialization. In all files which use `type`/`serialize`/`parse` there will be added extra import `from {import} import {type}, {serialize}, {parse}`
 
 
 ### Example with scalar mapped to built-in type
@@ -163,7 +163,7 @@ class OperationNameField(BaseModel, {import}):
     ...
 ```
 
-This directive can be used along with `files_to_include` option to extend funcionallity of generated classes.
+This directive can be used along with `files_to_include` option to extend functionality of generated classes.
 
 
 #### Example of usage of `mixin` and `files_to_include`:
