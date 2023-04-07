@@ -9,11 +9,9 @@ files_to_include = ["custom_scalars.py"]
 type = "int"
 
 [tool.ariadne-codegen.scalars.DATETIME]
-type = "datetime"
-import = "datetime"
+type = "datetime.datetime"
 
 [tool.ariadne-codegen.scalars.CODE]
-type = "Code"
-serialize = "serialize_code"
-parse = "parse_code"
-import = ".custom_scalars"
+type = ".custom_scalars.Code"
+serialize = ".custom_scalars.serialize_code"
+parse = ".custom_scalars.parse_code"

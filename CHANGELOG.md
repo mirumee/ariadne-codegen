@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## UNRELEASED
+
+- Changed logic how custom scalar imports are generated. Deprecated `import_` key.
+
+
 ## 0.5.0 (2023-04-05)
 
 - Added generation of GraphQL schema's Python representation.

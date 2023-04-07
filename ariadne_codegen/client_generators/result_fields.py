@@ -68,8 +68,10 @@ def parse_operation_field_type(
             return (generate_annotation_name(SIMPLE_TYPE_MAP[type_.name], nullable), [])
         if custom_scalars and type_.name in custom_scalars:
             return (
-                generate_annotation_name(custom_scalars[type_.name].type_, nullable),
-                [FieldNames(custom_scalars[type_.name].type_, type_.name)],
+                generate_annotation_name(
+                    custom_scalars[type_.name].type_name, nullable
+                ),
+                [FieldNames(custom_scalars[type_.name].type_name, type_.name)],
             )
         return (generate_annotation_name(ANY, nullable), [])
 

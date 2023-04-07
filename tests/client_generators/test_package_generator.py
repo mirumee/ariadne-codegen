@@ -565,7 +565,7 @@ def test_generate_creates_client_with_custom_scalars_imports(tmp_path):
         package_name,
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
-        custom_scalars={"SCALARABC": ScalarData(type_="ScalarABC", import_=".abc")},
+        custom_scalars={"SCALARABC": ScalarData(type_=".abc.ScalarABC")},
     )
     query_str = """
     query CustomQuery($id: ID!, $param: SCALARABC) {

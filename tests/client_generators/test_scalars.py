@@ -1,5 +1,7 @@
 import ast
 
+import pytest
+
 from ariadne_codegen.client_generators.constants import (
     ANY,
     CALLABLE,
@@ -11,25 +13,84 @@ from ariadne_codegen.client_generators.constants import (
 from ariadne_codegen.client_generators.scalars import (
     ScalarData,
     ScalarsDefinitionsGenerator,
+    generate_scalar_imports,
 )
 
-from ..utils import compare_ast
+from ..utils import compare_ast, sorted_imports
+
+
+@pytest.mark.parametrize(
+    "data, expected_imports",
+    [
+        (ScalarData(type_="Scalar"), []),
+        (ScalarData(type_="Scalar", serialize="serialize"), []),
+        (ScalarData(type_="Scalar", parse="parse"), []),
+        (
+            ScalarData(type_="ab.cd.Scalar"),
+            [ast.ImportFrom(names=[ast.alias("Scalar")], module="ab.cd", level=0)],
+        ),
+        (
+            ScalarData(type_="ab.cd.Scalar", serialize="xyz.serialize"),
+            [
+                ast.ImportFrom(names=[ast.alias("Scalar")], module="ab.cd", level=0),
+                ast.ImportFrom(names=[ast.alias("serialize")], module="xyz", level=0),
+            ],
+        ),
+        (
+            ScalarData(type_="ab.cd.Scalar", parse="xyz.parse"),
+            [
+                ast.ImportFrom(names=[ast.alias("Scalar")], module="ab.cd", level=0),
+                ast.ImportFrom(names=[ast.alias("parse")], module="xyz", level=0),
+            ],
+        ),
+        (
+            ScalarData(type_="a.Scalar", serialize="b.serialize", parse="c.parse"),
+            [
+                ast.ImportFrom(names=[ast.alias("Scalar")], module="a", level=0),
+                ast.ImportFrom(names=[ast.alias("serialize")], module="b", level=0),
+                ast.ImportFrom(names=[ast.alias("parse")], module="c", level=0),
+            ],
+        ),
+    ],
+)
+def test_generate_scalar_imports_returns_correct_imports(data, expected_imports):
+    assert compare_ast(
+        sorted_imports(generate_scalar_imports(data)), sorted_imports(expected_imports)
+    )
+
+
+def test_generate_scalar_imports_for_data_with_import_raises_deprecation_warning():
+    data = ScalarData(
+        type_="Scalar", serialize="serialize", parse="parse", import_="xyz"
+    )
+    expected_imports = [
+        ast.ImportFrom(
+            names=[
+                ast.alias(data.type_),
+                ast.alias(data.serialize),
+                ast.alias(data.parse),
+            ],
+            module=data.import_,
+            level=0,
+        )
+    ]
+
+    with pytest.deprecated_call():
+        assert compare_ast(generate_scalar_imports(data), expected_imports)
 
 
 def test_generate_without_scalars_returns_module_with_empty_dicts():
     expected_module = ast.Module(
         body=[
-            [
-                ast.ImportFrom(
-                    module=TYPING_MODULE,
-                    names=[
-                        ast.alias(name=DICT),
-                        ast.alias(name=ANY),
-                        ast.alias(name=CALLABLE),
-                    ],
-                    level=0,
-                )
-            ],
+            ast.ImportFrom(
+                module=TYPING_MODULE,
+                names=[
+                    ast.alias(name=DICT),
+                    ast.alias(name=ANY),
+                    ast.alias(name=CALLABLE),
+                ],
+                level=0,
+            ),
             ast.AnnAssign(
                 target=ast.Name(id=SCALARS_PARSE_DICT_NAME),
                 annotation=ast.Subscript(
@@ -87,57 +148,54 @@ def test_generate_returns_module_with_dictionaries_with_scalars_methods():
     generator = ScalarsDefinitionsGenerator(
         scalars_data=[
             ScalarData(type_="str"),
-            ScalarData(type_="datetime", import_="datetime"),
+            ScalarData(type_="datetime.datetime"),
             ScalarData(
-                type_="ScalarA",
-                serialize="serialize_a",
-                parse="parse_a",
-                import_=".scalar_a",
+                type_=".scalar_a.ScalarA",
+                serialize=".scalar_a.serialize_a",
+                parse=".scalar_a.parse_a",
             ),
             ScalarData(
-                type_="ScalarB",
-                serialize="serialize_b",
-                import_=".scalar_b",
+                type_=".scalar_b.ScalarB",
+                serialize=".scalar_b.serialize_b",
             ),
             ScalarData(
-                type_="ScalarC",
-                parse="parse_c",
-                import_=".scalar_c",
+                type_=".scalar_c.ScalarC",
+                parse=".scalar_c.parse_c",
             ),
         ]
     )
     expected_module = ast.Module(
         body=[
-            [
-                ast.ImportFrom(
-                    module=TYPING_MODULE,
-                    names=[
-                        ast.alias(name=DICT),
-                        ast.alias(name=ANY),
-                        ast.alias(name=CALLABLE),
-                    ],
-                    level=0,
-                ),
-                ast.ImportFrom(
-                    module=".scalar_a",
-                    names=[
-                        ast.alias(name="ScalarA"),
-                        ast.alias(name="serialize_a"),
-                        ast.alias(name="parse_a"),
-                    ],
-                    level=0,
-                ),
-                ast.ImportFrom(
-                    module=".scalar_b",
-                    names=[ast.alias(name="ScalarB"), ast.alias(name="serialize_b")],
-                    level=0,
-                ),
-                ast.ImportFrom(
-                    module=".scalar_c",
-                    names=[ast.alias(name="ScalarC"), ast.alias(name="parse_c")],
-                    level=0,
-                ),
-            ],
+            ast.ImportFrom(
+                module="typing",
+                names=[
+                    ast.alias(name="Dict"),
+                    ast.alias(name="Any"),
+                    ast.alias(name="Callable"),
+                ],
+                level=0,
+            ),
+            ast.ImportFrom(
+                module=".scalar_a", names=[ast.alias(name="ScalarA")], level=0
+            ),
+            ast.ImportFrom(
+                module=".scalar_a", names=[ast.alias(name="serialize_a")], level=0
+            ),
+            ast.ImportFrom(
+                module=".scalar_a", names=[ast.alias(name="parse_a")], level=0
+            ),
+            ast.ImportFrom(
+                module=".scalar_b", names=[ast.alias(name="ScalarB")], level=0
+            ),
+            ast.ImportFrom(
+                module=".scalar_b", names=[ast.alias(name="serialize_b")], level=0
+            ),
+            ast.ImportFrom(
+                module=".scalar_c", names=[ast.alias(name="ScalarC")], level=0
+            ),
+            ast.ImportFrom(
+                module=".scalar_c", names=[ast.alias(name="parse_c")], level=0
+            ),
             ast.AnnAssign(
                 target=ast.Name(id=SCALARS_PARSE_DICT_NAME),
                 annotation=ast.Subscript(

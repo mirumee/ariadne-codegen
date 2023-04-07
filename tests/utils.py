@@ -48,3 +48,7 @@ def filter_imports(module: ast.Module) -> List[ast.ImportFrom]:
 
 def format_graphql_str(source: str) -> str:
     return dedent(source).replace(4 * " ", 2 * " ").strip()
+
+
+def sorted_imports(imports: List[ast.ImportFrom]) -> List[ast.ImportFrom]:
+    return sorted(imports, key=lambda import_: import_.module or "")
