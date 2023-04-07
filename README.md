@@ -105,7 +105,7 @@ parse = "function used to create scalar instance from serialized form"
 ```
 
 All occurences of `{graphql scalar name}` will be represented as `type`. If provided, `serialize` and `parse` will be used for serialization and deserialization.
-If `type`/`serialize`/`parse` contains at least one `.` then string is split by last occurence, first part will be used as module to import from, and second part as type/method name, eg. `type = "custom_scalars.a.ScalarA"` will produce `from custom_scalars.a import ScalarA`.
+If `type`/`serialize`/`parse` contains at least one `.` then string will be split by it's last occurrence. First part will be used as module to import from, and second part as type/method name. For example, `type = "custom_scalars.a.ScalarA"` will produce `from custom_scalars.a import ScalarA`.
 
 
 ### Example with scalar mapped to built-in type
