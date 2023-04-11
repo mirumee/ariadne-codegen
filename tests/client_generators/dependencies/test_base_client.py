@@ -63,6 +63,40 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
     }
 
 
+def test_execute_correctly_parses_top_level_list_variables(mocker):
+    class TestModel1(BaseModel):
+        a: int
+
+    fake_client = mocker.MagicMock()
+    client = BaseClient(url="base_url", http_client=fake_client)
+    query_str = """
+    query Abc($v1: [[TestModel1!]!]!) {
+        abc(v1: $v1){
+            field1
+        }
+    }
+    """
+
+    client.execute(
+        query_str,
+        {
+            "v1": [[TestModel1(a=1), TestModel1(a=2)]],
+        },
+    )
+
+    assert fake_client.post.called
+    assert len(fake_client.post.mock_calls) == 1
+    call_kwargs = fake_client.post.mock_calls[0].kwargs
+    assert call_kwargs["url"] == "base_url"
+    assert call_kwargs["json"] == {
+        "query": query_str,
+        "variables": {"v1": [[{"a": 1}, {"a": 2}]]},
+    }
+    assert not any(
+        isinstance(x, BaseModel) for x in call_kwargs["json"]["variables"]["v1"][0]
+    )
+
+
 @pytest.mark.parametrize(
     "status_code, response_content",
     [
