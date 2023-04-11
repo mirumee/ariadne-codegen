@@ -1,7 +1,7 @@
 import ast
 from itertools import zip_longest
 from textwrap import dedent
-from typing import List, Optional, Union, cast
+from typing import List, Optional, Set, Union, cast
 
 
 def compare_ast(
@@ -24,14 +24,26 @@ def compare_ast(
     return node1 == node2
 
 
-def get_class_def(module: ast.Module, class_index=0) -> Optional[ast.ClassDef]:
+def get_class_def(
+    module: ast.Module, class_index=0, name_filter=None
+) -> Optional[ast.ClassDef]:
     found = 0
     for expr in module.body:
-        if isinstance(expr, ast.ClassDef):
+        if isinstance(expr, ast.ClassDef) and (
+            not name_filter or expr.name == name_filter
+        ):
             found += 1
             if found - 1 == class_index:
                 return expr
     return None
+
+
+def get_assignment_target_names(class_def: ast.ClassDef) -> Set[str]:
+    return {
+        x.target.id
+        for x in class_def.body
+        if isinstance(x, ast.AnnAssign) and isinstance(x.target, ast.Name)
+    }
 
 
 def filter_ast_objects(module: ast.Module, ast_class) -> List[ast.AST]:

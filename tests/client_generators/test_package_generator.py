@@ -1,3 +1,4 @@
+import ast
 from datetime import datetime
 from textwrap import dedent, indent
 
@@ -13,6 +14,8 @@ from ariadne_codegen.client_generators.constants import (
 from ariadne_codegen.client_generators.package import PackageGenerator
 from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.exceptions import ParsingError
+
+from ..utils import get_class_def
 
 SCHEMA_STR = """
 schema {
@@ -306,6 +309,38 @@ def test_generate_creates_client_with_correctly_implemented_async_method(tmp_pat
         client_content = client_file.read()
         assert indent(dedent(expected_method_def).strip(), "    ") in client_content
         assert "from .custom_query import CustomQuery" in client_content
+
+
+def test_generate_creates_client_with_valid_method_names(tmp_path):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        async_client=False,
+    )
+    query_str = """
+    query From($id: ID!, $param: String) {
+        query1(id: $id) {
+            field1
+            field2 {
+                fieldb
+            }
+            field3
+        }
+    }
+    """
+
+    generator.add_operation(parse(query_str).definitions[0])
+    generator.generate()
+
+    client_file_path = tmp_path / package_name / "client.py"
+    with client_file_path.open() as client_file:
+        client_content = client_file.read()
+        parsed = ast.parse(client_content)
+        class_def = get_class_def(parsed)
+        function = [x for x in class_def.body if isinstance(x, ast.FunctionDef)][0]
+        assert function.name == "from_"
 
 
 def test_generate_with_conflicting_query_name_raises_parsing_error(tmp_path):

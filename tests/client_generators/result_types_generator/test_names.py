@@ -5,8 +5,9 @@ import pytest
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
+from ariadne_codegen.utils import ast_to_str
 
-from ...utils import compare_ast, get_class_def
+from ...utils import compare_ast, get_assignment_target_names, get_class_def
 from .schema import SCHEMA_STR
 
 
@@ -104,3 +105,30 @@ def test_generate_returns_module_with_handled_graphql_alias(
     assert len(class_def.body) == 1
     field_implementation = class_def.body[0]
     assert compare_ast(field_implementation, expected_field_implementation)
+
+
+def test_generate_returns_module_with_valid_field_names():
+    query_str = """
+    query CustomQuery {
+        camelCaseQuery {
+            in: id
+        }
+    }
+    """
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+        convert_to_snake_case=True,
+    )
+
+    module = generator.generate()
+
+    parsed = ast.parse(
+        ast_to_str(module)
+    )  # Round trip because invalid identifiers get picked up in parse
+    class_def = get_class_def(parsed, name_filter="CustomQueryCamelCaseQuery")
+    field_names = get_assignment_target_names(class_def)
+    assert field_names == {"in_"}

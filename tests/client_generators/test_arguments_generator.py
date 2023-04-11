@@ -179,6 +179,38 @@ def test_generate_returns_arguments_and_dictionary_with_snake_case_names():
     assert compare_ast(arguments_dict, expected_arguments_dict)
 
 
+def test_generate_returns_arguments_and_dictionary_with_valid_names():
+    generator = ArgumentsGenerator(schema=GraphQLSchema(), convert_to_snake_case=True)
+    query = "query q($from: String!, $and: String!, $in: String!) {r}"
+    variable_definitions = _get_variable_definitions_from_query_str(query)
+
+    arguments, arguments_dict = generator.generate(variable_definitions)
+
+    expected_arguments = ast.arguments(
+        posonlyargs=[],
+        args=[
+            ast.arg(arg="self"),
+            ast.arg(arg="from_", annotation=ast.Name(id="str")),
+            ast.arg(arg="and_", annotation=ast.Name(id="str")),
+            ast.arg(arg="in_", annotation=ast.Name(id="str")),
+        ],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[],
+    )
+    expected_arguments_dict = ast.Dict(
+        keys=[
+            ast.Constant(value="from"),
+            ast.Constant(value="and"),
+            ast.Constant(value="in"),
+        ],
+        values=[ast.Name(id="from_"), ast.Name(id="and_"), ast.Name(id="in_")],
+    )
+
+    assert compare_ast(arguments, expected_arguments)
+    assert compare_ast(arguments_dict, expected_arguments_dict)
+
+
 def test_generate_returns_arguments_with_not_mapped_custom_scalar():
     schema_str = """
         schema { query: Query }
