@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 from graphql import (
     GraphQLEnumType,
@@ -22,11 +22,12 @@ from ..codegen import (
     generate_dict,
     generate_list_annotation,
     generate_name,
+    generate_union_annotation,
 )
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..utils import process_name
-from .constants import ANY, OPTIONAL, SIMPLE_TYPE_MAP
+from .constants import ANY, OPTIONAL, SIMPLE_TYPE_MAP, UNSET, UNSET_TYPE
 from .scalars import ScalarData
 
 
@@ -63,7 +64,10 @@ class ArgumentsGenerator:
             )
 
             arg = generate_arg(name, annotation)
-            if self.is_nullable(annotation):
+            if self._is_nullable(annotation):
+                arg.annotation = self._process_optional_arg_annotation(
+                    cast(ast.Subscript, annotation)
+                )
                 optional_args.append(arg)
             else:
                 required_args.append(arg)
@@ -73,7 +77,7 @@ class ArgumentsGenerator:
 
         arguments = generate_arguments(
             args=required_args + optional_args,
-            defaults=[generate_constant(None) for _ in optional_args],
+            defaults=[generate_name(UNSET) for _ in optional_args],
         )
 
         if self.plugin_manager:
@@ -140,11 +144,18 @@ class ArgumentsGenerator:
 
         return generate_annotation_name(name, nullable), used_custom_scalar
 
-    def is_nullable(self, annotation: Union[ast.Name, ast.Subscript]) -> bool:
+    def _is_nullable(self, annotation: Union[ast.Name, ast.Subscript]) -> bool:
         return (
             isinstance(annotation, ast.Subscript)
             and isinstance(annotation.value, ast.Name)
             and annotation.value.id == OPTIONAL
+        )
+
+    def _process_optional_arg_annotation(
+        self, annotation: ast.Subscript
+    ) -> ast.Subscript:
+        return generate_union_annotation(
+            types=[annotation, generate_name(UNSET_TYPE)], nullable=False
         )
 
     def _get_dict_value(

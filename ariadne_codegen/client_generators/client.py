@@ -38,6 +38,7 @@ class ClientGenerator:
         input_types_module_name: str,
         arguments_generator: ArgumentsGenerator,
         base_client_import: Optional[ast.ImportFrom] = None,
+        unset_import: Optional[ast.ImportFrom] = None,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
@@ -52,8 +53,8 @@ class ClientGenerator:
         self._add_import(
             generate_import_from([OPTIONAL, LIST, ANY, UNION], TYPING_MODULE)
         )
-        if base_client_import:
-            self._add_import(base_client_import)
+        self._add_import(base_client_import)
+        self._add_import(unset_import)
 
         self._class_def = generate_class_def(name=name, base_names=[base_client])
         self._gql_func_name = "gql"
@@ -141,7 +142,9 @@ class ClientGenerator:
             generate_import_from(names=[return_type], from_=return_type_module, level=1)
         )
 
-    def _add_import(self, import_: ast.ImportFrom):
+    def _add_import(self, import_: Optional[ast.ImportFrom] = None):
+        if not import_:
+            return
         if self.plugin_manager:
             import_ = self.plugin_manager.generate_client_import(import_)
         if import_.names and import_.module:
