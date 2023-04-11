@@ -25,7 +25,7 @@ from ..codegen import (
 )
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
-from ..utils import str_to_snake_case
+from ..utils import process_name
 from .constants import ANY, OPTIONAL, SIMPLE_TYPE_MAP
 from .scalars import ScalarData
 
@@ -57,7 +57,7 @@ class ArgumentsGenerator:
         dict_ = generate_dict()
         for variable_definition in variable_definitions:
             org_name = variable_definition.variable.name.value
-            name = self._process_name(org_name)
+            name = process_name(org_name, self.convert_to_snake_case)
             annotation, used_custom_scalar = self._parse_type_node(
                 variable_definition.type
             )
@@ -93,11 +93,6 @@ class ArgumentsGenerator:
 
     def get_used_custom_scalars(self) -> List[str]:
         return self._used_custom_scalars
-
-    def _process_name(self, name: str) -> str:
-        if self.convert_to_snake_case:
-            return str_to_snake_case(name)
-        return name
 
     def _parse_type_node(
         self,
