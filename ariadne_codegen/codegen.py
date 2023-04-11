@@ -64,7 +64,7 @@ def generate_arg(
 
 
 def generate_arguments(
-    args: Optional[List[ast.arg]] = None, defaults: Optional[List[ast.Constant]] = None
+    args: Optional[List[ast.arg]] = None, defaults: Optional[List[ast.expr]] = None
 ) -> ast.arguments:
     """Generate arguments."""
     return ast.arguments(
