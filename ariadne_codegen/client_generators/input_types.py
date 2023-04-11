@@ -20,7 +20,7 @@ from ..codegen import (
     generate_module,
 )
 from ..plugins.manager import PluginManager
-from ..utils import str_to_snake_case
+from ..utils import process_name
 from .constants import (
     ANY,
     BASE_MODEL_CLASS_NAME,
@@ -109,7 +109,7 @@ class InputTypesGenerator:
         )
 
         for lineno, (org_name, field) in enumerate(definition.fields.items(), start=1):
-            name = self._process_field_name(org_name)
+            name = process_name(org_name, self.convert_to_snake_case)
             annotation, field_type = parse_input_field_type(
                 field.type, custom_scalars=self.custom_scalars
             )
@@ -139,11 +139,6 @@ class InputTypesGenerator:
             )
 
         return class_def
-
-    def _process_field_name(self, name: str) -> str:
-        if self.convert_to_snake_case:
-            return str_to_snake_case(name)
-        return name
 
     def _process_field_value(
         self,

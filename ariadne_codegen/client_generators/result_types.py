@@ -33,7 +33,7 @@ from ..codegen import (
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
-from ..utils import str_to_pascal_case, str_to_snake_case
+from ..utils import process_name, str_to_pascal_case
 from .constants import (
     ANY,
     BASE_MODEL_CLASS_NAME,
@@ -270,11 +270,9 @@ class ResultTypesGenerator:
         return field.name.value
 
     def _process_field_name(self, name: str) -> str:
-        if self.convert_to_snake_case:
-            if name == TYPENAME_FIELD_NAME:
-                return "__typename__"
-            return str_to_snake_case(name)
-        return name
+        if self.convert_to_snake_case and name == TYPENAME_FIELD_NAME:
+            return "__typename__"
+        return process_name(name, self.convert_to_snake_case)
 
     def _get_field_from_schema(self, type_name: str, field_name: str) -> GraphQLField:
         try:

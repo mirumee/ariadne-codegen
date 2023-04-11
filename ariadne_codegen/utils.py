@@ -1,5 +1,6 @@
 import ast
 import re
+from keyword import iskeyword
 from textwrap import indent
 
 import isort
@@ -70,3 +71,14 @@ def format_multiline_strings(source: str) -> str:
             formatted = convert_to_multiline_string(orginal_str, variable_indent_size)
             formatted_source = formatted_source.replace(orginal_str, formatted)
     return formatted_source
+
+
+def process_name(name: str, convert_to_snake_case: bool) -> str:
+    """Processes the GraphQL name to remove keywords
+    and optionally convert to snake_case."""
+    processed_name = name
+    if convert_to_snake_case:
+        processed_name = str_to_snake_case(processed_name)
+    if iskeyword(processed_name):
+        processed_name += "_"
+    return processed_name

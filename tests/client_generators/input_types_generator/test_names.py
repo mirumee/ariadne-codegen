@@ -8,8 +8,9 @@ from ariadne_codegen.client_generators.constants import (
     FIELD_CLASS,
 )
 from ariadne_codegen.client_generators.input_types import InputTypesGenerator
+from ariadne_codegen.utils import ast_to_str
 
-from ...utils import compare_ast, get_class_def
+from ...utils import compare_ast, get_assignment_target_names, get_class_def
 
 
 @pytest.mark.parametrize(
@@ -137,3 +138,26 @@ def test_generate_returns_module_with_fields_names_converted_to_snake_case(
 
     class_def = get_class_def(module)
     assert compare_ast(class_def, expected_class_def)
+
+
+def test_generate_returns_module_with_valid_field_names():
+    schema = """
+    input KeywordInput {
+        in: String!
+        from: String!
+        and: String!
+    }
+    """
+
+    generator = InputTypesGenerator(
+        schema=build_ast_schema(parse(schema)), enums_module="enums"
+    )
+
+    module = generator.generate()
+
+    parsed = ast.parse(
+        ast_to_str(module)
+    )  # Round trip because invalid identifiers get picked up in parse
+    class_def = get_class_def(parsed)
+    field_names = get_assignment_target_names(class_def)
+    assert field_names == {"in_", "from_", "and_"}

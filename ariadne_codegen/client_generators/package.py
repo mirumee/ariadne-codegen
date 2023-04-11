@@ -8,7 +8,7 @@ from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNo
 from ..codegen import generate_import_from
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
-from ..utils import ast_to_str, str_to_pascal_case, str_to_snake_case
+from ..utils import ast_to_str, process_name, str_to_pascal_case
 from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
 from .constants import (
@@ -171,7 +171,7 @@ class PackageGenerator:
             raise ParsingError("Query without name.")
 
         return_type_name = str_to_pascal_case(name.value)
-        method_name = str_to_snake_case(name.value)
+        method_name = process_name(name.value, convert_to_snake_case=True)
         module_name = method_name
         file_name = f"{module_name}.py"
 
