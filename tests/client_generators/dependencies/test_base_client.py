@@ -1,10 +1,12 @@
 import json
+from typing import Optional
 
 import httpx
 import pytest
 from pydantic import BaseModel
 
 from ariadne_codegen.client_generators.dependencies.base_client import BaseClient
+from ariadne_codegen.client_generators.dependencies.base_model import UNSET
 from ariadne_codegen.client_generators.dependencies.exceptions import (
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
@@ -95,6 +97,74 @@ def test_execute_correctly_parses_top_level_list_variables(mocker):
     assert not any(
         isinstance(x, BaseModel) for x in call_kwargs["json"]["variables"]["v1"][0]
     )
+
+
+def test_execute_sends_payload_without_unset_arguments(mocker):
+    fake_client = mocker.MagicMock()
+    client = BaseClient(url="url", http_client=fake_client)
+    query_str = """
+    query Abc($arg1: TestInputA, $arg2: String, $arg3: Float, $arg4: Int!) {
+        abc(arg1: $arg1, arg2: $arg2, arg3: $arg3, arg4: $arg4){
+            field1
+        }
+    }
+    """
+
+    client.execute(query_str, {"arg1": UNSET, "arg2": UNSET, "arg3": None, "arg4": 2})
+
+    assert fake_client.post.called
+    assert len(fake_client.post.mock_calls) == 1
+    call_kwargs = fake_client.post.mock_calls[0].kwargs
+    assert call_kwargs["json"] == {
+        "query": query_str,
+        "variables": {"arg3": None, "arg4": 2},
+    }
+
+
+def test_execute_sends_payload_without_unset_input_fields(mocker):
+    class TestInputB(BaseModel):
+        required_b: str
+        optional_b: Optional[str]
+
+    class TestInputA(BaseModel):
+        required_a: str
+        optional_a: Optional[str]
+        input_b1: Optional[TestInputB]
+        input_b2: Optional[TestInputB]
+        input_b3: Optional[TestInputB]
+
+    fake_client = mocker.MagicMock()
+    client = BaseClient(url="url", http_client=fake_client)
+    query_str = """
+    query Abc($arg: TestInputB) {
+        abc(arg: $arg){
+            field1
+        }
+    }
+    """
+
+    client.execute(
+        query_str,
+        {
+            "arg": TestInputA(
+                required_a="a", input_b1=TestInputB(required_b="b"), input_b3=None
+            )
+        },
+    )
+
+    assert fake_client.post.called
+    assert len(fake_client.post.mock_calls) == 1
+    call_kwargs = fake_client.post.mock_calls[0].kwargs
+    assert call_kwargs["json"] == {
+        "query": query_str,
+        "variables": {
+            "arg": {
+                "required_a": "a",
+                "input_b1": {"required_b": "b"},
+                "input_b3": None,
+            }
+        },
+    }
 
 
 @pytest.mark.parametrize(
