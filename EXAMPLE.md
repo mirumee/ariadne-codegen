@@ -156,9 +156,10 @@ Generated client class inherits from `AsyncBaseClient` and has async method for 
 ```py
 # graphql_client/client.py
 
-from typing import Optional
+from typing import Optional, Union
 
 from .async_base_client import AsyncBaseClient
+from .base_model import UNSET, UnsetType
 from .create_user import CreateUser
 from .input_types import UserCreateInput
 from .list_all_users import ListAllUsers
@@ -207,7 +208,7 @@ class Client(AsyncBaseClient):
         return ListAllUsers.parse_obj(data)
 
     async def list_users_by_country(
-        self, country: Optional[str] = None
+        self, country: Union[Optional[str], UnsetType] = UNSET
     ) -> ListUsersByCountry:
         query = gql(
             """
