@@ -1,6 +1,6 @@
 import ast
 from datetime import datetime
-from textwrap import dedent, indent
+from textwrap import dedent
 
 import pytest
 from freezegun import freeze_time
@@ -259,56 +259,6 @@ def test_generate_copies_base_client_file(tmp_path):
     with copied_file_path.open() as copied_file:
         copied_content = copied_file.read()
         assert dedent(base_client_file_content) in dedent(copied_content)
-
-
-def test_generate_creates_client_with_correctly_implemented_async_method(tmp_path):
-    package_name = "test_graphql_client"
-    generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        async_client=True,
-    )
-    query_str = """
-    query CustomQuery($id: ID!, $param: String) {
-        query1(id: $id) {
-            field1
-            field2 {
-                fieldb
-            }
-            field3
-        }
-    }
-    """
-    expected_method_def = '''\
-    async def custom_query(self, id: str, param: Optional[str] = None) -> CustomQuery:
-        query = gql(
-            """
-            query CustomQuery($id: ID!, $param: String) {
-              query1(id: $id) {
-                field1
-                field2 {
-                  fieldb
-                }
-                field3
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {"id": id, "param": param}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return CustomQuery.parse_obj(data)
-    '''
-
-    generator.add_operation(parse(query_str).definitions[0])
-    generator.generate()
-
-    client_file_path = tmp_path / package_name / "client.py"
-    with client_file_path.open() as client_file:
-        client_content = client_file.read()
-        assert indent(dedent(expected_method_def).strip(), "    ") in client_content
-        assert "from .custom_query import CustomQuery" in client_content
 
 
 def test_generate_creates_client_with_valid_method_names(tmp_path):

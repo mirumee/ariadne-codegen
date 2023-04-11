@@ -3,7 +3,13 @@ import ast
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.client_generators.arguments import ArgumentsGenerator
-from ariadne_codegen.client_generators.constants import ANY, OPTIONAL
+from ariadne_codegen.client_generators.constants import (
+    ANY,
+    OPTIONAL,
+    UNION,
+    UNSET,
+    UNSET_TYPE,
+)
 from ariadne_codegen.client_generators.scalars import ScalarData
 
 from ..utils import compare_ast
@@ -64,22 +70,36 @@ def test_generate_returns_arguments_with_correct_optional_annotation():
     generator = ArgumentsGenerator(schema=schema)
     query = "query q($id: ID) {r}"
     variable_definitions = _get_variable_definitions_from_query_str(query)
+    expected_arguments = ast.arguments(
+        posonlyargs=[],
+        args=[
+            ast.arg(arg="self"),
+            ast.arg(
+                arg="id",
+                annotation=ast.Subscript(
+                    value=ast.Name(id=UNION),
+                    slice=ast.Tuple(
+                        elts=[
+                            ast.Subscript(
+                                value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")
+                            ),
+                            ast.Name(id=UNSET_TYPE),
+                        ]
+                    ),
+                ),
+            ),
+        ],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[ast.Name(id="UNSET")],
+    )
 
     arguments, _ = generator.generate(variable_definitions)
 
-    assert isinstance(arguments, ast.arguments)
-    assert len(arguments.args) == 2
-    id_arg = arguments.args[1]
-    assert id_arg.arg == "id"
-    assert id_arg.annotation
-    assert isinstance(id_arg.annotation, ast.Subscript)
-    assert isinstance(id_arg.annotation.value, ast.Name)
-    assert id_arg.annotation.value.id == OPTIONAL
-    assert isinstance(id_arg.annotation.slice, ast.Name)
-    assert id_arg.annotation.slice.id == "str"
+    assert compare_ast(arguments, expected_arguments)
 
 
-def test_generate_returns_arguments_with_default_none_for_optional_args():
+def test_generate_returns_arguments_with_default_value_for_optional_args():
     schema_str = """
         schema { query: Query }
         type Query { q(a: String, b: Float!, c: Int, d: Boolean!): Result! }
@@ -98,19 +118,35 @@ def test_generate_returns_arguments_with_default_none_for_optional_args():
             ast.arg(
                 arg="a",
                 annotation=ast.Subscript(
-                    value=ast.Name(OPTIONAL), slice=ast.Name(id="str")
+                    value=ast.Name(id=UNION),
+                    slice=ast.Tuple(
+                        elts=[
+                            ast.Subscript(
+                                value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")
+                            ),
+                            ast.Name(id=UNSET_TYPE),
+                        ]
+                    ),
                 ),
             ),
             ast.arg(
                 arg="c",
                 annotation=ast.Subscript(
-                    value=ast.Name(OPTIONAL), slice=ast.Name(id="int")
+                    value=ast.Name(id=UNION),
+                    slice=ast.Tuple(
+                        elts=[
+                            ast.Subscript(
+                                value=ast.Name(id=OPTIONAL), slice=ast.Name(id="int")
+                            ),
+                            ast.Name(id=UNSET_TYPE),
+                        ]
+                    ),
                 ),
             ),
         ],
         kwonlyargs=[],
         kw_defaults=[],
-        defaults=[ast.Constant(None), ast.Constant(None)],
+        defaults=[ast.Name(id=UNSET), ast.Name(id=UNSET)],
     )
 
     arguments, _ = generator.generate(variable_definitions)

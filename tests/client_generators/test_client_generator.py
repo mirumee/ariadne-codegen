@@ -11,6 +11,8 @@ from ariadne_codegen.client_generators.constants import (
     OPTIONAL,
     TYPING_MODULE,
     UNION,
+    UNSET,
+    UNSET_TYPE,
 )
 from ariadne_codegen.client_generators.scalars import ScalarData
 
@@ -130,7 +132,7 @@ def test_generate_triggers_generate_client_module_hook(mocker):
 def test_generate_returns_module_with_correct_imports():
     schema_str = """
     schema { query: Query }
-    type Query { xyz(arg1: TestScalar!, arg2: TestEnum!, arg3: TestInput!): TestType }
+    type Query { xyz(arg1: TestScalar!, arg2: TestEnum!, arg3: TestInput): TestType }
     type TestType {
         id: ID!
         name: String!
@@ -145,7 +147,7 @@ def test_generate_returns_module_with_correct_imports():
     scalar TestScalar
     """
     query_str = """
-    query ListXyz($arg1: TestScalar!, $arg2: TestEnum!, $arg3: TestInput!) {
+    query ListXyz($arg1: TestScalar!, $arg2: TestEnum!, $arg3: TestInput) {
         xyz(arg1: $arg1, arg2: $arg2, arg3: $arg3) {
             id
             name
@@ -164,11 +166,21 @@ def test_generate_returns_module_with_correct_imports():
         base_client_import=ast.ImportFrom(
             names=[ast.alias("BaseClient")], module="base_client", level=1
         ),
+        unset_import=ast.ImportFrom(
+            module="base_model",
+            names=[ast.alias(name=UNSET), ast.alias(name=UNSET_TYPE)],
+            level=1,
+        ),
         custom_scalars=scalars,
     )
     expected_imports = [
         ast.ImportFrom(
             module="base_client", names=[ast.alias(name="BaseClient")], level=1
+        ),
+        ast.ImportFrom(
+            module="base_model",
+            names=[ast.alias(name=UNSET), ast.alias(name=UNSET_TYPE)],
+            level=1,
         ),
         ast.ImportFrom(module="enums", names=[ast.alias(name="TestEnum")], level=1),
         ast.ImportFrom(module="inputs", names=[ast.alias(name="TestInput")], level=1),
