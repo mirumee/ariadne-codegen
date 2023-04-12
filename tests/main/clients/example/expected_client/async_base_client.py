@@ -69,12 +69,14 @@ class AsyncBaseClient:
 
         return cast(dict[str, Any], data)
 
+    def _convert_value(self, value: Any) -> Any:
+        if isinstance(value, BaseModel):
+            return value.dict(by_alias=True)
+        if isinstance(value, list):
+            return [self._convert_value(item) for item in value]
+        return value
+
     def _convert_dict_to_json_serializable(
         self, dict_: Dict[str, Any]
     ) -> Dict[str, Any]:
-        return {
-            key: value
-            if not isinstance(value, BaseModel)
-            else value.dict(by_alias=True)
-            for key, value in dict_.items()
-        }
+        return {key: self._convert_value(value) for key, value in dict_.items()}
