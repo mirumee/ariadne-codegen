@@ -6,6 +6,7 @@
 - Added escaping of GraphQL names which are Python keywords by appending `_` to them.
 - Fixed parsing of list variables.
 - Changed base clients to remove unset arguments and input fields from variables payload.
+- Added `process_name` plugin hook.
 
 
 ## 0.5.0 (2023-04-05)
