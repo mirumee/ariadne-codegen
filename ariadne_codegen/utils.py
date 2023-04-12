@@ -7,6 +7,7 @@ from typing import Optional
 import isort
 from autoflake import fix_code  # type: ignore
 from black import Mode, format_str
+from graphql import Node
 
 from .plugins.manager import PluginManager
 
@@ -80,6 +81,7 @@ def process_name(
     name: str,
     convert_to_snake_case: bool,
     plugin_manager: Optional[PluginManager] = None,
+    node: Optional[Node] = None,
 ) -> str:
     """Processes the GraphQL name to remove keywords
     and optionally convert to snake_case."""
@@ -89,5 +91,5 @@ def process_name(
     if iskeyword(processed_name):
         processed_name += "_"
     if plugin_manager:
-        processed_name = plugin_manager.process_name(processed_name)
+        processed_name = plugin_manager.process_name(processed_name, node=node)
     return processed_name

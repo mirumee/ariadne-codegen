@@ -326,7 +326,7 @@ def test_generate_init_code_calls_plugins_generate_init_code(
 
 
 def test_process_name_calls_plugins_process_name(plugin_manager_with_mocked_plugins):
-    plugin_manager_with_mocked_plugins.process_name("")
+    plugin_manager_with_mocked_plugins.process_name("", OperationDefinitionNode())
 
     assert plugin_manager_with_mocked_plugins.plugins[0].process_name.called
     assert plugin_manager_with_mocked_plugins.plugins[1].process_name.called

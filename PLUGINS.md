@@ -287,7 +287,7 @@ Hook executed on generation of init code. Result is used as content of `__init__
 ### process_name
 
 ```py
-def process_name(self, name: str) -> str:
+def process_name(self, name: str, node: Optional[Node] = None) -> str:
 ```
 
 Hook executed on processing of GraphQL field, argument or operation name.

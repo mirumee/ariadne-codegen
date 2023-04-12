@@ -7,6 +7,7 @@ from graphql import (
     GraphQLInputField,
     GraphQLInputObjectType,
     GraphQLSchema,
+    Node,
     OperationDefinitionNode,
     SelectionSetNode,
     VariableDefinitionNode,
@@ -187,5 +188,5 @@ class PluginManager:
     def generate_init_code(self, generated_code: str) -> str:
         return self._apply_plugins_on_object("generate_init_code", generated_code)
 
-    def process_name(self, name: str) -> str:
-        return self._apply_plugins_on_object("process_name", name)
+    def process_name(self, name: str, node: Optional[Node] = None) -> str:
+        return self._apply_plugins_on_object("process_name", name, node=node)

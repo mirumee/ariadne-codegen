@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture
 def mocked_plugin_manager(mocker):
-    def no_effect_method(obj, *_):
+    def no_effect_method(obj, *_, **__):
         return obj
 
     manager = mocker.MagicMock()

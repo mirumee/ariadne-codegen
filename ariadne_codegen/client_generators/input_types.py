@@ -113,6 +113,7 @@ class InputTypesGenerator:
                 org_name,
                 convert_to_snake_case=self.convert_to_snake_case,
                 plugin_manager=self.plugin_manager,
+                node=field,
             )
             annotation, field_type = parse_input_field_type(
                 field.type, custom_scalars=self.custom_scalars
