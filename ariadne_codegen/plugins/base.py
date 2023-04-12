@@ -144,3 +144,6 @@ class Plugin:
 
     def generate_init_code(self, generated_code: str) -> str:
         return generated_code
+
+    def process_name(self, name: str) -> str:
+        return name

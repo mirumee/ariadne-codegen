@@ -2,10 +2,12 @@ import ast
 import re
 from keyword import iskeyword
 from textwrap import indent
+from typing import Optional
 
 import isort
 from autoflake import fix_code  # type: ignore
 from black import Mode, format_str
+from .plugins.manager import PluginManager
 
 
 def ast_to_str(
@@ -73,7 +75,11 @@ def format_multiline_strings(source: str) -> str:
     return formatted_source
 
 
-def process_name(name: str, convert_to_snake_case: bool) -> str:
+def process_name(
+    name: str,
+    convert_to_snake_case: bool,
+    plugin_manager: Optional[PluginManager] = None,
+) -> str:
     """Processes the GraphQL name to remove keywords
     and optionally convert to snake_case."""
     processed_name = name
@@ -81,4 +87,6 @@ def process_name(name: str, convert_to_snake_case: bool) -> str:
         processed_name = str_to_snake_case(processed_name)
     if iskeyword(processed_name):
         processed_name += "_"
+    if plugin_manager:
+        processed_name = plugin_manager.process_name(processed_name)
     return processed_name

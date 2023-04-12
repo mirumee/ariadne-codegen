@@ -272,7 +272,11 @@ class ResultTypesGenerator:
     def _process_field_name(self, name: str) -> str:
         if self.convert_to_snake_case and name == TYPENAME_FIELD_NAME:
             return "__typename__"
-        return process_name(name, self.convert_to_snake_case)
+        return process_name(
+            name,
+            convert_to_snake_case=self.convert_to_snake_case,
+            plugin_manager=self.plugin_manager,
+        )
 
     def _get_field_from_schema(self, type_name: str, field_name: str) -> GraphQLField:
         try:

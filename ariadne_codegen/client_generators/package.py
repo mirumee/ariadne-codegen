@@ -180,7 +180,9 @@ class PackageGenerator:
             raise ParsingError("Query without name.")
 
         return_type_name = str_to_pascal_case(name.value)
-        method_name = process_name(name.value, convert_to_snake_case=True)
+        method_name = process_name(
+            name.value, convert_to_snake_case=True, plugin_manager=self.plugin_manager
+        )
         module_name = method_name
         file_name = f"{module_name}.py"
 

@@ -109,7 +109,11 @@ class InputTypesGenerator:
         )
 
         for lineno, (org_name, field) in enumerate(definition.fields.items(), start=1):
-            name = process_name(org_name, self.convert_to_snake_case)
+            name = process_name(
+                org_name,
+                convert_to_snake_case=self.convert_to_snake_case,
+                plugin_manager=self.plugin_manager,
+            )
             annotation, field_type = parse_input_field_type(
                 field.type, custom_scalars=self.custom_scalars
             )
