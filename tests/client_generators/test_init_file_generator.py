@@ -20,8 +20,7 @@ def test_add_import_adds_correct_objects_to_list():
     assert import_.level == 1
 
 
-def test_add_import_triggers_generate_init_import_hook_method(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_add_import_triggers_generate_init_import_hook_method(mocked_plugin_manager):
     generator = InitFileGenerator(plugin_manager=mocked_plugin_manager)
 
     generator.add_import(names=["TestClass"], from_="test", level=1)
@@ -64,8 +63,9 @@ def test_generate_with_added_imports_returns_module():
     assert [c.value for c in assign_stmt.value.elts] == [name1, name2]
 
 
-def test_generate_triggers_generate_init_module_from_plugin_manager(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_init_module_from_plugin_manager(
+    mocked_plugin_manager,
+):
     generator = InitFileGenerator(plugin_manager=mocked_plugin_manager)
 
     generator.generate()

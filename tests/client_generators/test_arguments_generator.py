@@ -320,8 +320,7 @@ def test_generate_returns_arguments_with_custom_scalar_and_used_serialize_method
     assert compare_ast(arguments_dict, expected_arguments_dict)
 
 
-def test_generate_triggers_generate_arguments_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_arguments_hook(mocked_plugin_manager):
     schema_str = """
         schema { query: Query }
         type Query { _skip: String! }
@@ -337,8 +336,7 @@ def test_generate_triggers_generate_arguments_hook(mocker):
     assert mocked_plugin_manager.generate_arguments.called
 
 
-def test_generate_triggers_generate_arguments_dict_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_arguments_dict_hook(mocked_plugin_manager):
     schema_str = """
         schema { query: Query }
         type Query { _skip: String! }

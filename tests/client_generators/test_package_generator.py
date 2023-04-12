@@ -52,19 +52,6 @@ scalar SCALARABC
 """
 
 
-@pytest.fixture
-def mocked_plugin_manager(mocker):
-    manager = mocker.MagicMock()
-    manager.generate_client_code.return_value = ""
-    manager.generate_enums_code.return_value = ""
-    manager.generate_inputs_code.return_value = ""
-    manager.generate_result_types_code.return_value = ""
-    manager.copy_code.return_value = ""
-    manager.generate_scalars_code.return_value = ""
-    manager.generate_init_code.return_value = ""
-    return manager
-
-
 def test_generate_creates_directory_and_files(tmp_path):
     package_name = "test_graphql_client"
     generator = PackageGenerator(package_name, tmp_path.as_posix(), GraphQLSchema())

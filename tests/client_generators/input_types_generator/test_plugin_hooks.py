@@ -9,7 +9,9 @@ from graphql import (
 from ariadne_codegen.client_generators.input_types import InputTypesGenerator
 
 
-def test_generator_triggers_generate_input_class_hook_for_every_input_type(mocker):
+def test_generator_triggers_generate_input_class_hook_for_every_input_type(
+    mocked_plugin_manager,
+):
     schema_str = """
     input TestInputA {
         fieldA: String!
@@ -19,7 +21,6 @@ def test_generator_triggers_generate_input_class_hook_for_every_input_type(mocke
         fieldB: Int!
     }
     """
-    mocked_plugin_manager = mocker.MagicMock()
 
     InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
@@ -37,7 +38,9 @@ def test_generator_triggers_generate_input_class_hook_for_every_input_type(mocke
     assert call1_input_type.name == "TestInputB"
 
 
-def test_generator_triggers_generate_input_field_hook_for_every_input_field(mocker):
+def test_generator_triggers_generate_input_field_hook_for_every_input_field(
+    mocked_plugin_manager,
+):
     schema_str = """
     input TestInputAB {
         fieldA: String!
@@ -48,7 +51,6 @@ def test_generator_triggers_generate_input_field_hook_for_every_input_field(mock
         fieldC: Int!
     }
     """
-    mocked_plugin_manager = mocker.MagicMock()
 
     InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
@@ -66,8 +68,7 @@ def test_generator_triggers_generate_input_field_hook_for_every_input_field(mock
     assert mock_calls[2].kwargs["field_name"] == "fieldC"
 
 
-def test_generate_triggers_generate_inputs_module_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_inputs_module_hook(mocked_plugin_manager):
     generator = InputTypesGenerator(
         schema=GraphQLSchema(),
         enums_module="enums",

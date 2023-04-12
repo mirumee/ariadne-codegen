@@ -7,9 +7,8 @@ from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
 from .schema import SCHEMA_STR
 
 
-def test_generate_triggers_generate_result_types_module_hook(mocker):
+def test_generate_triggers_generate_result_types_module_hook(mocked_plugin_manager):
     query_str = "query CustomQuery { camelCaseQuery { id } }"
-    mocked_plugin_manager = mocker.MagicMock()
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=cast(
@@ -24,9 +23,10 @@ def test_generate_triggers_generate_result_types_module_hook(mocker):
     assert mocked_plugin_manager.generate_result_types_module.called
 
 
-def test_get_operation_as_str_triggers_generate_operation_str_hook(mocker):
+def test_get_operation_as_str_triggers_generate_operation_str_hook(
+    mocked_plugin_manager,
+):
     query_str = "query CustomQuery { camelCaseQuery { id } }"
-    mocked_plugin_manager = mocker.MagicMock()
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=cast(
@@ -41,9 +41,10 @@ def test_get_operation_as_str_triggers_generate_operation_str_hook(mocker):
     assert mocked_plugin_manager.generate_operation_str.called
 
 
-def test_generator_triggers_generate_result_class_hook_for_every_class(mocker):
+def test_generator_triggers_generate_result_class_hook_for_every_class(
+    mocked_plugin_manager,
+):
     query_str = "query CustomQuery { camelCaseQuery { id } }"
-    mocked_plugin_manager = mocker.MagicMock()
 
     ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
@@ -60,7 +61,9 @@ def test_generator_triggers_generate_result_class_hook_for_every_class(mocker):
     } == {"CustomQuery", "CustomQueryCamelCaseQuery"}
 
 
-def test_generator_triggers_generate_result_field_hook_for_every_field(mocker):
+def test_generator_triggers_generate_result_field_hook_for_every_field(
+    mocked_plugin_manager,
+):
     query_str = """
     query CustomQuery {
         camelCaseQuery {
@@ -71,7 +74,6 @@ def test_generator_triggers_generate_result_field_hook_for_every_field(mocker):
         }
     }
     """
-    mocked_plugin_manager = mocker.MagicMock()
 
     ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),

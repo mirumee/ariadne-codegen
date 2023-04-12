@@ -73,8 +73,7 @@ def test_generate_returns_module_with_gql_lambda_definition():
     assert compare_ast(assign, expected_def)
 
 
-def test_generate_triggers_generate_gql_function_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_gql_function_hook(mocked_plugin_manager):
     generator = ClientGenerator(
         "ClientXYZ",
         base_client="BaseClient",
@@ -92,8 +91,7 @@ def test_generate_triggers_generate_gql_function_hook(mocker):
     assert mocked_plugin_manager.generate_gql_function.called
 
 
-def test_generate_triggers_generate_client_class_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_client_class_hook(mocked_plugin_manager):
     generator = ClientGenerator(
         "ClientXYZ",
         base_client="BaseClient",
@@ -110,8 +108,7 @@ def test_generate_triggers_generate_client_class_hook(mocker):
     assert mocked_plugin_manager.generate_client_class.called
 
 
-def test_generate_triggers_generate_client_module_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_client_module_hook(mocked_plugin_manager):
     generator = ClientGenerator(
         "ClientXYZ",
         base_client="BaseClient",
@@ -490,8 +487,7 @@ def test_add_method_generates_correct_method_body():
     assert compare_ast(method_def.body, expected_method_body)
 
 
-def test_add_method_triggers_generate_client_method_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_add_method_triggers_generate_client_method_hook(mocked_plugin_manager):
     schema_str = """
     schema { query: Query }
     type Query { xyz(arg1: Int!): TestType }

@@ -7,6 +7,7 @@ from typing import Optional
 import isort
 from autoflake import fix_code  # type: ignore
 from black import Mode, format_str
+
 from .plugins.manager import PluginManager
 
 
