@@ -78,3 +78,27 @@ def test_generate_triggers_generate_inputs_module_hook(mocked_plugin_manager):
     generator.generate()
 
     assert mocked_plugin_manager.generate_inputs_module.called
+
+
+def test_generate_triggers_process_name_hook_for_every_field(mocked_plugin_manager):
+    schema_str = """
+    input TestInputAB {
+        fieldA: String!
+        fieldB: String!
+    }
+
+    input TestInputC {
+        fieldC: Int!
+    }
+    """
+
+    InputTypesGenerator(
+        schema=build_ast_schema(parse(schema_str)),
+        enums_module="enums",
+        convert_to_snake_case=False,
+        plugin_manager=mocked_plugin_manager,
+    )
+
+    assert mocked_plugin_manager.process_name.call_count == 3
+    mock_calls = mocked_plugin_manager.process_name.mock_calls
+    assert {call.args[0] for call in mock_calls} == {"fieldA", "fieldB", "fieldC"}

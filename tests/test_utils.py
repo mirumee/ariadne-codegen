@@ -8,6 +8,7 @@ from ariadne_codegen.utils import (
     convert_to_multiline_string,
     format_multiline_strings,
     get_variable_indent_size,
+    process_name,
 )
 
 
@@ -113,3 +114,9 @@ def test_format_multiline_strings_returns_code_with_formatted_multiline_strings(
     '''
 
     assert format_multiline_strings(source) == expected
+
+
+def test_process_name_triggers_plugin_manager_process_name(mocked_plugin_manager):
+    process_name("", convert_to_snake_case=False, plugin_manager=mocked_plugin_manager)
+
+    assert mocked_plugin_manager.process_name.called

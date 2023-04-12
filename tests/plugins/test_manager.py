@@ -323,3 +323,10 @@ def test_generate_init_code_calls_plugins_generate_init_code(
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_init_code.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_init_code.called
+
+
+def test_process_name_calls_plugins_process_name(plugin_manager_with_mocked_plugins):
+    plugin_manager_with_mocked_plugins.process_name("")
+
+    assert plugin_manager_with_mocked_plugins.plugins[0].process_name.called
+    assert plugin_manager_with_mocked_plugins.plugins[1].process_name.called

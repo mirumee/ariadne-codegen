@@ -89,3 +89,34 @@ def test_generator_triggers_generate_result_field_hook_for_every_field(
         c.kwargs["field"].name.value
         for c in mocked_plugin_manager.generate_result_field.mock_calls
     } == {"camelCaseQuery", "id", "field1", "fielda"}
+
+
+def test_generator_triggers_process_name_hook_for_every_field(mocked_plugin_manager):
+    query_str = """
+    query CustomQuery {
+        camelCaseQuery {
+            id
+            field1 {
+                fielda
+            }
+        }
+    }
+    """
+
+    ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+        convert_to_snake_case=False,
+        plugin_manager=mocked_plugin_manager,
+    )
+
+    assert mocked_plugin_manager.process_name.call_count == 4
+    assert {c.args[0] for c in mocked_plugin_manager.process_name.mock_calls} == {
+        "camelCaseQuery",
+        "id",
+        "field1",
+        "fielda",
+    }
