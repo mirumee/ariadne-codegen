@@ -27,7 +27,7 @@ from ..codegen import (
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..utils import process_name
-from .constants import ANY, OPTIONAL, SIMPLE_TYPE_MAP, UNSET, UNSET_TYPE
+from .constants import ANY, OPTIONAL, SIMPLE_TYPE_MAP, UNSET_NAME, UNSET_TYPE_NAME
 from .scalars import ScalarData
 
 
@@ -77,7 +77,7 @@ class ArgumentsGenerator:
 
         arguments = generate_arguments(
             args=required_args + optional_args,
-            defaults=[generate_name(UNSET) for _ in optional_args],
+            defaults=[generate_name(UNSET_NAME) for _ in optional_args],
         )
 
         if self.plugin_manager:
@@ -155,7 +155,7 @@ class ArgumentsGenerator:
         self, annotation: ast.Subscript
     ) -> ast.Subscript:
         return generate_union_annotation(
-            types=[annotation, generate_name(UNSET_TYPE)], nullable=False
+            types=[annotation, generate_name(UNSET_TYPE_NAME)], nullable=False
         )
 
     def _get_dict_value(

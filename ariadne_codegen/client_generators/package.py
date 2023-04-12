@@ -19,8 +19,8 @@ from .constants import (
     GRAPHQL_CLIENT_EXCEPTIONS_NAMES,
     SOURCE_COMMENT,
     TIMESTAMP_COMMENT,
-    UNSET,
-    UNSET_TYPE,
+    UNSET_NAME,
+    UNSET_TYPE_NAME,
 )
 from .enums import EnumsGenerator
 from .init_file import InitFileGenerator
@@ -72,7 +72,7 @@ class PackageGenerator:
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
         )
         self.unset_import = generate_import_from(
-            [UNSET, UNSET_TYPE], self.base_model_file_path.stem, 1
+            [UNSET_NAME, UNSET_TYPE_NAME], self.base_model_file_path.stem, 1
         )
         self.exceptions_file_path = (
             Path(__file__).parent / "dependencies" / "exceptions.py"

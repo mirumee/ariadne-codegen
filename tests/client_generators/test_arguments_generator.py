@@ -7,8 +7,8 @@ from ariadne_codegen.client_generators.constants import (
     ANY,
     OPTIONAL,
     UNION,
-    UNSET,
-    UNSET_TYPE,
+    UNSET_NAME,
+    UNSET_TYPE_NAME,
 )
 from ariadne_codegen.client_generators.scalars import ScalarData
 
@@ -83,7 +83,7 @@ def test_generate_returns_arguments_with_correct_optional_annotation():
                             ast.Subscript(
                                 value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")
                             ),
-                            ast.Name(id=UNSET_TYPE),
+                            ast.Name(id=UNSET_TYPE_NAME),
                         ]
                     ),
                 ),
@@ -124,7 +124,7 @@ def test_generate_returns_arguments_with_default_value_for_optional_args():
                             ast.Subscript(
                                 value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")
                             ),
-                            ast.Name(id=UNSET_TYPE),
+                            ast.Name(id=UNSET_TYPE_NAME),
                         ]
                     ),
                 ),
@@ -138,7 +138,7 @@ def test_generate_returns_arguments_with_default_value_for_optional_args():
                             ast.Subscript(
                                 value=ast.Name(id=OPTIONAL), slice=ast.Name(id="int")
                             ),
-                            ast.Name(id=UNSET_TYPE),
+                            ast.Name(id=UNSET_TYPE_NAME),
                         ]
                     ),
                 ),
@@ -146,7 +146,7 @@ def test_generate_returns_arguments_with_default_value_for_optional_args():
         ],
         kwonlyargs=[],
         kw_defaults=[],
-        defaults=[ast.Name(id=UNSET), ast.Name(id=UNSET)],
+        defaults=[ast.Name(id=UNSET_NAME), ast.Name(id=UNSET_NAME)],
     )
 
     arguments, _ = generator.generate(variable_definitions)

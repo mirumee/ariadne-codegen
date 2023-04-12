@@ -11,8 +11,8 @@ from ariadne_codegen.client_generators.constants import (
     OPTIONAL,
     TYPING_MODULE,
     UNION,
-    UNSET,
-    UNSET_TYPE,
+    UNSET_NAME,
+    UNSET_TYPE_NAME,
 )
 from ariadne_codegen.client_generators.scalars import ScalarData
 
@@ -168,7 +168,7 @@ def test_generate_returns_module_with_correct_imports():
         ),
         unset_import=ast.ImportFrom(
             module="base_model",
-            names=[ast.alias(name=UNSET), ast.alias(name=UNSET_TYPE)],
+            names=[ast.alias(name=UNSET_NAME), ast.alias(name=UNSET_TYPE_NAME)],
             level=1,
         ),
         custom_scalars=scalars,
@@ -179,7 +179,7 @@ def test_generate_returns_module_with_correct_imports():
         ),
         ast.ImportFrom(
             module="base_model",
-            names=[ast.alias(name=UNSET), ast.alias(name=UNSET_TYPE)],
+            names=[ast.alias(name=UNSET_NAME), ast.alias(name=UNSET_TYPE_NAME)],
             level=1,
         ),
         ast.ImportFrom(module="enums", names=[ast.alias(name="TestEnum")], level=1),
