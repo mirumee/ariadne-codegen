@@ -1,13 +1,36 @@
 import ast
+from typing import cast
 
+from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
+
+from ariadne_codegen.client_generators.arguments import ArgumentsGenerator
 from ariadne_codegen.client_generators.client import ClientGenerator
+from ariadne_codegen.client_generators.constants import (
+    ANY,
+    LIST,
+    OPTIONAL,
+    TYPING_MODULE,
+    UNION,
+    UNSET_NAME,
+    UNSET_TYPE_NAME,
+)
+from ariadne_codegen.client_generators.scalars import ScalarData
 
-from ..utils import compare_ast, filter_imports, get_class_def
+from ..utils import compare_ast, filter_imports, get_class_def, sorted_imports
 
 
 def test_generate_returns_module_with_correct_class_name():
     name = "ClientXyz"
-    generator = ClientGenerator(name, "BaseClient")
+    generator = ClientGenerator(
+        name,
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+    )
 
     module = generator.generate()
     class_def = get_class_def(module)
@@ -17,7 +40,16 @@ def test_generate_returns_module_with_correct_class_name():
 
 
 def test_generate_returns_module_with_gql_lambda_definition():
-    generator = ClientGenerator("ClientXyz", "BaseClient")
+    generator = ClientGenerator(
+        "ClientXYZ",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+    )
     expected_def = ast.FunctionDef(
         name="gql",
         args=ast.arguments(
@@ -44,7 +76,15 @@ def test_generate_returns_module_with_gql_lambda_definition():
 def test_generate_triggers_generate_gql_function_hook(mocker):
     mocked_plugin_manager = mocker.MagicMock()
     generator = ClientGenerator(
-        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+        "ClientXYZ",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+        plugin_manager=mocked_plugin_manager,
     )
 
     generator.generate()
@@ -55,9 +95,16 @@ def test_generate_triggers_generate_gql_function_hook(mocker):
 def test_generate_triggers_generate_client_class_hook(mocker):
     mocked_plugin_manager = mocker.MagicMock()
     generator = ClientGenerator(
-        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+        "ClientXYZ",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+        plugin_manager=mocked_plugin_manager,
     )
-
     generator.generate()
 
     assert mocked_plugin_manager.generate_client_class.called
@@ -66,7 +113,15 @@ def test_generate_triggers_generate_client_class_hook(mocker):
 def test_generate_triggers_generate_client_module_hook(mocker):
     mocked_plugin_manager = mocker.MagicMock()
     generator = ClientGenerator(
-        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+        "ClientXYZ",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+        plugin_manager=mocked_plugin_manager,
     )
 
     generator.generate()
@@ -74,61 +129,109 @@ def test_generate_triggers_generate_client_module_hook(mocker):
     assert mocked_plugin_manager.generate_client_module.called
 
 
-def test_add_import_adds_import_to_generated_module():
-    generator = ClientGenerator("Client", "BaseClient")
-    name = "Xyz"
-    from_ = "xyz"
-    number_of_existing_imports = len(generator.imports)
-    generator.add_import([name], from_=from_)
-
-    module = generator.generate()
-    generated_import = module.body[number_of_existing_imports]
-
-    assert isinstance(generated_import, ast.ImportFrom)
-    assert generated_import.module == from_
-    assert [n.name for n in generated_import.names] == [name]
-
-
-def test_add_import_with_empty_names_list_doesnt_add_invalid_import():
-    generator = ClientGenerator("Client", "BaseClient")
-    number_of_pre_existing_imports = len(generator.imports)
-
-    generator.add_import([], from_="abc")
-    module = generator.generate()
-
-    imports = filter_imports(module)
-    assert len(imports) == number_of_pre_existing_imports
-
-
-def test_add_import_triggers_generate_client_import_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_returns_module_with_correct_imports():
+    schema_str = """
+    schema { query: Query }
+    type Query { xyz(arg1: TestScalar!, arg2: TestEnum!, arg3: TestInput): TestType }
+    type TestType {
+        id: ID!
+        name: String!
+    }
+    enum TestEnum {
+        A
+        B
+    }
+    input TestInput {
+        value: String
+    }
+    scalar TestScalar
+    """
+    query_str = """
+    query ListXyz($arg1: TestScalar!, $arg2: TestEnum!, $arg3: TestInput) {
+        xyz(arg1: $arg1, arg2: $arg2, arg3: $arg3) {
+            id
+            name
+        }
+    }
+    """
+    scalars = {"TestScalar": ScalarData(type_="str")}
     generator = ClientGenerator(
-        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+        "Client",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(
+            schema=build_schema(schema_str), custom_scalars=scalars
+        ),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+        unset_import=ast.ImportFrom(
+            module="base_model",
+            names=[ast.alias(name=UNSET_NAME), ast.alias(name=UNSET_TYPE_NAME)],
+            level=1,
+        ),
+        custom_scalars=scalars,
     )
+    expected_imports = [
+        ast.ImportFrom(
+            module="base_client", names=[ast.alias(name="BaseClient")], level=1
+        ),
+        ast.ImportFrom(
+            module="base_model",
+            names=[ast.alias(name=UNSET_NAME), ast.alias(name=UNSET_TYPE_NAME)],
+            level=1,
+        ),
+        ast.ImportFrom(module="enums", names=[ast.alias(name="TestEnum")], level=1),
+        ast.ImportFrom(module="inputs", names=[ast.alias(name="TestInput")], level=1),
+        ast.ImportFrom(module="list_xyz", names=[ast.alias(name="ListXyz")], level=1),
+        ast.ImportFrom(
+            module=TYPING_MODULE,
+            names=[
+                ast.alias(name=OPTIONAL),
+                ast.alias(name=LIST),
+                ast.alias(name=ANY),
+                ast.alias(name=UNION),
+            ],
+            level=0,
+        ),
+    ]
 
-    generator.add_import(["TestType"], "test", level=1)
+    generator.add_method(
+        definition=cast(OperationDefinitionNode, parse(query_str).definitions[0]),
+        name="list_xyz",
+        return_type="ListXyz",
+        return_type_module="list_xyz",
+        operation_str=query_str,
+        async_=True,
+    )
+    module = generator.generate()
 
-    assert mocked_plugin_manager.generate_client_import.called
+    assert compare_ast(
+        sorted_imports(filter_imports(module)), sorted_imports(expected_imports)
+    )
 
 
 def test_add_method_adds_async_method_definition():
-    generator = ClientGenerator("Client", "AsyncBaseClient")
+    generator = ClientGenerator(
+        "ClientXYZ",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+    )
     method_name = "list_xyz"
     return_type = "ListXyz"
-    arguments = ast.arguments(
-        posonlyargs=[],
-        args=[ast.arg(arg="self")],
-        kwonlyargs=[],
-        kw_defaults=[],
-        defaults=[],
-    )
-    arguments_dict = ast.Dict(keys=[], values=[])
+    return_type_module_name = method_name
 
     generator.add_method(
+        definition=OperationDefinitionNode(variable_definitions=()),
         name=method_name,
         return_type=return_type,
-        arguments=arguments,
-        arguments_dict=arguments_dict,
+        return_type_module=return_type_module_name,
         operation_str="",
         async_=True,
     )
@@ -142,26 +245,17 @@ def test_add_method_adds_async_method_definition():
     assert method_def.name == method_name
     assert isinstance(method_def.returns, ast.Name)
     assert method_def.returns.id == return_type
-    assert method_def.args == arguments
 
 
 def test_add_method_generates_correct_async_method_body():
-    generator = ClientGenerator("Client", "AsyncBaseClient")
-    method_name = "list_xyz"
-    return_type = "ListXyz"
-    arguments = ast.arguments(
-        posonlyargs=[],
-        args=[
-            ast.arg(arg="self"),
-            ast.arg(arg="arg1", annotation=ast.Name(id="int")),
-        ],
-        kwonlyargs=[],
-        kw_defaults=[],
-        defaults=[],
-    )
-    arguments_dict = ast.Dict(
-        keys=[ast.Constant(value="arg1")], values=[ast.Name(id="arg1")]
-    )
+    schema_str = """
+    schema { query: Query }
+    type Query { xyz(arg1: Int!): TestType }
+    type TestType {
+        id: ID!
+        name: String!
+    }
+    """
     query_str = """
     query ListXyz($arg1: Int!) {
         xyz(arg1: $arg1) {
@@ -170,6 +264,19 @@ def test_add_method_generates_correct_async_method_body():
         }
     }
     """
+    generator = ClientGenerator(
+        "Client",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+    )
+    method_name = "list_xyz"
+    return_type = "ListXyz"
+    return_type_module_name = method_name
     expected_method_body = [
         ast.Assign(
             targets=[ast.Name(id="query")],
@@ -221,10 +328,10 @@ def test_add_method_generates_correct_async_method_body():
     ]
 
     generator.add_method(
+        definition=cast(OperationDefinitionNode, parse(query_str).definitions[0]),
         name=method_name,
         return_type=return_type,
-        arguments=arguments,
-        arguments_dict=arguments_dict,
+        return_type_module=return_type_module_name,
         operation_str=query_str,
         async_=True,
     )
@@ -238,24 +345,42 @@ def test_add_method_generates_correct_async_method_body():
 
 
 def test_add_method_adds_method_definition():
-    generator = ClientGenerator("Client", "BaseClient")
+    schema_str = """
+    schema { query: Query }
+    type Query { xyz(arg1: Int!): TestType }
+    type TestType {
+        id: ID!
+        name: String!
+    }
+    """
+    query_str = """
+    query ListXyz($arg1: Int!) {
+        xyz(arg1: $arg1) {
+            id
+            name
+        }
+    }
+    """
+    generator = ClientGenerator(
+        "Client",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+    )
     method_name = "list_xyz"
     return_type = "ListXyz"
-    arguments = ast.arguments(
-        posonlyargs=[],
-        args=[ast.arg(arg="self")],
-        kwonlyargs=[],
-        kw_defaults=[],
-        defaults=[],
-    )
-    arguments_dict = ast.Dict(keys=[], values=[])
+    return_type_module_name = method_name
 
     generator.add_method(
+        definition=cast(OperationDefinitionNode, parse(query_str).definitions[0]),
         name=method_name,
         return_type=return_type,
-        arguments=arguments,
-        arguments_dict=arguments_dict,
-        operation_str="",
+        return_type_module=return_type_module_name,
+        operation_str=query_str,
         async_=False,
     )
     module = generator.generate()
@@ -268,26 +393,17 @@ def test_add_method_adds_method_definition():
     assert method_def.name == method_name
     assert isinstance(method_def.returns, ast.Name)
     assert method_def.returns.id == return_type
-    assert method_def.args == arguments
 
 
 def test_add_method_generates_correct_method_body():
-    generator = ClientGenerator("Client", "BaseClient")
-    method_name = "list_xyz"
-    return_type = "ListXyz"
-    arguments = ast.arguments(
-        posonlyargs=[],
-        args=[
-            ast.arg(arg="self"),
-            ast.arg(arg="arg1", annotation=ast.Name(id="int")),
-        ],
-        kwonlyargs=[],
-        kw_defaults=[],
-        defaults=[],
-    )
-    arguments_dict = ast.Dict(
-        keys=[ast.Constant(value="arg1")], values=[ast.Name(id="arg1")]
-    )
+    schema_str = """
+    schema { query: Query }
+    type Query { xyz(arg1: Int!): TestType }
+    type TestType {
+        id: ID!
+        name: String!
+    }
+    """
     query_str = """
     query ListXyz($arg1: Int!) {
         xyz(arg1: $arg1) {
@@ -296,6 +412,19 @@ def test_add_method_generates_correct_method_body():
         }
     }
     """
+    generator = ClientGenerator(
+        "Client",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+    )
+    method_name = "list_xyz"
+    return_type = "ListXyz"
+    return_type_module_name = method_name
     expected_method_body = [
         ast.Assign(
             targets=[ast.Name(id="query")],
@@ -345,10 +474,10 @@ def test_add_method_generates_correct_method_body():
     ]
 
     generator.add_method(
+        definition=cast(OperationDefinitionNode, parse(query_str).definitions[0]),
         name=method_name,
         return_type=return_type,
-        arguments=arguments,
-        arguments_dict=arguments_dict,
+        return_type_module=return_type_module_name,
         operation_str=query_str,
         async_=False,
     )
@@ -363,24 +492,45 @@ def test_add_method_generates_correct_method_body():
 
 def test_add_method_triggers_generate_client_method_hook(mocker):
     mocked_plugin_manager = mocker.MagicMock()
+    schema_str = """
+    schema { query: Query }
+    type Query { xyz(arg1: Int!): TestType }
+    type TestType {
+        id: ID!
+        name: String!
+    }
+    """
+    query_str = """
+    query ListXyz($arg1: Int!) {
+        xyz(arg1: $arg1) {
+            id
+            name
+        }
+    }
+    """
     generator = ClientGenerator(
-        "ClientXyz", "BaseClient", plugin_manager=mocked_plugin_manager
+        "Client",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+        plugin_manager=mocked_plugin_manager,
     )
+    method_name = "list_xyz"
+    return_type = "ListXyz"
+    return_type_module_name = method_name
 
     generator.add_method(
-        name="list_xyz",
-        return_type="ListXyz",
-        arguments=ast.arguments(
-            posonlyargs=[],
-            args=[ast.arg(arg="self")],
-            kwonlyargs=[],
-            kw_defaults=[],
-            defaults=[],
-        ),
-        arguments_dict=ast.Dict(keys=[], values=[]),
-        operation_str="",
+        definition=cast(OperationDefinitionNode, parse(query_str).definitions[0]),
+        name=method_name,
+        return_type=return_type,
+        return_type_module=return_type_module_name,
+        operation_str=query_str,
         async_=False,
     )
-    generator.add_import(["TestType"], "test", level=1)
+    generator.generate()
 
     assert mocked_plugin_manager.generate_client_method.called

@@ -5,6 +5,7 @@
 - Changed logic how custom scalar imports are generated. Deprecated `import_` key.
 - Added escaping of GraphQL names which are Python keywords by appending `_` to them.
 - Fixed parsing of list variables.
+- Changed base clients to remove unset arguments and input fields from variables payload.
 
 
 ## 0.5.0 (2023-04-05)

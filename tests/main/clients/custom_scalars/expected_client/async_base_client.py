@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, TypeVar, cast
 import httpx
 from pydantic import BaseModel
 
+from .base_model import UNSET
 from .exceptions import (
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
@@ -71,7 +72,7 @@ class AsyncBaseClient:
 
     def _convert_value(self, value: Any) -> Any:
         if isinstance(value, BaseModel):
-            return value.dict(by_alias=True)
+            return value.dict(by_alias=True, exclude_unset=True)
         if isinstance(value, list):
             return [self._convert_value(item) for item in value]
         return value
@@ -79,4 +80,8 @@ class AsyncBaseClient:
     def _convert_dict_to_json_serializable(
         self, dict_: Dict[str, Any]
     ) -> Dict[str, Any]:
-        return {key: self._convert_value(value) for key, value in dict_.items()}
+        return {
+            key: self._convert_value(value)
+            for key, value in dict_.items()
+            if value is not UNSET
+        }

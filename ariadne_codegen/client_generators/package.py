@@ -19,12 +19,14 @@ from .constants import (
     GRAPHQL_CLIENT_EXCEPTIONS_NAMES,
     SOURCE_COMMENT,
     TIMESTAMP_COMMENT,
+    UNSET_NAME,
+    UNSET_TYPE_NAME,
 )
 from .enums import EnumsGenerator
 from .init_file import InitFileGenerator
 from .input_types import InputTypesGenerator
 from .result_types import ResultTypesGenerator
-from .scalars import ScalarData, ScalarsDefinitionsGenerator, generate_scalar_imports
+from .scalars import ScalarData, ScalarsDefinitionsGenerator
 
 
 class PackageGenerator:
@@ -47,7 +49,6 @@ class PackageGenerator:
         fragments: Optional[List[FragmentDefinitionNode]] = None,
         init_generator: Optional[InitFileGenerator] = None,
         client_generator: Optional[ClientGenerator] = None,
-        arguments_generator: Optional[ArgumentsGenerator] = None,
         enums_generator: Optional[EnumsGenerator] = None,
         input_types_generator: Optional[InputTypesGenerator] = None,
         files_to_include: Optional[List[str]] = None,
@@ -70,6 +71,9 @@ class PackageGenerator:
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
         )
+        self.unset_import = generate_import_from(
+            [UNSET_NAME, UNSET_TYPE_NAME], self.base_model_file_path.stem, 1
+        )
         self.exceptions_file_path = (
             Path(__file__).parent / "dependencies" / "exceptions.py"
         )
@@ -88,6 +92,14 @@ class PackageGenerator:
         self.convert_to_snake_case = convert_to_snake_case
         self.async_client = async_client
 
+        if base_client_file_path:
+            self.base_client_file_path = Path(base_client_file_path)
+        else:
+            if self.async_client:
+                self.base_client_file_path = DEFAULT_ASYNC_BASE_CLIENT_PATH
+            else:
+                self.base_client_file_path = DEFAULT_BASE_CLIENT_PATH
+
         self.init_generator = (
             init_generator
             if init_generator
@@ -99,15 +111,20 @@ class PackageGenerator:
             else ClientGenerator(
                 name=self.client_name,
                 base_client=self.base_client_name,
-                plugin_manager=self.plugin_manager,
-            )
-        )
-        self.arguments_generator = (
-            arguments_generator
-            if arguments_generator
-            else ArgumentsGenerator(
-                schema=self.schema,
-                convert_to_snake_case=self.convert_to_snake_case,
+                enums_module_name=self.enums_module_name,
+                input_types_module_name=self.input_types_module_name,
+                arguments_generator=ArgumentsGenerator(
+                    schema=self.schema,
+                    convert_to_snake_case=self.convert_to_snake_case,
+                    custom_scalars=self.custom_scalars,
+                    plugin_manager=self.plugin_manager,
+                ),
+                base_client_import=generate_import_from(
+                    names=[self.base_client_name],
+                    from_=self.base_client_file_path.stem,
+                    level=1,
+                ),
+                unset_import=self.unset_import,
                 custom_scalars=self.custom_scalars,
                 plugin_manager=self.plugin_manager,
             )
@@ -129,14 +146,6 @@ class PackageGenerator:
             if enums_generator
             else EnumsGenerator(schema=self.schema, plugin_manager=self.plugin_manager)
         )
-
-        if base_client_file_path:
-            self.base_client_file_path = Path(base_client_file_path)
-        else:
-            if self.async_client:
-                self.base_client_file_path = DEFAULT_ASYNC_BASE_CLIENT_PATH
-            else:
-                self.base_client_file_path = DEFAULT_BASE_CLIENT_PATH
 
         self.fragments_definitions = {f.name.value: f for f in fragments or []}
 
@@ -191,18 +200,14 @@ class PackageGenerator:
             query_types_generator.get_generated_public_names(), module_name, 1
         )
 
-        arguments, arguments_dict = self.arguments_generator.generate(
-            definition.variable_definitions
-        )
         self.client_generator.add_method(
+            definition=definition,
             name=method_name,
             return_type=return_type_name,
-            arguments=arguments,
-            arguments_dict=arguments_dict,
+            return_type_module=module_name,
             operation_str=operation_str,
             async_=self.async_client,
         )
-        self.client_generator.add_import([return_type_name], module_name, 1)
 
     def _include_exceptions(self):
         return self.base_client_file_path in (
@@ -233,28 +238,6 @@ class PackageGenerator:
 
     def _generate_client(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
-
-        self.client_generator.add_import(
-            names=self.arguments_generator.get_used_inputs(),
-            from_=self.input_types_module_name,
-            level=1,
-        )
-        self.client_generator.add_import(
-            names=self.arguments_generator.get_used_enums(),
-            from_=self.enums_module_name,
-            level=1,
-        )
-
-        for custom_scalar_name in self.arguments_generator.get_used_custom_scalars():
-            scalar_data = self.custom_scalars[custom_scalar_name]
-            self.client_generator.add_imports(generate_scalar_imports(scalar_data))
-
-        self.client_generator.add_import(
-            names=[self.base_client_name],
-            from_=self.base_client_file_path.stem,
-            level=1,
-        )
-
         client_module = self.client_generator.generate()
         code = self._proccess_generated_code(
             ast_to_str(client_module, multiline_strings=True), self.queries_source

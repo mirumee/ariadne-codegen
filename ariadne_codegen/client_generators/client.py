@@ -1,5 +1,7 @@
 import ast
-from typing import List, Optional, Union, cast
+from typing import Dict, List, Optional, Union, cast
+
+from graphql import OperationDefinitionNode
 
 from ..codegen import (
     generate_ann_assign,
@@ -22,7 +24,9 @@ from ..codegen import (
     generate_tuple,
 )
 from ..plugins.manager import PluginManager
-from .constants import ANY, LIST, OPTIONAL, TYPING_MODULE
+from .arguments import ArgumentsGenerator
+from .constants import ANY, LIST, OPTIONAL, TYPING_MODULE, UNION
+from .scalars import ScalarData, generate_scalar_imports
 
 
 class ClientGenerator:
@@ -30,15 +34,29 @@ class ClientGenerator:
         self,
         name: str,
         base_client: str,
+        enums_module_name: str,
+        input_types_module_name: str,
+        arguments_generator: ArgumentsGenerator,
+        base_client_import: Optional[ast.ImportFrom] = None,
+        unset_import: Optional[ast.ImportFrom] = None,
+        custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.name = name
+        self.enums_module_name = enums_module_name
+        self.input_types_module_name = input_types_module_name
         self.plugin_manager = plugin_manager
-        self.class_def = generate_class_def(name=name, base_names=[base_client])
-        self.imports: list = [
-            generate_import_from([OPTIONAL, LIST, ANY], TYPING_MODULE)
-        ]
+        self.custom_scalars = custom_scalars if custom_scalars else {}
+        self.arguments_generator = arguments_generator
 
+        self._imports: List[ast.ImportFrom] = []
+        self._add_import(
+            generate_import_from([OPTIONAL, LIST, ANY, UNION], TYPING_MODULE)
+        )
+        self._add_import(base_client_import)
+        self._add_import(unset_import)
+
+        self._class_def = generate_class_def(name=name, base_names=[base_client])
         self._gql_func_name = "gql"
         self._operation_str_variable = "query"
         self._variables_dict_variable = "variables"
@@ -47,49 +65,56 @@ class ClientGenerator:
 
     def generate(self) -> ast.Module:
         """Generate module with class definition of graphql client."""
+        self._add_import(
+            generate_import_from(
+                names=self.arguments_generator.get_used_inputs(),
+                from_=self.input_types_module_name,
+                level=1,
+            )
+        )
+        self._add_import(
+            generate_import_from(
+                names=self.arguments_generator.get_used_enums(),
+                from_=self.enums_module_name,
+                level=1,
+            )
+        )
+        for custom_scalar_name in self.arguments_generator.get_used_custom_scalars():
+            scalar_data = self.custom_scalars[custom_scalar_name]
+            for import_ in generate_scalar_imports(scalar_data):
+                self._add_import(import_)
+
         gql_func = self._generate_gql_func()
-        gql_func.lineno = len(self.imports) + 1
+        gql_func.lineno = len(self._imports) + 1
         if self.plugin_manager:
             gql_func = self.plugin_manager.generate_gql_function(gql_func)
 
-        self.class_def.lineno = len(self.imports) + 3
-        if not self.class_def.body:
-            self.class_def.body.append(ast.Pass())
+        self._class_def.lineno = len(self._imports) + 3
+        if not self._class_def.body:
+            self._class_def.body.append(ast.Pass())
         if self.plugin_manager:
-            self.class_def = self.plugin_manager.generate_client_class(self.class_def)
+            self._class_def = self.plugin_manager.generate_client_class(self._class_def)
 
         module = generate_module(
-            body=self.imports + [gql_func, self.class_def],
+            body=self._imports + [gql_func, self._class_def],
         )
         if self.plugin_manager:
             module = self.plugin_manager.generate_client_module(module)
         return module
 
-    def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
-        """Add import to be included in module file."""
-        if not names:
-            return
-        import_ = generate_import_from(names=names, from_=from_, level=level)
-        if self.plugin_manager:
-            import_ = self.plugin_manager.generate_client_import(import_)
-        self.imports.append(import_)
-
-    def add_imports(self, imports: List[ast.ImportFrom]):
-        for import_ in imports:
-            if self.plugin_manager:
-                import_ = self.plugin_manager.generate_client_import(import_)
-            self.imports.append(import_)
-
     def add_method(
         self,
+        definition: OperationDefinitionNode,
         name: str,
         return_type: str,
-        arguments: ast.arguments,
-        arguments_dict: ast.Dict,
+        return_type_module: str,
         operation_str: str,
         async_: bool = True,
     ):
         """Add method to client."""
+        arguments, arguments_dict = self.arguments_generator.generate(
+            definition.variable_definitions
+        )
         method_def = (
             self._generate_async_method(
                 name=name,
@@ -107,12 +132,23 @@ class ClientGenerator:
                 operation_str=operation_str,
             )
         )
-        method_def.lineno = len(self.class_def.body) + 1
+        method_def.lineno = len(self._class_def.body) + 1
         if self.plugin_manager:
             method_def = self.plugin_manager.generate_client_method(
                 cast(Union[ast.FunctionDef, ast.AsyncFunctionDef], method_def)
             )
-        self.class_def.body.append(method_def)
+        self._class_def.body.append(method_def)
+        self._add_import(
+            generate_import_from(names=[return_type], from_=return_type_module, level=1)
+        )
+
+    def _add_import(self, import_: Optional[ast.ImportFrom] = None):
+        if not import_:
+            return
+        if self.plugin_manager:
+            import_ = self.plugin_manager.generate_client_import(import_)
+        if import_.names and import_.module:
+            self._imports.append(import_)
 
     def _generate_async_method(
         self,
