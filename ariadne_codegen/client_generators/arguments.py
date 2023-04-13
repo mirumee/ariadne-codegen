@@ -58,7 +58,12 @@ class ArgumentsGenerator:
         dict_ = generate_dict()
         for variable_definition in variable_definitions:
             org_name = variable_definition.variable.name.value
-            name = process_name(org_name, self.convert_to_snake_case)
+            name = process_name(
+                org_name,
+                convert_to_snake_case=self.convert_to_snake_case,
+                plugin_manager=self.plugin_manager,
+                node=variable_definition,
+            )
             annotation, used_custom_scalar = self._parse_type_node(
                 variable_definition.type
             )

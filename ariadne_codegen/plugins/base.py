@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 from graphql import (
     FieldNode,
@@ -7,6 +7,7 @@ from graphql import (
     GraphQLInputField,
     GraphQLInputObjectType,
     GraphQLSchema,
+    Node,
     OperationDefinitionNode,
     SelectionSetNode,
     VariableDefinitionNode,
@@ -144,3 +145,7 @@ class Plugin:
 
     def generate_init_code(self, generated_code: str) -> str:
         return generated_code
+
+    # pylint: disable=unused-argument
+    def process_name(self, name: str, node: Optional[Node] = None) -> str:
+        return name

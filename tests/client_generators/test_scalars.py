@@ -255,25 +255,19 @@ def test_generate_returns_module_with_dictionaries_with_scalars_methods():
     assert compare_ast(module, expected_module)
 
 
-def test_generate_triggers_generate_scalars_module_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
-
+def test_generate_triggers_generate_scalars_module_hook(mocked_plugin_manager):
     ScalarsDefinitionsGenerator(plugin_manager=mocked_plugin_manager).generate()
 
     assert mocked_plugin_manager.generate_scalars_module.called
 
 
-def test_generate_triggers_generate_scalars_parse_dict_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
-
+def test_generate_triggers_generate_scalars_parse_dict_hook(mocked_plugin_manager):
     ScalarsDefinitionsGenerator(plugin_manager=mocked_plugin_manager).generate()
 
     assert mocked_plugin_manager.generate_scalars_parse_dict.called
 
 
-def test_generate_triggers_generate_scalars_serialize_dict_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
-
+def test_generate_triggers_generate_scalars_serialize_dict_hook(mocked_plugin_manager):
     ScalarsDefinitionsGenerator(plugin_manager=mocked_plugin_manager).generate()
 
     assert mocked_plugin_manager.generate_scalars_serialize_dict.called

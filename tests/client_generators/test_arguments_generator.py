@@ -320,8 +320,7 @@ def test_generate_returns_arguments_with_custom_scalar_and_used_serialize_method
     assert compare_ast(arguments_dict, expected_arguments_dict)
 
 
-def test_generate_triggers_generate_arguments_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_arguments_hook(mocked_plugin_manager):
     schema_str = """
         schema { query: Query }
         type Query { _skip: String! }
@@ -337,8 +336,7 @@ def test_generate_triggers_generate_arguments_hook(mocker):
     assert mocked_plugin_manager.generate_arguments.called
 
 
-def test_generate_triggers_generate_arguments_dict_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_arguments_dict_hook(mocked_plugin_manager):
     schema_str = """
         schema { query: Query }
         type Query { _skip: String! }
@@ -352,3 +350,25 @@ def test_generate_triggers_generate_arguments_dict_hook(mocker):
     )
 
     assert mocked_plugin_manager.generate_arguments_dict.called
+
+
+def test_generate_triggers_process_name_hook_for_every_arg(mocked_plugin_manager):
+    schema_str = """
+        schema { query: Query }
+        type Query { _skip: String! }
+        """
+    generator = ArgumentsGenerator(
+        schema=build_schema(schema_str), plugin_manager=mocked_plugin_manager
+    )
+
+    generator.generate(
+        _get_variable_definitions_from_query_str(
+            "query q($arg1: String!, $arg2: String) { _skip }"
+        )
+    )
+
+    assert mocked_plugin_manager.process_name.call_count == 2
+    name1 = mocked_plugin_manager.process_name.mock_calls[0].args[0]
+    name2 = mocked_plugin_manager.process_name.mock_calls[1].args[0]
+    assert name1 == "arg1"
+    assert name2 == "arg2"

@@ -52,19 +52,6 @@ scalar SCALARABC
 """
 
 
-@pytest.fixture
-def mocked_plugin_manager(mocker):
-    manager = mocker.MagicMock()
-    manager.generate_client_code.return_value = ""
-    manager.generate_enums_code.return_value = ""
-    manager.generate_inputs_code.return_value = ""
-    manager.generate_result_types_code.return_value = ""
-    manager.copy_code.return_value = ""
-    manager.generate_scalars_code.return_value = ""
-    manager.generate_init_code.return_value = ""
-    return manager
-
-
 def test_generate_creates_directory_and_files(tmp_path):
     package_name = "test_graphql_client"
     generator = PackageGenerator(package_name, tmp_path.as_posix(), GraphQLSchema())
@@ -669,3 +656,24 @@ def test_generate_triggers_generate_init_code_hook(mocked_plugin_manager, tmp_pa
     ).generate()
 
     assert mocked_plugin_manager.generate_init_code.called
+
+
+def test_add_operation_triggers_process_name_hook(mocked_plugin_manager, tmp_path):
+    query_str = """
+    query custom_query_name {
+        query2 {
+            id
+        }
+    }
+    """
+    PackageGenerator(
+        "package_name",
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        plugin_manager=mocked_plugin_manager,
+    ).add_operation(parse(query_str).definitions[0])
+
+    assert mocked_plugin_manager.process_name.called
+    assert "custom_query_name" in {
+        c.args[0] for c in mocked_plugin_manager.process_name.mock_calls
+    }

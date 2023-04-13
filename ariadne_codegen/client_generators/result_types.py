@@ -185,7 +185,7 @@ class ResultTypesGenerator:
             start=1,
         ):
             field_name = self._get_field_name(field)
-            name = self._process_field_name(field_name)
+            name = self._process_field_name(field_name, field=field)
             field_definition = self._get_field_from_schema(type_name, field.name.value)
             annotation, field_types_names = parse_operation_field(
                 field=field,
@@ -269,10 +269,15 @@ class ResultTypesGenerator:
             return field.alias.value
         return field.name.value
 
-    def _process_field_name(self, name: str) -> str:
+    def _process_field_name(self, name: str, field: FieldNode) -> str:
         if self.convert_to_snake_case and name == TYPENAME_FIELD_NAME:
             return "__typename__"
-        return process_name(name, self.convert_to_snake_case)
+        return process_name(
+            name,
+            convert_to_snake_case=self.convert_to_snake_case,
+            plugin_manager=self.plugin_manager,
+            node=field,
+        )
 
     def _get_field_from_schema(self, type_name: str, field_name: str) -> GraphQLField:
         try:

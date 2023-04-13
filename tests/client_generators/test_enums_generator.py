@@ -131,8 +131,7 @@ def test_generate_returns_module_with_enum_class_definition_for_every_enum():
     assert compare_ast(class_defs, expected_class_defs)
 
 
-def test_generate_triggers_generate_enums_module_hook(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_enums_module_hook(mocked_plugin_manager):
     generator = EnumsGenerator(
         schema=GraphQLSchema(), plugin_manager=mocked_plugin_manager
     )
@@ -142,8 +141,9 @@ def test_generate_triggers_generate_enums_module_hook(mocker):
     assert mocked_plugin_manager.generate_enums_module.called
 
 
-def test_generate_triggers_generate_enum_hook_for_every_definition(mocker):
-    mocked_plugin_manager = mocker.MagicMock()
+def test_generate_triggers_generate_enum_hook_for_every_definition(
+    mocked_plugin_manager,
+):
     schema_str = """
     enum TestEnumAB {
         A

@@ -284,6 +284,14 @@ def generate_init_code(self, generated_code: str) -> str:
 
 Hook executed on generation of init code. Result is used as content of `__init__.py`.
 
+### process_name
+
+```py
+def process_name(self, name: str, node: Optional[Node] = None) -> str:
+```
+
+Hook executed on processing of GraphQL field, argument or operation name.
+
 
 ## Example
 
@@ -298,7 +306,7 @@ from ariadne_codegen.plugins.base import Plugin
 class VersionPlugin(Plugin):
     def generate_init_module(self, module: ast.Module) -> ast.Module:
         version = (
-            self.config_dict.get("tools", {})
+            self.config_dict.get("tool", {})
             .get("version_plugin", {})
             .get("version", "0.1")
         )
