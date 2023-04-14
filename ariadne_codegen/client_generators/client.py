@@ -1,19 +1,21 @@
 import ast
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union
 
-from graphql import OperationDefinitionNode
+from graphql import OperationDefinitionNode, OperationType
 
 from ..codegen import (
     generate_ann_assign,
     generate_arg,
     generate_arguments,
     generate_assign,
+    generate_async_for,
     generate_async_method_definition,
     generate_attribute,
     generate_await,
     generate_call,
     generate_class_def,
     generate_constant,
+    generate_expr,
     generate_import_from,
     generate_keyword,
     generate_method_definition,
@@ -22,10 +24,20 @@ from ..codegen import (
     generate_return,
     generate_subscript,
     generate_tuple,
+    generate_yield,
 )
+from ..exceptions import NotSupported
 from ..plugins.manager import PluginManager
 from .arguments import ArgumentsGenerator
-from .constants import ANY, LIST, OPTIONAL, TYPING_MODULE, UNION
+from .constants import (
+    ANY,
+    ASYNC_ITERATOR,
+    LIST,
+    OPTIONAL,
+    PARSE_OBJ_METHOD,
+    TYPING_MODULE,
+    UNION,
+)
 from .scalars import ScalarData, generate_scalar_imports
 
 
@@ -51,7 +63,9 @@ class ClientGenerator:
 
         self._imports: List[ast.ImportFrom] = []
         self._add_import(
-            generate_import_from([OPTIONAL, LIST, ANY, UNION], TYPING_MODULE)
+            generate_import_from(
+                [OPTIONAL, LIST, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE
+            )
         )
         self._add_import(base_client_import)
         self._add_import(unset_import)
@@ -115,28 +129,39 @@ class ClientGenerator:
         arguments, arguments_dict = self.arguments_generator.generate(
             definition.variable_definitions
         )
-        method_def = (
-            self._generate_async_method(
+        if definition.operation == OperationType.SUBSCRIPTION:
+            if not async_:
+                raise NotSupported("Only async client supports subscriptions.")
+            method_def: Union[
+                ast.FunctionDef, ast.AsyncFunctionDef
+            ] = self._generate_subscription_method_def(
                 name=name,
                 return_type=return_type,
                 arguments=arguments,
                 arguments_dict=arguments_dict,
                 operation_str=operation_str,
             )
-            if async_
-            else self._generate_method(
+        elif async_:
+            method_def = self._generate_async_method(
                 name=name,
                 return_type=return_type,
                 arguments=arguments,
                 arguments_dict=arguments_dict,
                 operation_str=operation_str,
             )
-        )
+        else:
+            method_def = self._generate_method(
+                name=name,
+                return_type=return_type,
+                arguments=arguments,
+                arguments_dict=arguments_dict,
+                operation_str=operation_str,
+            )
+
         method_def.lineno = len(self._class_def.body) + 1
         if self.plugin_manager:
-            method_def = self.plugin_manager.generate_client_method(
-                cast(Union[ast.FunctionDef, ast.AsyncFunctionDef], method_def)
-            )
+            method_def = self.plugin_manager.generate_client_method(method_def)
+
         self._class_def.body.append(method_def)
         self._add_import(
             generate_import_from(names=[return_type], from_=return_type_module, level=1)
@@ -149,6 +174,27 @@ class ClientGenerator:
             import_ = self.plugin_manager.generate_client_import(import_)
         if import_.names and import_.module:
             self._imports.append(import_)
+
+    def _generate_subscription_method_def(
+        self,
+        name: str,
+        return_type: str,
+        arguments: ast.arguments,
+        arguments_dict: ast.Dict,
+        operation_str: str,
+    ) -> ast.AsyncFunctionDef:
+        return generate_async_method_definition(
+            name=name,
+            arguments=arguments,
+            return_type=generate_subscript(
+                value=generate_name(ASYNC_ITERATOR), slice_=generate_name(return_type)
+            ),
+            body=[
+                self._generate_operation_str_assign(operation_str, 1),
+                self._generate_variables_assign(arguments_dict, 2),
+                self._generate_async_generator_loop(return_type, 3),
+            ],
+        )
 
     def _generate_async_method(
         self,
@@ -256,8 +302,43 @@ class ClientGenerator:
     def _generate_return_parsed_obj(self, return_type: str) -> ast.Return:
         return generate_return(
             generate_call(
-                func=generate_attribute(generate_name(return_type), "parse_obj"),
+                func=generate_attribute(generate_name(return_type), PARSE_OBJ_METHOD),
                 args=[generate_name(self._data_variable)],
+            )
+        )
+
+    def _generate_async_generator_loop(
+        self, return_type: str, lineno: int = 1
+    ) -> ast.AsyncFor:
+        return generate_async_for(
+            target=generate_name(self._data_variable),
+            iter_=generate_call(
+                func=generate_attribute(value=generate_name("self"), attr="execute_ws"),
+                keywords=[
+                    generate_keyword(
+                        arg="query",
+                        value=generate_name(self._operation_str_variable),
+                    ),
+                    generate_keyword(
+                        arg="variables",
+                        value=generate_name(self._variables_dict_variable),
+                    ),
+                ],
+            ),
+            body=[self._generate_yield_parsed_obj(return_type)],
+            lineno=lineno,
+        )
+
+    def _generate_yield_parsed_obj(self, return_type: str) -> ast.Expr:
+        return generate_expr(
+            generate_yield(
+                generate_call(
+                    func=generate_attribute(
+                        value=generate_name(return_type),
+                        attr=PARSE_OBJ_METHOD,
+                    ),
+                    args=[generate_name(self._data_variable)],
+                )
             )
         )
 

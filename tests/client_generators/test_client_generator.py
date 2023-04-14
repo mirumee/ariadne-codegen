@@ -7,8 +7,10 @@ from ariadne_codegen.client_generators.arguments import ArgumentsGenerator
 from ariadne_codegen.client_generators.client import ClientGenerator
 from ariadne_codegen.client_generators.constants import (
     ANY,
+    ASYNC_ITERATOR,
     LIST,
     OPTIONAL,
+    PARSE_OBJ_METHOD,
     TYPING_MODULE,
     UNION,
     UNSET_NAME,
@@ -189,6 +191,7 @@ def test_generate_returns_module_with_correct_imports():
                 ast.alias(name=LIST),
                 ast.alias(name=ANY),
                 ast.alias(name=UNION),
+                ast.alias(name=ASYNC_ITERATOR),
             ],
             level=0,
         ),
@@ -317,7 +320,7 @@ def test_add_method_generates_correct_async_method_body():
         ),
         ast.Return(
             value=ast.Call(
-                func=ast.Attribute(value=ast.Name(id="ListXyz"), attr="parse_obj"),
+                func=ast.Attribute(value=ast.Name(id="ListXyz"), attr=PARSE_OBJ_METHOD),
                 args=[ast.Name(id="data")],
                 keywords=[],
             )
@@ -463,7 +466,7 @@ def test_add_method_generates_correct_method_body():
         ),
         ast.Return(
             value=ast.Call(
-                func=ast.Attribute(value=ast.Name(id="ListXyz"), attr="parse_obj"),
+                func=ast.Attribute(value=ast.Name(id="ListXyz"), attr=PARSE_OBJ_METHOD),
                 args=[ast.Name(id="data")],
                 keywords=[],
             )

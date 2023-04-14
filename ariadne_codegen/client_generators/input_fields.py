@@ -33,7 +33,7 @@ from ..codegen import (
     generate_subscript,
 )
 from ..exceptions import ParsingError
-from .constants import ANY, FIELD_CLASS, SIMPLE_TYPE_MAP
+from .constants import ANY, FIELD_CLASS, PARSE_OBJ_METHOD, SIMPLE_TYPE_MAP
 from .scalars import ScalarData
 from .types import Annotation, CodegenInputFieldType
 
@@ -176,7 +176,7 @@ def parse_input_const_value_node(
                                         ),
                                         slice_=generate_constant(field_type),
                                     ),
-                                    attr="parse_obj",
+                                    attr=PARSE_OBJ_METHOD,
                                 ),
                                 args=[dict_],
                             )

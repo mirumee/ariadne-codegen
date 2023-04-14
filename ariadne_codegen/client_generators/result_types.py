@@ -106,6 +106,12 @@ class ResultTypesGenerator:
         if operation_type == OperationType.MUTATION and self.schema.mutation_type:
             return self.schema.mutation_type.name
 
+        if (
+            operation_type == OperationType.SUBSCRIPTION
+            and self.schema.subscription_type
+        ):
+            return self.schema.subscription_type.name
+
         raise NotSupported(f"Not supported operation type: {operation_type}")
 
     def generate(self) -> ast.Module:
