@@ -25,6 +25,7 @@ dependencies = [
   "toml~=0.10",
   "httpx~=0.23",
   "pydantic~=1.10",
+  "websockets~=11.0",
   "black",
   "isort",
   "autoflake",
