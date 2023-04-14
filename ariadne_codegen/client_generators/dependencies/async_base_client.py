@@ -34,13 +34,14 @@ class AsyncBaseClient:
         url: str = "",
         headers: Optional[Dict[str, str]] = None,
         http_client: Optional[httpx.AsyncClient] = None,
+        connection_init_payload: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.url = url
         self.headers = headers
-
         self.http_client = (
             http_client if http_client else httpx.AsyncClient(headers=headers)
         )
+        self.connection_init_payload = connection_init_payload
 
     async def __aenter__(self: Self) -> Self:
         return self
@@ -88,19 +89,11 @@ class AsyncBaseClient:
     async def execute_ws(
         self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> AsyncIterator[Dict[str, Any]]:
-        subscription_payload: Dict[str, Any] = {"query": query}
-        if variables:
-            subscription_payload["variables"] = self._convert_dict_to_json_serializable(
-                variables
-            )
-
         async with ws_connect(
             self.url, subprotocols=[Subprotocol(GQL_SUBPROTOCOL)]
         ) as websocket:
-            await websocket.send(json.dumps({"type": GQL_CONNECTION_INIT}))
-            await websocket.send(
-                json.dumps({"type": GQL_SUBSCRIBE, "payload": subscription_payload})
-            )
+            await self._send_connection_init(websocket)
+            await self._send_subscribe(websocket, query=query, variables=variables)
 
             async for message in websocket:
                 data = await self._handle_ws_message(message, websocket)
@@ -122,6 +115,25 @@ class AsyncBaseClient:
         if isinstance(value, list):
             return [self._convert_value(item) for item in value]
         return value
+
+    async def _send_connection_init(self, websocket: WebSocketClientProtocol):
+        payload: Dict[str, Any] = {"type": GQL_CONNECTION_INIT}
+        if self.connection_init_payload:
+            payload["payload"] = self.connection_init_payload
+        await websocket.send(json.dumps(payload))
+
+    async def _send_subscribe(
+        self,
+        websocket: WebSocketClientProtocol,
+        query: str,
+        variables: Optional[Dict[str, Any]] = None,
+    ):
+        payload: Dict[str, Any] = {"type": GQL_SUBSCRIBE, "payload": {"query": query}}
+        if variables:
+            payload["payload"]["variables"] = self._convert_dict_to_json_serializable(
+                variables
+            )
+        await websocket.send(json.dumps(payload))
 
     async def _handle_ws_message(
         self, message: Data, websocket: WebSocketClientProtocol
