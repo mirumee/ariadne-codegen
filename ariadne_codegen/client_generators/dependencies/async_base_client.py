@@ -1,5 +1,6 @@
 import json
 from typing import Any, AsyncIterator, Dict, Optional, TypeVar, cast
+from uuid import uuid4
 
 import httpx
 from pydantic import BaseModel
@@ -89,11 +90,17 @@ class AsyncBaseClient:
     async def execute_ws(
         self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> AsyncIterator[Dict[str, Any]]:
+        operation_id = str(uuid4())
         async with ws_connect(
             self.url, subprotocols=[Subprotocol(GQL_SUBPROTOCOL)]
         ) as websocket:
             await self._send_connection_init(websocket)
-            await self._send_subscribe(websocket, query=query, variables=variables)
+            await self._send_subscribe(
+                websocket,
+                operation_id=operation_id,
+                query=query,
+                variables=variables,
+            )
 
             async for message in websocket:
                 data = await self._handle_ws_message(message, websocket)
@@ -125,10 +132,15 @@ class AsyncBaseClient:
     async def _send_subscribe(
         self,
         websocket: WebSocketClientProtocol,
+        operation_id: str,
         query: str,
         variables: Optional[Dict[str, Any]] = None,
     ):
-        payload: Dict[str, Any] = {"type": GQL_SUBSCRIBE, "payload": {"query": query}}
+        payload: Dict[str, Any] = {
+            "id": operation_id,
+            "type": GQL_SUBSCRIBE,
+            "payload": {"query": query},
+        }
         if variables:
             payload["payload"]["variables"] = self._convert_dict_to_json_serializable(
                 variables
