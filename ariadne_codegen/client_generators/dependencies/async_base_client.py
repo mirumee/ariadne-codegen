@@ -6,7 +6,7 @@ import httpx
 from pydantic import BaseModel
 from websockets.client import WebSocketClientProtocol
 from websockets.client import connect as ws_connect
-from websockets.typing import Data, Subprotocol
+from websockets.typing import Data, Origin, Subprotocol
 
 from .base_model import UNSET
 from .exceptions import (
@@ -35,14 +35,20 @@ class AsyncBaseClient:
         url: str = "",
         headers: Optional[Dict[str, str]] = None,
         http_client: Optional[httpx.AsyncClient] = None,
-        connection_init_payload: Optional[Dict[str, Any]] = None,
+        ws_url: str = "",
+        ws_headers: Optional[Dict[str, Any]] = None,
+        ws_origin: Optional[str] = None,
+        ws_connection_init_payload: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.url = url
         self.headers = headers
         self.http_client = (
             http_client if http_client else httpx.AsyncClient(headers=headers)
         )
-        self.connection_init_payload = connection_init_payload
+        self.ws_url = ws_url
+        self.ws_headers = ws_headers or {}
+        self.ws_origin = Origin(ws_origin) if ws_origin else None
+        self.ws_connection_init_payload = ws_connection_init_payload
 
     async def __aenter__(self: Self) -> Self:
         return self
@@ -92,7 +98,10 @@ class AsyncBaseClient:
     ) -> AsyncIterator[Dict[str, Any]]:
         operation_id = str(uuid4())
         async with ws_connect(
-            self.url, subprotocols=[Subprotocol(GQL_SUBPROTOCOL)]
+            self.ws_url,
+            subprotocols=[Subprotocol(GQL_SUBPROTOCOL)],
+            origin=self.ws_origin,
+            extra_headers=self.ws_headers,
         ) as websocket:
             await self._send_connection_init(websocket)
             await self._send_subscribe(
@@ -125,8 +134,8 @@ class AsyncBaseClient:
 
     async def _send_connection_init(self, websocket: WebSocketClientProtocol):
         payload: Dict[str, Any] = {"type": GQL_CONNECTION_INIT}
-        if self.connection_init_payload:
-            payload["payload"] = self.connection_init_payload
+        if self.ws_connection_init_payload:
+            payload["payload"] = self.ws_connection_init_payload
         await websocket.send(json.dumps(payload))
 
     async def _send_subscribe(
