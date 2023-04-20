@@ -6,7 +6,7 @@
 
 # Ariadne Code Generator
 
-Python code generator that takes graphql schema, queries and mutations and generates Python package with fully typed and asynchronous GraphQL client.
+Python code generator that takes graphql schema, queries, mutations and subscriptions and generates Python package with fully typed and asynchronous GraphQL client.
 
 It's available as `ariadne-codegen` command and reads configuration from the `pyproject.toml` file:
 
@@ -91,6 +91,12 @@ For more complex scenarios, you can pass your own http client:
 ```py
 client = Client(http_client=CustomComplexHttpClient())
 ```
+
+
+### Websockets
+
+To handle subscriptions, default `AsyncBaseClient` uses websockets and implements [graphql-transport-ws](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md) subprotocol. Arguments `ws_origin` and `ws_headers` are added as headers to the handshake request and `ws_connection_init_payload` is used as payload of [ConnectionInit](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md#connectioninit) message.
+
 
 ## Custom scalars
 
@@ -204,7 +210,10 @@ ariadne-codegen --config clientB.toml
 Generated code requires:
 
 - pydantic
-- httpx (can be avoided by providing another base client class with `base_client_file_path` and `base_client_name` parameters)
+- httpx
+- websockets (only for default async base client)
+
+Both `httpx` and `websockets` dependencies can be avoided by providing another base client class with `base_client_file_path` and `base_client_name` options.
 
 
 ## Example
