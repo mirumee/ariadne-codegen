@@ -10,6 +10,7 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+from .get_users_counter import GetUsersCounter
 from .input_types import (
     LocationInput,
     NotificationsPreferencesInput,
@@ -26,6 +27,7 @@ __all__ = [
     "Color",
     "CreateUser",
     "CreateUserUserCreate",
+    "GetUsersCounter",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
