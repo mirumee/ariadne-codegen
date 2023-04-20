@@ -132,7 +132,7 @@ class AsyncBaseClient:
             return [self._convert_value(item) for item in value]
         return value
 
-    async def _send_connection_init(self, websocket: WebSocketClientProtocol):
+    async def _send_connection_init(self, websocket: WebSocketClientProtocol) -> None:
         payload: Dict[str, Any] = {"type": GQL_CONNECTION_INIT}
         if self.ws_connection_init_payload:
             payload["payload"] = self.ws_connection_init_payload
@@ -144,7 +144,7 @@ class AsyncBaseClient:
         operation_id: str,
         query: str,
         variables: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         payload: Dict[str, Any] = {
             "id": operation_id,
             "type": GQL_SUBSCRIBE,
