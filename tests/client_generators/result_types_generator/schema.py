@@ -2,6 +2,7 @@ SCHEMA_STR = """
 schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
 }
 
 type Query {
@@ -16,6 +17,10 @@ type Query {
 
 type Mutation {
     mutation1(num: Int!): CustomType!
+}
+
+type Subscription {
+  subscription1(num: Int!): CustomType!
 }
 
 type CustomType {
