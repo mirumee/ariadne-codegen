@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import httpx
 
@@ -69,3 +69,11 @@ class GraphQLClientGraphQLMultiError(GraphQLClientError):
             errors=[GraphQLClientGraphQLError.from_dict(e) for e in errors_dicts],
             data=data,
         )
+
+
+class GraphQLClientInvalidMessageFormat(GraphQLClientError):
+    def __init__(self, message: Union[str, bytes]) -> None:
+        self.message = message
+
+    def __str__(self) -> str:
+        return "Invalid message format."
