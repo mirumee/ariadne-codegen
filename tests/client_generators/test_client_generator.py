@@ -1,6 +1,7 @@
 import ast
 from typing import cast
 
+import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.client_generators.arguments import ArgumentsGenerator
@@ -17,6 +18,7 @@ from ariadne_codegen.client_generators.constants import (
     UNSET_TYPE_NAME,
 )
 from ariadne_codegen.client_generators.scalars import ScalarData
+from ariadne_codegen.exceptions import NotSupported
 
 from ..utils import compare_ast, filter_imports, get_class_def, sorted_imports
 
@@ -488,6 +490,127 @@ def test_add_method_generates_correct_method_body():
     method_def = class_def.body[0]
     assert isinstance(method_def, ast.FunctionDef)
     assert compare_ast(method_def.body, expected_method_body)
+
+
+def test_add_method_generates_async_generator_for_subscription_definition():
+    schema_str = """
+    schema { subscription: Subscription }
+    type Subscription { counter: Int! }
+    """
+    subscription_str = "subscription GetCounter { counter }"
+    generator = ClientGenerator(
+        "ClientXYZ",
+        base_client="AsyncBaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("AsyncBaseClient")], module="base_client", level=1
+        ),
+    )
+    expected_method_def = ast.AsyncFunctionDef(
+        name="get_counter",
+        args=ast.arguments(
+            posonlyargs=[],
+            args=[ast.arg(arg="self")],
+            kwonlyargs=[],
+            kw_defaults=[],
+            defaults=[],
+        ),
+        body=[
+            ast.Assign(
+                targets=[ast.Name(id="query")],
+                value=ast.Call(
+                    func=ast.Name(id="gql"),
+                    args=[
+                        [ast.Constant(value="subscription GetCounter { counter }\n")]
+                    ],
+                    keywords=[],
+                ),
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="variables"),
+                annotation=ast.Subscript(
+                    value=ast.Name(id="dict"),
+                    slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
+                ),
+                value=ast.Dict(keys=[], values=[]),
+                simple=1,
+            ),
+            ast.AsyncFor(
+                target=ast.Name(id="data"),
+                iter=ast.Call(
+                    func=ast.Attribute(value=ast.Name(id="self"), attr="execute_ws"),
+                    args=[],
+                    keywords=[
+                        ast.keyword(arg="query", value=ast.Name(id="query")),
+                        ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                    ],
+                ),
+                body=[
+                    ast.Expr(
+                        value=ast.Yield(
+                            value=ast.Call(
+                                func=ast.Attribute(
+                                    value=ast.Name(id="GetCounter"),
+                                    attr=PARSE_OBJ_METHOD,
+                                ),
+                                args=[ast.Name(id="data")],
+                                keywords=[],
+                            )
+                        )
+                    )
+                ],
+                orelse=[],
+            ),
+        ],
+        decorator_list=[],
+        returns=ast.Subscript(
+            value=ast.Name(id="AsyncIterator"), slice=ast.Name(id="GetCounter")
+        ),
+    )
+
+    generator.add_method(
+        definition=cast(
+            OperationDefinitionNode, parse(subscription_str).definitions[0]
+        ),
+        name="get_counter",
+        return_type="GetCounter",
+        return_type_module="get_counter",
+        operation_str=subscription_str,
+        async_=True,
+    )
+    module = generator.generate()
+
+    class_def = get_class_def(module)
+    assert class_def
+    assert compare_ast(class_def.body[0], expected_method_def)
+
+
+def test_add_method_raises_not_supported_for_not_async_subscription():
+    subscription_str = "subscription GetCounter { counter }"
+    generator = ClientGenerator(
+        "Client",
+        base_client="BaseClient",
+        enums_module_name="enums",
+        input_types_module_name="inputs",
+        arguments_generator=ArgumentsGenerator(GraphQLSchema()),
+        base_client_import=ast.ImportFrom(
+            names=[ast.alias("BaseClient")], module="base_client", level=1
+        ),
+    )
+
+    with pytest.raises(NotSupported):
+        generator.add_method(
+            definition=cast(
+                OperationDefinitionNode, parse(subscription_str).definitions[0]
+            ),
+            name="list_xyz",
+            return_type="ListXyz",
+            return_type_module="list_xyz",
+            operation_str="",
+            async_=False,
+        )
 
 
 def test_add_method_triggers_generate_client_method_hook(mocked_plugin_manager):
