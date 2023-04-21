@@ -131,7 +131,9 @@ class ClientGenerator:
         )
         if definition.operation == OperationType.SUBSCRIPTION:
             if not async_:
-                raise NotSupported("Only async client supports subscriptions.")
+                raise NotSupported(
+                    "Subscriptions are only available when using async client."
+                )
             method_def: Union[
                 ast.FunctionDef, ast.AsyncFunctionDef
             ] = self._generate_subscription_method_def(

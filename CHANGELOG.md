@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-- Added generation of subscriptions as async generators.
+- Added support for subscriptions as async generators.
 
 
 ## 0.6.0 (2023-04-18)
