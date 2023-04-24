@@ -1,3 +1,4 @@
+import enum
 import json
 from typing import Any, AsyncIterator, Dict, Optional, TypeVar, cast
 from uuid import uuid4
@@ -33,15 +34,18 @@ except ImportError:
 
 Self = TypeVar("Self", bound="AsyncBaseClient")
 
-GQL_SUBPROTOCOL = "graphql-transport-ws"
-GQL_CONNECTION_INIT = "connection_init"
-GQL_CONNECTION_ACK = "connection_ack"
-GQL_PING = "ping"
-GQL_PONG = "pong"
-GQL_SUBSCRIBE = "subscribe"
-GQL_NEXT = "next"
-GQL_ERROR = "error"
-GQL_COMPLETE = "complete"
+GRAPHQL_TRANSPORT_WS = "graphql-transport-ws"
+
+
+class GraphQLTransportWSMessageType(str, enum.Enum):
+    CONNECTION_INIT = "connection_init"
+    CONNECTION_ACK = "connection_ack"
+    PING = "ping"
+    PONG = "pong"
+    SUBSCRIBE = "subscribe"
+    NEXT = "next"
+    ERROR = "error"
+    COMPLETE = "complete"
 
 
 class AsyncBaseClient:
@@ -114,7 +118,7 @@ class AsyncBaseClient:
         operation_id = str(uuid4())
         async with ws_connect(
             self.ws_url,
-            subprotocols=[Subprotocol(GQL_SUBPROTOCOL)],
+            subprotocols=[Subprotocol(GRAPHQL_TRANSPORT_WS)],
             origin=self.ws_origin,
             extra_headers=self.ws_headers,
         ) as websocket:
@@ -148,7 +152,9 @@ class AsyncBaseClient:
         return value
 
     async def _send_connection_init(self, websocket: WebSocketClientProtocol) -> None:
-        payload: Dict[str, Any] = {"type": GQL_CONNECTION_INIT}
+        payload: Dict[str, Any] = {
+            "type": GraphQLTransportWSMessageType.CONNECTION_INIT.value
+        }
         if self.ws_connection_init_payload:
             payload["payload"] = self.ws_connection_init_payload
         await websocket.send(json.dumps(payload))
@@ -162,7 +168,7 @@ class AsyncBaseClient:
     ) -> None:
         payload: Dict[str, Any] = {
             "id": operation_id,
-            "type": GQL_SUBSCRIBE,
+            "type": GraphQLTransportWSMessageType.SUBSCRIBE.value,
             "payload": {"query": query},
         }
         if variables:
@@ -182,26 +188,21 @@ class AsyncBaseClient:
         type_ = message_dict.get("type")
         payload = message_dict.get("payload", {})
 
-        if not type_ or type_ not in (
-            GQL_CONNECTION_ACK,
-            GQL_PING,
-            GQL_PONG,
-            GQL_NEXT,
-            GQL_ERROR,
-            GQL_COMPLETE,
-        ):
+        if not type_ or type_ not in {t.value for t in GraphQLTransportWSMessageType}:
             raise GraphQLClientInvalidMessageFormat(message=message)
 
-        if type_ == GQL_NEXT:
+        if type_ == GraphQLTransportWSMessageType.NEXT:
             if "data" not in payload:
                 raise GraphQLClientInvalidMessageFormat(message=message)
             return cast(Dict[str, Any], payload["data"])
 
-        if type_ == GQL_COMPLETE:
+        if type_ == GraphQLTransportWSMessageType.COMPLETE:
             await websocket.close()
-        elif type_ == GQL_PING:
-            await websocket.send(json.dumps({"type": GQL_PONG}))
-        elif type_ == GQL_ERROR:
+        elif type_ == GraphQLTransportWSMessageType.PING:
+            await websocket.send(
+                json.dumps({"type": GraphQLTransportWSMessageType.PONG.value})
+            )
+        elif type_ == GraphQLTransportWSMessageType.ERROR:
             raise GraphQLClientGraphQLMultiError.from_errors_dicts(
                 errors_dicts=payload, data=message_dict
             )
