@@ -30,6 +30,12 @@ Ariadne Code Generator can be installed with pip:
 $ pip install ariadne-codegen
 ```
 
+To support subscriptions, default base client requires `websockets` package:
+
+```
+$ pip install ariadne-codegen[subscriptions]
+```
+
 
 ## Configuration
 
