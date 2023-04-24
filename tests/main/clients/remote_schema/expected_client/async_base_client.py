@@ -4,9 +4,6 @@ from uuid import uuid4
 
 import httpx
 from pydantic import BaseModel
-from websockets.client import WebSocketClientProtocol
-from websockets.client import connect as ws_connect
-from websockets.typing import Data, Origin, Subprotocol
 
 from .base_model import UNSET
 from .exceptions import (
@@ -15,6 +12,24 @@ from .exceptions import (
     GraphQLClientInvalidMessageFormat,
     GraphQlClientInvalidResponseError,
 )
+
+try:
+    from websockets.client import WebSocketClientProtocol
+    from websockets.client import connect as ws_connect
+    from websockets.typing import Data, Origin, Subprotocol
+except ImportError:
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager  # type: ignore
+    async def ws_connect(*args, **kwargs):  # pylint: disable=unused-argument
+        raise NotImplementedError("Subscriptions require 'websockets' package.")
+        yield  # pylint: disable=unreachable
+
+    WebSocketClientProtocol = Any  # type: ignore
+    Data = Any  # type: ignore
+    Origin = Any  # type: ignore
+    Subprotocol = Any  # type: ignore
+
 
 Self = TypeVar("Self", bound="AsyncBaseClient")
 
