@@ -14,6 +14,8 @@ It's available as `ariadne-codegen` command and reads configuration from the `py
 $ ariadne-codegen
 ```
 
+It can also be run as `python -m ariadne_codegen`.
+
 
 ## Features
 

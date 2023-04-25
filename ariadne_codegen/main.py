@@ -104,7 +104,3 @@ def graphql_schema(config_dict):
         type_map_name=settings.type_map_variable_name,
         schema_variable_name=settings.schema_variable_name,
     )
-
-
-if __name__ == "__main__":
-    main()
