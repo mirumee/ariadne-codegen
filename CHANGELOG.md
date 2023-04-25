@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## UNRELEASED
+
+- Added support for subscriptions as async generators.
+
+
 ## 0.6.0 (2023-04-18)
 
 - Changed logic how custom scalar imports are generated. Deprecated `import_` key.

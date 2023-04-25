@@ -1,6 +1,7 @@
 schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
 }
 
 type Query {
@@ -10,6 +11,10 @@ type Query {
 type Mutation {
   userCreate(userData: UserCreateInput!): User
   userPreferences(data: UserPreferencesInput): Boolean!
+}
+
+type Subscription {
+  usersCounter: Int!
 }
 
 input UserCreateInput {

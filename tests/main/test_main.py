@@ -38,10 +38,10 @@ def copy_files(files_to_copy: List[Path], target_dir: Path):
 
 
 def assert_the_same_files_in_directories(dir1: Path, dir2: Path):
-    files1 = [f for f in dir1.glob("*") if f.name != "__pycache__"]
-    assert [f.name for f in files1] == [
+    files1 = {f for f in dir1.glob("*") if f.name != "__pycache__"}
+    assert {f.name for f in files1} == {
         f.name for f in dir2.glob("*") if f.name != "__pycache__"
-    ]
+    }
 
     for file_ in files1:
         content1 = file_.read_text()

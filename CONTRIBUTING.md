@@ -20,7 +20,7 @@ Codebase is formatted using [black](https://github.com/ambv/black) and [isort](h
 
 Tests are developed using [pytest](https://pytest.org/).
 
-Dev requirements can be installed using Pip extras. For example, to install all dependencies for doing local development and running the tests, run `pip install -e .[dev]`.
+Dev requirements can be installed using Pip extras. For example, to install all dependencies for doing local development and running the tests, run `pip install -e .[subscriptions,dev]`.
 
 We require all changes to be done via pull requests, and to be approved by member-ranked users before merging.
 

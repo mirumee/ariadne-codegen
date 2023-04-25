@@ -227,6 +227,61 @@ def test_generate_returns_module_with_types_generated_from_mutation():
     }
 
 
+def test_generate_returns_module_with_types_generated_from_subscription():
+    mutation_str = """
+        subscription CustomSubscription($num: Int!) {
+            subscription1(num: $num) {
+                id
+            }
+        }
+    """
+    operation_definition = cast(
+        OperationDefinitionNode, parse(mutation_str).definitions[0]
+    )
+    expected_class_defs = [
+        ast.ClassDef(
+            name="CustomSubscription",
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+            decorator_list=[],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="subscription1"),
+                    annotation=ast.Name(id='"CustomSubscriptionSubscription1"'),
+                    simple=1,
+                )
+            ],
+        ),
+        ast.ClassDef(
+            name="CustomSubscriptionSubscription1",
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+            decorator_list=[],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="id"),
+                    annotation=ast.Name(id="str"),
+                    simple=1,
+                )
+            ],
+        ),
+    ]
+    generator = ResultTypesGenerator(
+        schema=build_schema(SCHEMA_STR),
+        operation_definition=operation_definition,
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    generated_class_defs = filter_class_defs(module)
+    assert len(generated_class_defs) == len(expected_class_defs)
+    assert compare_ast(generated_class_defs, expected_class_defs)
+    assert set(generator.get_generated_public_names()) == {
+        c.name for c in expected_class_defs
+    }
+
+
 def test_generate_returns_module_with_class_per_every_field():
     query_str = """
     query CustomQuery {

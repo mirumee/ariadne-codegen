@@ -1,8 +1,9 @@
-from typing import Optional, Union
+from typing import AsyncIterator, Optional, Union
 
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType
 from .create_user import CreateUser
+from .get_users_counter import GetUsersCounter
 from .input_types import UserCreateInput
 from .list_all_users import ListAllUsers
 from .list_users_by_country import ListUsersByCountry
@@ -77,3 +78,15 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListUsersByCountry.parse_obj(data)
+
+    async def get_users_counter(self) -> AsyncIterator[GetUsersCounter]:
+        query = gql(
+            """
+            subscription GetUsersCounter {
+              usersCounter
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        async for data in self.execute_ws(query=query, variables=variables):
+            yield GetUsersCounter.parse_obj(data)

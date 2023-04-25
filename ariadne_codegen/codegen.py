@@ -316,3 +316,23 @@ def generate_method_definition(
         returns=return_type,
         lineno=lineno,
     )
+
+
+def generate_async_for(
+    target: ast.expr,
+    iter_: ast.expr,
+    body: Optional[List[ast.stmt]] = None,
+    orelse: Optional[List[ast.stmt]] = None,
+    lineno: int = 1,
+) -> ast.AsyncFor:
+    return ast.AsyncFor(
+        target=target,
+        iter=iter_,
+        body=body or [ast.Pass()],
+        orelse=orelse or [],
+        lineno=lineno,
+    )
+
+
+def generate_yield(value: Optional[ast.expr] = None) -> ast.Yield:
+    return ast.Yield(value=value)
