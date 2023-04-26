@@ -23,6 +23,7 @@ from .constants import (
     UNSET_TYPE_NAME,
 )
 from .enums import EnumsGenerator
+from .fragments import FragmentsGenerator
 from .init_file import InitFileGenerator
 from .input_types import InputTypesGenerator
 from .result_types import ResultTypesGenerator
@@ -158,6 +159,7 @@ class PackageGenerator:
             plugin_manager=self.plugin_manager,
         )
         self.scalars_definitions_file_name = "scalars"
+        self.fragments_module_name = "fragments"
 
     def generate(self) -> List[str]:
         """Generate package with graphql client."""
@@ -168,6 +170,7 @@ class PackageGenerator:
         self._generate_enums()
         self._generate_input_types()
         self._generate_result_types()
+        self._generate_fragments()
         self._copy_files()
         self._generate_scalars_definitions()
         self._generate_init()
@@ -193,6 +196,7 @@ class PackageGenerator:
             schema=self.schema,
             operation_definition=definition,
             enums_module_name=self.enums_module_name,
+            fragments_module_name=self.fragments_module_name,
             fragments_definitions=self.fragments_definitions,
             base_model_import=self.base_model_import,
             convert_to_snake_case=self.convert_to_snake_case,
@@ -229,6 +233,7 @@ class PackageGenerator:
                 f"{self.enums_module_name}.py",
                 f"{self.input_types_module_name}.py",
                 f"{self.scalars_definitions_file_name}.py",
+                f"{self.fragments_module_name}.py",
             ]
             + list(self.result_types_files.keys())
             + [f.name for f in self.files_to_include]
@@ -305,6 +310,21 @@ class PackageGenerator:
                 code = self.plugin_manager.generate_result_types_code(code)
             file_path.write_text(code)
             self.generated_files.append(file_path.name)
+
+    def _generate_fragments(self):
+        module = FragmentsGenerator(
+            schema=self.schema,
+            enums_module_name=self.enums_module_name,
+            fragments_definitions=self.fragments_definitions,
+            base_model_import=self.base_model_import,
+            convert_to_snake_case=self.convert_to_snake_case,
+            custom_scalars=self.custom_scalars,
+            plugin_manager=self.plugin_manager,
+        ).generate()
+        file_path = self.package_path / f"{self.fragments_module_name}.py"
+        code = self._proccess_generated_code(ast_to_str(module), self.queries_source)
+        file_path.write_text(code)
+        self.generated_files.append(file_path.name)
 
     def _copy_files(self):
         files_to_copy = self.files_to_include + [

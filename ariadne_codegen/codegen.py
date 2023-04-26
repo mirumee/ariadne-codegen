@@ -336,3 +336,7 @@ def generate_async_for(
 
 def generate_yield(value: Optional[ast.expr] = None) -> ast.Yield:
     return ast.Yield(value=value)
+
+
+def generate_pass() -> ast.Pass:
+    return ast.Pass()

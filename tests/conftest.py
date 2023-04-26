@@ -10,6 +10,7 @@ def mocked_plugin_manager(mocker):
     manager.generate_client_code.side_effect = no_effect_method
     manager.generate_enums_code.side_effect = no_effect_method
     manager.generate_inputs_code.side_effect = no_effect_method
+    manager.generate_result_class.side_effect = no_effect_method
     manager.generate_result_types_code.side_effect = no_effect_method
     manager.copy_code.side_effect = no_effect_method
     manager.generate_scalars_code.side_effect = no_effect_method

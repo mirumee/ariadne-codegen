@@ -156,7 +156,7 @@ Hook executed on generation of representation for input field.
 
 ```py
 def generate_result_types_module(
-    self, module: ast.Module, operation_definition: OperationDefinitionNode
+    self, module: ast.Module, operation_definition: ExecutableDefinitionNode
 ) -> ast.Module:
 ```
 
@@ -166,7 +166,7 @@ Hook executed on generation of module with models reprenting result of given ope
 
 ```py
 def generate_operation_str(
-    self, operation_str: str, operation_definition: OperationDefinitionNode
+    self, operation_str: str, operation_definition: ExecutableDefinitionNode
 ) -> str:
 ```
 
@@ -178,7 +178,7 @@ Hook executed on generation of string representation of given operation. Result 
 def generate_result_class(
     self,
     class_def: ast.ClassDef,
-    operation_definition: OperationDefinitionNode,
+    operation_definition: ExecutableDefinitionNode,
     selection_set: SelectionSetNode,
 ) -> ast.ClassDef:
 ```
@@ -192,7 +192,7 @@ Hook executed on generation of single model, part of result of given query or mu
 def generate_result_field(
     self,
     field_implementation: ast.AnnAssign,
-    operation_definition: OperationDefinitionNode,
+    operation_definition: ExecutableDefinitionNode,
     field: FieldNode,
 ) -> ast.AnnAssign:
 ```

@@ -2,13 +2,13 @@ import ast
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from graphql import (
+    ExecutableDefinitionNode,
     FieldNode,
     GraphQLEnumType,
     GraphQLInputField,
     GraphQLInputObjectType,
     GraphQLSchema,
     Node,
-    OperationDefinitionNode,
     SelectionSetNode,
     VariableDefinitionNode,
 )
@@ -113,7 +113,7 @@ class PluginManager:
         )
 
     def generate_result_types_module(
-        self, module: ast.Module, operation_definition: OperationDefinitionNode
+        self, module: ast.Module, operation_definition: ExecutableDefinitionNode
     ) -> ast.Module:
         return self._apply_plugins_on_object(
             "generate_result_types_module",
@@ -122,7 +122,7 @@ class PluginManager:
         )
 
     def generate_operation_str(
-        self, operation_str: str, operation_definition: OperationDefinitionNode
+        self, operation_str: str, operation_definition: ExecutableDefinitionNode
     ) -> str:
         return self._apply_plugins_on_object(
             "generate_operation_str",
@@ -133,7 +133,7 @@ class PluginManager:
     def generate_result_class(
         self,
         class_def: ast.ClassDef,
-        operation_definition: OperationDefinitionNode,
+        operation_definition: ExecutableDefinitionNode,
         selection_set: SelectionSetNode,
     ) -> ast.ClassDef:
         return self._apply_plugins_on_object(
@@ -146,7 +146,7 @@ class PluginManager:
     def generate_result_field(
         self,
         field_implementation: ast.AnnAssign,
-        operation_definition: OperationDefinitionNode,
+        operation_definition: ExecutableDefinitionNode,
         field: FieldNode,
     ) -> ast.AnnAssign:
         return self._apply_plugins_on_object(
