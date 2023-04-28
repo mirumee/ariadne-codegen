@@ -48,7 +48,7 @@ Minimal configuration for client generation:
 ```toml
 [tool.ariadne-codegen]
 schema_path = "schema.graphql"
-queries_path="queries.graphql"
+queries_path = "queries.graphql"
 ```
 
 Required settings:
