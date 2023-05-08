@@ -63,3 +63,25 @@ def test_generate_returns_module_with_used_custom_scalars_imports():
     assert isinstance(module, ast.Module)
     import_ = filter_imports(module)[-1]
     assert compare_ast(import_, expected_import)
+
+
+def test_generate_returns_module_with_used_fragment_import():
+    query_str = "query CustomQuery { query2 { ...TestFragment } }"
+    operation_definition = cast(
+        OperationDefinitionNode, parse(query_str).definitions[0]
+    )
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        enums_module_name="enums",
+        fragments_module_name="fragments",
+    )
+
+    module = generator.generate()
+
+    assert isinstance(module, ast.Module)
+    import_ = filter_imports(module)[-1]
+    assert compare_ast(
+        import_,
+        ast.ImportFrom(module="fragments", names=[ast.alias("TestFragment")], level=1),
+    )

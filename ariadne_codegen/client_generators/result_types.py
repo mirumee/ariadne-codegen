@@ -100,6 +100,7 @@ class ResultTypesGenerator:
             type_name=self._get_operation_type_name(self.operation_definition),
             selection_set=self.operation_definition.selection_set,
         )
+        self._add_enums_scalars_fragments_imports()
 
     def _get_operation_type_name(self, definition: ExecutableDefinitionNode) -> str:
         if isinstance(definition, FragmentDefinitionNode):
@@ -129,18 +130,15 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
-        imports = self.get_imports()
-        class_defs = self.get_classes()
-
         update_forward_refs_calls = [
             generate_expr(
                 generate_method_call(class_def.name, UPDATE_FORWARD_REFS_METHOD)
             )
-            for class_def in class_defs
+            for class_def in self._class_defs
         ]
         module_body = (
-            cast(List[ast.stmt], imports)
-            + cast(List[ast.stmt], class_defs)
+            cast(List[ast.stmt], self._imports)
+            + cast(List[ast.stmt], self._class_defs)
             + cast(List[ast.stmt], update_forward_refs_calls)
         )
 
@@ -152,27 +150,6 @@ class ResultTypesGenerator:
         return module
 
     def get_imports(self) -> List[ast.ImportFrom]:
-        if self._used_enums:
-            self._imports.append(
-                generate_import_from(self._used_enums, self.enums_module_name, 1)
-            )
-        if self._used_scalars:
-            for scalar_name in self._used_scalars:
-                scalar_data = self.custom_scalars[scalar_name]
-                self._imports.extend(generate_scalar_imports(scalar_data))
-
-        if (
-            isinstance(self.operation_definition, OperationDefinitionNode)
-            and self._used_fragments_names
-            and self.fragments_module_name
-        ):
-            self._imports.append(
-                generate_import_from(
-                    [str_to_pascal_case(f) for f in self._used_fragments_names],
-                    self.fragments_module_name,
-                    1,
-                )
-            )
         return self._imports
 
     def get_classes(self) -> List[ast.ClassDef]:
@@ -415,3 +392,26 @@ class ResultTypesGenerator:
         for field_type_name in field_types_names:
             if field_type_name.type_name in self.custom_scalars:
                 self._used_scalars.append(field_type_name.type_name)
+
+    def _add_enums_scalars_fragments_imports(self):
+        if self._used_enums:
+            self._imports.append(
+                generate_import_from(self._used_enums, self.enums_module_name, 1)
+            )
+        if self._used_scalars:
+            for scalar_name in self._used_scalars:
+                scalar_data = self.custom_scalars[scalar_name]
+                self._imports.extend(generate_scalar_imports(scalar_data))
+
+        if (
+            isinstance(self.operation_definition, OperationDefinitionNode)
+            and self._used_fragments_names
+            and self.fragments_module_name
+        ):
+            self._imports.append(
+                generate_import_from(
+                    [str_to_pascal_case(f) for f in self._used_fragments_names],
+                    self.fragments_module_name,
+                    1,
+                )
+            )
