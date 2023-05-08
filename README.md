@@ -43,6 +43,14 @@ $ pip install ariadne-codegen[subscriptions]
 
 `ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`. You can use other configuration file with `--config` option, eg. `ariadne-codegen --config custom_file.toml`
 
+Minimal configuration for client generation:
+
+```toml
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+```
+
 Required settings:
 
 - `queries_path` - path to file/directory with queries
