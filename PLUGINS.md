@@ -292,6 +292,18 @@ def process_name(self, name: str, node: Optional[Node] = None) -> str:
 
 Hook executed on processing of GraphQL field, argument or operation name.
 
+### generate_fragments_module
+
+```py
+def generate_fragments_module(
+    self,
+    module: ast.Module,
+    fragments_definitions: Dict[str, FragmentDefinitionNode],
+) -> ast.Module:
+```
+
+Hook executed on generation of fragments module. Module has classes representing all fragments from provided queries. Later this module will be saved as `{fragments_module_name}.py`, `fragments_module_name` is taken from config.
+
 
 ## Example
 

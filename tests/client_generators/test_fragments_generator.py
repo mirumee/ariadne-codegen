@@ -164,3 +164,15 @@ def test_generate_returns_module_with_update_refs_calls(
 
     generated_update_refs_calls = filter_ast_objects(module, ast.Expr)
     assert compare_ast(generated_update_refs_calls, expected_update_refs_calls)
+
+
+def test_generate_triggers_generate_fragments_module_hook(mocked_plugin_manager):
+    generator = FragmentsGenerator(
+        schema=GraphQLSchema(),
+        enums_module_name="enums",
+        fragments_definitions={},
+        plugin_manager=mocked_plugin_manager,
+    )
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_fragments_module.called

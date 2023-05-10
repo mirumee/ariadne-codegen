@@ -4,6 +4,7 @@ from typing import Dict, Optional, Tuple, Union
 from graphql import (
     ExecutableDefinitionNode,
     FieldNode,
+    FragmentDefinitionNode,
     GraphQLEnumType,
     GraphQLInputField,
     GraphQLInputObjectType,
@@ -149,3 +150,11 @@ class Plugin:
     # pylint: disable=unused-argument
     def process_name(self, name: str, node: Optional[Node] = None) -> str:
         return name
+
+    # pylint: disable=unused-argument
+    def generate_fragments_module(
+        self,
+        module: ast.Module,
+        fragments_definitions: Dict[str, FragmentDefinitionNode],
+    ) -> ast.Module:
+        return module

@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from graphql import (
     ExecutableDefinitionNode,
     FieldNode,
+    FragmentDefinitionNode,
     GraphQLEnumType,
     GraphQLInputField,
     GraphQLInputObjectType,
@@ -190,3 +191,14 @@ class PluginManager:
 
     def process_name(self, name: str, node: Optional[Node] = None) -> str:
         return self._apply_plugins_on_object("process_name", name, node=node)
+
+    def generate_fragments_module(
+        self,
+        module: ast.Module,
+        fragments_definitions: Dict[str, FragmentDefinitionNode],
+    ) -> ast.Module:
+        return self._apply_plugins_on_object(
+            "generate_fragments_module",
+            module,
+            fragments_definitions=fragments_definitions,
+        )

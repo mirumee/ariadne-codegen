@@ -57,11 +57,16 @@ class FragmentsGenerator:
             for c in sorted_class_defs
         ]
 
-        return generate_module(
+        module = generate_module(
             body=cast(List[ast.stmt], imports)
             + cast(List[ast.stmt], sorted_class_defs)
             + cast(List[ast.stmt], update_forward_refs_calls)
         )
+        if self.plugin_manager:
+            module = self.plugin_manager.generate_fragments_module(
+                module, fragments_definitions=self.fragments_definitions
+            )
+        return module
 
     def _get_sorted_class_defs(
         self,
