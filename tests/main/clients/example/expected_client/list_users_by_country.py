@@ -4,17 +4,14 @@ from pydantic import Field
 
 from .base_model import BaseModel
 from .enums import Color
+from .fragments import BasicUser, UserPersonalData
 
 
 class ListUsersByCountry(BaseModel):
     users: List["ListUsersByCountryUsers"]
 
 
-class ListUsersByCountryUsers(BaseModel):
-    id: str
-    email: str
-    first_name: Optional[str] = Field(alias="firstName")
-    last_name: Optional[str] = Field(alias="lastName")
+class ListUsersByCountryUsers(BasicUser, UserPersonalData):
     favourite_color: Optional[Color] = Field(alias="favouriteColor")
 
 

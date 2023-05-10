@@ -312,6 +312,8 @@ class PackageGenerator:
             self.generated_files.append(file_path.name)
 
     def _generate_fragments(self):
+        if not self.fragments_definitions:
+            return
         module = FragmentsGenerator(
             schema=self.schema,
             enums_module_name=self.enums_module_name,
