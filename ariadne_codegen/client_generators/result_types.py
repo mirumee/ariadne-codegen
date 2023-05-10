@@ -199,7 +199,7 @@ class ResultTypesGenerator:
             )
 
         if fragments:
-            class_bases = [str_to_pascal_case(f) for f in fragments]
+            class_bases = [str_to_pascal_case(f) for f in sorted(fragments)]
         else:
             class_bases = [BASE_MODEL_CLASS_NAME]
         if extra_bases:
