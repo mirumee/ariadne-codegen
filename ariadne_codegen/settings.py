@@ -49,6 +49,7 @@ class ClientSettings(BaseSettings):
     base_client_file_path: Optional[str] = None
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
+    fragments_module_name: str = "fragments"
     include_comments: bool = True
     convert_to_snake_case: bool = True
     async_client: bool = True
@@ -132,6 +133,7 @@ class ClientSettings(BaseSettings):
             Coping base client class from '{self.base_client_file_path}'.
             Generating enums into '{self.enums_module_name}.py'.
             Generating inputs into '{self.input_types_module_name}.py'.
+            Generating fragments into '{self.fragments_module_name}.py'.
             {comments_msg}
             {snake_case_msg}
             {async_client_msg}

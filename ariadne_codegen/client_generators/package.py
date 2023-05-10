@@ -42,6 +42,7 @@ class PackageGenerator:
         base_client_file_path: Optional[str] = None,
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
+        fragments_module_name: str = "fragments",
         include_comments: bool = True,
         queries_source: str = "",
         schema_source: str = "",
@@ -85,6 +86,7 @@ class PackageGenerator:
 
         self.enums_module_name = enums_module_name
         self.input_types_module_name = input_types_module_name
+        self.fragments_module_name = fragments_module_name
         self.client_file_name = client_file_name
 
         self.include_comments = include_comments
@@ -159,7 +161,6 @@ class PackageGenerator:
             plugin_manager=self.plugin_manager,
         )
         self.scalars_definitions_file_name = "scalars"
-        self.fragments_module_name = "fragments"
 
     def generate(self) -> List[str]:
         """Generate package with graphql client."""
