@@ -11,20 +11,38 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+from .fragments import (
+    CompleteA,
+    CompleteAFieldB,
+    FullA,
+    FullAFieldB,
+    FullB,
+    MinimalA,
+    MinimalAFieldB,
+    MinimalB,
+)
 
 __all__ = [
     "AsyncBaseClient",
     "BaseModel",
     "Client",
+    "CompleteA",
+    "CompleteAFieldB",
     "ExampleQuery1",
     "ExampleQuery1ExampleQuery",
     "ExampleQuery2",
     "ExampleQuery2ExampleQuery",
     "ExampleQuery3",
     "ExampleQuery3ExampleQuery",
+    "FullA",
+    "FullAFieldB",
+    "FullB",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
     "GraphQlClientInvalidResponseError",
+    "MinimalA",
+    "MinimalAFieldB",
+    "MinimalB",
 ]

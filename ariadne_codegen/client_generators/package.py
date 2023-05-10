@@ -315,7 +315,8 @@ class PackageGenerator:
     def _generate_fragments(self):
         if not self.fragments_definitions:
             return
-        module = FragmentsGenerator(
+
+        generator = FragmentsGenerator(
             schema=self.schema,
             enums_module_name=self.enums_module_name,
             fragments_definitions=self.fragments_definitions,
@@ -323,11 +324,15 @@ class PackageGenerator:
             convert_to_snake_case=self.convert_to_snake_case,
             custom_scalars=self.custom_scalars,
             plugin_manager=self.plugin_manager,
-        ).generate()
+        )
+        module = generator.generate()
         file_path = self.package_path / f"{self.fragments_module_name}.py"
         code = self._proccess_generated_code(ast_to_str(module), self.queries_source)
         file_path.write_text(code)
         self.generated_files.append(file_path.name)
+        self.init_generator.add_import(
+            generator.get_generated_public_names(), self.fragments_module_name, 1
+        )
 
     def _copy_files(self):
         files_to_copy = self.files_to_include + [

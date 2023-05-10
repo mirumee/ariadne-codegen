@@ -29,6 +29,8 @@ class FragmentsGenerator:
         self.custom_scalars = custom_scalars
         self.plugin_manager = plugin_manager
 
+        self._generated_public_names: List[str] = []
+
     def generate(self) -> ast.Module:
         class_defs_dict: Dict[str, List[ast.ClassDef]] = {}
         imports: List[ast.ImportFrom] = []
@@ -48,6 +50,7 @@ class FragmentsGenerator:
             imports.extend(generator.get_imports())
             class_defs_dict[name] = generator.get_classes()
             dependencies_dict[name] = generator.get_used_fragments()
+            self._generated_public_names.extend(generator.get_generated_public_names())
 
         sorted_class_defs = self._get_sorted_class_defs(
             class_defs_dict=class_defs_dict, dependencies_dict=dependencies_dict
@@ -67,6 +70,9 @@ class FragmentsGenerator:
                 module, fragments_definitions=self.fragments_definitions
             )
         return module
+
+    def get_generated_public_names(self) -> List[str]:
+        return self._generated_public_names
 
     def _get_sorted_class_defs(
         self,

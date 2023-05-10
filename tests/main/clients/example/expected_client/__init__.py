@@ -10,6 +10,7 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+from .fragments import BasicUser, UserPersonalData
 from .get_users_counter import GetUsersCounter
 from .input_types import (
     LocationInput,
@@ -23,6 +24,7 @@ from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUsers
 __all__ = [
     "AsyncBaseClient",
     "BaseModel",
+    "BasicUser",
     "Client",
     "Color",
     "CreateUser",
@@ -41,5 +43,6 @@ __all__ = [
     "LocationInput",
     "NotificationsPreferencesInput",
     "UserCreateInput",
+    "UserPersonalData",
     "UserPreferencesInput",
 ]
