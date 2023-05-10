@@ -1,0 +1,15 @@
+fragment typeAandB on Interface {
+  id
+  ... on TypeA {
+    fieldA
+  }
+  ... on TypeB {
+    fieldB
+  }
+}
+
+query InterfaceA {
+  queryI {
+    ...typeAandB
+  }
+}

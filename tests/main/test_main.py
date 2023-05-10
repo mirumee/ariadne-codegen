@@ -130,6 +130,17 @@ def test_main_shows_version():
             "inline_fragments_client",
             CLIENTS_PATH / "inline_fragments" / "expected_client",
         ),
+                (
+            (
+                CLIENTS_PATH / "inline_fragments_bug" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "inline_fragments_bug" / "queries.graphql",
+                    CLIENTS_PATH / "inline_fragments_bug" / "schema.graphql",
+                ),
+            ),
+            "inline_fragments_bug_client",
+            CLIENTS_PATH / "inline_fragments_bug" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
