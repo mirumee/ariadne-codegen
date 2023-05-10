@@ -158,7 +158,7 @@ class ResultTypesGenerator:
     def get_operation_as_str(self) -> str:
         operation_str = print_ast(self.operation_definition)
         if self._used_fragments_names:
-            for used_fragment in sorted(self._used_fragments_names):
+            for used_fragment in sorted(self._get_all_related_fragments()):
                 operation_str += "\n\n" + print_ast(
                     self.fragments_definitions[used_fragment]
                 )
@@ -415,3 +415,27 @@ class ResultTypesGenerator:
                     1,
                 )
             )
+
+    def _get_all_related_fragments(self) -> Set[str]:
+        fragments_names: Set[str] = self._used_fragments_names.copy()
+        for fragment_name in self._used_fragments_names:
+            fragment_def = self.fragments_definitions[fragment_name]
+            fragments_names = fragments_names.union(
+                self._get_fragments_names(fragment_def.selection_set)
+            )
+        return fragments_names
+
+    def _get_fragments_names(self, selection_set: SelectionSetNode) -> Set[str]:
+        names: Set[str] = set()
+        for node in selection_set.selections:
+            if isinstance(node, FragmentSpreadNode):
+                name = node.name.value
+                names.add(name)
+                names = names.union(
+                    self._get_fragments_names(
+                        self.fragments_definitions[name].selection_set
+                    )
+                )
+            elif isinstance(node, FieldNode) and node.selection_set:
+                names = names.union(self._get_fragments_names(node.selection_set))
+        return names

@@ -125,3 +125,36 @@ def test_get_operation_as_str_returns_str_with_used_fragments():
     assert used_fragment2 in result
     assert not_used_fragment not in result
     assert result.index(used_fragment1) < result.index(used_fragment2)
+
+
+def test_get_operation_as_str_returns_str_with_fragment_used_by_another_fragment():
+    query_str = "query CustomQuery { query2 { ...TestFragment } }"
+    test_fragment_str = """
+    fragment TestFragment on CustomType {
+        id
+        field2 {
+            ...NestedFragment
+        }
+    }
+    """
+    nested_fragment_str = "fragment NestedFragment on CustomType2 { fieldb }"
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+        fragments_definitions={
+            "TestFragment": cast(
+                FragmentDefinitionNode, parse(test_fragment_str).definitions[0]
+            ),
+            "NestedFragment": cast(
+                FragmentDefinitionNode, parse(nested_fragment_str).definitions[0]
+            ),
+        },
+    )
+
+    result = generator.get_operation_as_str()
+
+    assert "fragment TestFragment on CustomType" in result
+    assert "fragment NestedFragment on CustomType2" in result

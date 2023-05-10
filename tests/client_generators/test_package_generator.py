@@ -471,7 +471,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
         "test_graphql_client",
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
-        fragments=[parse("fragment TestFragment on CustomType { id }").definitions[0]]
+        fragments=[parse("fragment TestFragment on CustomType { id }").definitions[0]],
     )
     query_str = """
     query CustomQuery {
