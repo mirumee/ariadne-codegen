@@ -1,0 +1,51 @@
+query exampleQuery1 {
+    exampleQuery {
+        value
+        ...MinimalA
+    }
+}
+
+query exampleQuery2 {
+    exampleQuery {
+        ...FullA
+    }
+}
+
+query exampleQuery3 {
+    exampleQuery {
+        ...CompleteA
+    }
+}
+
+fragment MinimalA on TypeA {
+    id
+    fieldB {
+        ...MinimalB
+    }
+}
+
+fragment MinimalB on TypeB {
+    id
+}
+
+fragment FullA on TypeA{
+    id
+    value
+    fieldB {
+        ...FullB
+    }
+}
+
+fragment FullB on TypeB {
+    id
+    value
+}
+
+fragment CompleteA on TypeA {
+    id
+    value
+    fieldB {
+        id
+        value
+    }
+}

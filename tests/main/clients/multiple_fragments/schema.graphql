@@ -1,0 +1,18 @@
+schema {
+    query: Query
+}
+
+type Query {
+    exampleQuery: TypeA!
+}
+
+type TypeA {
+    id: ID!
+    value: String!
+    fieldB: TypeB!
+}
+
+type TypeB {
+    id: ID!
+    value: Float!
+}

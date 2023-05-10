@@ -1,0 +1,5 @@
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+include_comments = false
+target_package_name = "multiple_fragments_client"
