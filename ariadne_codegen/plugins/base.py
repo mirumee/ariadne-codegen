@@ -20,6 +20,8 @@ class Plugin:
     def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
         self.schema = schema
         self.config_dict = config_dict
+        self.class_dict = {}
+        self.extended_imports = {}
 
     def generate_init_module(self, module: ast.Module) -> ast.Module:
         return module
