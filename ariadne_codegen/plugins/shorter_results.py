@@ -41,7 +41,7 @@ Or with the shorthand setting:
 
 import ast
 from typing import Union, Dict, Optional
-from graphql import GraphQLSchema
+from graphql import GraphQLSchema, ExecutableDefinitionNode
 from ariadne_codegen.codegen import (
     generate_async_for,
     generate_attribute,
@@ -55,7 +55,6 @@ from ariadne_codegen.codegen import (
 from ariadne_codegen.plugins.base import (
     Plugin,
     SelectionSetNode,
-    OperationDefinitionNode,
 )
 
 
@@ -76,7 +75,7 @@ class ShorterResultsPlugin(Plugin):
     def generate_result_class(
         self,
         class_def: ast.ClassDef,
-        operation_definition: OperationDefinitionNode,
+        operation_definition: ExecutableDefinitionNode,
         selection_set: SelectionSetNode,
     ) -> ast.ClassDef:
         """Store a map of all classes and its ast"""
