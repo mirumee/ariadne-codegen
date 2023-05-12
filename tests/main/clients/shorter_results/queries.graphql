@@ -1,0 +1,28 @@
+query GetAuthenticatedUser {
+  me {
+    id
+    username
+  }
+}
+
+query ListStrings_1 {
+  optionalListOptionalString
+}
+
+query ListStrings_2 {
+  optionalListString
+}
+
+query ListStrings_3 {
+  listOptionalString
+}
+
+query ListStrings_4 {
+  listString
+}
+
+query ListTypeA {
+  listOptionalTypeA {
+    id
+  }
+}

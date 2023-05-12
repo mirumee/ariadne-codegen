@@ -1,0 +1,19 @@
+type TypeA {
+  id: Int!
+}
+
+type User {
+    id: ID!
+    username: String!
+}
+
+type Query {
+  optionalListOptionalString: [String]
+  optionalListString: [String!]
+  listOptionalString: [String]!
+  listString: [String!]!
+
+  listOptionalTypeA: [TypeA]!
+
+  me: User!
+}
