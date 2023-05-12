@@ -151,6 +151,7 @@ grapql_client/
     create_user.py
     enums.py
     exceptions.py
+    fragments.py
     get_users_counter.py
     input_types.py
     list_all_users.py
@@ -413,17 +414,14 @@ from pydantic import Field
 
 from .base_model import BaseModel
 from .enums import Color
+from .fragments import BasicUser, UserPersonalData
 
 
 class ListUsersByCountry(BaseModel):
     users: List["ListUsersByCountryUsers"]
 
 
-class ListUsersByCountryUsers(BaseModel):
-    id: str
-    email: str
-    first_name: Optional[str] = Field(alias="firstName")
-    last_name: Optional[str] = Field(alias="lastName")
+class ListUsersByCountryUsers(BasicUser, UserPersonalData):
     favourite_color: Optional[Color] = Field(alias="favouriteColor")
 
 
@@ -446,6 +444,34 @@ class GetUsersCounter(BaseModel):
 GetUsersCounter.update_forward_refs()
 ```
 
+### Fragments file
+
+This file contains classes generated from all fragments used in any provided operation.
+
+```py
+# graphql_client/fragments.py
+
+from typing import Optional
+
+from pydantic import Field
+
+from .base_model import BaseModel
+
+
+class BasicUser(BaseModel):
+    id: str
+    email: str
+
+
+class UserPersonalData(BaseModel):
+    first_name: Optional[str] = Field(alias="firstName")
+    last_name: Optional[str] = Field(alias="lastName")
+
+
+BasicUser.update_forward_refs()
+UserPersonalData.update_forward_refs()
+```
+
 ### Init file
 
 Generated init file contains reimports and list of all generated classes.
@@ -465,6 +491,7 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+from .fragments import BasicUser, UserPersonalData
 from .get_users_counter import GetUsersCounter
 from .input_types import (
     LocationInput,
@@ -478,6 +505,7 @@ from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUsers
 __all__ = [
     "AsyncBaseClient",
     "BaseModel",
+    "BasicUser",
     "Client",
     "Color",
     "CreateUser",
@@ -496,6 +524,7 @@ __all__ = [
     "LocationInput",
     "NotificationsPreferencesInput",
     "UserCreateInput",
+    "UserPersonalData",
     "UserPreferencesInput",
 ]
 ```

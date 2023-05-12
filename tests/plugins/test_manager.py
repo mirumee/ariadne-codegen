@@ -330,3 +330,15 @@ def test_process_name_calls_plugins_process_name(plugin_manager_with_mocked_plug
 
     assert plugin_manager_with_mocked_plugins.plugins[0].process_name.called
     assert plugin_manager_with_mocked_plugins.plugins[1].process_name.called
+
+
+def test_generate_fragments_module_calls_plugins_generate_fragments_module(
+    plugin_manager_with_mocked_plugins,
+):
+    plugin_manager_with_mocked_plugins.generate_fragments_module(
+        ast.Module(body=[]), {}
+    )
+
+    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
+    assert plugin1.generate_fragments_module.called
+    assert plugin2.generate_fragments_module.called

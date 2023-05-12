@@ -341,17 +341,9 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
     )
     expected_class_def = ast.ClassDef(
         name="CustomQueryQuery2",
-        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+        bases=[ast.Name(id="TestFragment")],
         keywords=[],
         body=[
-            ast.AnnAssign(
-                target=ast.Name(id="id"), annotation=ast.Name(id="str"), simple=1
-            ),
-            ast.AnnAssign(
-                target=ast.Name(id="field1"),
-                annotation=ast.Name(id='"CustomQueryQuery2Field1"'),
-                simple=1,
-            ),
             ast.AnnAssign(
                 target=ast.Name(id="field2"),
                 annotation=ast.Subscript(
@@ -373,7 +365,7 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
     module = generator.generate()
 
     class_defs = filter_class_defs(module)
-    assert len(class_defs) == 4
+    assert len(class_defs) == 3
     custom_type_class_def = class_defs[1]
     assert custom_type_class_def.name == "CustomQueryQuery2"
     assert compare_ast(custom_type_class_def, expected_class_def)

@@ -446,14 +446,8 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
         query1: Optional["CustomQueryQuery1"]
 
 
-    class CustomQueryQuery1(BaseModel):
-        field1: Optional[List[Optional[str]]]
-        field2: Optional["CustomQueryQuery1Field2"]
+    class CustomQueryQuery1(TestFragment):
         field3: CustomEnum
-
-
-    class CustomQueryQuery1Field2(BaseModel):
-        fieldb: Optional[int]
     """
     query_def, fragment_def = parse(query_str).definitions
     generator = PackageGenerator(
@@ -477,11 +471,12 @@ def test_generate_returns_list_of_generated_files(tmp_path):
         "test_graphql_client",
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
+        fragments=[parse("fragment TestFragment on CustomType { id }").definitions[0]],
     )
     query_str = """
     query CustomQuery {
         query2 {
-            id
+            ...TestFragment
         }
     }
     """
@@ -500,6 +495,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             f"{generator.enums_module_name}.py",
             "custom_query.py",
             f"{generator.scalars_definitions_file_name}.py",
+            f"{generator.fragments_module_name}.py",
         ]
     )
 

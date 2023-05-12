@@ -63,6 +63,7 @@ def client(config_dict):
         base_client_name=settings.base_client_name,
         base_client_file_path=settings.base_client_file_path,
         input_types_module_name=settings.input_types_module_name,
+        fragments_module_name=settings.fragments_module_name,
         queries_source=settings.queries_path,
         schema_source=schema_source,
         include_comments=settings.include_comments,
