@@ -14,6 +14,7 @@ from .list_strings_2 import ListStrings2
 from .list_strings_3 import ListStrings3
 from .list_strings_4 import ListStrings4
 from .list_type_a import ListTypeA, ListTypeAListOptionalTypeA
+from .subscribe_strings import SubscribeStrings
 
 __all__ = [
     "AsyncBaseClient",
@@ -32,4 +33,5 @@ __all__ = [
     "ListStrings4",
     "ListTypeA",
     "ListTypeAListOptionalTypeA",
+    "SubscribeStrings",
 ]

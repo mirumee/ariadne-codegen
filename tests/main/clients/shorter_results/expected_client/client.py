@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import AsyncIterator, List, Optional
 
 from .async_base_client import AsyncBaseClient
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
@@ -7,6 +7,7 @@ from .list_strings_2 import ListStrings2
 from .list_strings_3 import ListStrings3
 from .list_strings_4 import ListStrings4
 from .list_type_a import ListTypeA, ListTypeAListOptionalTypeA
+from .subscribe_strings import SubscribeStrings
 
 
 def gql(q: str) -> str:
@@ -96,3 +97,15 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListTypeA.parse_obj(data).list_optional_type_a
+
+    async def subscribe_strings(self) -> AsyncIterator[Optional[List[str]]]:
+        query = gql(
+            """
+            subscription SubscribeStrings {
+              optionalListString
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        async for data in self.execute_ws(query=query, variables=variables):
+            yield SubscribeStrings.parse_obj(data).optional_list_string

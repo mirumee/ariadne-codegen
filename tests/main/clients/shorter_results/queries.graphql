@@ -26,3 +26,7 @@ query ListTypeA {
     id
   }
 }
+
+subscription SubscribeStrings {
+  optionalListString
+}

@@ -17,3 +17,7 @@ type Query {
 
   me: User!
 }
+
+type Subscription {
+  optionalListString: [String!]
+}
