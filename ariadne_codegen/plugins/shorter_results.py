@@ -242,6 +242,18 @@ def _return_or_yield_node_and_class(
     if len(return_class_ast.body) != 1:
         return None
 
+    # If we are a single method class, ensure we inherit from BaseModel. If we
+    # inherit from another class like a fragment that could contain more fields
+    # so we don't want to unpack.
+    if len(return_class_ast.bases) != 1:
+        return None
+
+    if not isinstance(return_class_ast.bases[0], ast.Name):
+        return None
+
+    if not return_class_ast.bases[0].id == "BaseModel":
+        return None
+
     single_field = return_class_ast.body[0]
     if single_field is None:
         return None
