@@ -167,13 +167,13 @@ class PackageGenerator:
         self._validate_unique_file_names()
         if not self.package_path.exists():
             self.package_path.mkdir()
-        self._generate_client()
         self._generate_enums()
         self._generate_input_types()
         self._generate_result_types()
         self._generate_fragments()
         self._copy_files()
         self._generate_scalars_definitions()
+        self._generate_client()
         self._generate_init()
 
         return sorted(self.generated_files)
