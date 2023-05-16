@@ -53,7 +53,6 @@ class ClientSettings(BaseSettings):
     include_comments: bool = True
     convert_to_snake_case: bool = True
     async_client: bool = True
-    unwrap_single_fields: bool = False
     files_to_include: List[str] = field(default_factory=list)
     plugins: List[str] = field(default_factory=list)
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
@@ -83,9 +82,6 @@ class ClientSettings(BaseSettings):
 
         for file_path in self.files_to_include:
             assert_path_is_valid_file(file_path)
-
-        if self.unwrap_single_fields:
-            self.plugins.insert(0, "ariadne_codegen.ShorterResultsPlugin")
 
     def _set_default_base_client_data(self):
         if not self.base_client_name and not self.base_client_file_path:

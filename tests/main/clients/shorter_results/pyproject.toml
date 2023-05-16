@@ -3,4 +3,4 @@ schema_path = "schema.graphql"
 queries_path = "queries.graphql"
 include_comments = false
 target_package_name = "shorter_results"
-unwrap_single_fields = true
+plugins = ["ariadne_codegen.ShorterResultsPlugin"]

@@ -32,11 +32,6 @@ By enabling this plugin the return type of the generated
 This plugin can be enabled by either adding the plugin in the settings:
 
     plugins = ["ariadne_codegen.ShorterResultsPlugin"]
-
-Or with the shorthand setting:
-
-    [tool.ariadne-codegen]
-    unwrap_single_fields = true
 """
 
 import ast
