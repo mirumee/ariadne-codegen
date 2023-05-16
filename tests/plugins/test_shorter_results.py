@@ -5,7 +5,14 @@ from ariadne_codegen.plugins import shorter_results
 
 
 def test_add_import():
-    module = ast.parse("from foo import bar")
+    module = ast.parse(
+        """
+from foo import bar
+
+class Client:
+    pass
+"""
+    )
 
     plugin = shorter_results.ShorterResultsPlugin(GraphQLSchema(), {})
     plugin.extended_imports = {
