@@ -120,3 +120,61 @@ def test_generator_triggers_process_name_hook_for_every_field(mocked_plugin_mana
         "field1",
         "fielda",
     }
+
+
+def test_generator_triggers_generate_result_class_hook_for_class_with_empty_body(
+    mocked_plugin_manager,
+):
+    query_str = "query CustomQuery { camelCaseQuery { ...CustomFragment } }"
+
+    ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+        plugin_manager=mocked_plugin_manager,
+        fragments_definitions={
+            "CustomFragment": parse(
+                "fragment CustomFragment on CustomType { id }"
+            ).definitions[0]
+        },
+    )
+
+    assert "CustomQueryCamelCaseQuery" in {
+        c.args[0].name for c in mocked_plugin_manager.generate_result_class.mock_calls
+    }
+
+
+def test_generator_triggers_generate_result_class_hook_once_for_class(
+    mocked_plugin_manager,
+):
+    query_str = """
+    query CustomQuery {
+        camelCaseQuery {
+            id
+            field1 {
+                fielda
+            }
+            field2 {
+                fieldb
+            }
+            field3
+            scalarField
+        }
+    }
+    """
+
+    ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+        plugin_manager=mocked_plugin_manager,
+    )
+
+    called_classes_names = [
+        c.args[0].name for c in mocked_plugin_manager.generate_result_class.mock_calls
+    ]
+    assert len(called_classes_names) == len(set(called_classes_names))

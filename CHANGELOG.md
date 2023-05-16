@@ -4,6 +4,7 @@
 
 - Added support for subscriptions as async generators.
 - Changed how fragments are handled to generate separate module with fragments as mixins.
+- Fixed `ResultTypesGenerator` to trigger `generate_result_class` for each result model.
 
 
 ## 0.6.0 (2023-04-18)
