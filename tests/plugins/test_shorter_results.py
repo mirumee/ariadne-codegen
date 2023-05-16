@@ -1,7 +1,7 @@
 import ast
 from graphql import GraphQLSchema
 
-from ariadne_codegen.plugins.contrib.shorter_results import ShorterResultsPlugin
+from ariadne_codegen.contrib.shorter_results import ShorterResultsPlugin
 
 
 def test_add_import():
