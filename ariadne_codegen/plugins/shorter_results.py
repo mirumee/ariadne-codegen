@@ -35,8 +35,8 @@ This plugin can be enabled by either adding the plugin in the settings:
 """
 
 import ast
-from typing import Union, Dict, Optional
-from graphql import GraphQLSchema, ExecutableDefinitionNode
+from typing import Union, Dict, Optional, List
+from graphql import GraphQLSchema, ExecutableDefinitionNode, SelectionSetNode
 from ariadne_codegen.codegen import (
     generate_async_for,
     generate_attribute,
@@ -47,10 +47,7 @@ from ariadne_codegen.codegen import (
     generate_yield,
 )
 
-from ariadne_codegen.plugins.base import (
-    Plugin,
-    SelectionSetNode,
-)
+from ariadne_codegen.plugins.base import Plugin
 
 
 class ShorterResultsPlugin(Plugin):
@@ -116,17 +113,22 @@ class ShorterResultsPlugin(Plugin):
         last_stmt = method_def.body[-1]
 
         if isinstance(last_stmt, ast.Return):
-            return self._generate_sync_client_method(method_def, last_stmt)
+            return self._generate_query_and_mutation_client_method(
+                method_def, last_stmt
+            )
         elif isinstance(last_stmt, ast.AsyncFor):
-            return self._generate_async_client_method(method_def, last_stmt)
+            return self._generate_subscription_client_method(method_def, last_stmt)
 
         return super().generate_client_method(method_def)
 
-    def _generate_async_client_method(
+    def _generate_subscription_client_method(
         self,
         method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
         async_for_stmt: ast.AsyncFor,
     ):
+        """
+        Generate method for subscriptions.
+        """
         if not isinstance(method_def.returns, ast.Subscript):
             return super().generate_client_method(method_def)
 
@@ -139,7 +141,11 @@ class ShorterResultsPlugin(Plugin):
         if node_and_class is None:
             return super().generate_client_method(method_def)
 
-        yield_node, single_field_class, single_field_return_class = node_and_class
+        yield_node, single_field_classes, single_field_return_class = node_and_class
+
+        previous_yield_value = _get_yield_value_from_async_for(method_def.body[-1])
+        if previous_yield_value is None:
+            return super().generate_client_method(method_def)
 
         # Update the return type to be the inner field and ensure we reference
         # the single field before returning.
@@ -147,22 +153,6 @@ class ShorterResultsPlugin(Plugin):
             value=generate_name("AsyncIterator"),
             slice_=yield_node,
         )
-
-        if not isinstance(method_def.body[-1], ast.AsyncFor):
-            return super().generate_client_method(method_def)
-
-        if len(method_def.body[-1].body) < 1:
-            return super().generate_client_method(method_def)
-
-        if not isinstance(method_def.body[-1].body[0], ast.Expr):
-            return super().generate_client_method(method_def)
-
-        if not isinstance(method_def.body[-1].body[0].value, ast.Yield):
-            return super().generate_client_method(method_def)
-
-        previous_yield_value = method_def.body[-1].body[0].value.value
-        if previous_yield_value is None:
-            return super().generate_client_method(method_def)
 
         method_def.body[-1] = generate_async_for(
             target=async_for_stmt.target,
@@ -177,15 +167,18 @@ class ShorterResultsPlugin(Plugin):
             ),
         )
 
-        self._update_imports(method_def, single_field_class)
+        self._update_imports(method_def, single_field_classes)
 
         return super().generate_client_method(method_def)
 
-    def _generate_sync_client_method(
+    def _generate_query_and_mutation_client_method(
         self,
         method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
         return_stmt: ast.Return,
     ):
+        """
+        Generate method for query or mutations.
+        """
         if return_stmt.value is None:
             return super().generate_client_method(method_def)
 
@@ -198,7 +191,7 @@ class ShorterResultsPlugin(Plugin):
         if node_and_class is None:
             return super().generate_client_method(method_def)
 
-        return_node, single_field_class, single_field_return_class = node_and_class
+        return_node, single_field_classes, single_field_return_class = node_and_class
 
         # Update the return type to be the inner field and ensure we reference
         # the single field before returning.
@@ -209,50 +202,71 @@ class ShorterResultsPlugin(Plugin):
             )
         )
 
-        self._update_imports(method_def, single_field_class)
+        self._update_imports(method_def, single_field_classes)
 
         return super().generate_client_method(method_def)
 
-    def _update_imports(self, method_def, single_field_class):
-        if single_field_class not in self.class_dict:
-            return
+    def _update_imports(
+        self,
+        method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
+        single_field_classes: List[str],
+    ):
+        """
+        After expanding to the inner type we will end up with one or more
+        classes that we're now returning. Ensure they're all imported in the
+        file defining the method.
+        """
+        for single_field_class in single_field_classes:
+            if single_field_class not in self.class_dict:
+                return
 
-        # After we change the type we also need to import it in the client if
-        # it's one of our generated types so add the extra import as needed.
-        if method_def.name not in self.extended_imports:
-            self.extended_imports[method_def.name] = set()
+            # After we change the type we also need to import it in the client if
+            # it's one of our generated types so add the extra import as needed.
+            if method_def.name not in self.extended_imports:
+                self.extended_imports[method_def.name] = set()
 
-        self.extended_imports[method_def.name].add(single_field_class)
+            self.extended_imports[method_def.name].add(single_field_class)
+
+
+def _get_yield_value_from_async_for(stmt: ast.stmt) -> Optional[ast.expr]:
+    """
+    Extract inner yield value from `ast.AsyncFor` and return `None` if the stmt
+    isn't of expected type.
+    """
+    if not isinstance(stmt, ast.AsyncFor):
+        return None
+
+    if len(stmt.body) < 1:
+        return None
+
+    if not isinstance(stmt.body[0], ast.Expr):
+        return None
+
+    if not isinstance(stmt.body[0].value, ast.Yield):
+        return None
+
+    yield_value = stmt.body[0].value.value
+    if yield_value is None:
+        return None
+
+    return yield_value
 
 
 def _return_or_yield_node_and_class(
     current_return_class: str, class_dict: Dict[str, ast.ClassDef]
-) -> Optional[tuple[ast.expr, str, str]]:
+) -> Optional[tuple[ast.expr, List[str], str]]:
+    """
+    Given there's only a single field in the return type, return the ast for
+    that node, what class(es) that is and the name of the field.
+    """
     if current_return_class not in class_dict:
         return None
 
-    return_class_ast = class_dict[current_return_class]
-
-    # If we're not a single method class there's nothing for the plugin to do.
-    if len(return_class_ast.body) != 1:
+    fields = _get_all_fields(class_dict[current_return_class], class_dict)
+    if len(fields) != 1:
         return None
 
-    # If we are a single method class, ensure we inherit from BaseModel. If we
-    # inherit from another class like a fragment that could contain more fields
-    # so we don't want to unpack.
-    if len(return_class_ast.bases) != 1:
-        return None
-
-    if not isinstance(return_class_ast.bases[0], ast.Name):
-        return None
-
-    if not return_class_ast.bases[0].id == "BaseModel":
-        return None
-
-    single_field = return_class_ast.body[0]
-    if single_field is None:
-        return None
-
+    single_field = fields[0]
     if not isinstance(single_field, ast.AnnAssign):
         return None
 
@@ -267,7 +281,7 @@ def _return_or_yield_node_and_class(
     return return_node, return_class, single_field.target.id
 
 
-def _update_node(node: ast.expr) -> tuple[ast.expr, str]:
+def _update_node(node: ast.expr) -> tuple[ast.expr, List[str]]:
     """
     Recurse down a node to finner the inner ast.Name. Once found, evaluate the
     potential literal so it gets unquoted and return the inner name.
@@ -279,11 +293,44 @@ def _update_node(node: ast.expr) -> tuple[ast.expr, str]:
             # Not a literal
             pass
 
-        return node, node.id
+        return node, [node.id]
 
     if isinstance(node, ast.Subscript):
-        node.slice, node_id = _update_node(node.slice)
+        node.slice, node_ids = _update_node(node.slice)
 
-        return node, node_id
+        return node, node_ids
 
-    return ast.expr(), ""
+    if isinstance(node, ast.Tuple):
+        all_node_ids = []
+        for i, elt in enumerate(node.elts):
+            node.elts[i], node_ids = _update_node(elt)
+            all_node_ids.extend(node_ids)
+
+        return node, all_node_ids
+
+    return ast.expr(), []
+
+
+def _get_all_fields(
+    class_def: ast.ClassDef, class_dict: Dict[str, ast.ClassDef]
+) -> List[ast.AnnAssign]:
+    """
+    Recursively get all fields from all inherited classes to figure out the
+    total amount of fields.
+    """
+    fields = []
+
+    for base in class_def.bases:
+        if not isinstance(base, ast.Name):
+            continue
+
+        if base.id not in class_dict:
+            continue
+
+        fields.extend(_get_all_fields(class_dict[base.id], class_dict))
+
+    for field in class_def.body:
+        if isinstance(field, ast.AnnAssign):
+            fields.append(field)
+
+    return fields
