@@ -7,6 +7,20 @@ type User {
     username: String!
 }
 
+interface Animal {
+  name: String!
+}
+
+type Cat implements Animal {
+  name: String!
+  kittens: Int!
+}
+
+type Dog implements Animal {
+  name: String!
+  puppies: Int!
+}
+
 type Query {
   optionalListOptionalString: [String]
   optionalListString: [String!]
@@ -16,6 +30,8 @@ type Query {
   listOptionalTypeA: [TypeA]!
 
   me: User!
+
+  animalByName(name: String!): Animal!
 }
 
 type Subscription {

@@ -27,6 +27,18 @@ query ListTypeA {
   }
 }
 
+query GetAnimalByName {
+  animalByName {
+    name
+    ... on Cat {
+      kittens
+    }
+    ... on Dog {
+      puppies
+    }
+  }
+}
+
 subscription SubscribeStrings {
   optionalListString
 }
