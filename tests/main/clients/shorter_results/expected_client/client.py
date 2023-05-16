@@ -7,6 +7,8 @@ from .get_animal_by_name import (
     GetAnimalByNameAnimalByNameCat,
     GetAnimalByNameAnimalByNameDog,
 )
+from .get_animal_fragment import GetAnimalFragment
+from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
 from .list_strings_1 import ListStrings1
 from .list_strings_2 import ListStrings2
@@ -131,6 +133,41 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetAnimalByName.parse_obj(data).animal_by_name
+
+    async def get_animal_fragment(self) -> str:
+        query = gql(
+            """
+            query GetAnimalFragment {
+              ...AnimalFragment
+            }
+
+            fragment AnimalFragment on Animal {
+              name
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetAnimalFragment.parse_obj(data).name
+
+    async def get_animal_fragment_with_extra(self) -> GetAnimalFragmentWithExtra:
+        query = gql(
+            """
+            query GetAnimalFragmentWithExtra {
+              ...AnimalFragment
+              listString
+            }
+
+            fragment AnimalFragment on Animal {
+              name
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetAnimalFragmentWithExtra.parse_obj(data)
 
     async def subscribe_strings(self) -> AsyncIterator[Optional[List[str]]]:
         query = gql(

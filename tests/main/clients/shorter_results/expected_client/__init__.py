@@ -8,12 +8,15 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+from .fragments import AnimalFragment
 from .get_animal_by_name import (
     GetAnimalByName,
     GetAnimalByNameAnimalByNameAnimal,
     GetAnimalByNameAnimalByNameCat,
     GetAnimalByNameAnimalByNameDog,
 )
+from .get_animal_fragment import GetAnimalFragment
+from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
 from .list_strings_1 import ListStrings1
 from .list_strings_2 import ListStrings2
@@ -23,6 +26,7 @@ from .list_type_a import ListTypeA, ListTypeAListOptionalTypeA
 from .subscribe_strings import SubscribeStrings
 
 __all__ = [
+    "AnimalFragment",
     "AsyncBaseClient",
     "BaseModel",
     "Client",
@@ -30,6 +34,8 @@ __all__ = [
     "GetAnimalByNameAnimalByNameAnimal",
     "GetAnimalByNameAnimalByNameCat",
     "GetAnimalByNameAnimalByNameDog",
+    "GetAnimalFragment",
+    "GetAnimalFragmentWithExtra",
     "GetAuthenticatedUser",
     "GetAuthenticatedUserMe",
     "GraphQLClientError",

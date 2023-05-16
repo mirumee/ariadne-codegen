@@ -39,6 +39,19 @@ query GetAnimalByName {
   }
 }
 
+query GetAnimalFragment {
+  ...AnimalFragment
+}
+
+query GetAnimalFragmentWithExtra {
+  ...AnimalFragment
+  listString
+}
+
+fragment AnimalFragment on Animal {
+  name
+}
+
 subscription SubscribeStrings {
   optionalListString
 }
