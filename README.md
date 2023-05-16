@@ -89,7 +89,7 @@ Ariadne Codegen implements a plugin system that enables further customization an
 Ariadne Codegen ships with optional plugins importable from the
 `ariadne_codegen.contrib` package:
 
-* [`ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin`](plugins/contrib/shorter_results.py)
+* [`ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin`](ariadne_codegen/contrib/shorter_results.py)
   \- This plugin processes generated client methods for operations where only
   single top field is requested, so they return this field's value directly
   instead of operation's result type. For example get_user method generated for
@@ -144,7 +144,7 @@ If `type`/`serialize`/`parse` contains at least one `.` then string will be spli
 
 ### Example with scalar mapped to built-in type
 
-In this case scalar is mapped to built-in `str` which doesn\`t require custom `serialize ` and `parse` methods. 
+In this case scalar is mapped to built-in `str` which doesn\`t require custom `serialize ` and `parse` methods.
 
 ```toml
 [tool.ariadne-codegen.scalars.SCALARA]
@@ -200,7 +200,7 @@ This directive can be used along with `files_to_include` option to extend functi
 
 #### Example of usage of `mixin` and `files_to_include`:
 
-Query with `mixin` directive: 
+Query with `mixin` directive:
 ```gql
 query listUsers {
     users @mixin(from: ".mixins", import: "UsersMixin") {
@@ -256,7 +256,7 @@ Instead of generating client, you can generate file with a copy of GraphQL schem
 ariadne-codegen graphqlschema
 ```
 
-`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers` and `remote_schema_verify_ssl` options with addition to some extra options specific to it:    
+`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers` and `remote_schema_verify_ssl` options with addition to some extra options specific to it:
 
 - `target_file_path` (defaults to `"schema.py"`) - destination path for generated file
 - `schema_variable_name` (defaults to `"schema"`) - name for schema variable, must be valid python identifier
@@ -266,7 +266,7 @@ Generated file contains:
 
 - Necessary imports
 - Type map declaration `{type_map_variable_name}: TypeMap = {...}`
-- Schema declaration `{schema_variable_name}: GraphQLSchema = GraphQLSchema(...)` 
+- Schema declaration `{schema_variable_name}: GraphQLSchema = GraphQLSchema(...)`
 
 
 ## Contributing
