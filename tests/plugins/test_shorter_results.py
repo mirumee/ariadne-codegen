@@ -1,7 +1,7 @@
 import ast
 from graphql import GraphQLSchema
 
-from ariadne_codegen.plugins import shorter_results
+from ariadne_codegen.plugins.contrib.shorter_results import ShorterResultsPlugin
 
 
 def test_add_import():
@@ -14,7 +14,7 @@ class Client:
 """
     )
 
-    plugin = shorter_results.ShorterResultsPlugin(GraphQLSchema(), {})
+    plugin = ShorterResultsPlugin(GraphQLSchema(), {})
     plugin.extended_imports = {
         "foo": {"baz"},
     }

@@ -84,12 +84,17 @@ Optional settings:
 
 Ariadne Codegen implements a plugin system that enables further customization and fine-tuning of generated Python code. It’s documentation is available separately in the [PLUGINS.md](https://github.com/mirumee/ariadne-codegen/blob/main/PLUGINS.md) file.
 
-### Built-in plugins
+### Standard plugins
 
-There are some built-in plugins that ships with `ariadne_codegen`:
+Ariadne Codegen ships with optional plugins importable from the
+`ariadne_codegen.contrib` package:
 
-* [`ariadne_codegen.ShorterResultsPlugin`](plugins/shorter_results.py) - Unwrap
-  response types with a single field.
+* [`ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin`](plugins/contrib/shorter_results.py)
+  \- This plugin processes generated client methods for operations where only
+  single top field is requested, so they return this field's value directly
+  instead of operation's result type. For example get_user method generated for
+  query `GetUser() { user(...) { ... }}` will return value of user field
+  directly instead of `GetUserResult`.
 
 ## Using generated client
 
