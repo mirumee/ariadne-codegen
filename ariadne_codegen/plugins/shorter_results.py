@@ -83,7 +83,31 @@ class ShorterResultsPlugin(Plugin):
         )
 
     def generate_client_module(self, module: ast.Module) -> ast.Module:
-        """Add extra import needed after expanding the inner field"""
+        """
+        Update the generated client.
+
+        At this point we've the full ast for all classes used for the client so
+        instead of modifying class by class in `generate_client_method` we
+        modify each method from here. By doing so we ensure that we have a map
+        between all classes, including fragments, so we can traverse them to
+        figure out how many fields we have in total for each request.
+
+        If we only have a single field, including when expanding our fragments,
+        we can expand the single field and update the return type.
+        """
+        client_def = next(
+            filter(lambda o: isinstance(o, ast.ClassDef), module.body), None
+        )
+        if not client_def:
+            return super().generate_client_module(module)
+
+        for method_def in [
+            m
+            for m in client_def.body
+            if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]:
+            self._modify_method_def(method_def)
+
         if len(self.extended_imports) == 0:
             return super().generate_client_module(module)
 
@@ -105,12 +129,14 @@ class ShorterResultsPlugin(Plugin):
 
         return super().generate_client_module(module)
 
-    def generate_client_method(
+    def _modify_method_def(
         self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
     ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
         """
         Change the method generated in the client to call the inner field and
-        change the return type.
+        change the return type. We do this here instead of
+        `generate_client_method` to ensure we have a map between all our classes
+        when updating the method def.
         """
         if len(method_def.body) < 1:
             return super().generate_client_method(method_def)
@@ -331,10 +357,7 @@ def _get_all_fields(
     fields = []
 
     for base in class_def.bases:
-        if not isinstance(base, ast.Name):
-            continue
-
-        if base.id not in class_dict:
+        if not isinstance(base, ast.Name) or base.id not in class_dict:
             continue
 
         fields.extend(_get_all_fields(class_dict[base.id], class_dict))
