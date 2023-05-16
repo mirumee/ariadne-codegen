@@ -35,6 +35,7 @@ This plugin can be enabled by either adding the plugin in the settings:
 """
 
 import ast
+from copy import deepcopy
 from typing import Union, Dict, Optional, List
 from graphql import GraphQLSchema, ExecutableDefinitionNode, SelectionSetNode
 from ariadne_codegen.codegen import (
@@ -276,9 +277,14 @@ def _return_or_yield_node_and_class(
     # Traverse the type annotation until we find the inner type. This can
     # require several iterations if the return type is something like
     # Optional[List[Any]]
-    return_node, return_class = _update_node(single_field.annotation)
+    #
+    # We make a deepcopy because we need to keep the quoted annotations for the
+    # fields in the query classes but we want to have it unquoted in the client
+    # method where we import the actual types.
+    annotations = deepcopy(single_field.annotation)
+    return_node, return_classes = _update_node(annotations)
 
-    return return_node, return_class, single_field.target.id
+    return return_node, return_classes, single_field.target.id
 
 
 def _update_node(node: ast.expr) -> tuple[ast.expr, List[str]]:
