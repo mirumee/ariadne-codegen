@@ -10,13 +10,13 @@ class UnionB(BaseModel):
 
 
 class UnionBQueryUTypeA(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     id: str
     field_a: str = Field(alias="fieldA")
 
 
 class UnionBQueryUTypeB(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     id: str
 
 

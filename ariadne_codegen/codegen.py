@@ -283,7 +283,7 @@ def generate_field_with_alias(name):
 
 def generate_typename_field_definition():
     return generate_ann_assign(
-        target="__typename__",
+        target="typename__",
         annotation=generate_name("str"),
         value=generate_field_with_alias("__typename"),
     )

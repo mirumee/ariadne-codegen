@@ -300,7 +300,7 @@ class ResultTypesGenerator:
 
     def _process_field_name(self, name: str, field: FieldNode) -> str:
         if self.convert_to_snake_case and name == TYPENAME_FIELD_NAME:
-            return "__typename__"
+            return "typename__"
         return process_name(
             name,
             convert_to_snake_case=self.convert_to_snake_case,
