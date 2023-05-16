@@ -249,15 +249,15 @@ class ResultTypesGenerator:
             self._save_used_enums(field_types_names)
             self._save_used_scalars(field_types_names)
 
-            if self.plugin_manager:
-                class_def = self.plugin_manager.generate_result_class(
-                    class_def,
-                    operation_definition=self.operation_definition,
-                    selection_set=selection_set,
-                )
-
         if not class_def.body:
             class_def.body.append(generate_pass())
+
+        if self.plugin_manager:
+            class_def = self.plugin_manager.generate_result_class(
+                class_def,
+                operation_definition=self.operation_definition,
+                selection_set=selection_set,
+            )
 
         return [class_def] + extra_classes
 
