@@ -233,7 +233,7 @@ def test_generate_returns_arguments_and_dictionary_with_valid_names():
             ast.arg(arg="and_", annotation=ast.Name(id="str")),
             ast.arg(arg="in_", annotation=ast.Name(id="str")),
             ast.arg(arg="field_a", annotation=ast.Name(id="str")),
-            ast.arg(arg="field_b", annotation=ast.Name(id="str")),
+            ast.arg(arg="_field_b", annotation=ast.Name(id="str")),
         ],
         kwonlyargs=[],
         kw_defaults=[],
@@ -252,7 +252,7 @@ def test_generate_returns_arguments_and_dictionary_with_valid_names():
             ast.Name(id="and_"),
             ast.Name(id="in_"),
             ast.Name(id="field_a"),
-            ast.Name(id="field_b"),
+            ast.Name(id="_field_b"),
         ],
     )
 

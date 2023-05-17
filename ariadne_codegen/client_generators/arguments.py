@@ -63,7 +63,6 @@ class ArgumentsGenerator:
                 convert_to_snake_case=self.convert_to_snake_case,
                 plugin_manager=self.plugin_manager,
                 node=variable_definition,
-                trim_leading_underscore=True,
             )
             annotation, used_custom_scalar = self._parse_type_node(
                 variable_definition.type
