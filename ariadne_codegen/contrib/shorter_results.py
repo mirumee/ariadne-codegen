@@ -98,7 +98,7 @@ class ShorterResultsPlugin(Plugin):
         client_def = next(
             filter(lambda o: isinstance(o, ast.ClassDef), module.body), None
         )
-        if not client_def:
+        if not client_def or not isinstance(client_def, ast.ClassDef):
             return super().generate_client_module(module)
 
         for method_def in [
@@ -131,7 +131,7 @@ class ShorterResultsPlugin(Plugin):
 
     def _modify_method_def(
         self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
-    ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
+    ) -> None:
         """
         Change the method generated in the client to call the inner field and
         change the return type. We do this here instead of
@@ -139,18 +139,16 @@ class ShorterResultsPlugin(Plugin):
         when updating the method def.
         """
         if len(method_def.body) < 1:
-            return super().generate_client_method(method_def)
+            return None
 
         last_stmt = method_def.body[-1]
 
         if isinstance(last_stmt, ast.Return):
-            return self._generate_query_and_mutation_client_method(
-                method_def, last_stmt
-            )
+            self._generate_query_and_mutation_client_method(method_def, last_stmt)
         elif isinstance(last_stmt, ast.AsyncFor):
-            return self._generate_subscription_client_method(method_def, last_stmt)
+            self._generate_subscription_client_method(method_def, last_stmt)
 
-        return super().generate_client_method(method_def)
+        return None
 
     def _generate_subscription_client_method(
         self,
@@ -161,22 +159,22 @@ class ShorterResultsPlugin(Plugin):
         Generate method for subscriptions.
         """
         if not isinstance(method_def.returns, ast.Subscript):
-            return super().generate_client_method(method_def)
+            return None
 
         if not isinstance(method_def.returns.slice, ast.Name):
-            return super().generate_client_method(method_def)
+            return None
 
         node_and_class = _return_or_yield_node_and_class(
             method_def.returns.slice.id, self.class_dict
         )
         if node_and_class is None:
-            return super().generate_client_method(method_def)
+            return None
 
         yield_node, single_field_classes, single_field_return_class = node_and_class
 
         previous_yield_value = _get_yield_value_from_async_for(method_def.body[-1])
         if previous_yield_value is None:
-            return super().generate_client_method(method_def)
+            return None
 
         # Update the return type to be the inner field and ensure we reference
         # the single field before returning.
@@ -200,27 +198,27 @@ class ShorterResultsPlugin(Plugin):
 
         self._update_imports(method_def, single_field_classes)
 
-        return super().generate_client_method(method_def)
+        return None
 
     def _generate_query_and_mutation_client_method(
         self,
         method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
         return_stmt: ast.Return,
-    ):
+    ) -> None:
         """
         Generate method for query or mutations.
         """
         if return_stmt.value is None:
-            return super().generate_client_method(method_def)
+            return None
 
         if not isinstance(method_def.returns, ast.Name):
-            return super().generate_client_method(method_def)
+            return None
 
         node_and_class = _return_or_yield_node_and_class(
             method_def.returns.id, self.class_dict
         )
         if node_and_class is None:
-            return super().generate_client_method(method_def)
+            return None
 
         return_node, single_field_classes, single_field_return_class = node_and_class
 
@@ -235,7 +233,7 @@ class ShorterResultsPlugin(Plugin):
 
         self._update_imports(method_def, single_field_classes)
 
-        return super().generate_client_method(method_def)
+        return None
 
     def _update_imports(
         self,
