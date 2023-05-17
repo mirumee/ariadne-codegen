@@ -36,12 +36,10 @@ This plugin can be enabled by either adding the plugin in the settings:
 
 import ast
 from copy import deepcopy
-from typing import Union, Dict, Optional, List
-from graphql import (
-    GraphQLSchema,
-    ExecutableDefinitionNode,
-    SelectionSetNode,
-)
+from typing import Dict, List, Optional, Union
+
+from graphql import ExecutableDefinitionNode, GraphQLSchema, SelectionSetNode
+
 from ariadne_codegen.codegen import (
     generate_async_for,
     generate_attribute,
@@ -51,7 +49,6 @@ from ariadne_codegen.codegen import (
     generate_subscript,
     generate_yield,
 )
-
 from ariadne_codegen.plugins.base import Plugin
 
 

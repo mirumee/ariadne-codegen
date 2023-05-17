@@ -1,4 +1,5 @@
 import ast
+
 from graphql import GraphQLSchema
 
 from ariadne_codegen.contrib.shorter_results import ShorterResultsPlugin
