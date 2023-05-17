@@ -28,6 +28,8 @@ type CustomType {
     field1: CustomType1!
     field2: CustomType2
     field3: CustomEnum!
+    _field4: String!
+    _Field5: String!
     scalarField: SCALARA
 }
 

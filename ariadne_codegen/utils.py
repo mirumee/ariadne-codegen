@@ -82,6 +82,7 @@ def process_name(
     convert_to_snake_case: bool,
     plugin_manager: Optional[PluginManager] = None,
     node: Optional[Node] = None,
+    trim_leading_underscore: bool = False,
 ) -> str:
     """Processes the GraphQL name to remove keywords
     and optionally convert to snake_case."""
@@ -90,6 +91,8 @@ def process_name(
         processed_name = str_to_snake_case(processed_name)
     if iskeyword(processed_name):
         processed_name += "_"
+    if trim_leading_underscore:
+        processed_name = re.sub("^_*", "", processed_name)
     if plugin_manager:
         processed_name = plugin_manager.process_name(processed_name, node=node)
     return processed_name
