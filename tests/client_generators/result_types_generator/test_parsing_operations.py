@@ -8,6 +8,7 @@ from ariadne_codegen.client_generators.constants import (
     BASE_MODEL_CLASS_NAME,
     LIST,
     OPTIONAL,
+    UNION,
 )
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
 
@@ -371,6 +372,184 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
     assert compare_ast(custom_type_class_def, expected_class_def)
 
 
+def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
+    query_str = """
+    query CustomQuery {
+        interfaceQuery {
+            ...InterfaceIFragment
+        }
+    }
+
+    fragment InterfaceIFragment on InterfaceI {
+        id
+        ... on TypeA {
+            fieldA
+        }
+        ... on TypeB {
+            fieldB
+        }
+    }
+    """
+    expected_class_defs = [
+        ast.ClassDef(
+            name="CustomQuery",
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="interface_query"),
+                    annotation=ast.Subscript(
+                        value=ast.Name(id=UNION),
+                        slice=ast.Tuple(
+                            elts=[
+                                ast.Name(id='"CustomQueryInterfaceQueryInterfaceI"'),
+                                ast.Name(id='"CustomQueryInterfaceQueryTypeA"'),
+                                ast.Name(id='"CustomQueryInterfaceQueryTypeB"'),
+                            ]
+                        ),
+                    ),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg="alias",
+                                value=ast.Constant(value="interfaceQuery"),
+                            )
+                        ],
+                    ),
+                    simple=1,
+                )
+            ],
+            decorator_list=[],
+        ),
+        ast.ClassDef(
+            name="CustomQueryInterfaceQueryInterfaceI",
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="__typename__"),
+                    annotation=ast.Name(id="str"),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg="alias",
+                                value=ast.Constant(value="__typename"),
+                            )
+                        ],
+                    ),
+                    simple=1,
+                ),
+                ast.AnnAssign(
+                    target=ast.Name(id="id"),
+                    annotation=ast.Name(id="str"),
+                    simple=1,
+                ),
+            ],
+            decorator_list=[],
+        ),
+        ast.ClassDef(
+            name="CustomQueryInterfaceQueryTypeA",
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="__typename__"),
+                    annotation=ast.Name(id="str"),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg="alias",
+                                value=ast.Constant(value="__typename"),
+                            )
+                        ],
+                    ),
+                    simple=1,
+                ),
+                ast.AnnAssign(
+                    target=ast.Name(id="id"),
+                    annotation=ast.Name(id="str"),
+                    simple=1,
+                ),
+                ast.AnnAssign(
+                    target=ast.Name(id="field_a"),
+                    annotation=ast.Name(id="str"),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(arg="alias", value=ast.Constant(value="fieldA"))
+                        ],
+                    ),
+                    simple=1,
+                ),
+            ],
+            decorator_list=[],
+        ),
+        ast.ClassDef(
+            name="CustomQueryInterfaceQueryTypeB",
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+            keywords=[],
+            body=[
+                ast.AnnAssign(
+                    target=ast.Name(id="__typename__"),
+                    annotation=ast.Name(id="str"),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg="alias",
+                                value=ast.Constant(value="__typename"),
+                            )
+                        ],
+                    ),
+                    simple=1,
+                ),
+                ast.AnnAssign(
+                    target=ast.Name(id="id"),
+                    annotation=ast.Name(id="str"),
+                    simple=1,
+                ),
+                ast.AnnAssign(
+                    target=ast.Name(id="field_b"),
+                    annotation=ast.Name(id="float"),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(arg="alias", value=ast.Constant(value="fieldB"))
+                        ],
+                    ),
+                    simple=1,
+                ),
+            ],
+            decorator_list=[],
+        ),
+    ]
+    operation_definition, fragment_def = cast(
+        Tuple[OperationDefinitionNode, FragmentDefinitionNode],
+        parse(query_str).definitions,
+    )
+    generator = ResultTypesGenerator(
+        schema=build_schema(SCHEMA_STR),
+        operation_definition=operation_definition,
+        enums_module_name="enums",
+        fragments_definitions={"InterfaceIFragment": fragment_def},
+    )
+
+    module = generator.generate()
+
+    class_defs = filter_class_defs(module)
+    assert compare_ast(class_defs, expected_class_defs)
+    assert not generator.get_fragments_used_as_mixins()
+
+
 def test_generate_returns_module_with_class_for_every_appearance_of_type():
     query_str = """
     query CustomQuery($id: ID!) {
@@ -385,7 +564,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
     expected_class_defs = [
         ast.ClassDef(
             name="CustomQuery",
-            bases=[ast.Name(id="BaseModel")],
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             keywords=[],
             body=[
                 ast.AnnAssign(
@@ -415,7 +594,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
         ),
         ast.ClassDef(
             name="CustomQueryQuery1",
-            bases=[ast.Name(id="BaseModel")],
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             keywords=[],
             body=[
                 ast.AnnAssign(
@@ -428,7 +607,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
         ),
         ast.ClassDef(
             name="CustomQueryCamelCaseQuery",
-            bases=[ast.Name(id="BaseModel")],
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             keywords=[],
             body=[
                 ast.AnnAssign(

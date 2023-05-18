@@ -76,8 +76,8 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
             fielda
         }
     """
-    fragment_definition = cast(
-        FragmentDefinitionNode, parse(fragment_str).definitions[0]
+    fragment_definition, nested_fragment_definition = cast(
+        FragmentDefinitionNode, parse(fragment_str).definitions
     )
     expected_class_defs = [
         ast.ClassDef(
@@ -108,6 +108,10 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
         schema=build_schema(SCHEMA_STR),
         operation_definition=fragment_definition,
         enums_module_name="enums",
+        fragments_definitions={
+            "TestFragment": fragment_definition,
+            "TestNestedFragment": nested_fragment_definition,
+        },
     )
 
     generated_class_defs = generator.get_classes()
@@ -116,4 +120,4 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
     assert set(generator.get_generated_public_names()) == {
         c.name for c in expected_class_defs
     }
-    assert generator.get_used_fragments() == ["TestNestedFragment"]
+    assert generator.get_fragments_used_as_mixins() == {"TestNestedFragment"}

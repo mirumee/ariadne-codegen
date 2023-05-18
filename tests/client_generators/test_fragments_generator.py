@@ -98,6 +98,7 @@ def test_generate_returns_module_with_class_for_every_fragment(
     generator = FragmentsGenerator(
         schema=schema,
         enums_module_name="enums",
+        fragments_names={"FragmentA", "FragmentB"},
         fragments_definitions={"FragmentA": fragment_a, "FragmentB": fragment_b},
         convert_to_snake_case=True,
     )
@@ -114,6 +115,7 @@ def test_generate_returns_module_with_correct_order_of_classes(
     generator = FragmentsGenerator(
         schema=schema,
         enums_module_name="enums",
+        fragments_names={"TestFragment", "FragmentA"},
         fragments_definitions={
             "TestFragment": test_fragment,
             "FragmentA": fragment_a,
@@ -125,6 +127,27 @@ def test_generate_returns_module_with_correct_order_of_classes(
 
     generated_class_defs = filter_class_defs(module)
     assert [c.name for c in generated_class_defs] == ["FragmentA", "TestFragment"]
+
+
+def test_generate_returns_module_with_models_for_only_selected_fragments(
+    schema, fragment_a, fragment_b, test_fragment
+):
+    generator = FragmentsGenerator(
+        schema=schema,
+        enums_module_name="enums",
+        fragments_names={"FragmentA"},
+        fragments_definitions={
+            "TestFragment": test_fragment,
+            "FragmentA": fragment_a,
+            "FragmentB": fragment_b,
+        },
+        convert_to_snake_case=True,
+    )
+
+    module = generator.generate()
+
+    generated_class_defs = filter_class_defs(module)
+    assert [c.name for c in generated_class_defs] == ["FragmentA"]
 
 
 def test_generate_returns_module_with_update_refs_calls(
@@ -153,6 +176,7 @@ def test_generate_returns_module_with_update_refs_calls(
     generator = FragmentsGenerator(
         schema=schema,
         enums_module_name="enums",
+        fragments_names={"TestFragment", "FragmentA"},
         fragments_definitions={
             "TestFragment": test_fragment,
             "FragmentA": fragment_a,
@@ -170,6 +194,7 @@ def test_generate_triggers_generate_fragments_module_hook(mocked_plugin_manager)
     generator = FragmentsGenerator(
         schema=GraphQLSchema(),
         enums_module_name="enums",
+        fragments_names={},
         fragments_definitions={},
         plugin_manager=mocked_plugin_manager,
     )

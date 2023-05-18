@@ -15,6 +15,7 @@ class FragmentsGenerator:
         self,
         schema: GraphQLSchema,
         enums_module_name: str,
+        fragments_names: Set[str],
         fragments_definitions: Dict[str, FragmentDefinitionNode],
         base_model_import: Optional[ast.ImportFrom] = None,
         convert_to_snake_case: bool = True,
@@ -23,6 +24,7 @@ class FragmentsGenerator:
     ) -> None:
         self.schema = schema
         self.enums_module_name = enums_module_name
+        self.fragments_names = fragments_names
         self.fragments_definitions = fragments_definitions
         self.base_model_import = base_model_import
         self.convert_to_snake_case = convert_to_snake_case
@@ -34,9 +36,10 @@ class FragmentsGenerator:
     def generate(self) -> ast.Module:
         class_defs_dict: Dict[str, List[ast.ClassDef]] = {}
         imports: List[ast.ImportFrom] = []
-        dependencies_dict: Dict[str, List[str]] = {}
+        dependencies_dict: Dict[str, Set[str]] = {}
 
-        for name, fragmanet_def in self.fragments_definitions.items():
+        for name in self.fragments_names:
+            fragmanet_def = self.fragments_definitions[name]
             generator = ResultTypesGenerator(
                 schema=self.schema,
                 operation_definition=fragmanet_def,
@@ -49,7 +52,7 @@ class FragmentsGenerator:
             )
             imports.extend(generator.get_imports())
             class_defs_dict[name] = generator.get_classes()
-            dependencies_dict[name] = generator.get_used_fragments()
+            dependencies_dict[name] = generator.get_fragments_used_as_mixins()
             self._generated_public_names.extend(generator.get_generated_public_names())
 
         sorted_class_defs = self._get_sorted_class_defs(
@@ -77,20 +80,19 @@ class FragmentsGenerator:
     def _get_sorted_class_defs(
         self,
         class_defs_dict: Dict[str, List[ast.ClassDef]],
-        dependencies_dict: Dict[str, List[str]],
+        dependencies_dict: Dict[str, Set[str]],
     ) -> List[ast.ClassDef]:
         sorted_class_defs: List[ast.ClassDef] = []
 
         for name in self._get_sorted_fragments_names(
-            fragments_names=list(self.fragments_definitions.keys()),
-            dependencies_dict=dependencies_dict,
+            fragments_names=self.fragments_names, dependencies_dict=dependencies_dict
         ):
             sorted_class_defs.extend(class_defs_dict[name])
 
         return sorted_class_defs
 
     def _get_sorted_fragments_names(
-        self, fragments_names: List[str], dependencies_dict: Dict[str, List[str]]
+        self, fragments_names: Set[str], dependencies_dict: Dict[str, Set[str]]
     ) -> List[str]:
         sorted_names: List[str] = []
         visited: Set[str] = set()
@@ -99,11 +101,11 @@ class FragmentsGenerator:
             if name in visited:
                 return
             visited.add(name)
-            for dep in dependencies_dict.get(name, []):
+            for dep in dependencies_dict.get(name, set()):
                 visit(dep)
             sorted_names.append(name)
 
-        for name in fragments_names:
+        for name in sorted(fragments_names):
             visit(name)
 
         return sorted_names
