@@ -31,7 +31,7 @@ By enabling this plugin the return type of the generated
 
 This plugin can be enabled by either adding the plugin in the settings:
 
-    plugins = ["ariadne_codegen.ShorterResultsPlugin"]
+    plugins = ["ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin"]
 """
 
 import ast
@@ -244,7 +244,7 @@ class ShorterResultsPlugin(Plugin):
         """
         for single_field_class in single_field_classes:
             if single_field_class not in self.class_dict:
-                return
+                continue
 
             # After we change the type we also need to import it in the client if
             # it's one of our generated types so add the extra import as needed.
@@ -271,11 +271,7 @@ def _get_yield_value_from_async_for(stmt: ast.stmt) -> Optional[ast.expr]:
     if not isinstance(stmt.body[0].value, ast.Yield):
         return None
 
-    yield_value = stmt.body[0].value.value
-    if yield_value is None:
-        return None
-
-    return yield_value
+    return stmt.body[0].value.value
 
 
 def _return_or_yield_node_and_class(
