@@ -31,7 +31,7 @@ class ScalarData:
     parse: Optional[str] = None
     import_: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.type_name: str = self._get_object_name(self.type_)
         self.parse_name: Optional[str] = (
             self._get_object_name(self.parse) if self.parse else None
