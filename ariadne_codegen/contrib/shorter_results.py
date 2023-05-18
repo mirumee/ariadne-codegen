@@ -24,12 +24,12 @@ would most of the time immediately be expanded to get the inner
     me = (await client.get_authenticated_user).me
 
 By enabling this plugin the return type of the generated
-`get_authenticated_user` would instead directly return a
-`GetAuthenticatedUserMe` so the caller could use:
+`get_authenticated_user` will instead directly return a
+`GetAuthenticatedUserMe` so the caller can use:
 
     me = await client.get_authenticated_user
 
-This plugin can be enabled by either adding the plugin in the settings:
+This plugin can be enabled in the settings:
 
     plugins = ["ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin"]
 """
@@ -56,8 +56,8 @@ class ShorterResultsPlugin(Plugin):
     """
     Make single field return types expanded.
 
-    All client method that returns type with a single field will be expanded and
-    instead return the type of the inner field.
+    All client methods that return a type with a single field will be expanded and
+    instead return the inner field.
     """
 
     def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
@@ -72,7 +72,7 @@ class ShorterResultsPlugin(Plugin):
         operation_definition: ExecutableDefinitionNode,
         selection_set: SelectionSetNode,
     ) -> ast.ClassDef:
-        """Store a map of all classes and its ast"""
+        """Store a map of all classes and their AST."""
         self.class_dict[class_def.name] = class_def
 
         return super().generate_result_class(
@@ -343,7 +343,7 @@ def _get_all_fields(
 ) -> List[ast.AnnAssign]:
     """
     Recursively get all fields from all inherited classes to figure out the
-    total amount of fields.
+    total number of fields.
     """
     fields = []
 

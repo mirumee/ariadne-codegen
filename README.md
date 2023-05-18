@@ -84,6 +84,7 @@ Optional settings:
 
 Ariadne Codegen implements a plugin system that enables further customization and fine-tuning of generated Python code. It’s documentation is available separately in the [PLUGINS.md](https://github.com/mirumee/ariadne-codegen/blob/main/PLUGINS.md) file.
 
+
 ### Standard plugins
 
 Ariadne Codegen ships with optional plugins importable from the
@@ -95,6 +96,7 @@ Ariadne Codegen ships with optional plugins importable from the
   instead of operation's result type. For example get_user method generated for
   query `GetUser() { user(...) { ... }}` will return value of user field
   directly instead of `GetUserResult`.
+
 
 ## Using generated client
 
@@ -144,7 +146,7 @@ If `type`/`serialize`/`parse` contains at least one `.` then string will be spli
 
 ### Example with scalar mapped to built-in type
 
-In this case scalar is mapped to built-in `str` which doesn\`t require custom `serialize ` and `parse` methods.
+In this case scalar is mapped to built-in `str` which doesn't require custom `serialize ` and `parse` methods.
 
 ```toml
 [tool.ariadne-codegen.scalars.SCALARA]
@@ -201,6 +203,7 @@ This directive can be used along with `files_to_include` option to extend functi
 #### Example of usage of `mixin` and `files_to_include`:
 
 Query with `mixin` directive:
+
 ```gql
 query listUsers {
     users @mixin(from: ".mixins", import: "UsersMixin") {
