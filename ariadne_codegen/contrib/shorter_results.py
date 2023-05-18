@@ -40,7 +40,7 @@ from typing import Dict, List, Optional, Union
 
 from graphql import ExecutableDefinitionNode, GraphQLSchema, SelectionSetNode
 
-from ariadne_codegen.codegen import (
+from ..codegen import (
     generate_async_for,
     generate_attribute,
     generate_expr,
@@ -49,7 +49,7 @@ from ariadne_codegen.codegen import (
     generate_subscript,
     generate_yield,
 )
-from ariadne_codegen.plugins.base import Plugin
+from ..plugins.base import Plugin
 
 
 class ShorterResultsPlugin(Plugin):
@@ -152,9 +152,7 @@ class ShorterResultsPlugin(Plugin):
         method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
         async_for_stmt: ast.AsyncFor,
     ):
-        """
-        Generate method for subscriptions.
-        """
+        """Generate method for subscriptions."""
         if not isinstance(method_def.returns, ast.Subscript):
             return None
 
@@ -202,9 +200,7 @@ class ShorterResultsPlugin(Plugin):
         method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
         return_stmt: ast.Return,
     ) -> None:
-        """
-        Generate method for query or mutations.
-        """
+        """Generate method for query or mutations."""
         if return_stmt.value is None:
             return None
 
@@ -310,7 +306,7 @@ def _return_or_yield_node_and_class(
 
 def _update_node(node: ast.expr) -> tuple[ast.expr, List[str]]:
     """
-    Recurse down a node to finner the inner ast.Name. Once found, evaluate the
+    Walk down a node to find the inner `ast.Name`. Once found, evaluate the
     potential literal so it gets unquoted and return the inner name.
     """
     if isinstance(node, ast.Name):
