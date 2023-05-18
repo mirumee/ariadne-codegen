@@ -92,7 +92,7 @@ def process_name(
     if iskeyword(processed_name):
         processed_name += "_"
     if trim_leading_underscore:
-        processed_name = re.sub("^_*", "", processed_name)
+        processed_name = processed_name.lstrip("_")
     if plugin_manager:
         processed_name = plugin_manager.process_name(processed_name, node=node)
     return processed_name
