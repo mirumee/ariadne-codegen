@@ -221,6 +221,7 @@ class ResultTypesGenerator:
                 directives=field.directives,
                 class_name=class_name + str_to_pascal_case(name),
                 custom_scalars=self.custom_scalars,
+                fragments_definitions=self.fragments_definitions,
             )
 
             field_implementation = generate_ann_assign(

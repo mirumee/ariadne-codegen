@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Tuple, cast
 from graphql import (
     DirectiveNode,
     FieldNode,
+    FragmentDefinitionNode,
+    FragmentSpreadNode,
     GraphQLEnumType,
     GraphQLInterfaceType,
     GraphQLList,
@@ -13,6 +15,7 @@ from graphql import (
     GraphQLScalarType,
     GraphQLUnionType,
     InlineFragmentNode,
+    SelectionSetNode,
 )
 
 from ..codegen import (
@@ -41,9 +44,14 @@ def parse_operation_field(
     directives: Optional[Tuple[DirectiveNode, ...]] = None,
     class_name: str = "",
     custom_scalars: Optional[Dict[str, ScalarData]] = None,
+    fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
 ) -> Tuple[Annotation, List[FieldNames]]:
     annotation, field_types_names = parse_operation_field_type(
-        field=field, type_=type_, class_name=class_name, custom_scalars=custom_scalars
+        field=field,
+        type_=type_,
+        class_name=class_name,
+        custom_scalars=custom_scalars,
+        fragments_definitions=fragments_definitions,
     )
     if not (is_nullable(annotation)) and directives:
         nullable_directives = [INCLUDE_DIRECTIVE_NAME, SKIP_DIRECTIVE_NAME]
@@ -51,6 +59,30 @@ def parse_operation_field(
         if any(n in nullable_directives for n in directives_names):
             annotation = generate_nullable_annotation(annotation)
     return annotation, field_types_names
+
+
+def get_inline_fragments_from_selection_set(
+    selection_set: Optional[SelectionSetNode],
+    fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]],
+) -> List[InlineFragmentNode]:
+    if not selection_set:
+        return []
+
+    fragments_definitions = fragments_definitions or {}
+    inline_fragments: List[InlineFragmentNode] = []
+
+    for selection in selection_set.selections or []:
+        if isinstance(selection, InlineFragmentNode):
+            inline_fragments.append(selection)
+        elif isinstance(selection, FragmentSpreadNode):
+            fragment_def = fragments_definitions[selection.name.value]
+            inline_fragments.extend(
+                get_inline_fragments_from_selection_set(
+                    fragment_def.selection_set, fragments_definitions
+                )
+            )
+
+    return inline_fragments
 
 
 # pylint: disable=too-many-return-statements, too-many-branches
@@ -61,6 +93,7 @@ def parse_operation_field_type(
     class_name: str = "",
     add_type_name: bool = False,
     custom_scalars: Optional[Dict[str, ScalarData]] = None,
+    fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
 ) -> Tuple[Annotation, List[FieldNames]]:
     """Parse graphql type and return generated annotation."""
     if isinstance(type_, GraphQLScalarType):
@@ -76,13 +109,9 @@ def parse_operation_field_type(
         return (generate_annotation_name(ANY, nullable), [])
 
     if isinstance(type_, GraphQLInterfaceType):
-        inline_fragments = []
-        if field.selection_set:
-            inline_fragments = [
-                s
-                for s in field.selection_set.selections
-                if isinstance(s, InlineFragmentNode)
-            ]
+        inline_fragments = get_inline_fragments_from_selection_set(
+            field.selection_set, fragments_definitions
+        )
         if inline_fragments:
             types = [
                 generate_annotation_name('"' + class_name + type_.name + '"', False)
@@ -125,6 +154,7 @@ def parse_operation_field_type(
                 class_name=class_name,
                 add_type_name=True,
                 custom_scalars=custom_scalars,
+                fragments_definitions=fragments_definitions,
             )
             annotations.append(sub_annotation)
             names.extend(sub_names)
@@ -137,6 +167,7 @@ def parse_operation_field_type(
             type_=cast(CodegenResultFieldType, type_.of_type),
             class_name=class_name,
             custom_scalars=custom_scalars,
+            fragments_definitions=fragments_definitions,
         )
         return (generate_list_annotation(slice_=slice_, nullable=nullable), names)
 
@@ -147,6 +178,7 @@ def parse_operation_field_type(
             nullable=False,
             class_name=class_name,
             custom_scalars=custom_scalars,
+            fragments_definitions=fragments_definitions,
         )
 
     raise ParsingError("Invalid field type.")
