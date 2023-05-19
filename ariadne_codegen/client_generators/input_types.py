@@ -114,6 +114,7 @@ class InputTypesGenerator:
                 convert_to_snake_case=self.convert_to_snake_case,
                 plugin_manager=self.plugin_manager,
                 node=field,
+                trim_leading_underscore=True,
             )
             annotation, field_type = parse_input_field_type(
                 field.type, custom_scalars=self.custom_scalars

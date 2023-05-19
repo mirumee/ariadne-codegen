@@ -10,12 +10,12 @@ class UnionC(BaseModel):
 
 
 class UnionCQueryUTypeA(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     id: str
 
 
 class UnionCQueryUTypeB(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     id: str
 
 

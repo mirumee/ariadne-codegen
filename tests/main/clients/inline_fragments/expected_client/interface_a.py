@@ -12,18 +12,18 @@ class InterfaceA(BaseModel):
 
 
 class InterfaceAQueryIInterface(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     id: str
 
 
 class InterfaceAQueryITypeA(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     id: str
     field_a: str = Field(alias="fieldA")
 
 
 class InterfaceAQueryITypeB(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     id: str
     field_b: str = Field(alias="fieldB")
 

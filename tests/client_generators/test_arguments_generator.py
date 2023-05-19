@@ -217,7 +217,10 @@ def test_generate_returns_arguments_and_dictionary_with_snake_case_names():
 
 def test_generate_returns_arguments_and_dictionary_with_valid_names():
     generator = ArgumentsGenerator(schema=GraphQLSchema(), convert_to_snake_case=True)
-    query = "query q($from: String!, $and: String!, $in: String!) {r}"
+    query = (
+        "query q($from: String!, $and: String!, $in: String!, "
+        "$_fieldA: String!, $_FieldB: String!) {r}"
+    )
     variable_definitions = _get_variable_definitions_from_query_str(query)
 
     arguments, arguments_dict = generator.generate(variable_definitions)
@@ -229,6 +232,8 @@ def test_generate_returns_arguments_and_dictionary_with_valid_names():
             ast.arg(arg="from_", annotation=ast.Name(id="str")),
             ast.arg(arg="and_", annotation=ast.Name(id="str")),
             ast.arg(arg="in_", annotation=ast.Name(id="str")),
+            ast.arg(arg="field_a", annotation=ast.Name(id="str")),
+            ast.arg(arg="_field_b", annotation=ast.Name(id="str")),
         ],
         kwonlyargs=[],
         kw_defaults=[],
@@ -239,8 +244,16 @@ def test_generate_returns_arguments_and_dictionary_with_valid_names():
             ast.Constant(value="from"),
             ast.Constant(value="and"),
             ast.Constant(value="in"),
+            ast.Constant(value="_fieldA"),
+            ast.Constant(value="_FieldB"),
         ],
-        values=[ast.Name(id="from_"), ast.Name(id="and_"), ast.Name(id="in_")],
+        values=[
+            ast.Name(id="from_"),
+            ast.Name(id="and_"),
+            ast.Name(id="in_"),
+            ast.Name(id="field_a"),
+            ast.Name(id="_field_b"),
+        ],
     )
 
     assert compare_ast(arguments, expected_arguments)

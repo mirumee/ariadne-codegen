@@ -29,7 +29,7 @@ def test_generate_returns_module_with_handled_typename_field():
     )
     expected_fields_implementations = [
         ast.AnnAssign(
-            target=ast.Name(id="__typename__"),
+            target=ast.Name(id="typename__"),
             annotation=ast.Name(id="str"),
             value=ast.Call(
                 func=ast.Name(id="Field"),
@@ -99,7 +99,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="__typename__"),
+                    target=ast.Name(id="typename__"),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
@@ -126,7 +126,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="__typename__"),
+                    target=ast.Name(id="typename__"),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
