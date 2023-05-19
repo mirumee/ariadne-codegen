@@ -14,18 +14,18 @@ class GetAnimalByName(BaseModel):
 
 
 class GetAnimalByNameAnimalByNameAnimal(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     name: str
 
 
 class GetAnimalByNameAnimalByNameCat(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     name: str
     kittens: int
 
 
 class GetAnimalByNameAnimalByNameDog(BaseModel):
-    __typename__: str = Field(alias="__typename")
+    typename__: str = Field(alias="__typename")
     name: str
     puppies: int
 
