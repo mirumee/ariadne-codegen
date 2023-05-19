@@ -6,7 +6,7 @@
 - Changed how fragments are handled to generate separate module with fragments as mixins.
 - Fixed `ResultTypesGenerator` to trigger `generate_result_class` for each result model.
 - Changed processing of models fields to trim leading underscores.
-- Added `ShorterResultsPlugin`. 
+- Added `ShorterResultsPlugin` to standard plugins.
 
 
 ## 0.6.0 (2023-04-18)
