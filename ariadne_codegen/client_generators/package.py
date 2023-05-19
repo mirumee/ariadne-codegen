@@ -162,7 +162,7 @@ class PackageGenerator:
         )
         self.scalars_definitions_file_name = "scalars"
 
-        self._fragments_used_as_mixins: Set[str] = set()
+        self._unpacked_fragments: Set[str] = set()
 
     def generate(self) -> List[str]:
         """Generate package with graphql client."""
@@ -206,8 +206,8 @@ class PackageGenerator:
             custom_scalars=self.custom_scalars,
             plugin_manager=self.plugin_manager,
         )
-        self._fragments_used_as_mixins = self._fragments_used_as_mixins.union(
-            query_types_generator.get_fragments_used_as_mixins()
+        self._unpacked_fragments = self._unpacked_fragments.union(
+            query_types_generator.get_unpacked_fragments()
         )
         self.result_types_files[file_name] = query_types_generator.generate()
         operation_str = query_types_generator.get_operation_as_str()
@@ -318,14 +318,16 @@ class PackageGenerator:
             self.generated_files.append(file_path.name)
 
     def _generate_fragments(self):
-        if not self._fragments_used_as_mixins:
+        if not set(self.fragments_definitions.keys()).difference(
+            self._unpacked_fragments
+        ):
             return
 
         generator = FragmentsGenerator(
             schema=self.schema,
             enums_module_name=self.enums_module_name,
-            fragments_names=self._fragments_used_as_mixins,
             fragments_definitions=self.fragments_definitions,
+            exclude_names=self._unpacked_fragments,
             base_model_import=self.base_model_import,
             convert_to_snake_case=self.convert_to_snake_case,
             custom_scalars=self.custom_scalars,

@@ -120,4 +120,3 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
     assert set(generator.get_generated_public_names()) == {
         c.name for c in expected_class_defs
     }
-    assert generator.get_fragments_used_as_mixins() == {"TestNestedFragment"}

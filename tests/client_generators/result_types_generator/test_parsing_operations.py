@@ -547,7 +547,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
 
     class_defs = filter_class_defs(module)
     assert compare_ast(class_defs, expected_class_defs)
-    assert not generator.get_fragments_used_as_mixins()
+    assert generator.get_unpacked_fragments() == {"InterfaceIFragment"}
 
 
 def test_generate_returns_module_with_class_for_every_appearance_of_type():

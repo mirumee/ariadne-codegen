@@ -15,8 +15,8 @@ class FragmentsGenerator:
         self,
         schema: GraphQLSchema,
         enums_module_name: str,
-        fragments_names: Set[str],
         fragments_definitions: Dict[str, FragmentDefinitionNode],
+        exclude_names: Optional[Set[str]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
@@ -24,13 +24,16 @@ class FragmentsGenerator:
     ) -> None:
         self.schema = schema
         self.enums_module_name = enums_module_name
-        self.fragments_names = fragments_names
+        self.exclude_names = exclude_names or set()
         self.fragments_definitions = fragments_definitions
         self.base_model_import = base_model_import
         self.convert_to_snake_case = convert_to_snake_case
         self.custom_scalars = custom_scalars
         self.plugin_manager = plugin_manager
 
+        self._fragments_names = (
+            set(self.fragments_definitions.keys()) - self.exclude_names
+        )
         self._generated_public_names: List[str] = []
 
     def generate(self) -> ast.Module:
@@ -38,7 +41,7 @@ class FragmentsGenerator:
         imports: List[ast.ImportFrom] = []
         dependencies_dict: Dict[str, Set[str]] = {}
 
-        for name in self.fragments_names:
+        for name in self._fragments_names:
             fragmanet_def = self.fragments_definitions[name]
             generator = ResultTypesGenerator(
                 schema=self.schema,
@@ -85,7 +88,7 @@ class FragmentsGenerator:
         sorted_class_defs: List[ast.ClassDef] = []
 
         for name in self._get_sorted_fragments_names(
-            fragments_names=self.fragments_names, dependencies_dict=dependencies_dict
+            fragments_names=self._fragments_names, dependencies_dict=dependencies_dict
         ):
             sorted_class_defs.extend(class_defs_dict[name])
 
@@ -101,7 +104,7 @@ class FragmentsGenerator:
             if name in visited:
                 return
             visited.add(name)
-            for dep in dependencies_dict.get(name, set()):
+            for dep in dependencies_dict[name]:
                 visit(dep)
             sorted_names.append(name)
 

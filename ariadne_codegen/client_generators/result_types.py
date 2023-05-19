@@ -173,6 +173,9 @@ class ResultTypesGenerator:
     def get_generated_public_names(self) -> List[str]:
         return self._public_names
 
+    def get_unpacked_fragments(self) -> Set[str]:
+        return self._upacked_fragments
+
     def get_fragments_used_as_mixins(self) -> Set[str]:
         return self._fragments_used_as_mixins
 
