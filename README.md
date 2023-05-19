@@ -116,7 +116,7 @@ For more complex scenarios, you can pass your own http client:
 client = Client(http_client=CustomComplexHttpClient())
 ```
 
-`CustomComplexHttpClient` needs to be instance of `httpx.AsyncClient` for async client, or `httpx.Client` for sync.
+`CustomComplexHttpClient` needs to be an instance of `httpx.AsyncClient` for async client, or `httpx.Client` for sync.
 
 
 ### Websockets
