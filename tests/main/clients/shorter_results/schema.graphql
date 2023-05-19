@@ -1,0 +1,39 @@
+type TypeA {
+  id: Int!
+}
+
+type User {
+    id: ID!
+    username: String!
+}
+
+interface Animal {
+  name: String!
+}
+
+type Cat implements Animal {
+  name: String!
+  kittens: Int!
+}
+
+type Dog implements Animal {
+  name: String!
+  puppies: Int!
+}
+
+type Query {
+  optionalListOptionalString: [String]
+  optionalListString: [String!]
+  listOptionalString: [String]!
+  listString: [String!]!
+
+  listOptionalTypeA: [TypeA]!
+
+  me: User!
+
+  animalByName(name: String!): Animal!
+}
+
+type Subscription {
+  optionalListString: [String!]
+}

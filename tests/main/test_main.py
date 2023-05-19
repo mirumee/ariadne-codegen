@@ -141,6 +141,17 @@ def test_main_shows_version():
             "multiple_fragments_client",
             CLIENTS_PATH / "multiple_fragments" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "shorter_results" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "shorter_results" / "queries.graphql",
+                    CLIENTS_PATH / "shorter_results" / "schema.graphql",
+                ),
+            ),
+            "shorter_results",
+            CLIENTS_PATH / "shorter_results" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )

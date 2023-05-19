@@ -1,0 +1,57 @@
+query GetAuthenticatedUser {
+  me {
+    id
+    username
+  }
+}
+
+query ListStrings_1 {
+  optionalListOptionalString
+}
+
+query ListStrings_2 {
+  optionalListString
+}
+
+query ListStrings_3 {
+  listOptionalString
+}
+
+query ListStrings_4 {
+  listString
+}
+
+query ListTypeA {
+  listOptionalTypeA {
+    id
+  }
+}
+
+query GetAnimalByName {
+  animalByName {
+    name
+    ... on Cat {
+      kittens
+    }
+    ... on Dog {
+      puppies
+    }
+  }
+}
+
+query GetAnimalFragment {
+  ...AnimalFragment
+}
+
+query GetAnimalFragmentWithExtra {
+  ...AnimalFragment
+  listString
+}
+
+fragment AnimalFragment on Animal {
+  name
+}
+
+subscription SubscribeStrings {
+  optionalListString
+}
