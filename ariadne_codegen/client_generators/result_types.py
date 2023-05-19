@@ -94,7 +94,7 @@ class ResultTypesGenerator:
         self._used_enums: List[str] = []
         self._used_scalars: List[str] = []
         self._fragments_used_as_mixins: Set[str] = set()
-        self._upacked_fragments: Set[str] = set()
+        self._unpacked_fragments: Set[str] = set()
 
         self._class_defs = self._parse_type_definition(
             class_name=str_to_pascal_case(self._operation_name),
@@ -158,7 +158,7 @@ class ResultTypesGenerator:
 
     def get_operation_as_str(self) -> str:
         operation_str = print_ast(self.operation_definition)
-        if self._fragments_used_as_mixins or self._upacked_fragments:
+        if self._fragments_used_as_mixins or self._unpacked_fragments:
             for used_fragment in sorted(self._get_all_related_fragments()):
                 operation_str += "\n\n" + print_ast(
                     self.fragments_definitions[used_fragment]
@@ -174,7 +174,7 @@ class ResultTypesGenerator:
         return self._public_names
 
     def get_unpacked_fragments(self) -> Set[str]:
-        return self._upacked_fragments
+        return self._unpacked_fragments
 
     def get_fragments_used_as_mixins(self) -> Set[str]:
         return self._fragments_used_as_mixins
@@ -279,7 +279,7 @@ class ResultTypesGenerator:
                 if not self._unpack_fragment(fragment_def):
                     fragments.add(selection.name.value)
                 else:
-                    self._upacked_fragments.add(selection.name.value)
+                    self._unpacked_fragments.add(selection.name.value)
                     sub_fields, sub_fragments = self._resolve_selection_set(
                         fragment_def.selection_set, root_type
                     )
@@ -446,7 +446,7 @@ class ResultTypesGenerator:
             fragments_names = fragments_names.union(
                 self._get_fragments_names(fragment_def.selection_set)
             )
-        return fragments_names.union(self._upacked_fragments)
+        return fragments_names.union(self._unpacked_fragments)
 
     def _get_fragments_names(self, selection_set: SelectionSetNode) -> Set[str]:
         names: Set[str] = set()
