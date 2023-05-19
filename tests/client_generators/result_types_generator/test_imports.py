@@ -75,6 +75,11 @@ def test_generate_returns_module_with_used_fragment_import():
         operation_definition=operation_definition,
         enums_module_name="enums",
         fragments_module_name="fragments",
+        fragments_definitions={
+            "TestFragment": parse(
+                "fragment TestFragment on CustomType { id }"
+            ).definitions[0]
+        },
     )
 
     module = generator.generate()

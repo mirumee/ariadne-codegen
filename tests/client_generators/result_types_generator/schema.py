@@ -13,6 +13,7 @@ type Query {
   query3: CustomType3!
   query4: UnionType!
   camelCaseQuery: CustomType!
+  interfaceQuery: InterfaceI!
 }
 
 type Mutation {
@@ -24,13 +25,13 @@ type Subscription {
 }
 
 type CustomType {
-    id: ID!
-    field1: CustomType1!
-    field2: CustomType2
-    field3: CustomEnum!
-    _field4: String!
-    _Field5: String!
-    scalarField: SCALARA
+  id: ID!
+  field1: CustomType1!
+  field2: CustomType2
+  field3: CustomEnum!
+  _field4: String!
+  _Field5: String!
+  scalarField: SCALARA
 }
 
 type CustomType1 {
@@ -38,12 +39,12 @@ type CustomType1 {
 }
 
 type CustomType2 {
-    fieldb: Int
+  fieldb: Int
 }
 
 type CustomType3 {
-    field1: CustomType1!
-    field2: CustomType1!
+  field1: CustomType1!
+  field2: CustomType1!
 }
 
 enum CustomEnum {
@@ -54,4 +55,23 @@ enum CustomEnum {
 union UnionType = CustomType1 | CustomType2
 
 scalar SCALARA
+
+interface InterfaceI {
+  id: ID!
+}
+
+type TypeA implements InterfaceI {
+  id: ID!
+  fieldA: String!
+}
+
+type TypeB implements InterfaceI {
+  id: ID!
+  fieldB: Float!
+}
+
+type TypeC implements InterfaceI {
+  id: ID!
+  fieldC: Int!
+}
 """

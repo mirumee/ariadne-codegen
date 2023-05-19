@@ -51,3 +51,67 @@ query UnionC {
     id
   }
 }
+
+query queryWithFragmentOnInterface {
+  queryI {
+    ...fragmentOnInterface
+  }
+}
+
+fragment fragmentOnInterface on Interface {
+  id
+  ... on TypeA {
+    fieldA
+  }
+  ... on TypeB {
+    fieldB
+  }
+}
+
+query queryWithFragmentOnUnion {
+  queryU {
+    ...fragmentOnUnion
+  }
+}
+
+fragment fragmentOnUnion on Union {
+  id
+  ... on TypeA {
+    fieldA
+  }
+  ... on TypeB {
+    fieldB
+  }
+}
+
+query queryWithFragmentOnQueryWithInterface {
+  ...FragmentOnQueryWithInterface
+}
+
+fragment FragmentOnQueryWithInterface on Query {
+  queryI {
+    id
+    ... on TypeA {
+      fieldA
+    }
+    ... on TypeB {
+      fieldB
+    }
+  }
+}
+
+query queryWithFragmentOnQueryWithUnion {
+  ...FragmentOnQueryWithUnion
+}
+
+fragment FragmentOnQueryWithUnion on Query {
+  queryU {
+    id
+    ... on TypeA {
+      fieldA
+    }
+    ... on TypeB {
+      fieldB
+    }
+  }
+}

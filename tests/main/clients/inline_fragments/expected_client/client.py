@@ -2,6 +2,12 @@ from .async_base_client import AsyncBaseClient
 from .interface_a import InterfaceA
 from .interface_b import InterfaceB
 from .interface_c import InterfaceC
+from .query_with_fragment_on_interface import QueryWithFragmentOnInterface
+from .query_with_fragment_on_query_with_interface import (
+    QueryWithFragmentOnQueryWithInterface,
+)
+from .query_with_fragment_on_query_with_union import QueryWithFragmentOnQueryWithUnion
+from .query_with_fragment_on_union import QueryWithFragmentOnUnion
 from .union_a import UnionA
 from .union_b import UnionB
 from .union_c import UnionC
@@ -124,3 +130,109 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return UnionC.parse_obj(data)
+
+    async def query_with_fragment_on_interface(self) -> QueryWithFragmentOnInterface:
+        query = gql(
+            """
+            query queryWithFragmentOnInterface {
+              queryI {
+                __typename
+                ...fragmentOnInterface
+              }
+            }
+
+            fragment fragmentOnInterface on Interface {
+              id
+              ... on TypeA {
+                fieldA
+              }
+              ... on TypeB {
+                fieldB
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return QueryWithFragmentOnInterface.parse_obj(data)
+
+    async def query_with_fragment_on_union(self) -> QueryWithFragmentOnUnion:
+        query = gql(
+            """
+            query queryWithFragmentOnUnion {
+              queryU {
+                __typename
+                ...fragmentOnUnion
+              }
+            }
+
+            fragment fragmentOnUnion on Union {
+              id
+              ... on TypeA {
+                fieldA
+              }
+              ... on TypeB {
+                fieldB
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return QueryWithFragmentOnUnion.parse_obj(data)
+
+    async def query_with_fragment_on_query_with_interface(
+        self,
+    ) -> QueryWithFragmentOnQueryWithInterface:
+        query = gql(
+            """
+            query queryWithFragmentOnQueryWithInterface {
+              ...FragmentOnQueryWithInterface
+            }
+
+            fragment FragmentOnQueryWithInterface on Query {
+              queryI {
+                id
+                ... on TypeA {
+                  fieldA
+                }
+                ... on TypeB {
+                  fieldB
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return QueryWithFragmentOnQueryWithInterface.parse_obj(data)
+
+    async def query_with_fragment_on_query_with_union(
+        self,
+    ) -> QueryWithFragmentOnQueryWithUnion:
+        query = gql(
+            """
+            query queryWithFragmentOnQueryWithUnion {
+              ...FragmentOnQueryWithUnion
+            }
+
+            fragment FragmentOnQueryWithUnion on Query {
+              queryU {
+                id
+                ... on TypeA {
+                  fieldA
+                }
+                ... on TypeB {
+                  fieldB
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return QueryWithFragmentOnQueryWithUnion.parse_obj(data)

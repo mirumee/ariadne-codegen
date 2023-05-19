@@ -5,6 +5,8 @@ import pytest
 from graphql import (
     DirectiveNode,
     FieldNode,
+    FragmentDefinitionNode,
+    FragmentSpreadNode,
     GraphQLEnumType,
     GraphQLEnumValueMap,
     GraphQLInterfaceType,
@@ -227,6 +229,55 @@ def test_parse_operation_field_type_returns_union_for_interface_with_inline_frag
         ),
         type_=GraphQLInterfaceType("TestInterface", fields={}),
         class_name="TestClassName",
+    )
+
+    assert compare_ast(annotation, expected_annotation)
+    assert names == expected_names
+
+
+def test_parse_operation_field_type_returns_union_inline_fragments_in_fragment():
+    expected_annotation = ast.Subscript(
+        value=ast.Name(id=OPTIONAL),
+        slice=ast.Subscript(
+            value=ast.Name(id=UNION),
+            slice=ast.Tuple(
+                elts=[
+                    ast.Name(id='"TestClassNameTestInterface"'),
+                    ast.Name(id='"TestClassNameTypeA"'),
+                    ast.Name(id='"TestClassNameTypeB"'),
+                ]
+            ),
+        ),
+    )
+    expected_names = [
+        FieldNames(class_name="TestClassNameTestInterface", type_name="TestInterface"),
+        FieldNames(class_name="TestClassNameTypeA", type_name="TypeA"),
+        FieldNames(class_name="TestClassNameTypeB", type_name="TypeB"),
+    ]
+    fragment_def = FragmentDefinitionNode(
+        name=NameNode(value="TestFragment"),
+        selection_set=SelectionSetNode(
+            selections=(
+                FieldNode(),
+                InlineFragmentNode(
+                    type_condition=NamedTypeNode(name=NameNode(value="TypeA"))
+                ),
+                InlineFragmentNode(
+                    type_condition=NamedTypeNode(name=NameNode(value="TypeB"))
+                ),
+            )
+        ),
+    )
+
+    annotation, names = parse_operation_field_type(
+        field=FieldNode(
+            selection_set=SelectionSetNode(
+                selections=(FragmentSpreadNode(name=NameNode(value="TestFragment")),)
+            )
+        ),
+        type_=GraphQLInterfaceType("TestInterface", fields={}),
+        class_name="TestClassName",
+        fragments_definitions={"TestFragment": fragment_def},
     )
 
     assert compare_ast(annotation, expected_annotation)

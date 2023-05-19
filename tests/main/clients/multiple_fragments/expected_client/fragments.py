@@ -3,17 +3,15 @@ from pydantic import Field
 from .base_model import BaseModel
 
 
-class MinimalB(BaseModel):
+class CompleteA(BaseModel):
     id: str
+    value: str
+    field_b: "CompleteAFieldB" = Field(alias="fieldB")
 
 
-class MinimalA(BaseModel):
+class CompleteAFieldB(BaseModel):
     id: str
-    field_b: "MinimalAFieldB" = Field(alias="fieldB")
-
-
-class MinimalAFieldB(MinimalB):
-    pass
+    value: float
 
 
 class FullB(BaseModel):
@@ -31,22 +29,24 @@ class FullAFieldB(FullB):
     pass
 
 
-class CompleteA(BaseModel):
+class MinimalB(BaseModel):
     id: str
-    value: str
-    field_b: "CompleteAFieldB" = Field(alias="fieldB")
 
 
-class CompleteAFieldB(BaseModel):
+class MinimalA(BaseModel):
     id: str
-    value: float
+    field_b: "MinimalAFieldB" = Field(alias="fieldB")
 
 
-MinimalB.update_forward_refs()
-MinimalA.update_forward_refs()
-MinimalAFieldB.update_forward_refs()
+class MinimalAFieldB(MinimalB):
+    pass
+
+
+CompleteA.update_forward_refs()
+CompleteAFieldB.update_forward_refs()
 FullB.update_forward_refs()
 FullA.update_forward_refs()
 FullAFieldB.update_forward_refs()
-CompleteA.update_forward_refs()
-CompleteAFieldB.update_forward_refs()
+MinimalB.update_forward_refs()
+MinimalA.update_forward_refs()
+MinimalAFieldB.update_forward_refs()

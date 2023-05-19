@@ -127,6 +127,27 @@ def test_generate_returns_module_with_correct_order_of_classes(
     assert [c.name for c in generated_class_defs] == ["FragmentA", "TestFragment"]
 
 
+def test_generate_returns_module_without_models_for_excluded_fragments(
+    schema, fragment_a, fragment_b, test_fragment
+):
+    generator = FragmentsGenerator(
+        schema=schema,
+        enums_module_name="enums",
+        fragments_definitions={
+            "TestFragment": test_fragment,
+            "FragmentA": fragment_a,
+            "FragmentB": fragment_b,
+        },
+        exclude_names={"TestFragment", "FragmentB"},
+        convert_to_snake_case=True,
+    )
+
+    module = generator.generate()
+
+    generated_class_defs = filter_class_defs(module)
+    assert [c.name for c in generated_class_defs] == ["FragmentA"]
+
+
 def test_generate_returns_module_with_update_refs_calls(
     schema, fragment_a, test_fragment
 ):

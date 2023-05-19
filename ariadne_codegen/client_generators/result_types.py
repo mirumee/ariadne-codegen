@@ -93,7 +93,8 @@ class ResultTypesGenerator:
         self._public_names: List[str] = []
         self._used_enums: List[str] = []
         self._used_scalars: List[str] = []
-        self._used_fragments_names: set[str] = set()
+        self._fragments_used_as_mixins: Set[str] = set()
+        self._unpacked_fragments: Set[str] = set()
 
         self._class_defs = self._parse_type_definition(
             class_name=str_to_pascal_case(self._operation_name),
@@ -157,7 +158,7 @@ class ResultTypesGenerator:
 
     def get_operation_as_str(self) -> str:
         operation_str = print_ast(self.operation_definition)
-        if self._used_fragments_names:
+        if self._fragments_used_as_mixins or self._unpacked_fragments:
             for used_fragment in sorted(self._get_all_related_fragments()):
                 operation_str += "\n\n" + print_ast(
                     self.fragments_definitions[used_fragment]
@@ -172,8 +173,11 @@ class ResultTypesGenerator:
     def get_generated_public_names(self) -> List[str]:
         return self._public_names
 
-    def get_used_fragments(self) -> List[str]:
-        return list(self._used_fragments_names)
+    def get_unpacked_fragments(self) -> Set[str]:
+        return self._unpacked_fragments
+
+    def get_fragments_used_as_mixins(self) -> Set[str]:
+        return self._fragments_used_as_mixins
 
     def _parse_type_definition(
         self,
@@ -220,6 +224,7 @@ class ResultTypesGenerator:
                 directives=field.directives,
                 class_name=class_name + str_to_pascal_case(name),
                 custom_scalars=self.custom_scalars,
+                fragments_definitions=self.fragments_definitions,
             )
 
             field_implementation = generate_ann_assign(
@@ -270,7 +275,16 @@ class ResultTypesGenerator:
             if isinstance(selection, FieldNode):
                 fields.append(selection)
             elif isinstance(selection, FragmentSpreadNode):
-                fragments.add(selection.name.value)
+                fragment_def = self.fragments_definitions[selection.name.value]
+                if not self._unpack_fragment(fragment_def):
+                    fragments.add(selection.name.value)
+                else:
+                    self._unpacked_fragments.add(selection.name.value)
+                    sub_fields, sub_fragments = self._resolve_selection_set(
+                        fragment_def.selection_set, root_type
+                    )
+                    fields.extend(sub_fields)
+                    fragments = fragments.union(sub_fragments)
             elif isinstance(selection, InlineFragmentNode):
                 if selection.type_condition.name.value == root_type:
                     sub_fields, sub_fragments = self._resolve_selection_set(
@@ -278,8 +292,16 @@ class ResultTypesGenerator:
                     )
                     fields.extend(sub_fields)
                     fragments = fragments.union(sub_fragments)
-        self._used_fragments_names = self._used_fragments_names.union(set(fragments))
+        self._fragments_used_as_mixins = self._fragments_used_as_mixins.union(
+            set(fragments)
+        )
         return fields, fragments
+
+    def _unpack_fragment(self, fragment_def: FragmentDefinitionNode) -> bool:
+        for fragment_selection in fragment_def.selection_set.selections:
+            if isinstance(fragment_selection, InlineFragmentNode):
+                return True
+        return False
 
     def _add_typename_field_to_selections(
         self, resolved_fields: List[FieldNode], selection_set: SelectionSetNode
@@ -406,25 +428,25 @@ class ResultTypesGenerator:
 
         if (
             isinstance(self.operation_definition, OperationDefinitionNode)
-            and self._used_fragments_names
+            and self._fragments_used_as_mixins
             and self.fragments_module_name
         ):
             self._imports.append(
                 generate_import_from(
-                    [str_to_pascal_case(f) for f in self._used_fragments_names],
+                    [str_to_pascal_case(f) for f in self._fragments_used_as_mixins],
                     self.fragments_module_name,
                     1,
                 )
             )
 
     def _get_all_related_fragments(self) -> Set[str]:
-        fragments_names: Set[str] = self._used_fragments_names.copy()
-        for fragment_name in self._used_fragments_names:
+        fragments_names: Set[str] = self._fragments_used_as_mixins.copy()
+        for fragment_name in self._fragments_used_as_mixins:
             fragment_def = self.fragments_definitions[fragment_name]
             fragments_names = fragments_names.union(
                 self._get_fragments_names(fragment_def.selection_set)
             )
-        return fragments_names
+        return fragments_names.union(self._unpacked_fragments)
 
     def _get_fragments_names(self, selection_set: SelectionSetNode) -> Set[str]:
         names: Set[str] = set()
