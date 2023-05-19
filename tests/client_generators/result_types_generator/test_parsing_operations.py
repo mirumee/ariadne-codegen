@@ -429,7 +429,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="__typename__"),
+                    target=ast.Name(id="typename__"),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
@@ -457,7 +457,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="__typename__"),
+                    target=ast.Name(id="typename__"),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
@@ -497,7 +497,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="__typename__"),
+                    target=ast.Name(id="typename__"),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
