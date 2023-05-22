@@ -1,1 +1,1 @@
-MyScalar = dict
+MyScalar = str
