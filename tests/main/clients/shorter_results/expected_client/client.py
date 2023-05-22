@@ -1,7 +1,7 @@
 from typing import AsyncIterator, List, Optional, Union
 
 from .async_base_client import AsyncBaseClient
-from .custom.scalars import MyScalar
+from .custom_scalars import MyScalar
 from .get_a_scalar import GetAScalar
 from .get_animal_by_name import (
     GetAnimalByName,

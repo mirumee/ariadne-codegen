@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from .base_model import BaseModel
-from .custom.scalars import MyScalar
+from .custom_scalars import MyScalar
 
 
 class GetAScalar(BaseModel):

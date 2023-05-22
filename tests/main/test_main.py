@@ -147,6 +147,7 @@ def test_main_shows_version():
                 (
                     CLIENTS_PATH / "shorter_results" / "queries.graphql",
                     CLIENTS_PATH / "shorter_results" / "schema.graphql",
+                    CLIENTS_PATH / "shorter_results" / "custom_scalars.py",
                 ),
             ),
             "shorter_results",
