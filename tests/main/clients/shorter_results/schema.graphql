@@ -1,3 +1,5 @@
+scalar MyScalar
+
 type TypeA {
   id: Int!
 }
@@ -32,6 +34,8 @@ type Query {
   me: User!
 
   animalByName(name: String!): Animal!
+
+  justAScalar: MyScalar!
 }
 
 type Subscription {
