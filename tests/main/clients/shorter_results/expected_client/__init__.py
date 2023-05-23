@@ -9,6 +9,7 @@ from .exceptions import (
     GraphQlClientInvalidResponseError,
 )
 from .fragments import AnimalFragment
+from .get_a_scalar import GetAScalar
 from .get_animal_by_name import (
     GetAnimalByName,
     GetAnimalByNameAnimalByNameAnimal,
@@ -30,6 +31,7 @@ __all__ = [
     "AsyncBaseClient",
     "BaseModel",
     "Client",
+    "GetAScalar",
     "GetAnimalByName",
     "GetAnimalByNameAnimalByNameAnimal",
     "GetAnimalByNameAnimalByNameCat",

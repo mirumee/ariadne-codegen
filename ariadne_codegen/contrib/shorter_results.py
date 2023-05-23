@@ -44,6 +44,7 @@ from ..codegen import (
     generate_async_for,
     generate_attribute,
     generate_expr,
+    generate_import_from,
     generate_name,
     generate_return,
     generate_subscript,
@@ -63,8 +64,27 @@ class ShorterResultsPlugin(Plugin):
     def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
         self.class_dict: Dict[str, ast.ClassDef] = {}
         self.extended_imports: Dict[str, set] = {}
+        self.imported_types: Dict[str, str] = {}
 
         super().__init__(schema, config_dict)
+
+    def generate_result_types_module(
+        self, module: ast.Module, operation_definition: ExecutableDefinitionNode
+    ) -> ast.Module:
+        for stmt in module.body:
+            if not isinstance(stmt, ast.ImportFrom):
+                continue
+
+            if stmt.module is None:
+                continue
+
+            for name in stmt.names:
+                if name.asname is not None:
+                    self.imported_types[name.asname] = stmt.module
+                else:
+                    self.imported_types[name.name] = stmt.module
+
+        return super().generate_result_types_module(module, operation_definition)
 
     def generate_result_class(
         self,
@@ -123,6 +143,22 @@ class ShorterResultsPlugin(Plugin):
             # method.
             for additional_import in self.extended_imports[stmt.module]:
                 stmt.names.append(ast.alias(name=additional_import))
+
+            # We delete the key if it already had an import from statement so we
+            # can create new imports for types not yet imported such as custom
+            # scalars.
+            self.extended_imports.pop(stmt.module, None)
+
+        for import_from, alias in self.extended_imports.items():
+            # We insert the import at the top, it will be sorted properly in a
+            # post-process step that will order the imports.
+            module.body.insert(
+                0,
+                generate_import_from(
+                    names=list(alias),
+                    from_=import_from,
+                ),
+            )
 
         return super().generate_client_module(module)
 
@@ -239,15 +275,21 @@ class ShorterResultsPlugin(Plugin):
         file defining the method.
         """
         for single_field_class in single_field_classes:
-            if single_field_class not in self.class_dict:
+            # The unwrapped field might be a custom scalar, if it is ensure we
+            # add it to imports.
+            if single_field_class in self.imported_types:
+                import_from = self.imported_types[single_field_class]
+            elif single_field_class in self.class_dict:
+                import_from = method_def.name
+            else:
                 continue
 
             # After we change the type we also need to import it in the client if
             # it's one of our generated types so add the extra import as needed.
-            if method_def.name not in self.extended_imports:
-                self.extended_imports[method_def.name] = set()
+            if import_from not in self.extended_imports:
+                self.extended_imports[import_from] = set()
 
-            self.extended_imports[method_def.name].add(single_field_class)
+            self.extended_imports[import_from].add(single_field_class)
 
 
 def _get_yield_value_from_async_for(stmt: ast.stmt) -> Optional[ast.expr]:

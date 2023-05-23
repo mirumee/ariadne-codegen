@@ -1,0 +1,1 @@
+MyScalar = str

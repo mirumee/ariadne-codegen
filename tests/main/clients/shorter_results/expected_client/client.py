@@ -1,6 +1,8 @@
 from typing import AsyncIterator, List, Optional, Union
 
 from .async_base_client import AsyncBaseClient
+from .custom_scalars import MyScalar
+from .get_a_scalar import GetAScalar
 from .get_animal_by_name import (
     GetAnimalByName,
     GetAnimalByNameAnimalByNameAnimal,
@@ -168,6 +170,19 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.parse_obj(data)
+
+    async def get_a_scalar(self) -> MyScalar:
+        query = gql(
+            """
+            query GetAScalar {
+              justAScalar
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetAScalar.parse_obj(data).just_a_scalar
 
     async def subscribe_strings(self) -> AsyncIterator[Optional[List[str]]]:
         query = gql(

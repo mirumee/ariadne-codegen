@@ -3,4 +3,8 @@ schema_path = "schema.graphql"
 queries_path = "queries.graphql"
 include_comments = false
 target_package_name = "shorter_results"
+files_to_include = ["custom_scalars.py"]
 plugins = ["ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin"]
+
+[tool.ariadne-codegen.scalars.MyScalar]
+type = ".custom_scalars.MyScalar"
