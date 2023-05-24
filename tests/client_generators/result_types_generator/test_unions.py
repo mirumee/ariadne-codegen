@@ -3,6 +3,7 @@ from typing import cast
 
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
+from ariadne_codegen.client_generators.constants import TYPENAME_ALIAS, TYPENAME_FIELD_NAME
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
 
 from ...utils import compare_ast, filter_class_defs, format_graphql_str
@@ -29,13 +30,13 @@ def test_generate_returns_module_with_handled_typename_field():
     )
     expected_fields_implementations = [
         ast.AnnAssign(
-            target=ast.Name(id="typename__"),
+            target=ast.Name(id=TYPENAME_ALIAS),
             annotation=ast.Name(id="str"),
             value=ast.Call(
                 func=ast.Name(id="Field"),
                 args=[],
                 keywords=[
-                    ast.keyword(arg="alias", value=ast.Constant(value="__typename"))
+                    ast.keyword(arg="alias", value=ast.Constant(value=TYPENAME_FIELD_NAME))
                 ],
             ),
             simple=1,
@@ -99,14 +100,14 @@ def test_generate_returns_module_with_classes_for_union_fields():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias", value=ast.Constant(value="__typename")
+                                arg="alias", value=ast.Constant(value=TYPENAME_FIELD_NAME)
                             )
                         ],
                     ),
@@ -126,14 +127,14 @@ def test_generate_returns_module_with_classes_for_union_fields():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias", value=ast.Constant(value="__typename")
+                                arg="alias", value=ast.Constant(value=TYPENAME_FIELD_NAME)
                             )
                         ],
                     ),

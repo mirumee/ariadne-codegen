@@ -23,6 +23,7 @@ COMMENT_DATETIME_FORMAT = "%Y-%m-%d %H:%M"
 BASE_MODEL_CLASS_NAME = "BaseModel"
 
 TYPENAME_FIELD_NAME = "__typename"
+TYPENAME_ALIAS = "typename__"
 
 TYPING_MODULE = "typing"
 PYDANTIC_MODULE = "pydantic"

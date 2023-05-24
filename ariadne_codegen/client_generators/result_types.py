@@ -46,6 +46,7 @@ from .constants import (
     MIXIN_NAME,
     OPTIONAL,
     PYDANTIC_MODULE,
+    TYPENAME_ALIAS,
     TYPENAME_FIELD_NAME,
     TYPING_MODULE,
     UNION,
@@ -321,8 +322,8 @@ class ResultTypesGenerator:
         return field.name.value
 
     def _process_field_name(self, name: str, field: FieldNode) -> str:
-        if self.convert_to_snake_case and name == TYPENAME_FIELD_NAME:
-            return "typename__"
+        if name == TYPENAME_FIELD_NAME:
+            return TYPENAME_ALIAS
         return process_name(
             name,
             convert_to_snake_case=self.convert_to_snake_case,

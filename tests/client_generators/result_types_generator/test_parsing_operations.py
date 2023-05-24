@@ -8,6 +8,8 @@ from ariadne_codegen.client_generators.constants import (
     BASE_MODEL_CLASS_NAME,
     LIST,
     OPTIONAL,
+    TYPENAME_ALIAS,
+    TYPENAME_FIELD_NAME,
     UNION,
 )
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
@@ -429,7 +431,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
@@ -437,7 +439,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                         keywords=[
                             ast.keyword(
                                 arg="alias",
-                                value=ast.Constant(value="__typename"),
+                                value=ast.Constant(value=TYPENAME_FIELD_NAME),
                             )
                         ],
                     ),
@@ -457,7 +459,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
@@ -465,7 +467,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                         keywords=[
                             ast.keyword(
                                 arg="alias",
-                                value=ast.Constant(value="__typename"),
+                                value=ast.Constant(value=TYPENAME_FIELD_NAME),
                             )
                         ],
                     ),
@@ -497,7 +499,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
                     annotation=ast.Name(id="str"),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
@@ -505,7 +507,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                         keywords=[
                             ast.keyword(
                                 arg="alias",
-                                value=ast.Constant(value="__typename"),
+                                value=ast.Constant(value=TYPENAME_FIELD_NAME),
                             )
                         ],
                     ),
