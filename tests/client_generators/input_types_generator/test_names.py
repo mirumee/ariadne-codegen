@@ -4,6 +4,7 @@ import pytest
 from graphql import build_ast_schema, parse
 
 from ariadne_codegen.client_generators.constants import (
+    ALIAS_KEYWORD,
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
 )
@@ -37,7 +38,8 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                             args=[],
                             keywords=[
                                 ast.keyword(
-                                    arg="alias", value=ast.Constant(value="inputField1")
+                                    arg=ALIAS_KEYWORD,
+                                    value=ast.Constant(value="inputField1"),
                                 )
                             ],
                         ),
@@ -77,7 +79,8 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                             args=[],
                             keywords=[
                                 ast.keyword(
-                                    arg="alias", value=ast.Constant(value="inputField1")
+                                    arg=ALIAS_KEYWORD,
+                                    value=ast.Constant(value="inputField1"),
                                 ),
                                 ast.keyword(
                                     arg="default", value=ast.Constant(value="abcd")
@@ -96,7 +99,8 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                             args=[],
                             keywords=[
                                 ast.keyword(
-                                    arg="alias", value=ast.Constant(value="inputField2")
+                                    arg=ALIAS_KEYWORD,
+                                    value=ast.Constant(value="inputField2"),
                                 ),
                                 ast.keyword(
                                     arg="default_factory",

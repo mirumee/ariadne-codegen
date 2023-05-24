@@ -26,17 +26,19 @@ from graphql import (
 from ..codegen import (
     generate_ann_assign,
     generate_class_def,
+    generate_constant,
     generate_expr,
-    generate_field_with_alias,
     generate_import_from,
     generate_method_call,
     generate_module,
     generate_pass,
+    generate_pydantic_field,
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
 from ..utils import process_name, str_to_pascal_case
 from .constants import (
+    ALIAS_KEYWORD,
     ANY,
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
@@ -234,7 +236,9 @@ class ResultTypesGenerator:
                 lineno=lineno,
             )
             if name != field_name:
-                field_implementation.value = generate_field_with_alias(field_name)
+                field_implementation.value = generate_pydantic_field(
+                    {ALIAS_KEYWORD: generate_constant(field_name)}
+                )
 
             if self.plugin_manager:
                 field_implementation = self.plugin_manager.generate_result_field(

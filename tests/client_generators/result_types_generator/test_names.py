@@ -4,6 +4,7 @@ from typing import cast
 import pytest
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
+from ariadne_codegen.client_generators.constants import ALIAS_KEYWORD
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
 from ariadne_codegen.utils import ast_to_str
 
@@ -26,7 +27,9 @@ def test_generate_returns_module_with_query_names_converted_to_snake_case():
             func=ast.Name(id="Field"),
             args=[],
             keywords=[
-                ast.keyword(arg="alias", value=ast.Constant(value="camelCaseQuery"))
+                ast.keyword(
+                    arg=ALIAS_KEYWORD, value=ast.Constant(value="camelCaseQuery")
+                )
             ],
         ),
         simple=1,
@@ -70,7 +73,7 @@ def test_generate_returns_module_with_query_names_converted_to_snake_case():
                     args=[],
                     keywords=[
                         ast.keyword(
-                            arg="alias", value=ast.Constant(value="aliasedName")
+                            arg=ALIAS_KEYWORD, value=ast.Constant(value="aliasedName")
                         )
                     ],
                 ),

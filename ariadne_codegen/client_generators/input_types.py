@@ -12,16 +12,18 @@ from graphql import (
 from ..codegen import (
     generate_ann_assign,
     generate_class_def,
+    generate_constant,
     generate_expr,
-    generate_field_with_alias,
     generate_import_from,
     generate_keyword,
     generate_method_call,
     generate_module,
+    generate_pydantic_field,
 )
 from ..plugins.manager import PluginManager
 from ..utils import process_name
 from .constants import (
+    ALIAS_KEYWORD,
     ANY,
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
@@ -151,7 +153,9 @@ class InputTypesGenerator:
         field_implementation: ast.AnnAssign,
         alias: str,
     ) -> ast.Call:
-        field_with_alias = generate_field_with_alias(alias)
+        field_with_alias = generate_pydantic_field(
+            {ALIAS_KEYWORD: generate_constant(alias)}
+        )
         if field_implementation.value:
             if (
                 isinstance(field_implementation.value, ast.Call)

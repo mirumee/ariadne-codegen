@@ -4,7 +4,10 @@ from typing import cast
 import pytest
 from graphql import FragmentDefinitionNode, GraphQLSchema, build_schema, parse
 
-from ariadne_codegen.client_generators.constants import UPDATE_FORWARD_REFS_METHOD
+from ariadne_codegen.client_generators.constants import (
+    ALIAS_KEYWORD,
+    UPDATE_FORWARD_REFS_METHOD,
+)
 from ariadne_codegen.client_generators.fragments import FragmentsGenerator
 
 from ..utils import compare_ast, filter_ast_objects, filter_class_defs
@@ -66,7 +69,9 @@ def test_generate_returns_module_with_class_for_every_fragment(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
-                            ast.keyword(arg="alias", value=ast.Constant(value="fieldA"))
+                            ast.keyword(
+                                arg=ALIAS_KEYWORD, value=ast.Constant(value="fieldA")
+                            )
                         ],
                     ),
                     simple=1,
@@ -86,7 +91,9 @@ def test_generate_returns_module_with_class_for_every_fragment(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
-                            ast.keyword(arg="alias", value=ast.Constant(value="fieldB"))
+                            ast.keyword(
+                                arg=ALIAS_KEYWORD, value=ast.Constant(value="fieldB")
+                            )
                         ],
                     ),
                     simple=1,
