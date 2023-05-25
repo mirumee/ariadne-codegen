@@ -102,7 +102,7 @@ def test_generate_without_scalars_returns_module_with_empty_dicts():
                                 value=ast.Name(id=CALLABLE),
                                 slice=ast.Tuple(
                                     elts=[
-                                        ast.List(elts=[ast.Name(id="str")]),
+                                        ast.List(elts=[ast.Name(id=ANY)]),
                                         ast.Name(id=ANY),
                                     ]
                                 ),
@@ -125,7 +125,7 @@ def test_generate_without_scalars_returns_module_with_empty_dicts():
                                 slice=ast.Tuple(
                                     elts=[
                                         ast.List(elts=[ast.Name(id=ANY)]),
-                                        ast.Name(id="str"),
+                                        ast.Name(id=ANY),
                                     ]
                                 ),
                             ),
@@ -207,7 +207,7 @@ def test_generate_returns_module_with_dictionaries_with_scalars_methods():
                                 value=ast.Name(id=CALLABLE),
                                 slice=ast.Tuple(
                                     elts=[
-                                        ast.List(elts=[ast.Name(id="str")]),
+                                        ast.List(elts=[ast.Name(id=ANY)]),
                                         ast.Name(id=ANY),
                                     ]
                                 ),
@@ -233,7 +233,7 @@ def test_generate_returns_module_with_dictionaries_with_scalars_methods():
                                 slice=ast.Tuple(
                                     elts=[
                                         ast.List(elts=[ast.Name(id=ANY)]),
-                                        ast.Name(id="str"),
+                                        ast.Name(id=ANY),
                                     ]
                                 ),
                             ),
