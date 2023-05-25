@@ -14,7 +14,7 @@ class FragmentOnQueryWithInterface(BaseModel):
 
 
 class FragmentOnQueryWithInterfaceQueryIInterface(BaseModel):
-    typename__: Literal["Interface"] = Field(alias="__typename")
+    typename__: Literal["Interface", "TypeC"] = Field(alias="__typename")
     id: str
 
 
@@ -32,7 +32,9 @@ class FragmentOnQueryWithInterfaceQueryITypeB(BaseModel):
 
 class FragmentOnQueryWithUnion(BaseModel):
     query_u: Union[
-        "FragmentOnQueryWithUnionQueryUTypeA", "FragmentOnQueryWithUnionQueryUTypeB"
+        "FragmentOnQueryWithUnionQueryUTypeA",
+        "FragmentOnQueryWithUnionQueryUTypeB",
+        "FragmentOnQueryWithUnionQueryUTypeC",
     ] = Field(alias="queryU", discriminator="typename__")
 
 
@@ -48,6 +50,11 @@ class FragmentOnQueryWithUnionQueryUTypeB(BaseModel):
     field_b: str = Field(alias="fieldB")
 
 
+class FragmentOnQueryWithUnionQueryUTypeC(BaseModel):
+    typename__: Literal["TypeC"] = Field(alias="__typename")
+    id: str
+
+
 FragmentOnQueryWithInterface.update_forward_refs()
 FragmentOnQueryWithInterfaceQueryIInterface.update_forward_refs()
 FragmentOnQueryWithInterfaceQueryITypeA.update_forward_refs()
@@ -55,3 +62,4 @@ FragmentOnQueryWithInterfaceQueryITypeB.update_forward_refs()
 FragmentOnQueryWithUnion.update_forward_refs()
 FragmentOnQueryWithUnionQueryUTypeA.update_forward_refs()
 FragmentOnQueryWithUnionQueryUTypeB.update_forward_refs()
+FragmentOnQueryWithUnionQueryUTypeC.update_forward_refs()

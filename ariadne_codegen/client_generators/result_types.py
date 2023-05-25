@@ -450,7 +450,7 @@ class ResultTypesGenerator:
         schema_types = [self.schema.type_map[n] for n in types_names]
         abstract_type = next(filter(is_abstract_type, schema_types), None)
         abstract_type = cast(GraphQLAbstractType, abstract_type)
-        if not abstract_type or not len(field_types_names) > 1:
+        if not abstract_type:
             return result
 
         possible_types = self.schema.get_possible_types(abstract_type)

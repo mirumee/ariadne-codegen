@@ -7,7 +7,9 @@ from .base_model import BaseModel
 
 class QueryWithFragmentOnUnion(BaseModel):
     query_u: Union[
-        "QueryWithFragmentOnUnionQueryUTypeA", "QueryWithFragmentOnUnionQueryUTypeB"
+        "QueryWithFragmentOnUnionQueryUTypeA",
+        "QueryWithFragmentOnUnionQueryUTypeB",
+        "QueryWithFragmentOnUnionQueryUTypeC",
     ] = Field(alias="queryU", discriminator="typename__")
 
 
@@ -23,6 +25,12 @@ class QueryWithFragmentOnUnionQueryUTypeB(BaseModel):
     field_b: str = Field(alias="fieldB")
 
 
+class QueryWithFragmentOnUnionQueryUTypeC(BaseModel):
+    typename__: Literal["TypeC"] = Field(alias="__typename")
+    id: str
+
+
 QueryWithFragmentOnUnion.update_forward_refs()
 QueryWithFragmentOnUnionQueryUTypeA.update_forward_refs()
 QueryWithFragmentOnUnionQueryUTypeB.update_forward_refs()
+QueryWithFragmentOnUnionQueryUTypeC.update_forward_refs()

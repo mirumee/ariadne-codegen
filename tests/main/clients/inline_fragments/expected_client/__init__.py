@@ -16,6 +16,7 @@ from .fragments import (
     FragmentOnQueryWithUnion,
     FragmentOnQueryWithUnionQueryUTypeA,
     FragmentOnQueryWithUnionQueryUTypeB,
+    FragmentOnQueryWithUnionQueryUTypeC,
 )
 from .interface_a import (
     InterfaceA,
@@ -25,6 +26,19 @@ from .interface_a import (
 )
 from .interface_b import InterfaceB, InterfaceBQueryIInterface, InterfaceBQueryITypeA
 from .interface_c import InterfaceC, InterfaceCQueryI
+from .interface_with_typename import InterfaceWithTypename, InterfaceWithTypenameQueryI
+from .list_interface import (
+    ListInterface,
+    ListInterfaceQueryListIInterface,
+    ListInterfaceQueryListITypeA,
+    ListInterfaceQueryListITypeB,
+)
+from .list_union import (
+    ListUnion,
+    ListUnionQueryListUTypeA,
+    ListUnionQueryListUTypeB,
+    ListUnionQueryListUTypeC,
+)
 from .query_with_fragment_on_interface import (
     QueryWithFragmentOnInterface,
     QueryWithFragmentOnInterfaceQueryIInterface,
@@ -39,10 +53,17 @@ from .query_with_fragment_on_union import (
     QueryWithFragmentOnUnion,
     QueryWithFragmentOnUnionQueryUTypeA,
     QueryWithFragmentOnUnionQueryUTypeB,
+    QueryWithFragmentOnUnionQueryUTypeC,
 )
-from .union_a import UnionA, UnionAQueryUTypeA, UnionAQueryUTypeB
-from .union_b import UnionB, UnionBQueryUTypeA, UnionBQueryUTypeB
-from .union_c import UnionC, UnionCQueryUTypeA, UnionCQueryUTypeB
+from .union_a import UnionA, UnionAQueryUTypeA, UnionAQueryUTypeB, UnionAQueryUTypeC
+from .union_b import UnionB, UnionBQueryUTypeA, UnionBQueryUTypeB, UnionBQueryUTypeC
+from .union_c import UnionC, UnionCQueryUTypeA, UnionCQueryUTypeB, UnionCQueryUTypeC
+from .union_with_typename import (
+    UnionWithTypename,
+    UnionWithTypenameQueryUTypeA,
+    UnionWithTypenameQueryUTypeB,
+    UnionWithTypenameQueryUTypeC,
+)
 
 __all__ = [
     "AsyncBaseClient",
@@ -55,6 +76,7 @@ __all__ = [
     "FragmentOnQueryWithUnion",
     "FragmentOnQueryWithUnionQueryUTypeA",
     "FragmentOnQueryWithUnionQueryUTypeB",
+    "FragmentOnQueryWithUnionQueryUTypeC",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
@@ -69,6 +91,16 @@ __all__ = [
     "InterfaceBQueryITypeA",
     "InterfaceC",
     "InterfaceCQueryI",
+    "InterfaceWithTypename",
+    "InterfaceWithTypenameQueryI",
+    "ListInterface",
+    "ListInterfaceQueryListIInterface",
+    "ListInterfaceQueryListITypeA",
+    "ListInterfaceQueryListITypeB",
+    "ListUnion",
+    "ListUnionQueryListUTypeA",
+    "ListUnionQueryListUTypeB",
+    "ListUnionQueryListUTypeC",
     "QueryWithFragmentOnInterface",
     "QueryWithFragmentOnInterfaceQueryIInterface",
     "QueryWithFragmentOnInterfaceQueryITypeA",
@@ -78,13 +110,21 @@ __all__ = [
     "QueryWithFragmentOnUnion",
     "QueryWithFragmentOnUnionQueryUTypeA",
     "QueryWithFragmentOnUnionQueryUTypeB",
+    "QueryWithFragmentOnUnionQueryUTypeC",
     "UnionA",
     "UnionAQueryUTypeA",
     "UnionAQueryUTypeB",
+    "UnionAQueryUTypeC",
     "UnionB",
     "UnionBQueryUTypeA",
     "UnionBQueryUTypeB",
+    "UnionBQueryUTypeC",
     "UnionC",
     "UnionCQueryUTypeA",
     "UnionCQueryUTypeB",
+    "UnionCQueryUTypeC",
+    "UnionWithTypename",
+    "UnionWithTypenameQueryUTypeA",
+    "UnionWithTypenameQueryUTypeB",
+    "UnionWithTypenameQueryUTypeC",
 ]

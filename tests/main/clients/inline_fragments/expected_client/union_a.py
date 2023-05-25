@@ -6,9 +6,9 @@ from .base_model import BaseModel
 
 
 class UnionA(BaseModel):
-    query_u: Union["UnionAQueryUTypeA", "UnionAQueryUTypeB"] = Field(
-        alias="queryU", discriminator="typename__"
-    )
+    query_u: Union[
+        "UnionAQueryUTypeA", "UnionAQueryUTypeB", "UnionAQueryUTypeC"
+    ] = Field(alias="queryU", discriminator="typename__")
 
 
 class UnionAQueryUTypeA(BaseModel):
@@ -23,6 +23,12 @@ class UnionAQueryUTypeB(BaseModel):
     field_b: str = Field(alias="fieldB")
 
 
+class UnionAQueryUTypeC(BaseModel):
+    typename__: Literal["TypeC"] = Field(alias="__typename")
+    id: str
+
+
 UnionA.update_forward_refs()
 UnionAQueryUTypeA.update_forward_refs()
 UnionAQueryUTypeB.update_forward_refs()
+UnionAQueryUTypeC.update_forward_refs()

@@ -12,7 +12,7 @@ class InterfaceB(BaseModel):
 
 
 class InterfaceBQueryIInterface(BaseModel):
-    typename__: Literal["Interface", "TypeB"] = Field(alias="__typename")
+    typename__: Literal["Interface", "TypeB", "TypeC"] = Field(alias="__typename")
     id: str
 
 

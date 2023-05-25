@@ -82,7 +82,7 @@ def parse_operation_field(
 
 
 def generate_typename_annotation(typename_values: List[str]) -> ast.Subscript:
-    elts: List[ast.expr] = [generate_name(f'"{v}"') for v in typename_values]
+    elts: List[ast.expr] = [generate_name(f'"{v}"') for v in sorted(typename_values)]
     slice_ = generate_tuple(elts) if len(elts) > 1 else elts[0]
     return generate_subscript(value=generate_name(LITERAL), slice_=slice_)
 
