@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Literal, Union
 
 from pydantic import Field
 
@@ -10,22 +10,22 @@ class GetAnimalByName(BaseModel):
         "GetAnimalByNameAnimalByNameAnimal",
         "GetAnimalByNameAnimalByNameCat",
         "GetAnimalByNameAnimalByNameDog",
-    ] = Field(alias="animalByName")
+    ] = Field(alias="animalByName", discriminator="typename__")
 
 
 class GetAnimalByNameAnimalByNameAnimal(BaseModel):
-    typename__: str = Field(alias="__typename")
+    typename__: Literal["Animal"] = Field(alias="__typename")
     name: str
 
 
 class GetAnimalByNameAnimalByNameCat(BaseModel):
-    typename__: str = Field(alias="__typename")
+    typename__: Literal["Cat"] = Field(alias="__typename")
     name: str
     kittens: int
 
 
 class GetAnimalByNameAnimalByNameDog(BaseModel):
-    typename__: str = Field(alias="__typename")
+    typename__: Literal["Dog"] = Field(alias="__typename")
     name: str
     puppies: int
 

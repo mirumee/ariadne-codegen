@@ -7,7 +7,9 @@ from graphql import FragmentDefinitionNode, OperationDefinitionNode, build_schem
 from ariadne_codegen.client_generators.constants import (
     ALIAS_KEYWORD,
     BASE_MODEL_CLASS_NAME,
+    DISCRIMINATOR_KEYWORD,
     LIST,
+    LITERAL,
     OPTIONAL,
     TYPENAME_ALIAS,
     TYPENAME_FIELD_NAME,
@@ -418,7 +420,11 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                             ast.keyword(
                                 arg=ALIAS_KEYWORD,
                                 value=ast.Constant(value="interfaceQuery"),
-                            )
+                            ),
+                            ast.keyword(
+                                arg=DISCRIMINATOR_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_ALIAS),
+                            ),
                         ],
                     ),
                     simple=1,
@@ -433,7 +439,12 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             body=[
                 ast.AnnAssign(
                     target=ast.Name(id=TYPENAME_ALIAS),
-                    annotation=ast.Name(id="str"),
+                    annotation=ast.Subscript(
+                        value=ast.Name(LITERAL),
+                        slice=ast.Tuple(
+                            elts=[ast.Name('"InterfaceI"'), ast.Name('"TypeC"')]
+                        ),
+                    ),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
@@ -461,7 +472,9 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             body=[
                 ast.AnnAssign(
                     target=ast.Name(id=TYPENAME_ALIAS),
-                    annotation=ast.Name(id="str"),
+                    annotation=ast.Subscript(
+                        value=ast.Name(LITERAL), slice=ast.Name('"TypeA"')
+                    ),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
@@ -503,7 +516,9 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             body=[
                 ast.AnnAssign(
                     target=ast.Name(id=TYPENAME_ALIAS),
-                    annotation=ast.Name(id="str"),
+                    annotation=ast.Subscript(
+                        value=ast.Name(LITERAL), slice=ast.Name('"TypeB"')
+                    ),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
