@@ -22,15 +22,23 @@ from graphql import (
 )
 
 from ariadne_codegen.client_generators.constants import (
+    ANNOTATED,
+    DISCRIMINATOR_KEYWORD,
+    FIELD_CLASS,
     INCLUDE_DIRECTIVE_NAME,
     LIST,
+    LITERAL,
     OPTIONAL,
     SKIP_DIRECTIVE_NAME,
+    TYPENAME_ALIAS,
+    TYPENAME_FIELD_NAME,
     UNION,
 )
 from ariadne_codegen.client_generators.result_fields import (
     FieldNames,
+    annotate_nested_unions,
     is_nullable,
+    is_union,
     parse_operation_field,
     parse_operation_field_type,
 )
@@ -71,6 +79,78 @@ def test_parse_operation_field_returns_optional_annotation_if_given_nullable_dir
         field=FieldNode(),
         type_=type_,
         directives=(DirectiveNode(name=NameNode(value=directive), arguments=()),),
+    )
+
+    assert compare_ast(annotation, expected_annotation)
+
+
+def test_parse_operation_field_returns_typename_annotation_with_multiple_values():
+    expected_annotation = ast.Subscript(
+        value=ast.Name(id=LITERAL),
+        slice=ast.Tuple(elts=[ast.Name(id='"TypeA"'), ast.Name(id='"TypeB"')]),
+    )
+
+    annotation, _ = parse_operation_field(
+        field=FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME)),
+        type_=GraphQLNonNull(GraphQLScalarType("String")),
+        typename_values=["TypeB", "TypeA"],
+    )
+
+    assert compare_ast(annotation, expected_annotation)
+
+
+def test_parse_operation_field_returns_typename_annotation_with_single_value():
+    expected_annotation = ast.Subscript(
+        value=ast.Name(id=LITERAL), slice=ast.Name(id='"TypeA"')
+    )
+
+    annotation, _ = parse_operation_field(
+        field=FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME)),
+        type_=GraphQLNonNull(GraphQLScalarType("String")),
+        typename_values=["TypeA"],
+    )
+
+    assert compare_ast(annotation, expected_annotation)
+
+
+def test_parse_operation_field_returns_annotation_with_annotated_nested_unions():
+    expected_annotation = ast.Subscript(
+        value=ast.Name(id=OPTIONAL),
+        slice=ast.Subscript(
+            value=ast.Name(id=ANNOTATED),
+            slice=ast.Tuple(
+                elts=[
+                    ast.Subscript(
+                        value=ast.Name(id=UNION),
+                        slice=ast.Tuple(
+                            elts=[ast.Name(id='"TypeA"'), ast.Name(id='"TypeB"')]
+                        ),
+                    ),
+                    ast.Call(
+                        func=ast.Name(id=FIELD_CLASS),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg=DISCRIMINATOR_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_ALIAS),
+                            )
+                        ],
+                    ),
+                ]
+            ),
+        ),
+    )
+
+    annotation, _ = parse_operation_field(
+        field=FieldNode(name=NameNode(value="unionField")),
+        type_=GraphQLUnionType(
+            "UnionType",
+            types=[
+                GraphQLObjectType("TypeA", fields={}),
+                GraphQLObjectType("TypeB", fields={}),
+            ],
+        ),
+        typename_values=["TypeA", "TypeB"],
     )
 
     assert compare_ast(annotation, expected_annotation)
@@ -401,6 +481,96 @@ def test_parse_operation_field_type_returns_annotation_for_list(
 @pytest.mark.parametrize(
     "annotation, expected",
     [
+        (
+            ast.Subscript(
+                value=ast.Name(id=UNION),
+                slice=ast.Tuple(elts=[ast.Name(id='"TypeA"'), ast.Name(id='"TypeB"')]),
+            ),
+            ast.Subscript(
+                value=ast.Name(id=ANNOTATED),
+                slice=ast.Tuple(
+                    elts=[
+                        ast.Subscript(
+                            value=ast.Name(id=UNION),
+                            slice=ast.Tuple(
+                                elts=[ast.Name(id='"TypeA"'), ast.Name(id='"TypeB"')]
+                            ),
+                        ),
+                        ast.Call(
+                            func=ast.Name(id=FIELD_CLASS),
+                            args=[],
+                            keywords=[
+                                ast.keyword(
+                                    arg=DISCRIMINATOR_KEYWORD,
+                                    value=ast.Constant(value=TYPENAME_ALIAS),
+                                )
+                            ],
+                        ),
+                    ]
+                ),
+            ),
+        ),
+        (
+            ast.Subscript(
+                value=ast.Name(id=LIST),
+                slice=ast.Subscript(
+                    value=ast.Name(id=UNION),
+                    slice=ast.Tuple(
+                        elts=[ast.Name(id='"TypeA"'), ast.Name(id='"TypeB"')]
+                    ),
+                ),
+            ),
+            ast.Subscript(
+                value=ast.Name(id=LIST),
+                slice=ast.Subscript(
+                    value=ast.Name(id=ANNOTATED),
+                    slice=ast.Tuple(
+                        elts=[
+                            ast.Subscript(
+                                value=ast.Name(id=UNION),
+                                slice=ast.Tuple(
+                                    elts=[
+                                        ast.Name(id='"TypeA"'),
+                                        ast.Name(id='"TypeB"'),
+                                    ]
+                                ),
+                            ),
+                            ast.Call(
+                                func=ast.Name(id=FIELD_CLASS),
+                                args=[],
+                                keywords=[
+                                    ast.keyword(
+                                        arg=DISCRIMINATOR_KEYWORD,
+                                        value=ast.Constant(value=TYPENAME_ALIAS),
+                                    )
+                                ],
+                            ),
+                        ]
+                    ),
+                ),
+            ),
+        ),
+    ],
+)
+def test_annotate_nested_unions_returns_annotated_union(annotation, expected):
+    assert compare_ast(annotate_nested_unions(annotation), expected)
+
+
+@pytest.mark.parametrize(
+    "annotation",
+    [
+        ast.Name(id="TestName"),
+        ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="TestName")),
+        ast.Subscript(value=ast.Name(id=LIST), slice=ast.Name(id="TestName")),
+    ],
+)
+def test_annotate_nested_unions_doesnt_change_not_unions(annotation):
+    assert compare_ast(annotate_nested_unions(annotation), annotation)
+
+
+@pytest.mark.parametrize(
+    "annotation, expected",
+    [
         (ast.Name(id="TestName"), False),
         (
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="TestName")),
@@ -414,3 +584,30 @@ def test_parse_operation_field_type_returns_annotation_for_list(
 )
 def test_is_nullable(annotation, expected):
     assert is_nullable(annotation) == expected
+
+
+@pytest.mark.parametrize(
+    "annotation, expected",
+    [
+        (ast.Name(id="TypeA"), False),
+        (
+            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="TypeA")),
+            False,
+        ),
+        (
+            ast.Subscript(value=ast.Name(id=UNION), slice=ast.Name(id="TypeA")),
+            True,
+        ),
+        (
+            ast.Subscript(
+                value=ast.Name(id=OPTIONAL),
+                slice=ast.Subscript(
+                    value=ast.Name(id=UNION), slice=ast.Name(id="TypeA")
+                ),
+            ),
+            False,
+        ),
+    ],
+)
+def test_is_union(annotation, expected):
+    assert is_union(annotation) is expected
