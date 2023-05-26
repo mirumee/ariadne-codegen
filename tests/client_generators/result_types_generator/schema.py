@@ -32,6 +32,7 @@ type CustomType {
   _field4: String!
   _Field5: String!
   scalarField: SCALARA
+  _: String!
 }
 
 type CustomType1 {

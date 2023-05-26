@@ -93,6 +93,8 @@ def process_name(
         processed_name += "_"
     if trim_leading_underscore:
         processed_name = processed_name.lstrip("_")
+        if not processed_name:
+            processed_name = "underscore_"
     if plugin_manager:
         processed_name = plugin_manager.process_name(processed_name, node=node)
     return processed_name
