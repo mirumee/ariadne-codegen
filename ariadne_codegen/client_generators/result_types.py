@@ -1,5 +1,6 @@
 import ast
-from typing import Dict, List, Optional, Set, Tuple, cast
+from copy import deepcopy
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 from graphql import (
     DirectiveNode,
@@ -21,8 +22,10 @@ from graphql import (
     SelectionNode,
     SelectionSetNode,
     StringValueNode,
+    Visitor,
     is_abstract_type,
     print_ast,
+    visit,
 )
 
 from ..codegen import (
@@ -167,7 +170,9 @@ class ResultTypesGenerator:
         return self._class_defs
 
     def get_operation_as_str(self) -> str:
-        operation_str = print_ast(self.operation_definition)
+        operation_str = print_ast(
+            self._get_operation_definition_without_mixin_directive()
+        )
         if self._fragments_used_as_mixins or self._unpacked_fragments:
             for used_fragment in sorted(self._get_all_related_fragments()):
                 operation_str += "\n\n" + print_ast(
@@ -518,3 +523,16 @@ class ResultTypesGenerator:
             elif isinstance(node, FieldNode) and node.selection_set:
                 names = names.union(self._get_fragments_names(node.selection_set))
         return names
+
+    def _get_operation_definition_without_mixin_directive(self):
+        class RemoveMixinVisitor(Visitor):
+            @staticmethod
+            def enter_field(node: FieldNode, *_args: Any) -> FieldNode:
+                node.directives = tuple(
+                    d for d in node.directives or [] if d.name.value != MIXIN_NAME
+                )
+                return node
+
+        operation_def = deepcopy(self.operation_definition)
+        visit(operation_def, RemoveMixinVisitor())
+        return operation_def

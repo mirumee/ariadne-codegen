@@ -7,6 +7,7 @@ from graphql import (
     parse,
 )
 
+from ariadne_codegen.client_generators.constants import MIXIN_NAME
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
 
 from ...utils import format_graphql_str
@@ -158,3 +159,39 @@ def test_get_operation_as_str_returns_str_with_fragment_used_by_another_fragment
 
     assert "fragment TestFragment on CustomType" in result
     assert "fragment NestedFragment on CustomType2" in result
+
+
+def test_get_operation_as_str_returns_representation_without_mixin_directive():
+    query_str = format_graphql_str(
+        """
+        query CustomQuery {
+            query2 @mixin(from: ".mixins", import: "TestMixin") {
+                id
+                field1 @mixin(from: ".mixins", import: "TestMixin1") {
+                    fielda
+                }
+                field2 @mixin(from: ".mixins", import: "TestMixin2") {
+                    fieldb
+                }
+            }
+        }
+        """
+    )
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+    )
+
+    result = generator.get_operation_as_str()
+
+    assert MIXIN_NAME not in result
+    # tests that operation definition still contains mixin directive
+    field_query2 = generator.operation_definition.selection_set.selections[0]
+    field_field1 = field_query2.selection_set.selections[1]
+    field_field2 = field_query2.selection_set.selections[2]
+    assert field_query2.directives[0].name.value == MIXIN_NAME
+    assert field_field1.directives[0].name.value == MIXIN_NAME
+    assert field_field2.directives[0].name.value == MIXIN_NAME

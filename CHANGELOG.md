@@ -10,6 +10,7 @@
 - Fixed handling of inline fragments inside other fragments.
 - Changed generated unions to use pydantic's discriminated unions feature.
 - Replaced HTTPX's `json=` serializer for query payloads with pydantic's `pydantic_encoder`.
+- Removed `mixin` directive from operation string sent to server.
 
 
 ## 0.6.0 (2023-04-18)
