@@ -3,6 +3,13 @@ from typing import cast
 
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
+from ariadne_codegen.client_generators.constants import (
+    ALIAS_KEYWORD,
+    DISCRIMINATOR_KEYWORD,
+    LITERAL,
+    TYPENAME_ALIAS,
+    TYPENAME_FIELD_NAME,
+)
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
 
 from ...utils import compare_ast, filter_class_defs, format_graphql_str
@@ -29,13 +36,17 @@ def test_generate_returns_module_with_handled_typename_field():
     )
     expected_fields_implementations = [
         ast.AnnAssign(
-            target=ast.Name(id="typename__"),
-            annotation=ast.Name(id="str"),
+            target=ast.Name(id=TYPENAME_ALIAS),
+            annotation=ast.Subscript(
+                value=ast.Name(id=LITERAL), slice=ast.Name(id='"CustomType"')
+            ),
             value=ast.Call(
                 func=ast.Name(id="Field"),
                 args=[],
                 keywords=[
-                    ast.keyword(arg="alias", value=ast.Constant(value="__typename"))
+                    ast.keyword(
+                        arg=ALIAS_KEYWORD, value=ast.Constant(value=TYPENAME_FIELD_NAME)
+                    )
                 ],
             ),
             simple=1,
@@ -88,6 +99,16 @@ def test_generate_returns_module_with_classes_for_union_fields():
                             ],
                         ),
                     ),
+                    value=ast.Call(
+                        func=ast.Name(id="Field"),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg=DISCRIMINATOR_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_ALIAS),
+                            ),
+                        ],
+                    ),
                     simple=1,
                 )
             ],
@@ -99,14 +120,17 @@ def test_generate_returns_module_with_classes_for_union_fields():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
-                    annotation=ast.Name(id="str"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
+                    annotation=ast.Subscript(
+                        value=ast.Name(id=LITERAL), slice=ast.Name(id='"CustomType1"')
+                    ),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias", value=ast.Constant(value="__typename")
+                                arg=ALIAS_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_FIELD_NAME),
                             )
                         ],
                     ),
@@ -126,14 +150,17 @@ def test_generate_returns_module_with_classes_for_union_fields():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
-                    annotation=ast.Name(id="str"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
+                    annotation=ast.Subscript(
+                        value=ast.Name(id=LITERAL), slice=ast.Name(id='"CustomType2"')
+                    ),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias", value=ast.Constant(value="__typename")
+                                arg=ALIAS_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_FIELD_NAME),
                             )
                         ],
                     ),

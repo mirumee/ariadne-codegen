@@ -1,5 +1,5 @@
 import ast
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from graphql import (
     GraphQLEnumType,
@@ -269,23 +269,12 @@ def generate_lambda(body: ast.expr, args: Optional[ast.arguments] = None) -> ast
     return ast.Lambda(args=args or generate_arguments(), body=body)
 
 
-def generate_field_with_alias(name):
+def generate_pydantic_field(keywords: Dict[str, ast.expr]) -> ast.Call:
     return generate_call(
         func=generate_name(FIELD_CLASS),
         keywords=[
-            generate_keyword(
-                arg="alias",
-                value=generate_constant(name),
-            )
+            generate_keyword(arg=arg, value=value) for arg, value in keywords.items()
         ],
-    )
-
-
-def generate_typename_field_definition():
-    return generate_ann_assign(
-        target="typename__",
-        annotation=generate_name("str"),
-        value=generate_field_with_alias("__typename"),
     )
 
 

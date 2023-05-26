@@ -8,6 +8,7 @@
 - Changed processing of models fields to trim leading underscores.
 - Added `ShorterResultsPlugin` to standard plugins.
 - Fixed handling of inline fragments inside other fragments.
+- Changed generated unions to use pydantic's discriminated unions feature.
 
 
 ## 0.6.0 (2023-04-18)

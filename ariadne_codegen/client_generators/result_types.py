@@ -7,6 +7,7 @@ from graphql import (
     FieldNode,
     FragmentDefinitionNode,
     FragmentSpreadNode,
+    GraphQLAbstractType,
     GraphQLEnumType,
     GraphQLField,
     GraphQLNonNull,
@@ -20,38 +21,45 @@ from graphql import (
     SelectionNode,
     SelectionSetNode,
     StringValueNode,
+    is_abstract_type,
     print_ast,
 )
 
 from ..codegen import (
     generate_ann_assign,
     generate_class_def,
+    generate_constant,
     generate_expr,
-    generate_field_with_alias,
     generate_import_from,
     generate_method_call,
     generate_module,
     generate_pass,
+    generate_pydantic_field,
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
 from ..utils import process_name, str_to_pascal_case
 from .constants import (
+    ALIAS_KEYWORD,
+    ANNOTATED,
     ANY,
     BASE_MODEL_CLASS_NAME,
+    DISCRIMINATOR_KEYWORD,
     FIELD_CLASS,
     LIST,
+    LITERAL,
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
     MIXIN_NAME,
     OPTIONAL,
     PYDANTIC_MODULE,
+    TYPENAME_ALIAS,
     TYPENAME_FIELD_NAME,
     TYPING_MODULE,
     UNION,
     UPDATE_FORWARD_REFS_METHOD,
 )
-from .result_fields import FieldNames, parse_operation_field
+from .result_fields import FieldNames, is_union, parse_operation_field
 from .scalars import ScalarData, generate_scalar_imports
 from .types import CodegenResultFieldType
 
@@ -85,7 +93,9 @@ class ResultTypesGenerator:
         self.plugin_manager = plugin_manager
 
         self._imports: List[ast.ImportFrom] = [
-            generate_import_from([OPTIONAL, UNION, ANY, LIST], TYPING_MODULE),
+            generate_import_from(
+                [OPTIONAL, UNION, ANY, LIST, LITERAL, ANNOTATED], TYPING_MODULE
+            ),
             generate_import_from([FIELD_CLASS], PYDANTIC_MODULE),
             base_model_import
             or generate_import_from([BASE_MODEL_CLASS_NAME], PYDANTIC_MODULE),
@@ -186,6 +196,7 @@ class ResultTypesGenerator:
         selection_set: SelectionSetNode,
         add_typename: bool = False,
         extra_bases: Optional[List[str]] = None,
+        typename_values: Optional[List[str]] = None,
     ) -> List[ast.ClassDef]:
         if class_name in self._public_names:
             return []
@@ -223,6 +234,7 @@ class ResultTypesGenerator:
                 type_=cast(CodegenResultFieldType, field_definition.type),
                 directives=field.directives,
                 class_name=class_name + str_to_pascal_case(name),
+                typename_values=typename_values,
                 custom_scalars=self.custom_scalars,
                 fragments_definitions=self.fragments_definitions,
             )
@@ -232,15 +244,9 @@ class ResultTypesGenerator:
                 annotation=annotation,
                 lineno=lineno,
             )
-            if name != field_name:
-                field_implementation.value = generate_field_with_alias(field_name)
-
-            if self.plugin_manager:
-                field_implementation = self.plugin_manager.generate_result_field(
-                    field_implementation,
-                    operation_definition=self.operation_definition,
-                    field=field,
-                )
+            field_implementation = self._process_field_implementation(
+                field_implementation, field_schema_name=field_name, field=field
+            )
 
             class_def.body.append(field_implementation)
 
@@ -321,8 +327,8 @@ class ResultTypesGenerator:
         return field.name.value
 
     def _process_field_name(self, name: str, field: FieldNode) -> str:
-        if self.convert_to_snake_case and name == TYPENAME_FIELD_NAME:
-            return "typename__"
+        if name == TYPENAME_FIELD_NAME:
+            return TYPENAME_ALIAS
         return process_name(
             name,
             convert_to_snake_case=self.convert_to_snake_case,
@@ -344,6 +350,35 @@ class ResultTypesGenerator:
             raise ParsingError(
                 f"Field {field_name} not found in type {type_name}."
             ) from exc
+
+    def _process_field_implementation(
+        self,
+        field_implementation: ast.AnnAssign,
+        field_schema_name: str,
+        field: FieldNode,
+    ) -> ast.AnnAssign:
+        keywords: Dict[str, ast.expr] = {}
+
+        if (
+            isinstance(field_implementation.target, ast.Name)
+            and field_implementation.target.id != field_schema_name
+        ):
+            keywords[ALIAS_KEYWORD] = generate_constant(field_schema_name)
+
+        if is_union(field_implementation.annotation):
+            keywords[DISCRIMINATOR_KEYWORD] = generate_constant(TYPENAME_ALIAS)
+
+        if keywords:
+            field_implementation.value = generate_pydantic_field(keywords)
+
+        if self.plugin_manager:
+            field_implementation = self.plugin_manager.generate_result_field(
+                field_implementation,
+                operation_definition=self.operation_definition,
+                field=field,
+            )
+
+        return field_implementation
 
     def _parse_mixin_directives(self, field: FieldNode) -> List[str]:
         if not field.directives:
@@ -391,6 +426,7 @@ class ResultTypesGenerator:
         if selection_set:
             generated_classes = []
             add_typename = len(field_types_names) > 1
+            typename_values = self._get_typename_values(field_types_names)
             for field_type_names in field_types_names:
                 generated_classes.extend(
                     self._parse_type_definition(
@@ -399,10 +435,30 @@ class ResultTypesGenerator:
                         selection_set=selection_set,
                         add_typename=add_typename,
                         extra_bases=extra_bases,
+                        typename_values=typename_values[field_type_names.type_name],
                     )
                 )
             return generated_classes
         return []
+
+    def _get_typename_values(
+        self, field_types_names: List[FieldNames]
+    ) -> Dict[str, List[str]]:
+        types_names = [n.type_name for n in field_types_names]
+        result = {name: [name] for name in types_names}
+
+        schema_types = [self.schema.type_map[n] for n in types_names]
+        abstract_type = next(filter(is_abstract_type, schema_types), None)
+        abstract_type = cast(GraphQLAbstractType, abstract_type)
+        if not abstract_type:
+            return result
+
+        possible_types = self.schema.get_possible_types(abstract_type)
+        possible_types_names = [t.name for t in possible_types]
+        types_without_class = list(set(possible_types_names) - set(types_names))
+
+        result[abstract_type.name].extend(types_without_class)
+        return result
 
     def _save_used_enums(self, field_types_names: List[FieldNames]):
         for field_type_name in field_types_names:

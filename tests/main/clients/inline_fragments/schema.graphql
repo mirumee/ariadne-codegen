@@ -5,6 +5,8 @@ schema {
 type Query {
   queryI: Interface!
   queryU: Union!
+  queryListI: [Interface!]!
+  queryListU: [Union!]!
 }
 
 interface Interface {
@@ -21,4 +23,9 @@ type TypeB implements Interface {
   fieldB: String!
 }
 
-union Union = TypeA | TypeB
+type TypeC implements Interface {
+  id: String!
+  fieldC: Float!
+}
+
+union Union = TypeA | TypeB | TypeC

@@ -2,6 +2,9 @@ from .async_base_client import AsyncBaseClient
 from .interface_a import InterfaceA
 from .interface_b import InterfaceB
 from .interface_c import InterfaceC
+from .interface_with_typename import InterfaceWithTypename
+from .list_interface import ListInterface
+from .list_union import ListUnion
 from .query_with_fragment_on_interface import QueryWithFragmentOnInterface
 from .query_with_fragment_on_query_with_interface import (
     QueryWithFragmentOnQueryWithInterface,
@@ -11,6 +14,7 @@ from .query_with_fragment_on_union import QueryWithFragmentOnUnion
 from .union_a import UnionA
 from .union_b import UnionB
 from .union_c import UnionC
+from .union_with_typename import UnionWithTypename
 
 
 def gql(q: str) -> str:
@@ -74,6 +78,44 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return InterfaceC.parse_obj(data)
 
+    async def list_interface(self) -> ListInterface:
+        query = gql(
+            """
+            query ListInterface {
+              queryListI {
+                __typename
+                id
+                ... on TypeA {
+                  fieldA
+                }
+                ... on TypeB {
+                  fieldB
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return ListInterface.parse_obj(data)
+
+    async def interface_with_typename(self) -> InterfaceWithTypename:
+        query = gql(
+            """
+            query InterfaceWithTypename {
+              queryI {
+                __typename
+                id
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return InterfaceWithTypename.parse_obj(data)
+
     async def union_a(self) -> UnionA:
         query = gql(
             """
@@ -130,6 +172,44 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return UnionC.parse_obj(data)
+
+    async def list_union(self) -> ListUnion:
+        query = gql(
+            """
+            query ListUnion {
+              queryListU {
+                __typename
+                id
+                ... on TypeA {
+                  fieldA
+                }
+                ... on TypeB {
+                  fieldB
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return ListUnion.parse_obj(data)
+
+    async def union_with_typename(self) -> UnionWithTypename:
+        query = gql(
+            """
+            query UnionWithTypename {
+              queryU {
+                __typename
+                id
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return UnionWithTypename.parse_obj(data)
 
     async def query_with_fragment_on_interface(self) -> QueryWithFragmentOnInterface:
         query = gql(

@@ -5,9 +5,14 @@ import pytest
 from graphql import FragmentDefinitionNode, OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.client_generators.constants import (
+    ALIAS_KEYWORD,
     BASE_MODEL_CLASS_NAME,
+    DISCRIMINATOR_KEYWORD,
     LIST,
+    LITERAL,
     OPTIONAL,
+    TYPENAME_ALIAS,
+    TYPENAME_FIELD_NAME,
     UNION,
 )
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
@@ -413,9 +418,13 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias",
+                                arg=ALIAS_KEYWORD,
                                 value=ast.Constant(value="interfaceQuery"),
-                            )
+                            ),
+                            ast.keyword(
+                                arg=DISCRIMINATOR_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_ALIAS),
+                            ),
                         ],
                     ),
                     simple=1,
@@ -429,15 +438,20 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
-                    annotation=ast.Name(id="str"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
+                    annotation=ast.Subscript(
+                        value=ast.Name(LITERAL),
+                        slice=ast.Tuple(
+                            elts=[ast.Name('"InterfaceI"'), ast.Name('"TypeC"')]
+                        ),
+                    ),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias",
-                                value=ast.Constant(value="__typename"),
+                                arg=ALIAS_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_FIELD_NAME),
                             )
                         ],
                     ),
@@ -457,15 +471,17 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
-                    annotation=ast.Name(id="str"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
+                    annotation=ast.Subscript(
+                        value=ast.Name(LITERAL), slice=ast.Name('"TypeA"')
+                    ),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias",
-                                value=ast.Constant(value="__typename"),
+                                arg=ALIAS_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_FIELD_NAME),
                             )
                         ],
                     ),
@@ -483,7 +499,9 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
-                            ast.keyword(arg="alias", value=ast.Constant(value="fieldA"))
+                            ast.keyword(
+                                arg=ALIAS_KEYWORD, value=ast.Constant(value="fieldA")
+                            )
                         ],
                     ),
                     simple=1,
@@ -497,15 +515,17 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="typename__"),
-                    annotation=ast.Name(id="str"),
+                    target=ast.Name(id=TYPENAME_ALIAS),
+                    annotation=ast.Subscript(
+                        value=ast.Name(LITERAL), slice=ast.Name('"TypeB"')
+                    ),
                     value=ast.Call(
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias",
-                                value=ast.Constant(value="__typename"),
+                                arg=ALIAS_KEYWORD,
+                                value=ast.Constant(value=TYPENAME_FIELD_NAME),
                             )
                         ],
                     ),
@@ -523,7 +543,9 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                         func=ast.Name(id="Field"),
                         args=[],
                         keywords=[
-                            ast.keyword(arg="alias", value=ast.Constant(value="fieldB"))
+                            ast.keyword(
+                                arg=ALIAS_KEYWORD, value=ast.Constant(value="fieldB")
+                            )
                         ],
                     ),
                     simple=1,
@@ -583,7 +605,8 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
                         args=[],
                         keywords=[
                             ast.keyword(
-                                arg="alias", value=ast.Constant(value="camelCaseQuery")
+                                arg=ALIAS_KEYWORD,
+                                value=ast.Constant(value="camelCaseQuery"),
                             )
                         ],
                     ),

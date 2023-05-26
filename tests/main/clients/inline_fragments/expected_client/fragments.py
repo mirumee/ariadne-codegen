@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Literal, Union
 
 from pydantic import Field
 
@@ -10,42 +10,49 @@ class FragmentOnQueryWithInterface(BaseModel):
         "FragmentOnQueryWithInterfaceQueryIInterface",
         "FragmentOnQueryWithInterfaceQueryITypeA",
         "FragmentOnQueryWithInterfaceQueryITypeB",
-    ] = Field(alias="queryI")
+    ] = Field(alias="queryI", discriminator="typename__")
 
 
 class FragmentOnQueryWithInterfaceQueryIInterface(BaseModel):
-    typename__: str = Field(alias="__typename")
+    typename__: Literal["Interface", "TypeC"] = Field(alias="__typename")
     id: str
 
 
 class FragmentOnQueryWithInterfaceQueryITypeA(BaseModel):
-    typename__: str = Field(alias="__typename")
+    typename__: Literal["TypeA"] = Field(alias="__typename")
     id: str
     field_a: str = Field(alias="fieldA")
 
 
 class FragmentOnQueryWithInterfaceQueryITypeB(BaseModel):
-    typename__: str = Field(alias="__typename")
+    typename__: Literal["TypeB"] = Field(alias="__typename")
     id: str
     field_b: str = Field(alias="fieldB")
 
 
 class FragmentOnQueryWithUnion(BaseModel):
     query_u: Union[
-        "FragmentOnQueryWithUnionQueryUTypeA", "FragmentOnQueryWithUnionQueryUTypeB"
-    ] = Field(alias="queryU")
+        "FragmentOnQueryWithUnionQueryUTypeA",
+        "FragmentOnQueryWithUnionQueryUTypeB",
+        "FragmentOnQueryWithUnionQueryUTypeC",
+    ] = Field(alias="queryU", discriminator="typename__")
 
 
 class FragmentOnQueryWithUnionQueryUTypeA(BaseModel):
-    typename__: str = Field(alias="__typename")
+    typename__: Literal["TypeA"] = Field(alias="__typename")
     id: str
     field_a: str = Field(alias="fieldA")
 
 
 class FragmentOnQueryWithUnionQueryUTypeB(BaseModel):
-    typename__: str = Field(alias="__typename")
+    typename__: Literal["TypeB"] = Field(alias="__typename")
     id: str
     field_b: str = Field(alias="fieldB")
+
+
+class FragmentOnQueryWithUnionQueryUTypeC(BaseModel):
+    typename__: Literal["TypeC"] = Field(alias="__typename")
+    id: str
 
 
 FragmentOnQueryWithInterface.update_forward_refs()
@@ -55,3 +62,4 @@ FragmentOnQueryWithInterfaceQueryITypeB.update_forward_refs()
 FragmentOnQueryWithUnion.update_forward_refs()
 FragmentOnQueryWithUnionQueryUTypeA.update_forward_refs()
 FragmentOnQueryWithUnionQueryUTypeB.update_forward_refs()
+FragmentOnQueryWithUnionQueryUTypeC.update_forward_refs()

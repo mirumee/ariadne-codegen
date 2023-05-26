@@ -25,6 +25,25 @@ query InterfaceC {
   }
 }
 
+query ListInterface {
+  queryListI {
+    id
+    ... on TypeA {
+      fieldA
+    }
+    ... on TypeB {
+      fieldB
+    }
+  }
+}
+
+query InterfaceWithTypename {
+  queryI {
+    __typename
+    id
+  }
+}
+
 query UnionA {
   queryU {
     id
@@ -51,6 +70,26 @@ query UnionC {
     id
   }
 }
+
+query ListUnion {
+  queryListU {
+    id
+    ... on TypeA {
+      fieldA
+    }
+    ... on TypeB {
+      fieldB
+    }
+  }
+}
+
+query UnionWithTypename {
+  queryU {
+    __typename
+    id
+  }
+}
+
 
 query queryWithFragmentOnInterface {
   queryI {
