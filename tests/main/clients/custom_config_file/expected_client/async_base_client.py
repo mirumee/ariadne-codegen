@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import httpx
 from pydantic import BaseModel
+from pydantic.json import pydantic_encoder
 
 from .base_model import UNSET
 from .exceptions import (
@@ -86,7 +87,8 @@ class AsyncBaseClient:
         payload: Dict[str, Any] = {"query": query}
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
-        return await self.http_client.post(url=self.url, json=payload)
+        content = json.dumps(payload, default=pydantic_encoder)
+        return await self.http_client.post(url=self.url, content=content)
 
     def get_data(self, response: httpx.Response) -> Dict[str, Any]:
         if not response.is_success:

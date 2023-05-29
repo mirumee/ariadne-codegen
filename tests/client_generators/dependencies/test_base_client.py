@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Optional
 
 import httpx
@@ -14,9 +15,9 @@ from ariadne_codegen.client_generators.dependencies.exceptions import (
 )
 
 
-def test_execute_sends_post_to_correct_url_with_correct_payload(mocker):
-    fake_client = mocker.MagicMock()
-    client = BaseClient(url="base_url/endpoint", http_client=fake_client)
+def test_execute_sends_post_to_correct_url_with_correct_payload(httpx_mock):
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url/endpoint")
     query_str = """
     query Abc($v: String!) {
         abc(v: $v) {
@@ -27,22 +28,21 @@ def test_execute_sends_post_to_correct_url_with_correct_payload(mocker):
 
     client.execute(query_str, {"v": "Xyz"})
 
-    assert fake_client.post.called
-    assert len(fake_client.post.mock_calls) == 1
-    call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["url"] == "base_url/endpoint"
-    assert call_kwargs["json"] == {"query": query_str, "variables": {"v": "Xyz"}}
+    request = httpx_mock.get_request()
+    assert request.url == "http://base_url/endpoint"
+    content = json.loads(request.content)
+    assert content == {"query": query_str, "variables": {"v": "Xyz"}}
 
 
-def test_execute_parses_pydantic_variables_before_sending(mocker):
+def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
     class TestModel1(BaseModel):
         a: int
 
     class TestModel2(BaseModel):
         nested: TestModel1
 
-    fake_client = mocker.MagicMock()
-    client = BaseClient(url="base_url", http_client=fake_client)
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url")
     query_str = """
     query Abc($v1: TestModel1!, $v2: TestModel2) {
         abc(v1: $v1, v2: $v2){
@@ -55,22 +55,20 @@ def test_execute_parses_pydantic_variables_before_sending(mocker):
         query_str, {"v1": TestModel1(a=5), "v2": TestModel2(nested=TestModel1(a=10))}
     )
 
-    assert fake_client.post.called
-    assert len(fake_client.post.mock_calls) == 1
-    call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["url"] == "base_url"
-    assert call_kwargs["json"] == {
+    request = httpx_mock.get_request()
+    content = json.loads(request.content)
+    assert content == {
         "query": query_str,
         "variables": {"v1": {"a": 5}, "v2": {"nested": {"a": 10}}},
     }
 
 
-def test_execute_correctly_parses_top_level_list_variables(mocker):
+def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
     class TestModel1(BaseModel):
         a: int
 
-    fake_client = mocker.MagicMock()
-    client = BaseClient(url="base_url", http_client=fake_client)
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url")
     query_str = """
     query Abc($v1: [[TestModel1!]!]!) {
         abc(v1: $v1){
@@ -86,22 +84,18 @@ def test_execute_correctly_parses_top_level_list_variables(mocker):
         },
     )
 
-    assert fake_client.post.called
-    assert len(fake_client.post.mock_calls) == 1
-    call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["url"] == "base_url"
-    assert call_kwargs["json"] == {
+    request = httpx_mock.get_request()
+    content = json.loads(request.content)
+    assert content == {
         "query": query_str,
         "variables": {"v1": [[{"a": 1}, {"a": 2}]]},
     }
-    assert not any(
-        isinstance(x, BaseModel) for x in call_kwargs["json"]["variables"]["v1"][0]
-    )
+    assert not any(isinstance(x, BaseModel) for x in content["variables"]["v1"][0])
 
 
-def test_execute_sends_payload_without_unset_arguments(mocker):
-    fake_client = mocker.MagicMock()
-    client = BaseClient(url="url", http_client=fake_client)
+def test_execute_sends_payload_without_unset_arguments(httpx_mock):
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url")
     query_str = """
     query Abc($arg1: TestInputA, $arg2: String, $arg3: Float, $arg4: Int!) {
         abc(arg1: $arg1, arg2: $arg2, arg3: $arg3, arg4: $arg4){
@@ -112,16 +106,15 @@ def test_execute_sends_payload_without_unset_arguments(mocker):
 
     client.execute(query_str, {"arg1": UNSET, "arg2": UNSET, "arg3": None, "arg4": 2})
 
-    assert fake_client.post.called
-    assert len(fake_client.post.mock_calls) == 1
-    call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["json"] == {
+    request = httpx_mock.get_request()
+    content = json.loads(request.content)
+    assert content == {
         "query": query_str,
         "variables": {"arg3": None, "arg4": 2},
     }
 
 
-def test_execute_sends_payload_without_unset_input_fields(mocker):
+def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
     class TestInputB(BaseModel):
         required_b: str
         optional_b: Optional[str]
@@ -133,8 +126,8 @@ def test_execute_sends_payload_without_unset_input_fields(mocker):
         input_b2: Optional[TestInputB]
         input_b3: Optional[TestInputB]
 
-    fake_client = mocker.MagicMock()
-    client = BaseClient(url="url", http_client=fake_client)
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url")
     query_str = """
     query Abc($arg: TestInputB) {
         abc(arg: $arg){
@@ -152,10 +145,9 @@ def test_execute_sends_payload_without_unset_input_fields(mocker):
         },
     )
 
-    assert fake_client.post.called
-    assert len(fake_client.post.mock_calls) == 1
-    call_kwargs = fake_client.post.mock_calls[0].kwargs
-    assert call_kwargs["json"] == {
+    request = httpx_mock.get_request()
+    content = json.loads(request.content)
+    assert content == {
         "query": query_str,
         "variables": {
             "arg": {
@@ -165,6 +157,19 @@ def test_execute_sends_payload_without_unset_input_fields(mocker):
             }
         },
     }
+
+
+def test_execute_sends_payload_with_serialized_datetime_without_exception(httpx_mock):
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url")
+    query_str = "query Abc($arg: DATETIME) { abc }"
+    arg_value = datetime(2023, 12, 31, 10, 15)
+
+    client.execute(query_str, {"arg": arg_value})
+
+    request = httpx_mock.get_request()
+    content = json.loads(request.content)
+    assert content["variables"]["arg"] == arg_value.isoformat()
 
 
 @pytest.mark.parametrize(

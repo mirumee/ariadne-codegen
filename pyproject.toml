@@ -38,6 +38,7 @@ dev = [
   "types-toml",
   "pytest-mock",
   "pytest-asyncio",
+  "pytest-httpx",
   "freezegun",
 ]
 subscriptions = ["websockets~=11.0"]
