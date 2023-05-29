@@ -1,7 +1,9 @@
+import json
 from typing import Any, Dict, Optional, TypeVar, cast
 
 import httpx
 from pydantic import BaseModel
+from pydantic.json import pydantic_encoder
 
 from .base_model import UNSET
 from .exceptions import (
@@ -42,7 +44,8 @@ class BaseClient:
         payload: Dict[str, Any] = {"query": query}
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
-        return self.http_client.post(url=self.url, json=payload)
+        content = json.dumps(payload, default=pydantic_encoder)
+        return self.http_client.post(url=self.url, content=content)
 
     def get_data(self, response: httpx.Response) -> dict[str, Any]:
         if not response.is_success:

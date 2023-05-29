@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from typing import Optional
 
 import httpx
@@ -156,6 +157,19 @@ def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
             }
         },
     }
+
+
+def test_execute_sends_payload_with_serialized_datetime_without_exception(httpx_mock):
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url")
+    query_str = "query Abc($arg: DATETIME) { abc }"
+    arg_value = datetime(2023, 12, 31, 10, 15)
+
+    client.execute(query_str, {"arg": arg_value})
+
+    request = httpx_mock.get_request()
+    content = json.loads(request.content)
+    assert content["variables"]["arg"] == arg_value.isoformat()
 
 
 @pytest.mark.parametrize(
