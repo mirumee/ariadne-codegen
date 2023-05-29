@@ -9,7 +9,7 @@
 - Added `ShorterResultsPlugin` to standard plugins.
 - Fixed handling of inline fragments inside other fragments.
 - Changed generated unions to use pydantic's discriminated unions feature.
-- Used pydantic's `pydantic_encoder` to serialize `variables` dict.
+- Replaced HTTPX's `json=` serializer for query payloads with pydantic's `pydantic_encoder`.
 
 
 ## 0.6.0 (2023-04-18)
