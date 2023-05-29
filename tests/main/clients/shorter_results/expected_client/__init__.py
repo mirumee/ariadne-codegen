@@ -19,6 +19,12 @@ from .get_animal_by_name import (
 from .get_animal_fragment import GetAnimalFragment
 from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
+from .list_animals import (
+    ListAnimals,
+    ListAnimalsListAnimalsAnimal,
+    ListAnimalsListAnimalsCat,
+    ListAnimalsListAnimalsDog,
+)
 from .list_strings_1 import ListStrings1
 from .list_strings_2 import ListStrings2
 from .list_strings_3 import ListStrings3
@@ -45,6 +51,10 @@ __all__ = [
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
     "GraphQlClientInvalidResponseError",
+    "ListAnimals",
+    "ListAnimalsListAnimalsAnimal",
+    "ListAnimalsListAnimalsCat",
+    "ListAnimalsListAnimalsDog",
     "ListStrings1",
     "ListStrings2",
     "ListStrings3",

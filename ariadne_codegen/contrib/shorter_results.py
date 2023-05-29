@@ -361,17 +361,43 @@ def _update_node(node: ast.expr) -> tuple[ast.expr, List[str]]:
         return node, [node.id]
 
     if isinstance(node, ast.Subscript):
-        node.slice, node_ids = _update_node(node.slice)
+        child_node, node_ids = _update_node(node.slice)
+
+        # We don't want to keep annotations in the return type so if the node is
+        # an annotated subscript (which may come from something like interface
+        # discriminators), remove them.
+        if isinstance(node.value, ast.Name) and node.value.id == "Annotated":
+            return child_node, node_ids
+
+        node.slice = child_node
 
         return node, node_ids
 
     if isinstance(node, ast.Tuple):
+        # If the tuple is a two element tuple with the first element as a
+        # subscript and the second as a call expression calling `Field` it comes
+        # from a discriminator annotation which isn't needed as the return type.
+        # Just return the first node and its elements and drop the call
+        # expression.
+        if len(node.elts) == 2:
+            first_node, second_node = node.elts
+            if (
+                isinstance(first_node, ast.Subscript)
+                and isinstance(second_node, ast.Call)
+                and isinstance(second_node.func, ast.Name)
+                and second_node.func.id == "Field"
+            ):
+                return _update_node(first_node)
+
         all_node_ids = []
         for i, elt in enumerate(node.elts):
             node.elts[i], node_ids = _update_node(elt)
             all_node_ids.extend(node_ids)
 
         return node, all_node_ids
+
+    if isinstance(node, ast.expr):
+        return node, []
 
     return ast.expr(), []
 

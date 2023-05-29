@@ -39,6 +39,18 @@ query GetAnimalByName {
   }
 }
 
+query ListAnimals {
+  listAnimals {
+    name
+    ... on Cat {
+      kittens
+    }
+    ... on Dog {
+      puppies
+    }
+  }
+}
+
 query GetAnimalFragment {
   ...AnimalFragment
 }

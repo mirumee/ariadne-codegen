@@ -12,6 +12,12 @@ from .get_animal_by_name import (
 from .get_animal_fragment import GetAnimalFragment
 from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
+from .list_animals import (
+    ListAnimals,
+    ListAnimalsListAnimalsAnimal,
+    ListAnimalsListAnimalsCat,
+    ListAnimalsListAnimalsDog,
+)
 from .list_strings_1 import ListStrings1
 from .list_strings_2 import ListStrings2
 from .list_strings_3 import ListStrings3
@@ -135,6 +141,36 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetAnimalByName.parse_obj(data).animal_by_name
+
+    async def list_animals(
+        self,
+    ) -> List[
+        Union[
+            ListAnimalsListAnimalsAnimal,
+            ListAnimalsListAnimalsCat,
+            ListAnimalsListAnimalsDog,
+        ]
+    ]:
+        query = gql(
+            """
+            query ListAnimals {
+              listAnimals {
+                __typename
+                name
+                ... on Cat {
+                  kittens
+                }
+                ... on Dog {
+                  puppies
+                }
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return ListAnimals.parse_obj(data).list_animals
 
     async def get_animal_fragment(self) -> str:
         query = gql(
