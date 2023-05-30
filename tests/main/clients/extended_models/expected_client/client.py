@@ -12,7 +12,7 @@ class Client(AsyncBaseClient):
         query = gql(
             """
             query getQueryA {
-              queryA @mixin(from: ".mixins_a", import: "MixinA") @mixin(from: ".common_mixins", import: "CommonMixin") {
+              queryA {
                 fieldA
               }
             }
@@ -27,7 +27,7 @@ class Client(AsyncBaseClient):
         query = gql(
             """
             query getQueryB {
-              queryB @mixin(from: ".mixins_b", import: "MixinB") @mixin(from: ".common_mixins", import: "CommonMixin") {
+              queryB {
                 fieldB
               }
             }
