@@ -33,6 +33,7 @@ type Query {
 
   me: User!
 
+  listAnimals: [Animal!]!
   animalByName(name: String!): Animal!
 
   justAScalar: MyScalar!

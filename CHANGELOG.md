@@ -11,6 +11,7 @@
 - Changed generated unions to use pydantic's discriminated unions feature.
 - Replaced HTTPX's `json=` serializer for query payloads with pydantic's `pydantic_encoder`.
 - Removed `mixin` directive from operation string sent to server.
+- Fixed `ShorterResultsPlugin` that generated faulty code for discriminated unions.
 
 
 ## 0.6.0 (2023-04-18)
