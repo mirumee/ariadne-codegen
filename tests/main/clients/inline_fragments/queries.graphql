@@ -90,7 +90,6 @@ query UnionWithTypename {
   }
 }
 
-
 query queryWithFragmentOnInterface {
   queryI {
     ...fragmentOnInterface
@@ -153,4 +152,33 @@ fragment FragmentOnQueryWithUnion on Query {
       fieldB
     }
   }
+}
+
+fragment unusedFragmentOnInterface on Interface {
+  id
+  ... on TypeA {
+    fieldA
+  }
+  ... on TypeB {
+    fieldB
+  }
+}
+
+fragment unusedFragmentOnUnion on Union {
+  id
+  ... on TypeA {
+    fieldA
+  }
+  ... on TypeB {
+    fieldB
+  }
+}
+
+fragment unusedFragmentOnUnionWithoutInlineFragments on Union {
+  id
+}
+
+fragment unusedFragmentOnTypeA on TypeA {
+  id
+  fieldA
 }

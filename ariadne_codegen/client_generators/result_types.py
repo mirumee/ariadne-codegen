@@ -15,6 +15,7 @@ from graphql import (
     GraphQLObjectType,
     GraphQLScalarType,
     GraphQLSchema,
+    GraphQLUnionType,
     InlineFragmentNode,
     NameNode,
     OperationDefinitionNode,
@@ -109,11 +110,17 @@ class ResultTypesGenerator:
         self._fragments_used_as_mixins: Set[str] = set()
         self._unpacked_fragments: Set[str] = set()
 
-        self._class_defs = self._parse_type_definition(
-            class_name=str_to_pascal_case(self._operation_name),
-            type_name=self._get_operation_type_name(self.operation_definition),
-            selection_set=self.operation_definition.selection_set,
-        )
+        if isinstance(
+            self.operation_definition, FragmentDefinitionNode
+        ) and self._unpack_fragment(self.operation_definition):
+            self._class_defs = []
+        else:
+            self._class_defs = self._parse_type_definition(
+                class_name=str_to_pascal_case(self._operation_name),
+                type_name=self._get_operation_type_name(self.operation_definition),
+                selection_set=self.operation_definition.selection_set,
+            )
+
         self._add_enums_scalars_fragments_imports()
 
     def _get_operation_type_name(self, definition: ExecutableDefinitionNode) -> str:
@@ -309,6 +316,11 @@ class ResultTypesGenerator:
         return fields, fragments
 
     def _unpack_fragment(self, fragment_def: FragmentDefinitionNode) -> bool:
+        if fragment_def.name and isinstance(
+            self.schema.type_map.get(fragment_def.type_condition.name.value),
+            GraphQLUnionType,
+        ):
+            return True
         for fragment_selection in fragment_def.selection_set.selections:
             if isinstance(fragment_selection, InlineFragmentNode):
                 return True
