@@ -120,3 +120,56 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
     assert set(generator.get_generated_public_names()) == {
         c.name for c in expected_class_defs
     }
+
+
+def test_get_classes_returns_empty_list_for_fragment_on_union():
+    fragment_str = """
+        fragment TestFragment on UnionType {
+            ... on CustomType1 {
+                fielda
+            }
+            ... on CustomType2 {
+                fieldb
+            }
+        }
+    """
+    fragment_definition = cast(
+        FragmentDefinitionNode, parse(fragment_str).definitions[0]
+    )
+    generator = ResultTypesGenerator(
+        schema=build_schema(SCHEMA_STR),
+        operation_definition=fragment_definition,
+        enums_module_name="enums",
+        fragments_definitions={"TestFragment": fragment_definition},
+    )
+
+    generated_class_defs = generator.get_classes()
+
+    assert not generated_class_defs
+
+
+def test_get_classes_returns_empty_list_for_fragment_with_inline_fragments():
+    fragment_str = """
+        fragment TestFragment on InterfaceI {
+            id
+            ... on TypeA {
+                fieldA
+            }
+            ... on TypeB {
+                fieldB
+            }
+        }
+    """
+    fragment_definition = cast(
+        FragmentDefinitionNode, parse(fragment_str).definitions[0]
+    )
+    generator = ResultTypesGenerator(
+        schema=build_schema(SCHEMA_STR),
+        operation_definition=fragment_definition,
+        enums_module_name="enums",
+        fragments_definitions={"TestFragment": fragment_definition},
+    )
+
+    generated_class_defs = generator.get_classes()
+
+    assert not generated_class_defs

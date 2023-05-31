@@ -17,6 +17,7 @@ from .fragments import (
     FragmentOnQueryWithUnionQueryUTypeA,
     FragmentOnQueryWithUnionQueryUTypeB,
     FragmentOnQueryWithUnionQueryUTypeC,
+    UnusedFragmentOnTypeA,
 )
 from .interface_a import (
     InterfaceA,
@@ -127,4 +128,5 @@ __all__ = [
     "UnionWithTypenameQueryUTypeA",
     "UnionWithTypenameQueryUTypeB",
     "UnionWithTypenameQueryUTypeC",
+    "UnusedFragmentOnTypeA",
 ]

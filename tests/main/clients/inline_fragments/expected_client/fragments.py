@@ -55,6 +55,11 @@ class FragmentOnQueryWithUnionQueryUTypeC(BaseModel):
     id: str
 
 
+class UnusedFragmentOnTypeA(BaseModel):
+    id: str
+    field_a: str = Field(alias="fieldA")
+
+
 FragmentOnQueryWithInterface.update_forward_refs()
 FragmentOnQueryWithInterfaceQueryIInterface.update_forward_refs()
 FragmentOnQueryWithInterfaceQueryITypeA.update_forward_refs()
@@ -63,3 +68,4 @@ FragmentOnQueryWithUnion.update_forward_refs()
 FragmentOnQueryWithUnionQueryUTypeA.update_forward_refs()
 FragmentOnQueryWithUnionQueryUTypeB.update_forward_refs()
 FragmentOnQueryWithUnionQueryUTypeC.update_forward_refs()
+UnusedFragmentOnTypeA.update_forward_refs()
