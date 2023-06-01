@@ -25,6 +25,7 @@ class BaseSettings:
     remote_schema_url: Optional[str] = None
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
+    plugins: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:
@@ -54,7 +55,6 @@ class ClientSettings(BaseSettings):
     convert_to_snake_case: bool = True
     async_client: bool = True
     files_to_include: List[str] = field(default_factory=list)
-    plugins: List[str] = field(default_factory=list)
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -156,6 +156,12 @@ class GraphQLSchemaSettings(BaseSettings):
 
     @property
     def used_settings_message(self):
+        plugins_list = ",".join(self.plugins)
+        plugins_msg = (
+            f"Plugins to use: {plugins_list}"
+            if self.plugins
+            else "No plugin is being used."
+        )
         return dedent(
             f"""\
             Selected strategy: {Strategy.GRAPHQL_SCHEMA}
@@ -163,6 +169,7 @@ class GraphQLSchemaSettings(BaseSettings):
             Saving graphql schema to: {self.target_file_path}.
             Using {self.schema_variable_name} as variable name for schema.
             Using {self.type_map_variable_name} as variable name for type map.
+            {plugins_msg}
             """
         )
 
