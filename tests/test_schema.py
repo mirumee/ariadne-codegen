@@ -29,7 +29,13 @@ SECOND_SCHEMA = """
     }
 """
 
-INCORRECT_SCHEMA = """
+INVALID_SCHEMA = """
+    type Query {
+        test: String! @unknownDirective
+    }
+"""
+
+INVALID_SYNTAX_SCHEMA = """
     type Query {
         test: Custom
 
@@ -93,9 +99,16 @@ def single_file_schema(tmp_path_factory):
 
 
 @pytest.fixture
-def incorrect_schema_file(tmp_path_factory):
+def invalid_schema_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("schema").joinpath("schema.graphql")
-    file_.write_text(INCORRECT_SCHEMA, encoding="utf-8")
+    file_.write_text(INVALID_SCHEMA, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def invalid_syntax_schema_file(tmp_path_factory):
+    file_ = tmp_path_factory.mktemp("schema").joinpath("schema.graphql")
+    file_.write_text(INVALID_SYNTAX_SCHEMA, encoding="utf-8")
     return file_
 
 
@@ -155,11 +168,11 @@ def test_read_graphql_file_returns_content_of_file(single_file_schema):
 
 
 def test_read_graphql_file_with_invalid_file_raises_invalid_graphql_syntax_exception(
-    incorrect_schema_file,
+    invalid_syntax_schema_file,
 ):
     with pytest.raises(InvalidGraphqlSyntax) as exc:
-        read_graphql_file(incorrect_schema_file)
-    assert str(incorrect_schema_file) in str(exc)
+        read_graphql_file(invalid_syntax_schema_file)
+    assert str(invalid_syntax_schema_file) in str(exc)
 
 
 def test_walk_graphql_files_returns_graphql_files_from_directory(schemas_directory):
@@ -200,20 +213,25 @@ def test_load_graphql_files_from_path_returns_schema_from_nested_directory(
 
 @pytest.mark.parametrize(
     "path_fixture",
-    ["single_file_schema", "schemas_directory", "schemas_nested_directories"],
+    [
+        "single_file_schema",
+        "invalid_schema_file",
+        "schemas_directory",
+        "schemas_nested_directories",
+    ],
     indirect=True,
 )
-def test_get_graphql_schema_returns_graphql_schema(path_fixture):
+def test_get_graphql_schema_from_path_returns_graphql_schema(path_fixture):
     assert isinstance(
         get_graphql_schema_from_path(path_fixture.as_posix()), GraphQLSchema
     )
 
 
-def test_get_graphql_schema_with_invalid_schema_raises_invalid_graphql_syntax_exception(
-    incorrect_schema_file,
+def test_get_graphql_schema_from_path_with_invalid_syntax_raises_invalid_graphql_syntax(
+    invalid_syntax_schema_file,
 ):
     with pytest.raises(InvalidGraphqlSyntax):
-        get_graphql_schema_from_path(incorrect_schema_file.as_posix())
+        get_graphql_schema_from_path(invalid_syntax_schema_file.as_posix())
 
 
 def test_introspect_remote_schema_called_with_invalid_url_raises_introspection_error(

@@ -44,7 +44,8 @@ def get_graphql_schema_from_url(
     url: str, headers: Optional[Dict[str, str]] = None, verify_ssl: bool = True
 ) -> GraphQLSchema:
     return build_client_schema(
-        introspect_remote_schema(url=url, headers=headers, verify_ssl=verify_ssl)
+        introspect_remote_schema(url=url, headers=headers, verify_ssl=verify_ssl),
+        assume_valid=True,
     )
 
 
@@ -90,8 +91,7 @@ def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
     """Get graphql schema build from provided path."""
     schema_str = load_graphql_files_from_path(Path(schema_path))
     graphql_ast = parse(schema_str)
-    schema: GraphQLSchema = build_ast_schema(graphql_ast)
-    assert_valid_schema(schema)
+    schema: GraphQLSchema = build_ast_schema(graphql_ast, assume_valid=True)
     return schema
 
 

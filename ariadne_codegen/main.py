@@ -1,6 +1,7 @@
 import sys
 
 import click
+from graphql import assert_valid_schema
 
 from .client_generators.package import PackageGenerator
 from .config import get_client_settings, get_config_dict, get_graphql_schema_settings
@@ -47,6 +48,7 @@ def client(config_dict):
             verify_ssl=settings.remote_schema_verify_ssl,
         )
         schema_source = settings.remote_schema_url
+    assert_valid_schema(schema)
 
     definitions = get_graphql_queries(settings.queries_path)
     queries = filter_operations_definitions(definitions)
@@ -98,6 +100,7 @@ def graphql_schema(config_dict):
             verify_ssl=settings.remote_schema_verify_ssl,
         )
     )
+    assert_valid_schema(schema)
 
     generate_graphql_schema_file(
         schema=schema,
