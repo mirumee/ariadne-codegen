@@ -14,6 +14,7 @@
 - Fixed `ShorterResultsPlugin` that generated faulty code for discriminated unions.
 - Changed generator to ignore unused fragments which should be unpacked in queries.
 - Changed type hints for parse and serialize methods of scalars to `typing.Any`.
+- Added `process_schema` plugin hook.
 
 
 ## 0.6.0 (2023-04-18)
