@@ -9,7 +9,6 @@ from graphql import (
     GraphQLSyntaxError,
     IntrospectionQuery,
     OperationDefinitionNode,
-    assert_valid_schema,
     build_ast_schema,
     build_client_schema,
     get_introspection_query,
