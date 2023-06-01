@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.7.0 (2023-06-01)
 
 - Added support for subscriptions as async generators.
 - Changed how fragments are handled to generate separate module with fragments as mixins.
