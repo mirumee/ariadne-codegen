@@ -202,3 +202,13 @@ class PluginManager:
             module,
             fragments_definitions=fragments_definitions,
         )
+
+    def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
+        processed_schema = schema
+        for plugin in self.plugins:
+            processed_schema = plugin.process_schema(processed_schema)
+
+            for plugin in self.plugins:
+                plugin.schema = processed_schema
+
+        return processed_schema
