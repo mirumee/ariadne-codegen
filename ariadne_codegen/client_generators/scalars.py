@@ -120,14 +120,14 @@ class ScalarsDefinitionsGenerator:
                         name=SCALARS_PARSE_DICT_NAME,
                         dict_=self._parse_dict,
                         callable_annotation=generate_tuple(
-                            [generate_list([generate_name("str")]), generate_name(ANY)]
+                            [generate_list([generate_name(ANY)]), generate_name(ANY)]
                         ),
                     ),
                     self._generate_dict_assignment(
                         name=SCALARS_SERIALIZE_DICT_NAME,
                         dict_=self._serialize_dict,
                         callable_annotation=generate_tuple(
-                            [generate_list([generate_name(ANY)]), generate_name("str")]
+                            [generate_list([generate_name(ANY)]), generate_name(ANY)]
                         ),
                     ),
                 ],
