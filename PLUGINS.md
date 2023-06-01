@@ -304,6 +304,7 @@ def generate_fragments_module(
 
 Hook executed on generation of fragments module. Module has classes representing all fragments from provided queries. Later this module will be saved as `{fragments_module_name}.py`, `fragments_module_name` is taken from config.
 
+
 ### process_schema
 
 ```py
