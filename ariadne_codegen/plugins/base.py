@@ -158,3 +158,6 @@ class Plugin:
         fragments_definitions: Dict[str, FragmentDefinitionNode],
     ) -> ast.Module:
         return module
+
+    def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
+        return schema

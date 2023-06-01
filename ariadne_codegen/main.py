@@ -38,6 +38,7 @@ def main(strategy=Strategy.CLIENT, config=None):
 
 def client(config_dict):
     settings = get_client_settings(config_dict)
+
     if settings.schema_path:
         schema = get_graphql_schema_from_path(settings.schema_path)
         schema_source = settings.schema_path
@@ -48,6 +49,13 @@ def client(config_dict):
             verify_ssl=settings.remote_schema_verify_ssl,
         )
         schema_source = settings.remote_schema_url
+
+    plugin_manager = PluginManager(
+        schema=schema,
+        config_dict=config_dict,
+        plugins_types=get_plugins_types(settings.plugins),
+    )
+    schema = plugin_manager.process_schema(schema)
     assert_valid_schema(schema)
 
     definitions = get_graphql_queries(settings.queries_path)
@@ -74,11 +82,7 @@ def client(config_dict):
         async_client=settings.async_client,
         files_to_include=settings.files_to_include,
         custom_scalars=settings.scalars,
-        plugin_manager=PluginManager(
-            schema=schema,
-            config_dict=config_dict,
-            plugins_types=get_plugins_types(settings.plugins),
-        ),
+        plugin_manager=plugin_manager,
     )
     for query in queries:
         package_generator.add_operation(query)
@@ -89,7 +93,6 @@ def client(config_dict):
 
 def graphql_schema(config_dict):
     settings = get_graphql_schema_settings(config_dict)
-    sys.stdout.write(settings.used_settings_message)
 
     schema = (
         get_graphql_schema_from_path(settings.schema_path)
@@ -100,7 +103,15 @@ def graphql_schema(config_dict):
             verify_ssl=settings.remote_schema_verify_ssl,
         )
     )
+    plugin_manager = PluginManager(
+        schema=schema,
+        config_dict=config_dict,
+        plugins_types=get_plugins_types(settings.plugins),
+    )
+    schema = plugin_manager.process_schema(schema)
     assert_valid_schema(schema)
+
+    sys.stdout.write(settings.used_settings_message)
 
     generate_graphql_schema_file(
         schema=schema,

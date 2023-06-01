@@ -304,6 +304,15 @@ def generate_fragments_module(
 
 Hook executed on generation of fragments module. Module has classes representing all fragments from provided queries. Later this module will be saved as `{fragments_module_name}.py`, `fragments_module_name` is taken from config.
 
+### process_schema
+
+```py
+def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
+```
+
+Hook executed on creating `GraphQLSchema` object from path or url provided in settings. During parsing `assume_valid` is set to `True`. Then this hook is called, and only after that `graphql.assert_valid_schema` is used to validate schema.
+To ensure all plugins have current version of schema, result of this hook is propagated to all plugins, updating their `schema` field. 
+
 
 ## Example
 

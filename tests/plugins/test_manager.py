@@ -342,3 +342,39 @@ def test_generate_fragments_module_calls_plugins_generate_fragments_module(
     plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
     assert plugin1.generate_fragments_module.called
     assert plugin2.generate_fragments_module.called
+
+
+def test_process_schema_calls_plugins_process_schema(
+    plugin_manager_with_mocked_plugins,
+):
+    plugin_manager_with_mocked_plugins.process_schema(GraphQLSchema())
+
+    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
+    assert plugin1.process_schema.called
+    assert plugin2.process_schema.called
+
+
+def test_process_schema_updates_plugins_schema_field():
+    class SchemaPugin(Plugin):
+        def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
+            return GraphQLSchema()
+
+    class DumbPlugin(Plugin):
+        pass
+
+    org_schema = GraphQLSchema()
+    manager = PluginManager(
+        schema=org_schema,
+        plugins_types=[DumbPlugin, SchemaPugin, DumbPlugin],
+    )
+
+    dumb_plugin1, schema_plugin, dump_plugin2 = manager.plugins
+    assert dumb_plugin1.schema is org_schema
+    assert dump_plugin2.schema is org_schema
+    assert schema_plugin.schema is org_schema
+
+    manager.process_schema(org_schema)
+
+    assert dumb_plugin1.schema is not org_schema
+    assert dump_plugin2.schema is not org_schema
+    assert schema_plugin.schema is not org_schema
