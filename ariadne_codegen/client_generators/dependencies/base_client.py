@@ -45,7 +45,9 @@ class BaseClient:
         if variables:
             payload["variables"] = self._convert_dict_to_json_serializable(variables)
         content = json.dumps(payload, default=pydantic_encoder)
-        return self.http_client.post(url=self.url, content=content)
+        return self.http_client.post(
+            url=self.url, content=content, headers={"Content-Type": "application/json"}
+        )
 
     def get_data(self, response: httpx.Response) -> dict[str, Any]:
         if not response.is_success:
