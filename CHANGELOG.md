@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## UNRELEASED
+
+- Fixed `AsyncBaseClient` and `BaseClient` to send `Content-Type` header with requests.
+
+
 ## 0.7.0 (2023-06-01)
 
 - Added support for subscriptions as async generators.

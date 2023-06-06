@@ -172,6 +172,27 @@ def test_execute_sends_payload_with_serialized_datetime_without_exception(httpx_
     assert content["variables"]["arg"] == arg_value.isoformat()
 
 
+def test_execute_sends_request_with_correct_content_type(httpx_mock):
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url")
+
+    client.execute("query Abc { abc }", {})
+
+    request = httpx_mock.get_request()
+    assert request.headers["Content-Type"] == "application/json"
+
+
+def test_execute_sends_request_with_extra_headers_and_correct_content_type(httpx_mock):
+    httpx_mock.add_response()
+    client = BaseClient(url="http://base_url", headers={"h_key": "h_value"})
+
+    client.execute("query Abc { abc }", {})
+
+    request = httpx_mock.get_request()
+    assert request.headers["h_key"] == "h_value"
+    assert request.headers["Content-Type"] == "application/json"
+
+
 @pytest.mark.parametrize(
     "status_code, response_content",
     [
