@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.7.1 (2023-06-06)
 
 - Fixed `AsyncBaseClient` and `BaseClient` to send `Content-Type` header with requests.
 
