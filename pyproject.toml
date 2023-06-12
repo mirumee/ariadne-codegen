@@ -8,6 +8,7 @@ description = "Generate fully typed GraphQL client from schema, queries and muta
 authors = [{ name = "Mirumee Software", email = "hello@mirumee.com" }]
 version = "0.7.1"
 readme = "README.md"
+license = { file = "LICENSE" }
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -76,9 +77,5 @@ profile = "black"
 include = [
   "ariadne_codegen/**/*.py",
   "ariadne_codegen/py.typed",
-  "LICENSE",
-  "README.md",
-  "EXAMPLE.md",
-  "pyproject.toml",
 ]
 exclude = ["tests"]
