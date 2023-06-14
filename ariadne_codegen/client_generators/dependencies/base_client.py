@@ -1,5 +1,6 @@
+import io
 import json
-from typing import Any, Dict, Optional, TypeVar, cast
+from typing import Any, Dict, List, Optional, Tuple, TypeVar, cast
 
 import httpx
 from pydantic import BaseModel
@@ -41,13 +42,16 @@ class BaseClient:
     def execute(
         self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> httpx.Response:
-        payload: Dict[str, Any] = {"query": query}
-        if variables:
-            payload["variables"] = self._convert_dict_to_json_serializable(variables)
-        content = json.dumps(payload, default=pydantic_encoder)
-        return self.http_client.post(
-            url=self.url, content=content, headers={"Content-Type": "application/json"}
-        )
+        processed_variables, files_to_paths_map = self._process_variables(variables)
+        payload: Dict[str, Any] = {"query": query, "variables": processed_variables}
+
+        if files_to_paths_map:
+            return self._execute_multipart(
+                payload=payload,
+                files_to_paths_map=files_to_paths_map,
+            )
+
+        return self._execute_json(payload=payload)
 
     def get_data(self, response: httpx.Response) -> dict[str, Any]:
         if not response.is_success:
@@ -73,12 +77,14 @@ class BaseClient:
 
         return cast(dict[str, Any], data)
 
-    def _convert_value(self, value: Any) -> Any:
-        if isinstance(value, BaseModel):
-            return value.dict(by_alias=True, exclude_unset=True)
-        if isinstance(value, list):
-            return [self._convert_value(item) for item in value]
-        return value
+    def _process_variables(
+        self, variables: Optional[Dict[str, Any]]
+    ) -> Tuple[Dict[str, Any], Dict[io.IOBase, List[str]]]:
+        if not variables:
+            return {}, {}
+
+        serializable_variables = self._convert_dict_to_json_serializable(variables)
+        return self._get_files_from_variables(serializable_variables)
 
     def _convert_dict_to_json_serializable(
         self, dict_: Dict[str, Any]
@@ -88,3 +94,68 @@ class BaseClient:
             for key, value in dict_.items()
             if value is not UNSET
         }
+
+    def _convert_value(self, value: Any) -> Any:
+        if isinstance(value, BaseModel):
+            return value.dict(by_alias=True, exclude_unset=True)
+        if isinstance(value, list):
+            return [self._convert_value(item) for item in value]
+        return value
+
+    def _get_files_from_variables(
+        self, variables: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[io.IOBase, List[str]]]:
+        files_to_paths_map: Dict[io.IOBase, List[str]] = {}
+
+        def separate_files(path: str, obj: Any) -> Any:
+            if isinstance(obj, list):
+                nulled_list = []
+                for index, value in enumerate(obj):
+                    value = separate_files(f"{path}.{index}", value)
+                    nulled_list.append(value)
+                return nulled_list
+
+            if isinstance(obj, dict):
+                nulled_dict = {}
+                for key, value in obj.items():
+                    value = separate_files(f"{path}.{key}", value)
+                    nulled_dict[key] = value
+                return nulled_dict
+
+            if isinstance(obj, io.IOBase):
+                if obj in files_to_paths_map:
+                    files_to_paths_map[obj].append(path)
+                else:
+                    files_to_paths_map[obj] = [path]
+                return None
+
+            return obj
+
+        nulled_variables = separate_files("variables", variables)
+        return nulled_variables, files_to_paths_map
+
+    def _execute_multipart(
+        self,
+        payload: Dict[str, Any],
+        files_to_paths_map: Dict[io.IOBase, List[str]],
+    ) -> httpx.Response:
+        files_map: Dict[str, List[str]] = {
+            str(i): files_to_paths_map[file_]
+            for i, file_ in enumerate(files_to_paths_map.keys())
+        }
+        files: Dict[str, io.IOBase] = {
+            str(i): file_ for i, file_ in enumerate(files_to_paths_map.keys())
+        }
+
+        data = {
+            "operations": json.dumps(payload, default=pydantic_encoder),
+            "map": json.dumps(files_map, default=pydantic_encoder),
+        }
+
+        return self.http_client.post(url=self.url, data=data, files=files)
+
+    def _execute_json(self, payload: Dict[str, Any]) -> httpx.Response:
+        content = json.dumps(payload, default=pydantic_encoder)
+        return self.http_client.post(
+            url=self.url, content=content, headers={"Content-Type": "application/json"}
+        )
