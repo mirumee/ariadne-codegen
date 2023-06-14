@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 import httpx
 import pytest
@@ -15,6 +15,8 @@ from ariadne_codegen.client_generators.dependencies.exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+
+from ...utils import decode_multipart_request
 
 
 @pytest.mark.asyncio
@@ -208,6 +210,144 @@ async def test_execute_sends_request_with_extra_headers_and_correct_content_type
     request = httpx_mock.get_request()
     assert request.headers["h_key"] == "h_value"
     assert request.headers["Content-Type"] == "application/json"
+
+
+@pytest.mark.asyncio
+async def test_execute_sends_file_with_multipart_form_data_content_type(
+    httpx_mock, txt_file
+):
+    httpx_mock.add_response()
+    client = AsyncBaseClient(url="http://base_url")
+
+    await client.execute(
+        "query Abc($file: Upload!) { abc(file: $file) }",
+        {"file": open(txt_file, "rb")},
+    )
+
+    request = httpx_mock.get_request()
+    assert "multipart/form-data" in request.headers["Content-Type"]
+
+@pytest.mark.asyncio
+async def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
+    httpx_mock.add_response()
+    query_str = "query Abc($file: Upload!) { abc(file: $file) }"
+
+    client = AsyncBaseClient(url="http://base_url")
+    await client.execute(query_str, {"file": open(txt_file, "rb")})
+
+    request = httpx_mock.get_request()
+    request.read()
+    assert "multipart/form-data" in request.headers["Content-Type"]
+    sent_parts = decode_multipart_request(request)
+
+    assert sent_parts["operations"]
+    decoded_operations = json.loads(sent_parts["operations"].content)
+    assert decoded_operations == {"query": query_str, "variables": {"file": None}}
+
+    assert sent_parts["map"]
+    decoded_map = json.loads(sent_parts["map"].content)
+    assert decoded_map == {"0": ["variables.file"]}
+
+    assert sent_parts["0"]
+    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].content == b"abcdefgh"
+
+
+@pytest.mark.asyncio
+async def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
+    httpx_mock.add_response()
+    query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
+
+    client = AsyncBaseClient(url="http://base_url")
+    await client.execute(
+        query_str, {"files": [open(txt_file, "rb"), open(png_file, "rb")]}
+    )
+
+    request = httpx_mock.get_request()
+    request.read()
+    assert "multipart/form-data" in request.headers["Content-Type"]
+    sent_parts = decode_multipart_request(request)
+
+    assert sent_parts["operations"]
+    decoded_operations = json.loads(sent_parts["operations"].content)
+    assert decoded_operations == {
+        "query": query_str,
+        "variables": {"files": [None, None]},
+    }
+
+    assert sent_parts["map"]
+    decoded_map = json.loads(sent_parts["map"].content)
+    assert decoded_map == {"0": ["variables.files.0"], "1": ["variables.files.1"]}
+
+    assert sent_parts["0"]
+    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].content == b"abcdefgh"
+
+    assert sent_parts["1"]
+    assert sent_parts["1"].headers[b"Content-Type"] == b"image/png"
+    assert sent_parts["1"].content == b"image_content"
+
+
+@pytest.mark.asyncio
+async def test_execute_sends_nested_file(httpx_mock, txt_file):
+    class InputType(BaseModel):
+        file_: Any
+
+    httpx_mock.add_response()
+    query_str = "query Abc($input: InputType!) { abc(input: $input) }"
+
+    client = AsyncBaseClient(url="http://base_url")
+    await client.execute(query_str, {"input": InputType(file_=open(txt_file, "rb"))})
+
+    request = httpx_mock.get_request()
+    request.read()
+    assert "multipart/form-data" in request.headers["Content-Type"]
+    sent_parts = decode_multipart_request(request)
+
+    assert sent_parts["operations"]
+    decoded_operations = json.loads(sent_parts["operations"].content)
+    assert decoded_operations == {
+        "query": query_str,
+        "variables": {"input": {"file_": None}},
+    }
+
+    assert sent_parts["map"]
+    decoded_map = json.loads(sent_parts["map"].content)
+    assert decoded_map == {"0": ["variables.input.file_"]}
+
+    assert sent_parts["0"]
+    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].content == b"abcdefgh"
+
+
+@pytest.mark.asyncio
+async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
+    httpx_mock.add_response()
+    query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
+
+    client = AsyncBaseClient(url="http://base_url")
+    file_ = open(txt_file, "rb")
+    await client.execute(query_str, {"files": [file_, file_]})
+
+    request = httpx_mock.get_request()
+    request.read()
+    assert "multipart/form-data" in request.headers["Content-Type"]
+    sent_parts = decode_multipart_request(request)
+
+    assert sent_parts["operations"]
+    decoded_operations = json.loads(sent_parts["operations"].content)
+    assert decoded_operations == {
+        "query": query_str,
+        "variables": {"files": [None, None]},
+    }
+
+    assert sent_parts["map"]
+    decoded_map = json.loads(sent_parts["map"].content)
+    assert decoded_map == {"0": ["variables.files.0", "variables.files.1"]}
+
+    assert sent_parts["0"]
+    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].content == b"abcdefgh"
 
 
 @pytest.mark.parametrize(
