@@ -1,6 +1,6 @@
 import io
 import json
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, cast
+from typing import IO, Any, Dict, List, Optional, Tuple, TypeVar, cast
 
 import httpx
 from pydantic import BaseModel
@@ -79,7 +79,7 @@ class BaseClient:
 
     def _process_variables(
         self, variables: Optional[Dict[str, Any]]
-    ) -> Tuple[Dict[str, Any], Dict[io.IOBase, List[str]]]:
+    ) -> Tuple[Dict[str, Any], Dict[IO[bytes], List[str]]]:
         if not variables:
             return {}, {}
 
@@ -104,8 +104,8 @@ class BaseClient:
 
     def _get_files_from_variables(
         self, variables: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[io.IOBase, List[str]]]:
-        files_to_paths_map: Dict[io.IOBase, List[str]] = {}
+    ) -> Tuple[Dict[str, Any], Dict[IO[bytes], List[str]]]:
+        files_to_paths_map: Dict[IO[bytes], List[str]] = {}
 
         def separate_files(path: str, obj: Any) -> Any:
             if isinstance(obj, list):
@@ -122,11 +122,12 @@ class BaseClient:
                     nulled_dict[key] = value
                 return nulled_dict
 
-            if isinstance(obj, io.IOBase):
-                if obj in files_to_paths_map:
-                    files_to_paths_map[obj].append(path)
+            if isinstance(obj, io.IOBase) and "b" in getattr(obj, "mode", "b"):
+                checked_obj = cast(IO[bytes], obj)
+                if checked_obj in files_to_paths_map:
+                    files_to_paths_map[checked_obj].append(path)
                 else:
-                    files_to_paths_map[obj] = [path]
+                    files_to_paths_map[checked_obj] = [path]
                 return None
 
             return obj
@@ -137,13 +138,13 @@ class BaseClient:
     def _execute_multipart(
         self,
         payload: Dict[str, Any],
-        files_to_paths_map: Dict[io.IOBase, List[str]],
+        files_to_paths_map: Dict[IO[bytes], List[str]],
     ) -> httpx.Response:
         files_map: Dict[str, List[str]] = {
             str(i): files_to_paths_map[file_]
             for i, file_ in enumerate(files_to_paths_map.keys())
         }
-        files: Dict[str, io.IOBase] = {
+        files: Dict[str, IO[bytes]] = {
             str(i): file_ for i, file_ in enumerate(files_to_paths_map.keys())
         }
 

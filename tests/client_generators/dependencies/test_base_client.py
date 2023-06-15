@@ -197,12 +197,9 @@ def test_execute_sends_request_with_extra_headers_and_correct_content_type(httpx
 
 def test_execute_sends_file_with_multipart_form_data_content_type(httpx_mock, txt_file):
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url")
 
-    client.execute(
-        "query Abc($file: Upload!) { abc(file: $file) }",
-        {"file": open(txt_file, "rb")},
-    )
+    client = BaseClient(url="http://base_url")
+    client.execute("query Abc($file: Upload!) { abc(file: $file) }", {"file": txt_file})
 
     request = httpx_mock.get_request()
     assert "multipart/form-data" in request.headers["Content-Type"]
@@ -213,7 +210,7 @@ def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
     query_str = "query Abc($file: Upload!) { abc(file: $file) }"
 
     client = BaseClient(url="http://base_url")
-    client.execute(query_str, {"file": open(txt_file, "rb")})
+    client.execute(query_str, {"file": txt_file})
 
     request = httpx_mock.get_request()
     request.read()
@@ -238,7 +235,7 @@ def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
     query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
 
     client = BaseClient(url="http://base_url")
-    client.execute(query_str, {"files": [open(txt_file, "rb"), open(png_file, "rb")]})
+    client.execute(query_str, {"files": [txt_file, png_file]})
 
     request = httpx_mock.get_request()
     request.read()
@@ -273,7 +270,7 @@ def test_execute_sends_nested_file(httpx_mock, txt_file):
     query_str = "query Abc($input: InputType!) { abc(input: $input) }"
 
     client = BaseClient(url="http://base_url")
-    client.execute(query_str, {"input": InputType(file_=open(txt_file, "rb"))})
+    client.execute(query_str, {"input": InputType(file_=txt_file)})
 
     request = httpx_mock.get_request()
     request.read()
@@ -301,8 +298,7 @@ def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
     query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
 
     client = BaseClient(url="http://base_url")
-    file_ = open(txt_file, "rb")
-    client.execute(query_str, {"files": [file_, file_]})
+    client.execute(query_str, {"files": [txt_file, txt_file]})
 
     request = httpx_mock.get_request()
     request.read()
