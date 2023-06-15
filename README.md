@@ -124,6 +124,11 @@ client = Client(http_client=CustomComplexHttpClient())
 To handle subscriptions, default `AsyncBaseClient` uses [websockets](https://github.com/python-websockets/websockets) and implements [graphql-transport-ws](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md) subprotocol. Arguments `ws_origin` and `ws_headers` are added as headers to the handshake request and `ws_connection_init_payload` is used as payload of [ConnectionInit](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md#connectioninit) message.
 
 
+### File upload
+
+Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary matches `typing.IO[bytes]`. If such file is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
+
+
 ## Custom scalars
 
 By default, not built-in scalars are represented as `typing.Any` in generated client.
