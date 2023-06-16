@@ -126,7 +126,13 @@ To handle subscriptions, default `AsyncBaseClient` uses [websockets](https://git
 
 ### File upload
 
-Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary matches `typing.IO[bytes]`. If such file is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
+Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary is a file. We consider a file as object which:
+- is instance of `io.IOBase` or any of its subclasses
+- is opened in binary mode (has `b` in `mode` attribute)
+- has `name` attribute
+- has `content_type` attribute
+
+If at least one file is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
 
 
 ## Custom scalars

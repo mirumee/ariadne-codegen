@@ -250,7 +250,35 @@ async def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
 
     assert sent_parts["0"]
     assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
+
+
+@pytest.mark.asyncio
+async def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
+    httpx_mock.add_response()
+    query_str = "query Abc($file: Upload!) { abc(file: $file) }"
+
+    client = AsyncBaseClient(url="http://base_url")
+    await client.execute(query_str, {"file": in_memory_txt_file})
+
+    request = httpx_mock.get_request()
+    request.read()
+    assert "multipart/form-data" in request.headers["Content-Type"]
+    sent_parts = decode_multipart_request(request)
+
+    assert sent_parts["operations"]
+    decoded_operations = json.loads(sent_parts["operations"].content)
+    assert decoded_operations == {"query": query_str, "variables": {"file": None}}
+
+    assert sent_parts["map"]
+    decoded_map = json.loads(sent_parts["map"].content)
+    assert decoded_map == {"0": ["variables.file"]}
+
+    assert sent_parts["0"]
+    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert b"in_memory.txt" in sent_parts["0"].headers[b"Content-Disposition"]
+    assert sent_parts["0"].content == b"123456"
 
 
 @pytest.mark.asyncio
@@ -279,10 +307,12 @@ async def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
 
     assert sent_parts["0"]
     assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
     assert sent_parts["1"]
     assert sent_parts["1"].headers[b"Content-Type"] == b"image/png"
+    assert b"png_file.png" in sent_parts["1"].headers[b"Content-Disposition"]
     assert sent_parts["1"].content == b"image_content"
 
 
@@ -315,6 +345,7 @@ async def test_execute_sends_nested_file(httpx_mock, txt_file):
 
     assert sent_parts["0"]
     assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
 
@@ -344,6 +375,7 @@ async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
 
     assert sent_parts["0"]
     assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
 

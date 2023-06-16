@@ -122,7 +122,12 @@ class BaseClient:
                     nulled_dict[key] = value
                 return nulled_dict
 
-            if isinstance(obj, io.IOBase) and "b" in getattr(obj, "mode", "b"):
+            if (
+                isinstance(obj, io.IOBase)
+                and "b" in getattr(obj, "mode", "b")
+                and hasattr(obj, "name")
+                and hasattr(obj, "content_type")
+            ):
                 checked_obj = cast(IO[bytes], obj)
                 if checked_obj in files_to_paths_map:
                     files_to_paths_map[checked_obj].append(path)
@@ -144,8 +149,9 @@ class BaseClient:
             str(i): files_to_paths_map[file_]
             for i, file_ in enumerate(files_to_paths_map.keys())
         }
-        files: Dict[str, IO[bytes]] = {
-            str(i): file_ for i, file_ in enumerate(files_to_paths_map.keys())
+        files: Dict[str, Tuple[str, IO[bytes], str]] = {
+            str(i): (getattr(file_, "name"), file_, getattr(file_, "content_type"))
+            for i, file_ in enumerate(files_to_paths_map.keys())
         }
 
         data = {
