@@ -6,26 +6,30 @@
 schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
 }
 
 type Query {
   users(country: String): [User!]!
 }
 
+type Mutation {
+  userCreate(userData: UserCreateInput!): User
+  userPreferences(data: UserPreferencesInput): Boolean!
+  fileUpload(file: Upload!): Boolean!
+}
+
 type Subscription {
   usersCounter: Int!
 }
 
-type Mutation {
-  userCreate(userData: UserCreateInput!): User
-  userPreferences(data: UserPreferencesInput): Boolean!
-}
+scalar Upload
 
 input UserCreateInput {
   firstName: String
   lastName: String
   email: String!
-  favouriteColor: Color 
+  favouriteColor: Color
   location: LocationInput
 }
 
@@ -39,7 +43,7 @@ type User {
   firstName: String
   lastName: String
   email: String!
-  favouriteColor: Color 
+  favouriteColor: Color
   location: Location
 }
 
@@ -62,7 +66,12 @@ input UserPreferencesInput {
   favouriteWord: String = "word"
   colorOpacity: Float = 1.0
   excludedTags: [String!] = ["offtop", "tag123"]
-  notificationsPreferences: NotificationsPreferencesInput! = {receiveMails: true, receivePushNotifications: true, receiveSms: false, title: "Mr"}
+  notificationsPreferences: NotificationsPreferencesInput! = {
+    receiveMails: true
+    receivePushNotifications: true
+    receiveSms: false
+    title: "Mr"
+  }
 }
 
 input NotificationsPreferencesInput {
@@ -78,43 +87,47 @@ input NotificationsPreferencesInput {
 
 ```gql
 mutation CreateUser($userData: UserCreateInput!) {
-    userCreate(userData: $userData) {
-        id
-    }
+  userCreate(userData: $userData) {
+    id
+  }
 }
 
 query ListAllUsers {
-    users {
-        id
-        firstName
-        lastName
-        email
-        location {
-            country
-        }
+  users {
+    id
+    firstName
+    lastName
+    email
+    location {
+      country
     }
+  }
 }
 
 query ListUsersByCountry($country: String) {
-    users(country: $country) {
-        ...BasicUser
-        ...UserPersonalData
-        favouriteColor
-    }
+  users(country: $country) {
+    ...BasicUser
+    ...UserPersonalData
+    favouriteColor
+  }
 }
 
 fragment BasicUser on User {
-    id
-    email
+  id
+  email
 }
 
 fragment UserPersonalData on User {
-    firstName
-    lastName
+  firstName
+  lastName
 }
 
 subscription GetUsersCounter {
-    usersCounter
+  usersCounter
+}
+
+mutation uploadFile($file: Upload!) {
+  fileUpload(file: $file)
 }
 ```
 
@@ -157,6 +170,7 @@ grapql_client/
     list_all_users.py
     list_users_by_country.py
     scalars.py
+    upload_file.py
 ```
 
 ### Client class
@@ -169,12 +183,13 @@ Generated client class inherits from `AsyncBaseClient` and has async method for 
 from typing import AsyncIterator, Optional, Union
 
 from .async_base_client import AsyncBaseClient
-from .base_model import UNSET, UnsetType
+from .base_model import UNSET, UnsetType, Upload
 from .create_user import CreateUser
 from .get_users_counter import GetUsersCounter
 from .input_types import UserCreateInput
 from .list_all_users import ListAllUsers
 from .list_users_by_country import ListUsersByCountry
+from .upload_file import UploadFile
 
 
 def gql(q: str) -> str:
@@ -258,6 +273,19 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         async for data in self.execute_ws(query=query, variables=variables):
             yield GetUsersCounter.parse_obj(data)
+
+    async def upload_file(self, file: Upload) -> UploadFile:
+        query = gql(
+            """
+            mutation uploadFile($file: Upload!) {
+              fileUpload(file: $file)
+            }
+            """
+        )
+        variables: dict[str, object] = {"file": file}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return UploadFile.parse_obj(data)
 ```
 
 ### Base client
@@ -444,6 +472,21 @@ class GetUsersCounter(BaseModel):
 GetUsersCounter.update_forward_refs()
 ```
 
+```py
+# graphql_client/upload_file.py
+
+from pydantic import Field
+
+from .base_model import BaseModel
+
+
+class UploadFile(BaseModel):
+    file_upload: bool = Field(alias="fileUpload")
+
+
+UploadFile.update_forward_refs()
+```
+
 ### Fragments file
 
 This file contains classes generated from all fragments used in any provided operation.
@@ -480,7 +523,7 @@ Generated init file contains reimports and list of all generated classes.
 # graphql_client/__init__.py
 
 from .async_base_client import AsyncBaseClient
-from .base_model import BaseModel
+from .base_model import BaseModel, Upload
 from .client import Client
 from .create_user import CreateUser, CreateUserUserCreate
 from .enums import Color
@@ -501,6 +544,7 @@ from .input_types import (
 )
 from .list_all_users import ListAllUsers, ListAllUsersUsers, ListAllUsersUsersLocation
 from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUsers
+from .upload_file import UploadFile
 
 __all__ = [
     "AsyncBaseClient",
@@ -523,6 +567,8 @@ __all__ = [
     "ListUsersByCountryUsers",
     "LocationInput",
     "NotificationsPreferencesInput",
+    "Upload",
+    "UploadFile",
     "UserCreateInput",
     "UserPersonalData",
     "UserPreferencesInput",

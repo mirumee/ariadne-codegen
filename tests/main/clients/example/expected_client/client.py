@@ -1,12 +1,13 @@
 from typing import AsyncIterator, Optional, Union
 
 from .async_base_client import AsyncBaseClient
-from .base_model import UNSET, UnsetType
+from .base_model import UNSET, UnsetType, Upload
 from .create_user import CreateUser
 from .get_users_counter import GetUsersCounter
 from .input_types import UserCreateInput
 from .list_all_users import ListAllUsers
 from .list_users_by_country import ListUsersByCountry
+from .upload_file import UploadFile
 
 
 def gql(q: str) -> str:
@@ -90,3 +91,16 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         async for data in self.execute_ws(query=query, variables=variables):
             yield GetUsersCounter.parse_obj(data)
+
+    async def upload_file(self, file: Upload) -> UploadFile:
+        query = gql(
+            """
+            mutation uploadFile($file: Upload!) {
+              fileUpload(file: $file)
+            }
+            """
+        )
+        variables: dict[str, object] = {"file": file}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return UploadFile.parse_obj(data)

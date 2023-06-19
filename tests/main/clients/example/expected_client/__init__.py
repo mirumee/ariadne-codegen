@@ -20,6 +20,7 @@ from .input_types import (
 )
 from .list_all_users import ListAllUsers, ListAllUsersUsers, ListAllUsersUsersLocation
 from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUsers
+from .upload_file import UploadFile
 
 __all__ = [
     "AsyncBaseClient",
@@ -43,6 +44,7 @@ __all__ = [
     "LocationInput",
     "NotificationsPreferencesInput",
     "Upload",
+    "UploadFile",
     "UserCreateInput",
     "UserPersonalData",
     "UserPreferencesInput",
