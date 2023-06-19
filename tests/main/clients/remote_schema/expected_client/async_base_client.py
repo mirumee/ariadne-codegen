@@ -1,5 +1,4 @@
 import enum
-import io
 import json
 from typing import IO, Any, AsyncIterator, Dict, List, Optional, Tuple, TypeVar, cast
 from uuid import uuid4
@@ -8,7 +7,7 @@ import httpx
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
 
-from .base_model import UNSET
+from .base_model import UNSET, Upload
 from .exceptions import (
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
@@ -85,13 +84,14 @@ class AsyncBaseClient:
     async def execute(
         self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> httpx.Response:
-        processed_variables, files_to_paths_map = self._process_variables(variables)
+        processed_variables, files, files_map = self._process_variables(variables)
         payload: Dict[str, Any] = {"query": query, "variables": processed_variables}
 
-        if files_to_paths_map:
+        if files and files_map:
             return await self._execute_multipart(
                 payload=payload,
-                files_to_paths_map=files_to_paths_map,
+                files=files,
+                files_map=files_map,
             )
 
         return await self._execute_json(payload=payload)
@@ -145,9 +145,11 @@ class AsyncBaseClient:
 
     def _process_variables(
         self, variables: Optional[Dict[str, Any]]
-    ) -> Tuple[Dict[str, Any], Dict[IO[bytes], List[str]]]:
+    ) -> Tuple[
+        Dict[str, Any], Dict[str, Tuple[str, IO[bytes], str]], Dict[str, List[str]]
+    ]:
         if not variables:
-            return {}, {}
+            return {}, {}, {}
 
         serializable_variables = self._convert_dict_to_json_serializable(variables)
         return self._get_files_from_variables(serializable_variables)
@@ -170,8 +172,11 @@ class AsyncBaseClient:
 
     def _get_files_from_variables(
         self, variables: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[IO[bytes], List[str]]]:
-        files_to_paths_map: Dict[IO[bytes], List[str]] = {}
+    ) -> Tuple[
+        Dict[str, Any], Dict[str, Tuple[str, IO[bytes], str]], Dict[str, List[str]]
+    ]:
+        files_map: Dict[str, List[str]] = {}
+        files_list: List[Upload] = []
 
         def separate_files(path: str, obj: Any) -> Any:
             if isinstance(obj, list):
@@ -188,38 +193,31 @@ class AsyncBaseClient:
                     nulled_dict[key] = value
                 return nulled_dict
 
-            if (
-                isinstance(obj, io.IOBase)
-                and "b" in getattr(obj, "mode", "b")
-                and hasattr(obj, "name")
-                and hasattr(obj, "content_type")
-            ):
-                checked_obj = cast(IO[bytes], obj)
-                if checked_obj in files_to_paths_map:
-                    files_to_paths_map[checked_obj].append(path)
+            if isinstance(obj, Upload):
+                if obj in files_list:
+                    file_index = files_list.index(obj)
+                    files_map[str(file_index)].append(path)
                 else:
-                    files_to_paths_map[checked_obj] = [path]
+                    file_index = len(files_list)
+                    files_list.append(obj)
+                    files_map[str(file_index)] = [path]
                 return None
 
             return obj
 
         nulled_variables = separate_files("variables", variables)
-        return nulled_variables, files_to_paths_map
+        files: Dict[str, Tuple[str, IO[bytes], str]] = {
+            str(i): (file_.filename, file_.content, file_.content_type)
+            for i, file_ in enumerate(files_list)
+        }
+        return nulled_variables, files, files_map
 
     async def _execute_multipart(
         self,
         payload: Dict[str, Any],
-        files_to_paths_map: Dict[IO[bytes], List[str]],
+        files: Dict[str, Tuple[str, IO[bytes], str]],
+        files_map: Dict[str, List[str]],
     ) -> httpx.Response:
-        files_map: Dict[str, List[str]] = {
-            str(i): files_to_paths_map[file_]
-            for i, file_ in enumerate(files_to_paths_map.keys())
-        }
-        files: Dict[str, Tuple[str, IO[bytes], str]] = {
-            str(i): (getattr(file_, "name"), file_, getattr(file_, "content_type"))
-            for i, file_ in enumerate(files_to_paths_map.keys())
-        }
-
         data = {
             "operations": json.dumps(payload, default=pydantic_encoder),
             "map": json.dumps(files_map, default=pydantic_encoder),
