@@ -26,6 +26,7 @@ from ariadne_codegen.client_generators.constants import (
     LIST,
     OPTIONAL,
     PARSE_OBJ_METHOD,
+    UPLOAD_CLASS_NAME,
 )
 from ariadne_codegen.client_generators.input_fields import (
     parse_input_const_value_node,
@@ -44,6 +45,7 @@ from ..utils import compare_ast
         (GraphQLNonNull(GraphQLScalarType("Int")), ast.Name(id="int")),
         (GraphQLNonNull(GraphQLScalarType("Boolean")), ast.Name(id="bool")),
         (GraphQLNonNull(GraphQLScalarType("Float")), ast.Name(id="float")),
+        (GraphQLNonNull(GraphQLScalarType("Upload")), ast.Name(id=UPLOAD_CLASS_NAME)),
         (GraphQLNonNull(GraphQLScalarType("Other")), ast.Name(id="Any")),
         (
             GraphQLScalarType("String"),
@@ -64,6 +66,12 @@ from ..utils import compare_ast
         (
             GraphQLScalarType("Float"),
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="float")),
+        ),
+        (
+            GraphQLScalarType("Upload"),
+            ast.Subscript(
+                value=ast.Name(id=OPTIONAL), slice=ast.Name(id=UPLOAD_CLASS_NAME)
+            ),
         ),
         (
             GraphQLScalarType("Other"),

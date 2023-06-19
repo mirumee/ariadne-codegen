@@ -74,6 +74,9 @@ class PackageGenerator:
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
         )
+        self.upload_import = generate_import_from(
+            [UPLOAD_CLASS_NAME], self.base_model_file_path.stem, 1
+        )
         self.unset_import = generate_import_from(
             [UNSET_NAME, UNSET_TYPE_NAME], self.base_model_file_path.stem, 1
         )
@@ -139,8 +142,9 @@ class PackageGenerator:
             else InputTypesGenerator(
                 schema=self.schema,
                 enums_module=self.enums_module_name,
-                convert_to_snake_case=self.convert_to_snake_case,
                 base_model_import=self.base_model_import,
+                upload_import=self.upload_import,
+                convert_to_snake_case=self.convert_to_snake_case,
                 custom_scalars=self.custom_scalars,
                 plugin_manager=self.plugin_manager,
             )
