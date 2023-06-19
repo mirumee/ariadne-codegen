@@ -1,8 +1,10 @@
-from dataclasses import dataclass
-from typing import IO, Any, Dict, Type, Union, get_args, get_origin
+from io import IOBase
+from typing import Any, Dict, Type, Union, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel
+from pydantic import ConfigDict
 from pydantic.class_validators import validator
+from pydantic.dataclasses import dataclass
 from pydantic.fields import ModelField
 
 from .scalars import SCALARS_PARSE_FUNCTIONS, SCALARS_SERIALIZE_FUNCTIONS
@@ -59,8 +61,8 @@ class BaseModel(PydanticBaseModel):
         return value
 
 
-@dataclass
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class Upload:
     filename: str
-    content: IO[bytes]
+    content: IOBase
     content_type: str

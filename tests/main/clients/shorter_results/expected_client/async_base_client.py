@@ -207,7 +207,7 @@ class AsyncBaseClient:
 
         nulled_variables = separate_files("variables", variables)
         files: Dict[str, Tuple[str, IO[bytes], str]] = {
-            str(i): (file_.filename, file_.content, file_.content_type)
+            str(i): (file_.filename, cast(IO[bytes], file_.content), file_.content_type)
             for i, file_ in enumerate(files_list)
         }
         return nulled_variables, files, files_map
