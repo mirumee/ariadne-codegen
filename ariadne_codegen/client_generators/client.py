@@ -49,8 +49,9 @@ class ClientGenerator:
         enums_module_name: str,
         input_types_module_name: str,
         arguments_generator: ArgumentsGenerator,
-        base_client_import: Optional[ast.ImportFrom] = None,
-        unset_import: Optional[ast.ImportFrom] = None,
+        base_client_import: ast.ImportFrom,
+        unset_import: ast.ImportFrom,
+        upload_import: ast.ImportFrom,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
@@ -69,6 +70,7 @@ class ClientGenerator:
         )
         self._add_import(base_client_import)
         self._add_import(unset_import)
+        self._add_import(upload_import)
 
         self._class_def = generate_class_def(name=name, base_names=[base_client])
         self._gql_func_name = "gql"

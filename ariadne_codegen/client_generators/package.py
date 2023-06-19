@@ -132,6 +132,7 @@ class PackageGenerator:
                     level=1,
                 ),
                 unset_import=self.unset_import,
+                upload_import=self.upload_import,
                 custom_scalars=self.custom_scalars,
                 plugin_manager=self.plugin_manager,
             )
