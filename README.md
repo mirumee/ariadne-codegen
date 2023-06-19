@@ -126,13 +126,20 @@ To handle subscriptions, default `AsyncBaseClient` uses [websockets](https://git
 
 ### File upload
 
-Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary is a file. We consider a file as object which:
-- is instance of `io.IOBase` or any of its subclasses
-- is opened in binary mode (has `b` in `mode` attribute)
-- has `name` attribute
-- has `content_type` attribute
+Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary is an instance of `Upload`. If at least one instance is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
 
-If at least one file is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
+Dataclass `Upload` is included in generated client and can be imported from it: 
+
+```py
+from {target_package_name} import Upload
+```
+
+By default we use this class to represent graphql scalar `Upload`. For schema with different name for this scalar, you can still use `Upload` and default client for file uploads:
+
+```toml
+[tool.ariadne-codegen.scalars.OTHERSCALAR]
+type = "Upload"
+```
 
 
 ## Custom scalars
