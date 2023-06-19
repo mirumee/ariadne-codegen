@@ -1,5 +1,5 @@
 from .async_base_client import AsyncBaseClient
-from .base_model import BaseModel
+from .base_model import BaseModel, Upload
 from .client import Client
 from .example_query1 import ExampleQuery1, ExampleQuery1ExampleQuery
 from .example_query2 import ExampleQuery2, ExampleQuery2ExampleQuery
@@ -45,4 +45,5 @@ __all__ = [
     "MinimalA",
     "MinimalAFieldB",
     "MinimalB",
+    "Upload",
 ]

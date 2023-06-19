@@ -1,4 +1,5 @@
-from typing import Any, Dict, Type, Union, get_args, get_origin
+from dataclasses import dataclass
+from typing import IO, Any, Dict, Type, Union, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic.class_validators import validator
@@ -56,3 +57,10 @@ class BaseModel(PydanticBaseModel):
             return [self._serialize_value(item) for item in value]
 
         return value
+
+
+@dataclass
+class Upload:
+    filename: str
+    content: IO[bytes]
+    content_type: str

@@ -21,6 +21,7 @@ from .constants import (
     TIMESTAMP_COMMENT,
     UNSET_NAME,
     UNSET_TYPE_NAME,
+    UPLOAD_CLASS_NAME,
 )
 from .enums import EnumsGenerator
 from .fragments import FragmentsGenerator
@@ -368,7 +369,7 @@ class PackageGenerator:
             level=1,
         )
         self.init_generator.add_import(
-            names=[BASE_MODEL_CLASS_NAME],
+            names=[BASE_MODEL_CLASS_NAME, UPLOAD_CLASS_NAME],
             from_=self.base_model_file_path.stem,
             level=1,
         )

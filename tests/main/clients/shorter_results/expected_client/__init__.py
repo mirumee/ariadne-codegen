@@ -1,5 +1,5 @@
 from .async_base_client import AsyncBaseClient
-from .base_model import BaseModel
+from .base_model import BaseModel, Upload
 from .client import Client
 from .exceptions import (
     GraphQLClientError,
@@ -62,4 +62,5 @@ __all__ = [
     "ListTypeA",
     "ListTypeAListOptionalTypeA",
     "SubscribeStrings",
+    "Upload",
 ]
