@@ -12,11 +12,13 @@ from graphql import (
     GraphQLString,
     GraphQLSyntaxError,
     IntrospectionQuery,
+    NoUnusedFragmentsRule,
     OperationDefinitionNode,
     build_ast_schema,
     build_client_schema,
     get_introspection_query,
     parse,
+    specified_rules,
     validate,
 )
 
@@ -48,7 +50,11 @@ def get_graphql_queries(
     """Get graphql queries definitions build from provided path."""
     queries_str = load_graphql_files_from_path(Path(queries_path))
     queries_ast = parse(queries_str)
-    validation_errors = validate(schema, queries_ast)
+    validation_errors = validate(
+        schema=schema,
+        document_ast=queries_ast,
+        rules=[r for r in specified_rules if r is not NoUnusedFragmentsRule],
+    )
     if validation_errors:
         raise InvalidOperationForGivenSchema(
             "\n\n".join(error.message for error in validation_errors)
