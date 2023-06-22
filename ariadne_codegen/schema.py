@@ -4,8 +4,12 @@ from typing import Dict, Generator, List, Optional, Tuple, cast
 import httpx
 from graphql import (
     DefinitionNode,
+    DirectiveLocation,
     FragmentDefinitionNode,
+    GraphQLArgument,
+    GraphQLDirective,
     GraphQLSchema,
+    GraphQLString,
     GraphQLSyntaxError,
     IntrospectionQuery,
     OperationDefinitionNode,
@@ -13,9 +17,15 @@ from graphql import (
     build_client_schema,
     get_introspection_query,
     parse,
+    validate,
 )
 
-from .exceptions import IntrospectionError, InvalidGraphqlSyntax
+from .client_generators.constants import MIXIN_FROM_NAME, MIXIN_IMPORT_NAME, MIXIN_NAME
+from .exceptions import (
+    IntrospectionError,
+    InvalidGraphqlSyntax,
+    InvalidOperationForGivenSchema,
+)
 
 
 def filter_operations_definitions(
@@ -32,10 +42,17 @@ def filter_fragments_definitions(
     return [d for d in definitions if isinstance(d, FragmentDefinitionNode)]
 
 
-def get_graphql_queries(queries_path: str) -> Tuple[DefinitionNode, ...]:
+def get_graphql_queries(
+    queries_path: str, schema: GraphQLSchema
+) -> Tuple[DefinitionNode, ...]:
     """Get graphql queries definitions build from provided path."""
     queries_str = load_graphql_files_from_path(Path(queries_path))
     queries_ast = parse(queries_str)
+    validation_errors = validate(schema, queries_ast)
+    if validation_errors:
+        raise InvalidOperationForGivenSchema(
+            "\n\n".join(error.message for error in validation_errors)
+        )
     return queries_ast.definitions
 
 
@@ -121,4 +138,22 @@ def read_graphql_file(path: Path) -> str:
         parse(schema)
     except GraphQLSyntaxError as exc:
         raise InvalidGraphqlSyntax(f"Invalid graphql syntax in file {path}") from exc
+    return schema
+
+
+def add_mixin_directive_to_schema(schema: GraphQLSchema) -> GraphQLSchema:
+    if MIXIN_NAME in {d.name for d in schema.directives}:
+        return schema
+
+    schema.directives += (
+        GraphQLDirective(
+            name=MIXIN_NAME,
+            locations=[DirectiveLocation.FIELD],
+            args={
+                MIXIN_IMPORT_NAME: GraphQLArgument(type_=GraphQLString),
+                MIXIN_FROM_NAME: GraphQLArgument(type_=GraphQLString),
+            },
+            is_repeatable=True,
+        ),
+    )
     return schema

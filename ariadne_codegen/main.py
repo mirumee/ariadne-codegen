@@ -9,6 +9,7 @@ from .graphql_schema_generators.schema import generate_graphql_schema_file
 from .plugins.explorer import get_plugins_types
 from .plugins.manager import PluginManager
 from .schema import (
+    add_mixin_directive_to_schema,
     filter_fragments_definitions,
     filter_operations_definitions,
     get_graphql_queries,
@@ -55,10 +56,11 @@ def client(config_dict):
         config_dict=config_dict,
         plugins_types=get_plugins_types(settings.plugins),
     )
+    schema = add_mixin_directive_to_schema(schema)
     schema = plugin_manager.process_schema(schema)
     assert_valid_schema(schema)
 
-    definitions = get_graphql_queries(settings.queries_path)
+    definitions = get_graphql_queries(settings.queries_path, schema)
     queries = filter_operations_definitions(definitions)
     fragments = filter_fragments_definitions(definitions)
 
