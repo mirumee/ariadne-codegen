@@ -51,10 +51,6 @@ query ListAnimals {
   }
 }
 
-query GetAnimalFragment {
-  ...ListAnimalsFragment
-}
-
 query GetAnimalFragmentWithExtra {
   ...ListAnimalsFragment
   listString

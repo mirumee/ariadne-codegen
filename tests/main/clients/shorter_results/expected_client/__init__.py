@@ -16,7 +16,6 @@ from .get_animal_by_name import (
     GetAnimalByNameAnimalByNameCat,
     GetAnimalByNameAnimalByNameDog,
 )
-from .get_animal_fragment import GetAnimalFragment
 from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
 from .list_animals import (
@@ -41,7 +40,6 @@ __all__ = [
     "GetAnimalByNameAnimalByNameAnimal",
     "GetAnimalByNameAnimalByNameCat",
     "GetAnimalByNameAnimalByNameDog",
-    "GetAnimalFragment",
     "GetAnimalFragmentWithExtra",
     "GetAuthenticatedUser",
     "GetAuthenticatedUserMe",

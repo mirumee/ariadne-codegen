@@ -9,7 +9,6 @@ from .get_animal_by_name import (
     GetAnimalByNameAnimalByNameCat,
     GetAnimalByNameAnimalByNameDog,
 )
-from .get_animal_fragment import GetAnimalFragment, ListAnimalsFragmentListAnimals
 from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
 from .list_animals import (
@@ -171,25 +170,6 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListAnimals.parse_obj(data).list_animals
-
-    async def get_animal_fragment(self) -> List[ListAnimalsFragmentListAnimals]:
-        query = gql(
-            """
-            query GetAnimalFragment {
-              ...ListAnimalsFragment
-            }
-
-            fragment ListAnimalsFragment on Query {
-              listAnimals {
-                name
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return GetAnimalFragment.parse_obj(data).list_animals
 
     async def get_animal_fragment_with_extra(self) -> GetAnimalFragmentWithExtra:
         query = gql(
