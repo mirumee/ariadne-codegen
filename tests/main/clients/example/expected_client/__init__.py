@@ -1,5 +1,5 @@
 from .async_base_client import AsyncBaseClient
-from .base_model import BaseModel
+from .base_model import BaseModel, Upload
 from .client import Client
 from .create_user import CreateUser, CreateUserUserCreate
 from .enums import Color
@@ -20,6 +20,7 @@ from .input_types import (
 )
 from .list_all_users import ListAllUsers, ListAllUsersUsers, ListAllUsersUsersLocation
 from .list_users_by_country import ListUsersByCountry, ListUsersByCountryUsers
+from .upload_file import UploadFile
 
 __all__ = [
     "AsyncBaseClient",
@@ -42,6 +43,8 @@ __all__ = [
     "ListUsersByCountryUsers",
     "LocationInput",
     "NotificationsPreferencesInput",
+    "Upload",
+    "UploadFile",
     "UserCreateInput",
     "UserPersonalData",
     "UserPreferencesInput",

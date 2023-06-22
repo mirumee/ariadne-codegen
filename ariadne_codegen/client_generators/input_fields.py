@@ -33,7 +33,7 @@ from ..codegen import (
     generate_subscript,
 )
 from ..exceptions import ParsingError
-from .constants import ANY, FIELD_CLASS, PARSE_OBJ_METHOD, SIMPLE_TYPE_MAP
+from .constants import ANY, FIELD_CLASS, INPUT_SCALARS_MAP, PARSE_OBJ_METHOD
 from .scalars import ScalarData
 from .types import Annotation, CodegenInputFieldType
 
@@ -45,10 +45,10 @@ def parse_input_field_type(
     custom_scalars: Optional[Dict[str, ScalarData]] = None,
 ) -> Tuple[Annotation, str]:
     if isinstance(type_, GraphQLScalarType):
-        if type_.name in SIMPLE_TYPE_MAP:
+        if type_.name in INPUT_SCALARS_MAP:
             return (
                 generate_annotation_name(
-                    name=SIMPLE_TYPE_MAP[type_.name], nullable=nullable
+                    name=INPUT_SCALARS_MAP[type_.name], nullable=nullable
                 ),
                 "",
             )

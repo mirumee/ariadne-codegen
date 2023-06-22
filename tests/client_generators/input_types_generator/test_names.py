@@ -132,10 +132,13 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
     ],
 )
 def test_generate_returns_module_with_fields_names_converted_to_snake_case(
-    schema_str, expected_class_def
+    schema_str, expected_class_def, base_model_import, upload_import
 ):
     generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)), enums_module="enums"
+        schema=build_ast_schema(parse(schema_str)),
+        enums_module="enums",
+        base_model_import=base_model_import,
+        upload_import=upload_import,
     )
 
     module = generator.generate()
@@ -144,7 +147,9 @@ def test_generate_returns_module_with_fields_names_converted_to_snake_case(
     assert compare_ast(class_def, expected_class_def)
 
 
-def test_generate_returns_module_with_valid_field_names():
+def test_generate_returns_module_with_valid_field_names(
+    base_model_import, upload_import
+):
     schema = """
     input KeywordInput {
         in: String!
@@ -157,7 +162,10 @@ def test_generate_returns_module_with_valid_field_names():
     """
 
     generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema)), enums_module="enums"
+        schema=build_ast_schema(parse(schema)),
+        enums_module="enums",
+        base_model_import=base_model_import,
+        upload_import=upload_import,
     )
 
     module = generator.generate()

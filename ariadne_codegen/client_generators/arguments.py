@@ -27,7 +27,7 @@ from ..codegen import (
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..utils import process_name
-from .constants import ANY, OPTIONAL, SIMPLE_TYPE_MAP, UNSET_NAME, UNSET_TYPE_NAME
+from .constants import ANY, INPUT_SCALARS_MAP, OPTIONAL, UNSET_NAME, UNSET_TYPE_NAME
 from .scalars import ScalarData
 
 
@@ -140,7 +140,7 @@ class ArgumentsGenerator:
             self._used_enums.append(name)
         elif isinstance(type_, GraphQLScalarType):
             if name not in self.custom_scalars:
-                name = SIMPLE_TYPE_MAP.get(name, ANY)
+                name = INPUT_SCALARS_MAP.get(name, ANY)
             else:
                 used_custom_scalar = name
                 name = self.custom_scalars[name].type_name

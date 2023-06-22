@@ -1,17 +1,20 @@
 from pathlib import Path
-from typing import Dict
 
-SIMPLE_TYPE_MAP: Dict[str, str] = {
+SIMPLE_TYPE_MAP = {
     "String": "str",
     "ID": "str",
     "Int": "int",
     "Boolean": "bool",
     "Float": "float",
 }
-OPTIONAL: str = "Optional"
-LIST: str = "List"
-UNION: str = "Union"
-ANY: str = "Any"
+
+UPLOAD_CLASS_NAME = "Upload"
+INPUT_SCALARS_MAP = {**SIMPLE_TYPE_MAP, "Upload": UPLOAD_CLASS_NAME}
+
+OPTIONAL = "Optional"
+LIST = "List"
+UNION = "Union"
+ANY = "Any"
 DICT = "Dict"
 CALLABLE = "Callable"
 ANNOTATED = "Annotated"

@@ -1,39 +1,43 @@
 mutation CreateUser($userData: UserCreateInput!) {
-    userCreate(userData: $userData) {
-        id
-    }
+  userCreate(userData: $userData) {
+    id
+  }
 }
 
 query ListAllUsers {
-    users {
-        id
-        firstName
-        lastName
-        email
-        location {
-            country
-        }
+  users {
+    id
+    firstName
+    lastName
+    email
+    location {
+      country
     }
+  }
 }
 
 query ListUsersByCountry($country: String) {
-    users(country: $country) {
-        ...BasicUser
-        ...UserPersonalData
-        favouriteColor
-    }
+  users(country: $country) {
+    ...BasicUser
+    ...UserPersonalData
+    favouriteColor
+  }
 }
 
 fragment BasicUser on User {
-    id
-    email
+  id
+  email
 }
 
 fragment UserPersonalData on User {
-    firstName
-    lastName
+  firstName
+  lastName
 }
 
 subscription GetUsersCounter {
-    usersCounter
+  usersCounter
+}
+
+mutation uploadFile($file: Upload!) {
+  fileUpload(file: $file)
 }

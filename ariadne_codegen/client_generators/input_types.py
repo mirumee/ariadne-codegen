@@ -43,8 +43,9 @@ class InputTypesGenerator:
         self,
         schema: GraphQLSchema,
         enums_module: str,
+        base_model_import: ast.ImportFrom,
+        upload_import: ast.ImportFrom,
         convert_to_snake_case: bool = True,
-        base_model_import: Optional[ast.ImportFrom] = None,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
@@ -57,8 +58,8 @@ class InputTypesGenerator:
         self._imports = [
             generate_import_from([OPTIONAL, ANY, UNION, LIST], TYPING_MODULE),
             generate_import_from([FIELD_CLASS], PYDANTIC_MODULE),
-            base_model_import
-            or generate_import_from([BASE_MODEL_CLASS_NAME], PYDANTIC_MODULE),
+            base_model_import,
+            upload_import,
         ]
         self._dependencies: Dict[str, List[str]] = defaultdict(list)
         self._used_enums: List[str] = []

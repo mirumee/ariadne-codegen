@@ -11,17 +11,20 @@ type Query {
 type Mutation {
   userCreate(userData: UserCreateInput!): User
   userPreferences(data: UserPreferencesInput): Boolean!
+  fileUpload(file: Upload!): Boolean!
 }
 
 type Subscription {
   usersCounter: Int!
 }
 
+scalar Upload
+
 input UserCreateInput {
   firstName: String
   lastName: String
   email: String!
-  favouriteColor: Color 
+  favouriteColor: Color
   location: LocationInput
 }
 
@@ -35,7 +38,7 @@ type User {
   firstName: String
   lastName: String
   email: String!
-  favouriteColor: Color 
+  favouriteColor: Color
   location: Location
 }
 
@@ -58,7 +61,12 @@ input UserPreferencesInput {
   favouriteWord: String = "word"
   colorOpacity: Float = 1.0
   excludedTags: [String!] = ["offtop", "tag123"]
-  notificationsPreferences: NotificationsPreferencesInput! = {receiveMails: true, receivePushNotifications: true, receiveSms: false, title: "Mr"}
+  notificationsPreferences: NotificationsPreferencesInput! = {
+    receiveMails: true
+    receivePushNotifications: true
+    receiveSms: false
+    title: "Mr"
+  }
 }
 
 input NotificationsPreferencesInput {

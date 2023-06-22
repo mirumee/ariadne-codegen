@@ -21,6 +21,7 @@ from .constants import (
     TIMESTAMP_COMMENT,
     UNSET_NAME,
     UNSET_TYPE_NAME,
+    UPLOAD_CLASS_NAME,
 )
 from .enums import EnumsGenerator
 from .fragments import FragmentsGenerator
@@ -72,6 +73,9 @@ class PackageGenerator:
         )
         self.base_model_import = generate_import_from(
             [BASE_MODEL_CLASS_NAME], self.base_model_file_path.stem, 1
+        )
+        self.upload_import = generate_import_from(
+            [UPLOAD_CLASS_NAME], self.base_model_file_path.stem, 1
         )
         self.unset_import = generate_import_from(
             [UNSET_NAME, UNSET_TYPE_NAME], self.base_model_file_path.stem, 1
@@ -128,6 +132,7 @@ class PackageGenerator:
                     level=1,
                 ),
                 unset_import=self.unset_import,
+                upload_import=self.upload_import,
                 custom_scalars=self.custom_scalars,
                 plugin_manager=self.plugin_manager,
             )
@@ -138,8 +143,9 @@ class PackageGenerator:
             else InputTypesGenerator(
                 schema=self.schema,
                 enums_module=self.enums_module_name,
-                convert_to_snake_case=self.convert_to_snake_case,
                 base_model_import=self.base_model_import,
+                upload_import=self.upload_import,
+                convert_to_snake_case=self.convert_to_snake_case,
                 custom_scalars=self.custom_scalars,
                 plugin_manager=self.plugin_manager,
             )
@@ -368,7 +374,7 @@ class PackageGenerator:
             level=1,
         )
         self.init_generator.add_import(
-            names=[BASE_MODEL_CLASS_NAME],
+            names=[BASE_MODEL_CLASS_NAME, UPLOAD_CLASS_NAME],
             from_=self.base_model_file_path.stem,
             level=1,
         )

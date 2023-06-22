@@ -41,6 +41,7 @@ dev = [
   "pytest-asyncio",
   "pytest-httpx",
   "freezegun",
+  "requests-toolbelt",
 ]
 subscriptions = ["websockets~=11.0"]
 
@@ -74,8 +75,5 @@ testpaths = ["tests"]
 profile = "black"
 
 [tool.hatch.build]
-include = [
-  "ariadne_codegen/**/*.py",
-  "ariadne_codegen/py.typed",
-]
+include = ["ariadne_codegen/**/*.py", "ariadne_codegen/py.typed"]
 exclude = ["tests"]

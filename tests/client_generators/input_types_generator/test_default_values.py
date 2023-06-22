@@ -29,11 +29,14 @@ from ...utils import compare_ast, get_class_def
     ],
 )
 def test_generate_returns_module_with_parsed_inputs_scalar_field_with_default_value(
-    field_str, expected_annotation, expected_value
+    field_str, expected_annotation, expected_value, base_model_import, upload_import
 ):
     schema_str = f"input TestInput {{{field_str}}}"
     generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)), enums_module="enums"
+        schema=build_ast_schema(parse(schema_str)),
+        enums_module="enums",
+        base_model_import=base_model_import,
+        upload_import=upload_import,
     )
     expected_class_def = ast.ClassDef(
         name="TestInput",
@@ -100,11 +103,14 @@ def test_generate_returns_module_with_parsed_inputs_scalar_field_with_default_va
     ],
 )
 def test_generate_returns_module_with_parsed_inputs_list_field_with_default_value(
-    field_str, expected_list
+    field_str, expected_list, base_model_import, upload_import
 ):
     schema_str = f"input TestInput {{{field_str}}}"
     generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)), enums_module="enums"
+        schema=build_ast_schema(parse(schema_str)),
+        enums_module="enums",
+        base_model_import=base_model_import,
+        upload_import=upload_import,
     )
     expected_field_value = ast.Call(
         func=ast.Name(id=FIELD_CLASS),
@@ -138,7 +144,9 @@ def test_generate_returns_module_with_parsed_inputs_list_field_with_default_valu
     assert compare_ast(field_def.value, expected_field_value)
 
 
-def test_generate_returns_module_with_parsed_inputs_object_field_with_default_value():
+def test_generate_returns_module_with_parsed_inputs_object_field_with_default_value(
+    base_model_import, upload_import
+):
     schema_str = """
     input TestInput {
         field: SecondInput = {val: 5}
@@ -186,7 +194,10 @@ def test_generate_returns_module_with_parsed_inputs_object_field_with_default_va
     )
 
     generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)), enums_module="enums"
+        schema=build_ast_schema(parse(schema_str)),
+        enums_module="enums",
+        base_model_import=base_model_import,
+        upload_import=upload_import,
     )
 
     module = generator.generate()
@@ -201,7 +212,9 @@ def test_generate_returns_module_with_parsed_inputs_object_field_with_default_va
     assert compare_ast(field_def.value, expected_field_value)
 
 
-def test_generate_returns_module_with_parsed_nested_object_as_default_value():
+def test_generate_returns_module_with_parsed_nested_object_as_default_value(
+    base_model_import, upload_import
+):
     schema_str = """
     input TestInput {
         field: SecondInput = { nested: { val: 1.5 } }
@@ -257,7 +270,10 @@ def test_generate_returns_module_with_parsed_nested_object_as_default_value():
         ],
     )
     generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)), enums_module="enums"
+        schema=build_ast_schema(parse(schema_str)),
+        enums_module="enums",
+        base_model_import=base_model_import,
+        upload_import=upload_import,
     )
 
     module = generator.generate()

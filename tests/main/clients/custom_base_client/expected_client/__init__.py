@@ -1,4 +1,4 @@
-from .base_model import BaseModel
+from .base_model import BaseModel, Upload
 from .client import Client
 from .custom_base_client import CustomAsyncBaseClient
 from .enums import enumA
@@ -11,6 +11,7 @@ __all__ = [
     "CustomAsyncBaseClient",
     "GetQueryA",
     "GetQueryAQueryA",
+    "Upload",
     "enumA",
     "inputA",
 ]
