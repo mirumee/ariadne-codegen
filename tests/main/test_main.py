@@ -9,8 +9,8 @@ from click.testing import CliRunner
 
 from ariadne_codegen.exceptions import (
     InvalidConfiguration,
+    InvalidOperationForSchema,
     MissingConfiguration,
-    InvalidOperationForGivenSchema,
 )
 from ariadne_codegen.main import main
 
@@ -188,7 +188,7 @@ def test_main_generates_correct_package(
                     CLIENTS_PATH / "invalid_pyprojects" / "not_valid_query.graphql",
                 ),
             ),
-            InvalidOperationForGivenSchema,
+            InvalidOperationForSchema,
         ),
     ],
     indirect=["project_dir"],

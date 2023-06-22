@@ -26,7 +26,7 @@ from .client_generators.constants import MIXIN_FROM_NAME, MIXIN_IMPORT_NAME, MIX
 from .exceptions import (
     IntrospectionError,
     InvalidGraphqlSyntax,
-    InvalidOperationForGivenSchema,
+    InvalidOperationForSchema,
 )
 
 
@@ -56,7 +56,7 @@ def get_graphql_queries(
         rules=[r for r in specified_rules if r is not NoUnusedFragmentsRule],
     )
     if validation_errors:
-        raise InvalidOperationForGivenSchema(
+        raise InvalidOperationForSchema(
             "\n\n".join(error.message for error in validation_errors)
         )
     return queries_ast.definitions

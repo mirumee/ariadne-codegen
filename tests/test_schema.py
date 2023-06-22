@@ -5,7 +5,7 @@ from graphql import GraphQLSchema, OperationDefinitionNode, build_schema
 from ariadne_codegen.exceptions import (
     IntrospectionError,
     InvalidGraphqlSyntax,
-    InvalidOperationForGivenSchema,
+    InvalidOperationForSchema,
 )
 from ariadne_codegen.schema import (
     get_graphql_queries,
@@ -430,7 +430,7 @@ def test_get_graphql_queries_with_invalid_file_raises_invalid_graphql_syntax_exc
 def test_get_graphql_queries_with_invalid_query_for_schema_raises_invalid_operation(
     invalid_query_for_schema_file, schema_str
 ):
-    with pytest.raises(InvalidOperationForGivenSchema):
+    with pytest.raises(InvalidOperationForSchema):
         get_graphql_queries(
             invalid_query_for_schema_file.as_posix(), build_schema(schema_str)
         )
