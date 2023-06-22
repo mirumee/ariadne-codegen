@@ -1,5 +1,6 @@
 from .async_base_client import AsyncBaseClient
 from .get_query_a import GetQueryA
+from .get_query_a_with_fragment import GetQueryAWithFragment
 from .get_query_b import GetQueryB
 
 
@@ -37,3 +38,22 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetQueryB.parse_obj(data)
+
+    async def get_query_a_with_fragment(self) -> GetQueryAWithFragment:
+        query = gql(
+            """
+            query getQueryAWithFragment {
+              ...getQueryAFragment
+            }
+
+            fragment getQueryAFragment on Query {
+              queryA {
+                fieldA
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetQueryAWithFragment.parse_obj(data)

@@ -161,9 +161,8 @@ def test_get_operation_as_str_returns_str_with_fragment_used_by_another_fragment
     assert "fragment NestedFragment on CustomType2" in result
 
 
-def test_get_operation_as_str_returns_representation_without_mixin_directive():
-    query_str = format_graphql_str(
-        """
+def test_get_operation_as_str_returns_operation_without_mixin_directive():
+    query_str = """
         query CustomQuery {
             query2 @mixin(from: ".mixins", import: "TestMixin") {
                 id
@@ -175,8 +174,7 @@ def test_get_operation_as_str_returns_representation_without_mixin_directive():
                 }
             }
         }
-        """
-    )
+    """
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=cast(
@@ -195,3 +193,57 @@ def test_get_operation_as_str_returns_representation_without_mixin_directive():
     assert field_query2.directives[0].name.value == MIXIN_NAME
     assert field_field1.directives[0].name.value == MIXIN_NAME
     assert field_field2.directives[0].name.value == MIXIN_NAME
+
+
+def test_get_operation_as_str_returns_fragments_str_without_mixin_directive():
+    operation_definition = """
+        query CustomQuery {
+            query2 @mixin(from: ".mixins", import: "TestMixin1") {
+                ...TestFragment1
+                ...TestFragment2
+                field2 @mixin(from: ".mixins", import: "TestMixin2") {
+                    fieldb
+                }
+            }
+        }
+        """
+    fragment_without_mixin_str = """
+        fragment TestFragment1 on CustomType {
+            id 
+        }
+    """
+    fragment_without_mixin = cast(
+        FragmentDefinitionNode, parse(fragment_without_mixin_str).definitions[0]
+    )
+    fragment_with_mixin_str = """
+        fragment TestFragment2 on CustomType {
+            field1 @mixin(from: ".mixins", import: "TestMixin3") {
+                fielda
+            }
+        }
+        """
+    fragment_with_mixin = cast(
+        FragmentDefinitionNode, parse(fragment_with_mixin_str).definitions[0]
+    )
+
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(operation_definition).definitions[0]
+        ),
+        enums_module_name="enums",
+        fragments_definitions={
+            "TestFragment1": fragment_without_mixin,
+            "TestFragment2": fragment_with_mixin,
+        },
+    )
+
+    result = generator.get_operation_as_str()
+
+    assert MIXIN_NAME not in result
+    field_query2 = generator.operation_definition.selection_set.selections[0]
+    field_field2 = field_query2.selection_set.selections[2]
+    assert field_query2.directives[0].name.value == MIXIN_NAME
+    assert field_field2.directives[0].name.value == MIXIN_NAME
+    field_field1 = fragment_with_mixin.selection_set.selections[0]
+    assert field_field1.directives[0].name.value == MIXIN_NAME

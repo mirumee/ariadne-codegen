@@ -13,3 +13,15 @@ query getQueryB {
     fieldB
   }
 }
+
+query getQueryAWithFragment {
+  ...getQueryAFragment
+}
+
+fragment getQueryAFragment on Query {
+    queryA
+    @mixin(from: ".mixins_a", import: "MixinA")
+    @mixin(from: ".common_mixins", import: "CommonMixin") {
+    fieldA
+  }
+}
