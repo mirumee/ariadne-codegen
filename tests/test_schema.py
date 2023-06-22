@@ -1,8 +1,12 @@
 import httpx
 import pytest
-from graphql import GraphQLSchema, OperationDefinitionNode
+from graphql import GraphQLSchema, OperationDefinitionNode, build_schema
 
-from ariadne_codegen.exceptions import IntrospectionError, InvalidGraphqlSyntax
+from ariadne_codegen.exceptions import (
+    IntrospectionError,
+    InvalidGraphqlSyntax,
+    InvalidOperationForGivenSchema,
+)
 from ariadne_codegen.schema import (
     get_graphql_queries,
     get_graphql_schema_from_path,
@@ -133,15 +137,27 @@ def single_file_query(tmp_path_factory, test_query_str):
 def invalid_syntax_query_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("queries").joinpath("query.graphql")
     query_str = """
-        query getUsers
-            users(first: 10) {
-                edges {
-                    node {
-                        id
-                        username
-                    }
-                }
+        query testQuery
+            test {
+                node
+                default
             }
+        }
+    """
+    file_.write_text(query_str, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def invalid_query_for_schema_file(tmp_path_factory):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query.graphql")
+    query_str = """
+        query testQuery {
+            test {
+                node
+                default
+            }
+            anotherQuery
         }
     """
     file_.write_text(query_str, encoding="utf-8")
@@ -376,9 +392,11 @@ def test_introspect_remote_schema_uses_provided_verify_ssl_flag(verify_ssl, mock
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_single_file(
-    single_file_query,
+    single_file_query, schema_str
 ):
-    queries = get_graphql_queries(single_file_query.as_posix())
+    queries = get_graphql_queries(
+        single_file_query.as_posix(), build_schema(schema_str)
+    )
     assert len(queries) == 1
     assert isinstance(queries[0], OperationDefinitionNode)
     assert queries[0].name
@@ -386,9 +404,11 @@ def test_get_graphql_queries_returns_schema_definitions_from_single_file(
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_directory(
-    queries_directory,
+    queries_directory, schema_str
 ):
-    queries = get_graphql_queries(queries_directory.as_posix())
+    queries = get_graphql_queries(
+        queries_directory.as_posix(), build_schema(schema_str)
+    )
     assert len(queries) == 2
     assert isinstance(queries[0], OperationDefinitionNode)
     assert isinstance(queries[1], OperationDefinitionNode)
@@ -399,7 +419,18 @@ def test_get_graphql_queries_returns_schema_definitions_from_directory(
 
 
 def test_get_graphql_queries_with_invalid_file_raises_invalid_graphql_syntax_exception(
-    invalid_syntax_query_file,
+    invalid_syntax_query_file, schema_str
 ):
     with pytest.raises(InvalidGraphqlSyntax):
-        get_graphql_queries(invalid_syntax_query_file.as_posix())
+        get_graphql_queries(
+            invalid_syntax_query_file.as_posix(), build_schema(schema_str)
+        )
+
+
+def test_get_graphql_queries_with_invalid_query_for_schema_raises_invalid_operation(
+    invalid_query_for_schema_file, schema_str
+):
+    with pytest.raises(InvalidOperationForGivenSchema):
+        get_graphql_queries(
+            invalid_query_for_schema_file.as_posix(), build_schema(schema_str)
+        )

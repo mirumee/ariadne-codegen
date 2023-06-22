@@ -25,7 +25,6 @@ class UnionAQueryUTypeB(BaseModel):
 
 class UnionAQueryUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
-    id: str
 
 
 UnionA.update_forward_refs()

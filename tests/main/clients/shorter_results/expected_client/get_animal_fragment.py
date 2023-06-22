@@ -1,7 +1,7 @@
-from .fragments import AnimalFragment
+from .fragments import ListAnimalsFragment
 
 
-class GetAnimalFragment(AnimalFragment):
+class GetAnimalFragment(ListAnimalsFragment):
     pass
 
 

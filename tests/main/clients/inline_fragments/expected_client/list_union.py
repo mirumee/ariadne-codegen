@@ -32,7 +32,6 @@ class ListUnionQueryListUTypeB(BaseModel):
 
 class ListUnionQueryListUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
-    id: str
 
 
 ListUnion.update_forward_refs()

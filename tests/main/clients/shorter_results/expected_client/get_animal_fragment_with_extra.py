@@ -2,10 +2,10 @@ from typing import List
 
 from pydantic import Field
 
-from .fragments import AnimalFragment
+from .fragments import ListAnimalsFragment
 
 
-class GetAnimalFragmentWithExtra(AnimalFragment):
+class GetAnimalFragmentWithExtra(ListAnimalsFragment):
     list_string: List[str] = Field(alias="listString")
 
 

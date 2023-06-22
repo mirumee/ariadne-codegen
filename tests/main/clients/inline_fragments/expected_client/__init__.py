@@ -58,13 +58,6 @@ from .query_with_fragment_on_union import (
 )
 from .union_a import UnionA, UnionAQueryUTypeA, UnionAQueryUTypeB, UnionAQueryUTypeC
 from .union_b import UnionB, UnionBQueryUTypeA, UnionBQueryUTypeB, UnionBQueryUTypeC
-from .union_c import UnionC, UnionCQueryUTypeA, UnionCQueryUTypeB, UnionCQueryUTypeC
-from .union_with_typename import (
-    UnionWithTypename,
-    UnionWithTypenameQueryUTypeA,
-    UnionWithTypenameQueryUTypeB,
-    UnionWithTypenameQueryUTypeC,
-)
 
 __all__ = [
     "AsyncBaseClient",
@@ -120,14 +113,6 @@ __all__ = [
     "UnionBQueryUTypeA",
     "UnionBQueryUTypeB",
     "UnionBQueryUTypeC",
-    "UnionC",
-    "UnionCQueryUTypeA",
-    "UnionCQueryUTypeB",
-    "UnionCQueryUTypeC",
-    "UnionWithTypename",
-    "UnionWithTypenameQueryUTypeA",
-    "UnionWithTypenameQueryUTypeB",
-    "UnionWithTypenameQueryUTypeC",
     "UnusedFragmentOnTypeA",
     "Upload",
 ]
