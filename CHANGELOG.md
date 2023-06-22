@@ -4,6 +4,7 @@
 
 - Added support for `Upload` scalar. Added support for file uploads to `AsyncBaseClient` and `BaseClient`.
 - Added validation of defined operations against the schema.
+- Removed `mixin` directive from fragment string included in operation string sent to server
 
 
 ## 0.7.1 (2023-06-06)
