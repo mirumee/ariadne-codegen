@@ -154,7 +154,7 @@ def add_mixin_directive_to_schema(schema: GraphQLSchema) -> GraphQLSchema:
     schema.directives += (
         GraphQLDirective(
             name=MIXIN_NAME,
-            locations=[DirectiveLocation.FIELD],
+            locations=[DirectiveLocation.FIELD, DirectiveLocation.FRAGMENT_DEFINITION],
             args={
                 MIXIN_IMPORT_NAME: GraphQLArgument(type_=GraphQLString),
                 MIXIN_FROM_NAME: GraphQLArgument(type_=GraphQLString),

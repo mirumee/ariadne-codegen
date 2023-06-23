@@ -1,6 +1,6 @@
 import ast
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
 from graphql import (
     DirectiveNode,
@@ -120,6 +120,9 @@ class ResultTypesGenerator:
                 class_name=str_to_pascal_case(self._operation_name),
                 type_name=self._get_operation_type_name(self.operation_definition),
                 selection_set=self.operation_definition.selection_set,
+                extra_bases=self._get_extra_bases_from_mixin_directives(
+                    self.operation_definition
+                ),
             )
 
         self._add_enums_scalars_fragments_imports()
@@ -269,7 +272,7 @@ class ResultTypesGenerator:
                 self._parse_field_selection_set_types(
                     selection_set=field.selection_set,
                     field_types_names=field_types_names,
-                    extra_bases=self._parse_mixin_directives(field),
+                    extra_bases=self._get_extra_bases_from_mixin_directives(field),
                 )
             )
             self._save_used_enums(field_types_names)
@@ -400,11 +403,13 @@ class ResultTypesGenerator:
 
         return field_implementation
 
-    def _parse_mixin_directives(self, field: FieldNode) -> List[str]:
-        if not field.directives:
+    def _get_extra_bases_from_mixin_directives(
+        self, node: Union[FieldNode, ExecutableDefinitionNode]
+    ) -> List[str]:
+        if not node.directives:
             return []
         directives = [
-            d for d in field.directives if d.name and d.name.value == MIXIN_NAME
+            d for d in node.directives if d.name and d.name.value == MIXIN_NAME
         ]
         extra_base_classes: List[str] = []
         for directive in directives:
@@ -418,7 +423,7 @@ class ResultTypesGenerator:
             extra_base_classes.append(arguments[MIXIN_IMPORT_NAME])
         return extra_base_classes
 
-    def _parse_mixin_arguments(self, directive: DirectiveNode):
+    def _parse_mixin_arguments(self, directive: DirectiveNode) -> Dict[str, str]:
         arguments = {}
         for arg in directive.arguments:
             if not (
