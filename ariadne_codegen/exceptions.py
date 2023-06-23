@@ -18,6 +18,10 @@ class InvalidGraphqlSyntax(CodeGenException):
     """Invalid graphql syntax."""
 
 
+class InvalidOperationForSchema(CodeGenException):
+    """Invalid operation for the schema."""
+
+
 class NotSupported(CodeGenException):
     """Not supported."""
 

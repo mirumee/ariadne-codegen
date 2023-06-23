@@ -27,8 +27,8 @@ query ListTypeA {
   }
 }
 
-query GetAnimalByName {
-  animalByName {
+query GetAnimalByName($name: String!) {
+  animalByName(name: $name) {
     name
     ... on Cat {
       kittens
@@ -51,12 +51,8 @@ query ListAnimals {
   }
 }
 
-query GetAnimalFragment {
-  ...AnimalFragment
-}
-
 query GetAnimalFragmentWithExtra {
-  ...AnimalFragment
+  ...ListAnimalsFragment
   listString
 }
 
@@ -64,8 +60,10 @@ query GetAScalar {
   justAScalar
 }
 
-fragment AnimalFragment on Animal {
-  name
+fragment ListAnimalsFragment on Query {
+  listAnimals {
+    name
+  }
 }
 
 subscription SubscribeStrings {

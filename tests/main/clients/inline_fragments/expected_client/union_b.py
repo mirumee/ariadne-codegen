@@ -19,12 +19,10 @@ class UnionBQueryUTypeA(BaseModel):
 
 class UnionBQueryUTypeB(BaseModel):
     typename__: Literal["TypeB"] = Field(alias="__typename")
-    id: str
 
 
 class UnionBQueryUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
-    id: str
 
 
 UnionB.update_forward_refs()

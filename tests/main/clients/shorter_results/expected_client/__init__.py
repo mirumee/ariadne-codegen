@@ -8,7 +8,7 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
-from .fragments import AnimalFragment
+from .fragments import ListAnimalsFragment, ListAnimalsFragmentListAnimals
 from .get_a_scalar import GetAScalar
 from .get_animal_by_name import (
     GetAnimalByName,
@@ -16,7 +16,6 @@ from .get_animal_by_name import (
     GetAnimalByNameAnimalByNameCat,
     GetAnimalByNameAnimalByNameDog,
 )
-from .get_animal_fragment import GetAnimalFragment
 from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
 from .list_animals import (
@@ -33,7 +32,6 @@ from .list_type_a import ListTypeA, ListTypeAListOptionalTypeA
 from .subscribe_strings import SubscribeStrings
 
 __all__ = [
-    "AnimalFragment",
     "AsyncBaseClient",
     "BaseModel",
     "Client",
@@ -42,7 +40,6 @@ __all__ = [
     "GetAnimalByNameAnimalByNameAnimal",
     "GetAnimalByNameAnimalByNameCat",
     "GetAnimalByNameAnimalByNameDog",
-    "GetAnimalFragment",
     "GetAnimalFragmentWithExtra",
     "GetAuthenticatedUser",
     "GetAuthenticatedUserMe",
@@ -52,6 +49,8 @@ __all__ = [
     "GraphQLClientHttpError",
     "GraphQlClientInvalidResponseError",
     "ListAnimals",
+    "ListAnimalsFragment",
+    "ListAnimalsFragmentListAnimals",
     "ListAnimalsListAnimalsAnimal",
     "ListAnimalsListAnimalsCat",
     "ListAnimalsListAnimalsDog",

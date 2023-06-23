@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Added support for `Upload` scalar. Added support for file uploads to `AsyncBaseClient` and `BaseClient`.
+- Added validation of defined operations against the schema.
 
 
 ## 0.7.1 (2023-06-06)

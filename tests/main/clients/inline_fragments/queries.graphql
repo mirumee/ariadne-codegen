@@ -46,11 +46,12 @@ query InterfaceWithTypename {
 
 query UnionA {
   queryU {
-    id
     ... on TypeA {
+      id
       fieldA
     }
     ... on TypeB {
+      id
       fieldB
     }
   }
@@ -58,35 +59,23 @@ query UnionA {
 
 query UnionB {
   queryU {
-    id
     ... on TypeA {
+      id
       fieldA
     }
-  }
-}
-
-query UnionC {
-  queryU {
-    id
   }
 }
 
 query ListUnion {
   queryListU {
-    id
     ... on TypeA {
+      id
       fieldA
     }
     ... on TypeB {
+      id
       fieldB
     }
-  }
-}
-
-query UnionWithTypename {
-  queryU {
-    __typename
-    id
   }
 }
 
@@ -113,11 +102,12 @@ query queryWithFragmentOnUnion {
 }
 
 fragment fragmentOnUnion on Union {
-  id
   ... on TypeA {
+    id
     fieldA
   }
   ... on TypeB {
+    id
     fieldB
   }
 }
@@ -144,11 +134,12 @@ query queryWithFragmentOnQueryWithUnion {
 
 fragment FragmentOnQueryWithUnion on Query {
   queryU {
-    id
     ... on TypeA {
+      id
       fieldA
     }
     ... on TypeB {
+      id
       fieldB
     }
   }
@@ -165,17 +156,14 @@ fragment unusedFragmentOnInterface on Interface {
 }
 
 fragment unusedFragmentOnUnion on Union {
-  id
   ... on TypeA {
+    id
     fieldA
   }
   ... on TypeB {
+    id
     fieldB
   }
-}
-
-fragment unusedFragmentOnUnionWithoutInlineFragments on Union {
-  id
 }
 
 fragment unusedFragmentOnTypeA on TypeA {

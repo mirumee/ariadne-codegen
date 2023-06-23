@@ -1,8 +1,12 @@
 import httpx
 import pytest
-from graphql import GraphQLSchema, OperationDefinitionNode
+from graphql import GraphQLSchema, OperationDefinitionNode, build_schema
 
-from ariadne_codegen.exceptions import IntrospectionError, InvalidGraphqlSyntax
+from ariadne_codegen.exceptions import (
+    IntrospectionError,
+    InvalidGraphqlSyntax,
+    InvalidOperationForSchema,
+)
 from ariadne_codegen.schema import (
     get_graphql_queries,
     get_graphql_schema_from_path,
@@ -12,125 +16,108 @@ from ariadne_codegen.schema import (
     walk_graphql_files,
 )
 
-FIRST_SCHEMA = """
-    type Query {
-        test: Custom
-    }
 
-    type Custom {
-        node: String
-        default: String
-    }
-"""
-
-SECOND_SCHEMA = """
-    type User {
-        name: String
-    }
-"""
-
-INVALID_SCHEMA = """
-    type Query {
-        test: String! @unknownDirective
-    }
-"""
-
-INVALID_SYNTAX_SCHEMA = """
-    type Query {
-        test: Custom
-
-    type Custom {
-        node: String
-        default: String
-    }
-"""
-
-FIRST_FILENAME = "base.graphql"
-SECOND_FILENAME = "user.graphql"
-
-FIRST_QUERY = """
-    query getUsers {
-        users(first: 10) {
-            edges {
-                node {
-                    id
-                    username
-                }
-            }
+@pytest.fixture
+def schema_str():
+    return """
+        type Query {
+            test: Custom
         }
-    }
-"""
 
-SECOND_QUERY = """
-    query getUsers2 {
-        users(first: 10) {
-            edges {
-                node {
-                    id
-                    username
-                }
-            }
+        type Custom {
+            node: String
+            default: String
         }
-    }
-"""
-
-INCORRECT_QUERY = """
-    query getUsers
-        users(first: 10) {
-            edges {
-                node {
-                    id
-                    username
-                }
-            }
-        }
-    }
-"""
-
-FIRST_QUERY_FILENAME = "query1.graphql"
-SECOND_QUERY_FILENAME = "query2.graphql"
+    """
 
 
 @pytest.fixture
-def single_file_schema(tmp_path_factory):
+def extra_type_str():
+    return """
+        type User {
+            name: String
+        }
+    """
+
+
+@pytest.fixture
+def test_query_str():
+    return """
+        query testQuery {
+            test {
+                node
+                default
+            }
+        }
+    """
+
+
+@pytest.fixture
+def test_query_2_str():
+    return """
+        query testQuery2 {
+            test {
+                node
+                default
+            }
+        }
+    """
+
+
+@pytest.fixture
+def single_file_schema(tmp_path_factory, schema_str):
     file_ = tmp_path_factory.mktemp("schema").joinpath("schema.graphql")
-    file_.write_text(FIRST_SCHEMA, encoding="utf-8")
+    file_.write_text(schema_str, encoding="utf-8")
     return file_
 
 
 @pytest.fixture
 def invalid_schema_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("schema").joinpath("schema.graphql")
-    file_.write_text(INVALID_SCHEMA, encoding="utf-8")
+    schema_str = """
+        type Query {
+            test: String! @unknownDirective
+        }
+    """
+    file_.write_text(schema_str, encoding="utf-8")
     return file_
 
 
 @pytest.fixture
 def invalid_syntax_schema_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("schema").joinpath("schema.graphql")
-    file_.write_text(INVALID_SYNTAX_SCHEMA, encoding="utf-8")
+    schema_str = """
+        type Query {
+            test: Custom
+
+        type Custom {
+            node: String
+            default: String
+        }
+    """
+    file_.write_text(schema_str, encoding="utf-8")
     return file_
 
 
 @pytest.fixture
-def schemas_directory(tmp_path_factory):
+def schemas_directory(tmp_path_factory, schema_str, extra_type_str):
     schemas_dir = tmp_path_factory.mktemp("schemas")
-    first_file = schemas_dir.joinpath(FIRST_FILENAME)
-    first_file.write_text(FIRST_SCHEMA, encoding="utf-8")
-    second_file = schemas_dir.joinpath(SECOND_FILENAME)
-    second_file.write_text(SECOND_SCHEMA, encoding="utf-8")
+    first_file = schemas_dir.joinpath("schema.graphql")
+    first_file.write_text(schema_str, encoding="utf-8")
+    second_file = schemas_dir.joinpath("user.graphql")
+    second_file.write_text(extra_type_str, encoding="utf-8")
     return schemas_dir
 
 
 @pytest.fixture
-def schemas_nested_directories(tmp_path_factory):
+def schemas_nested_directories(tmp_path_factory, schema_str, extra_type_str):
     schemas_dir = tmp_path_factory.mktemp("schemas")
     nested_dir = schemas_dir.joinpath("nested")
     nested_dir.mkdir()
-    first_file = schemas_dir.joinpath(FIRST_FILENAME)
-    first_file.write_text(FIRST_SCHEMA, encoding="utf-8")
-    second_file = nested_dir.joinpath(SECOND_FILENAME)
-    second_file.write_text(SECOND_SCHEMA, encoding="utf-8")
+    first_file = schemas_dir.joinpath("schema.graphql")
+    first_file.write_text(schema_str, encoding="utf-8")
+    second_file = nested_dir.joinpath("user.graphql")
+    second_file.write_text(extra_type_str, encoding="utf-8")
     return schemas_dir
 
 
@@ -140,31 +127,55 @@ def path_fixture(request):
 
 
 @pytest.fixture
-def single_file_query(tmp_path_factory):
-    file_ = tmp_path_factory.mktemp("queries").joinpath(FIRST_QUERY_FILENAME)
-    file_.write_text(FIRST_QUERY, encoding="utf-8")
+def single_file_query(tmp_path_factory, test_query_str):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query1.graphql")
+    file_.write_text(test_query_str, encoding="utf-8")
     return file_
 
 
 @pytest.fixture
-def incorrect_file_query(tmp_path_factory):
-    file_ = tmp_path_factory.mktemp("queries").joinpath(FIRST_QUERY_FILENAME)
-    file_.write_text(INCORRECT_QUERY, encoding="utf-8")
+def invalid_syntax_query_file(tmp_path_factory):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query.graphql")
+    query_str = """
+        query testQuery
+            test {
+                node
+                default
+            }
+        }
+    """
+    file_.write_text(query_str, encoding="utf-8")
     return file_
 
 
 @pytest.fixture
-def queries_directory(tmp_path_factory):
+def invalid_query_for_schema_file(tmp_path_factory):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query.graphql")
+    query_str = """
+        query testQuery {
+            test {
+                node
+                default
+            }
+            anotherQuery
+        }
+    """
+    file_.write_text(query_str, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def queries_directory(tmp_path_factory, test_query_str, test_query_2_str):
     schemas_dir = tmp_path_factory.mktemp("queries")
-    first_file = schemas_dir.joinpath(FIRST_QUERY_FILENAME)
-    first_file.write_text(FIRST_QUERY, encoding="utf-8")
-    second_file = schemas_dir.joinpath(SECOND_QUERY_FILENAME)
-    second_file.write_text(SECOND_QUERY, encoding="utf-8")
+    first_file = schemas_dir.joinpath("query1.graphql")
+    first_file.write_text(test_query_str, encoding="utf-8")
+    second_file = schemas_dir.joinpath("query2.graphql")
+    second_file.write_text(test_query_2_str, encoding="utf-8")
     return schemas_dir
 
 
-def test_read_graphql_file_returns_content_of_file(single_file_schema):
-    assert read_graphql_file(single_file_schema) == FIRST_SCHEMA
+def test_read_graphql_file_returns_content_of_file(single_file_schema, schema_str):
+    assert read_graphql_file(single_file_schema) == schema_str
 
 
 def test_read_graphql_file_with_invalid_file_raises_invalid_graphql_syntax_exception(
@@ -177,7 +188,7 @@ def test_read_graphql_file_with_invalid_file_raises_invalid_graphql_syntax_excep
 
 def test_walk_graphql_files_returns_graphql_files_from_directory(schemas_directory):
     assert sorted(f.name for f in walk_graphql_files(schemas_directory)) == sorted(
-        [FIRST_FILENAME, SECOND_FILENAME]
+        ["schema.graphql", "user.graphql"]
     )
 
 
@@ -186,29 +197,31 @@ def test_walk_graphql_files_returns_graphql_files_from_nested_directory(
 ):
     assert sorted(
         f.name for f in walk_graphql_files(schemas_nested_directories)
-    ) == sorted([FIRST_FILENAME, SECOND_FILENAME])
+    ) == sorted(["schema.graphql", "user.graphql"])
 
 
 def test_load_graphql_files_from_path_returns_schema_from_single_file(
-    single_file_schema,
+    single_file_schema, schema_str
 ):
-    assert load_graphql_files_from_path(single_file_schema) == FIRST_SCHEMA
+    assert load_graphql_files_from_path(single_file_schema) == schema_str
 
 
 def test_load_graphql_files_from_path_returns_schema_from_directory(
-    schemas_directory,
+    schemas_directory, schema_str, extra_type_str
 ):
-    assert load_graphql_files_from_path(schemas_directory) == "\n".join(
-        [FIRST_SCHEMA, SECOND_SCHEMA]
-    )
+    content = load_graphql_files_from_path(schemas_directory)
+
+    assert schema_str in content
+    assert extra_type_str in content
 
 
 def test_load_graphql_files_from_path_returns_schema_from_nested_directory(
-    schemas_nested_directories,
+    schemas_nested_directories, schema_str, extra_type_str
 ):
-    assert load_graphql_files_from_path(schemas_nested_directories) == "\n".join(
-        [FIRST_SCHEMA, SECOND_SCHEMA]
-    )
+    content = load_graphql_files_from_path(schemas_nested_directories)
+
+    assert schema_str in content
+    assert extra_type_str in content
 
 
 @pytest.mark.parametrize(
@@ -379,30 +392,45 @@ def test_introspect_remote_schema_uses_provided_verify_ssl_flag(verify_ssl, mock
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_single_file(
-    single_file_query,
+    single_file_query, schema_str
 ):
-    queries = get_graphql_queries(single_file_query.as_posix())
+    queries = get_graphql_queries(
+        single_file_query.as_posix(), build_schema(schema_str)
+    )
     assert len(queries) == 1
     assert isinstance(queries[0], OperationDefinitionNode)
     assert queries[0].name
-    assert queries[0].name.value == "getUsers"
+    assert queries[0].name.value == "testQuery"
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_directory(
-    queries_directory,
+    queries_directory, schema_str
 ):
-    queries = get_graphql_queries(queries_directory.as_posix())
+    queries = get_graphql_queries(
+        queries_directory.as_posix(), build_schema(schema_str)
+    )
     assert len(queries) == 2
     assert isinstance(queries[0], OperationDefinitionNode)
     assert isinstance(queries[1], OperationDefinitionNode)
     assert queries[0].name
     assert queries[1].name
-    assert queries[0].name.value == "getUsers"
-    assert queries[1].name.value == "getUsers2"
+    assert queries[0].name.value == "testQuery"
+    assert queries[1].name.value == "testQuery2"
 
 
 def test_get_graphql_queries_with_invalid_file_raises_invalid_graphql_syntax_exception(
-    incorrect_file_query,
+    invalid_syntax_query_file, schema_str
 ):
     with pytest.raises(InvalidGraphqlSyntax):
-        get_graphql_queries(incorrect_file_query.as_posix())
+        get_graphql_queries(
+            invalid_syntax_query_file.as_posix(), build_schema(schema_str)
+        )
+
+
+def test_get_graphql_queries_with_invalid_query_for_schema_raises_invalid_operation(
+    invalid_query_for_schema_file, schema_str
+):
+    with pytest.raises(InvalidOperationForSchema):
+        get_graphql_queries(
+            invalid_query_for_schema_file.as_posix(), build_schema(schema_str)
+        )

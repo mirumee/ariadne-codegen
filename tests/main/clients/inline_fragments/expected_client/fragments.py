@@ -52,7 +52,6 @@ class FragmentOnQueryWithUnionQueryUTypeB(BaseModel):
 
 class FragmentOnQueryWithUnionQueryUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
-    id: str
 
 
 class UnusedFragmentOnTypeA(BaseModel):

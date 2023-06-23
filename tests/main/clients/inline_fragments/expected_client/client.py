@@ -13,8 +13,6 @@ from .query_with_fragment_on_query_with_union import QueryWithFragmentOnQueryWit
 from .query_with_fragment_on_union import QueryWithFragmentOnUnion
 from .union_a import UnionA
 from .union_b import UnionB
-from .union_c import UnionC
-from .union_with_typename import UnionWithTypename
 
 
 def gql(q: str) -> str:
@@ -122,11 +120,12 @@ class Client(AsyncBaseClient):
             query UnionA {
               queryU {
                 __typename
-                id
                 ... on TypeA {
+                  id
                   fieldA
                 }
                 ... on TypeB {
+                  id
                   fieldB
                 }
               }
@@ -144,8 +143,8 @@ class Client(AsyncBaseClient):
             query UnionB {
               queryU {
                 __typename
-                id
                 ... on TypeA {
+                  id
                   fieldA
                 }
               }
@@ -157,33 +156,18 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return UnionB.parse_obj(data)
 
-    async def union_c(self) -> UnionC:
-        query = gql(
-            """
-            query UnionC {
-              queryU {
-                __typename
-                id
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return UnionC.parse_obj(data)
-
     async def list_union(self) -> ListUnion:
         query = gql(
             """
             query ListUnion {
               queryListU {
                 __typename
-                id
                 ... on TypeA {
+                  id
                   fieldA
                 }
                 ... on TypeB {
+                  id
                   fieldB
                 }
               }
@@ -194,22 +178,6 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListUnion.parse_obj(data)
-
-    async def union_with_typename(self) -> UnionWithTypename:
-        query = gql(
-            """
-            query UnionWithTypename {
-              queryU {
-                __typename
-                id
-              }
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return UnionWithTypename.parse_obj(data)
 
     async def query_with_fragment_on_interface(self) -> QueryWithFragmentOnInterface:
         query = gql(
@@ -248,11 +216,12 @@ class Client(AsyncBaseClient):
             }
 
             fragment fragmentOnUnion on Union {
-              id
               ... on TypeA {
+                id
                 fieldA
               }
               ... on TypeB {
+                id
                 fieldB
               }
             }
@@ -301,11 +270,12 @@ class Client(AsyncBaseClient):
 
             fragment FragmentOnQueryWithUnion on Query {
               queryU {
-                id
                 ... on TypeA {
+                  id
                   fieldA
                 }
                 ... on TypeB {
+                  id
                   fieldB
                 }
               }

@@ -9,7 +9,6 @@ from .get_animal_by_name import (
     GetAnimalByNameAnimalByNameCat,
     GetAnimalByNameAnimalByNameDog,
 )
-from .get_animal_fragment import GetAnimalFragment
 from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
 from .list_animals import (
@@ -115,7 +114,7 @@ class Client(AsyncBaseClient):
         return ListTypeA.parse_obj(data).list_optional_type_a
 
     async def get_animal_by_name(
-        self,
+        self, name: str
     ) -> Union[
         GetAnimalByNameAnimalByNameAnimal,
         GetAnimalByNameAnimalByNameCat,
@@ -123,8 +122,8 @@ class Client(AsyncBaseClient):
     ]:
         query = gql(
             """
-            query GetAnimalByName {
-              animalByName {
+            query GetAnimalByName($name: String!) {
+              animalByName(name: $name) {
                 __typename
                 name
                 ... on Cat {
@@ -137,7 +136,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: dict[str, object] = {"name": name}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetAnimalByName.parse_obj(data).animal_by_name
@@ -172,33 +171,18 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return ListAnimals.parse_obj(data).list_animals
 
-    async def get_animal_fragment(self) -> str:
-        query = gql(
-            """
-            query GetAnimalFragment {
-              ...AnimalFragment
-            }
-
-            fragment AnimalFragment on Animal {
-              name
-            }
-            """
-        )
-        variables: dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
-        data = self.get_data(response)
-        return GetAnimalFragment.parse_obj(data).name
-
     async def get_animal_fragment_with_extra(self) -> GetAnimalFragmentWithExtra:
         query = gql(
             """
             query GetAnimalFragmentWithExtra {
-              ...AnimalFragment
+              ...ListAnimalsFragment
               listString
             }
 
-            fragment AnimalFragment on Animal {
-              name
+            fragment ListAnimalsFragment on Query {
+              listAnimals {
+                name
+              }
             }
             """
         )

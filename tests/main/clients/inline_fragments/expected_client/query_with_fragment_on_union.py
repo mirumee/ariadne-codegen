@@ -27,7 +27,6 @@ class QueryWithFragmentOnUnionQueryUTypeB(BaseModel):
 
 class QueryWithFragmentOnUnionQueryUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
-    id: str
 
 
 QueryWithFragmentOnUnion.update_forward_refs()
