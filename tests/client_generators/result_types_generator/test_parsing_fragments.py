@@ -173,3 +173,58 @@ def test_get_classes_returns_empty_list_for_fragment_with_inline_fragments():
     generated_class_defs = generator.get_classes()
 
     assert not generated_class_defs
+
+
+def test_get_classes_returns_fragment_classes_with_handled_mixin_directive():
+    fragment_str = """
+        fragment TestFragment on CustomType
+        @mixin(from: ".test_mixins", import: "TestMixinA")  {
+            id
+        }
+    """
+    fragment_definition = cast(
+        FragmentDefinitionNode, parse(fragment_str).definitions[0]
+    )
+    generator = ResultTypesGenerator(
+        schema=build_schema(SCHEMA_STR),
+        operation_definition=fragment_definition,
+        enums_module_name="enums",
+        fragments_definitions={"TestFragment": fragment_definition},
+    )
+
+    generated_class_defs = generator.get_classes()
+
+    assert len(generated_class_defs) == 1
+    fragment_class_def = generated_class_defs[0]
+    assert fragment_class_def.name == "TestFragment"
+    assert {b.id for b in fragment_class_def.bases} == {
+        BASE_MODEL_CLASS_NAME,
+        "TestMixinA",
+    }
+
+
+def test_get_imports_returns_mixin_imports():
+    fragment_str = """
+        fragment TestFragment on CustomType
+        @mixin(from: ".test_mixins", import: "TestMixinA")  {
+            id
+        }
+    """
+    fragment_definition = cast(
+        FragmentDefinitionNode, parse(fragment_str).definitions[0]
+    )
+    generator = ResultTypesGenerator(
+        schema=build_schema(SCHEMA_STR),
+        operation_definition=fragment_definition,
+        enums_module_name="enums",
+        fragments_definitions={"TestFragment": fragment_definition},
+    )
+
+    generated_imports = generator.get_imports()
+
+    mixin_imports = [imp for imp in generated_imports if imp.module == ".test_mixins"]
+    assert len(mixin_imports) == 1
+    assert compare_ast(
+        mixin_imports[0],
+        ast.ImportFrom(module=".test_mixins", names=[ast.alias("TestMixinA")], level=0),
+    )

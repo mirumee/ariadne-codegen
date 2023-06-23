@@ -1,4 +1,5 @@
 from .async_base_client import AsyncBaseClient
+from .fragments_with_mixins import FragmentsWithMixins
 from .get_query_a import GetQueryA
 from .get_query_a_with_fragment import GetQueryAWithFragment
 from .get_query_b import GetQueryB
@@ -57,3 +58,29 @@ class Client(AsyncBaseClient):
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetQueryAWithFragment.parse_obj(data)
+
+    async def fragments_with_mixins(self) -> FragmentsWithMixins:
+        query = gql(
+            """
+            query fragmentsWithMixins {
+              queryA {
+                ...fragmentA
+              }
+              queryB {
+                ...fragmentB
+              }
+            }
+
+            fragment fragmentA on TypeA @mixin(from: ".mixins_a", import: "MixinA") {
+              fieldA
+            }
+
+            fragment fragmentB on TypeB @mixin(from: ".mixins_b", import: "MixinB") {
+              fieldB
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return FragmentsWithMixins.parse_obj(data)

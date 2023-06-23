@@ -8,7 +8,12 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
-from .fragments import GetQueryAFragment, GetQueryAFragmentQueryA
+from .fragments import FragmentA, FragmentB, GetQueryAFragment, GetQueryAFragmentQueryA
+from .fragments_with_mixins import (
+    FragmentsWithMixins,
+    FragmentsWithMixinsQueryA,
+    FragmentsWithMixinsQueryB,
+)
 from .get_query_a import GetQueryA, GetQueryAQueryA
 from .get_query_a_with_fragment import GetQueryAWithFragment
 from .get_query_b import GetQueryB, GetQueryBQueryB
@@ -17,6 +22,11 @@ __all__ = [
     "AsyncBaseClient",
     "BaseModel",
     "Client",
+    "FragmentA",
+    "FragmentB",
+    "FragmentsWithMixins",
+    "FragmentsWithMixinsQueryA",
+    "FragmentsWithMixinsQueryB",
     "GetQueryA",
     "GetQueryAFragment",
     "GetQueryAFragmentQueryA",
