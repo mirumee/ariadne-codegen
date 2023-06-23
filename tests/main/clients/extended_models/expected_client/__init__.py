@@ -8,7 +8,9 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
+from .fragments import GetQueryAFragment, GetQueryAFragmentQueryA
 from .get_query_a import GetQueryA, GetQueryAQueryA
+from .get_query_a_with_fragment import GetQueryAWithFragment
 from .get_query_b import GetQueryB, GetQueryBQueryB
 
 __all__ = [
@@ -16,7 +18,10 @@ __all__ = [
     "BaseModel",
     "Client",
     "GetQueryA",
+    "GetQueryAFragment",
+    "GetQueryAFragmentQueryA",
     "GetQueryAQueryA",
+    "GetQueryAWithFragment",
     "GetQueryB",
     "GetQueryBQueryB",
     "GraphQLClientError",

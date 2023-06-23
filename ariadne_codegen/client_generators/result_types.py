@@ -18,6 +18,7 @@ from graphql import (
     GraphQLUnionType,
     InlineFragmentNode,
     NameNode,
+    Node,
     OperationDefinitionNode,
     OperationType,
     SelectionNode,
@@ -178,12 +179,14 @@ class ResultTypesGenerator:
 
     def get_operation_as_str(self) -> str:
         operation_str = print_ast(
-            self._get_operation_definition_without_mixin_directive()
+            self._get_node_without_mixin_directive(self.operation_definition)
         )
         if self._fragments_used_as_mixins or self._unpacked_fragments:
             for used_fragment in sorted(self._get_all_related_fragments()):
                 operation_str += "\n\n" + print_ast(
-                    self.fragments_definitions[used_fragment]
+                    self._get_node_without_mixin_directive(
+                        self.fragments_definitions[used_fragment]
+                    )
                 )
 
         if self.plugin_manager:
@@ -536,7 +539,7 @@ class ResultTypesGenerator:
                 names = names.union(self._get_fragments_names(node.selection_set))
         return names
 
-    def _get_operation_definition_without_mixin_directive(self):
+    def _get_node_without_mixin_directive(self, node: Node) -> Node:
         class RemoveMixinVisitor(Visitor):
             @staticmethod
             def enter_field(node: FieldNode, *_args: Any) -> FieldNode:
@@ -545,6 +548,6 @@ class ResultTypesGenerator:
                 )
                 return node
 
-        operation_def = deepcopy(self.operation_definition)
-        visit(operation_def, RemoveMixinVisitor())
-        return operation_def
+        copied_node = deepcopy(node)
+        visit(copied_node, RemoveMixinVisitor())
+        return copied_node
