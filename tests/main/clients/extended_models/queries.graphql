@@ -19,9 +19,26 @@ query getQueryAWithFragment {
 }
 
 fragment getQueryAFragment on Query {
-    queryA
+  queryA
     @mixin(from: ".mixins_a", import: "MixinA")
     @mixin(from: ".common_mixins", import: "CommonMixin") {
     fieldA
   }
+}
+
+query fragmentsWithMixins {
+  queryA @mixin(from: ".common_mixins", import: "CommonMixin") {
+    ...fragmentA
+  }
+  queryB @mixin(from: ".common_mixins", import: "CommonMixin") {
+    ...fragmentB
+  }
+}
+
+fragment fragmentA on TypeA @mixin(from: ".mixins_a", import: "MixinA") {
+  fieldA
+}
+
+fragment fragmentB on TypeB @mixin(from: ".mixins_b", import: "MixinB") {
+  fieldB
 }
