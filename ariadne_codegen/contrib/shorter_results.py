@@ -38,7 +38,12 @@ import ast
 from copy import deepcopy
 from typing import Dict, List, Optional, Union
 
-from graphql import ExecutableDefinitionNode, GraphQLSchema, SelectionSetNode
+from graphql import (
+    ExecutableDefinitionNode,
+    FragmentDefinitionNode,
+    GraphQLSchema,
+    SelectionSetNode,
+)
 
 from ..codegen import (
     generate_async_for,
@@ -98,6 +103,19 @@ class ShorterResultsPlugin(Plugin):
         return super().generate_result_class(
             class_def, operation_definition, selection_set
         )
+
+    def generate_fragments_module(
+        self,
+        module: ast.Module,
+        fragments_definitions: Dict[str, FragmentDefinitionNode],
+    ) -> ast.Module:
+        """Store a map of all fragment classes and their AST."""
+        for fragment_class in [
+            x.name for x in module.body if isinstance(x, ast.ClassDef)
+        ]:
+            self.imported_types[fragment_class] = ".fragments"
+
+        return super().generate_fragments_module(module, fragments_definitions)
 
     def generate_client_module(self, module: ast.Module) -> ast.Module:
         """
@@ -275,8 +293,8 @@ class ShorterResultsPlugin(Plugin):
         file defining the method.
         """
         for single_field_class in single_field_classes:
-            # The unwrapped field might be a custom scalar, if it is ensure we
-            # add it to imports.
+            # The unwrapped field might be a custom scalar or fragment, if it is
+            # ensure we add it to imports.
             if single_field_class in self.imported_types:
                 import_from = self.imported_types[single_field_class]
             elif single_field_class in self.class_dict:
