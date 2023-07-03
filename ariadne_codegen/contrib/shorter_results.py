@@ -110,10 +110,16 @@ class ShorterResultsPlugin(Plugin):
         fragments_definitions: Dict[str, FragmentDefinitionNode],
     ) -> ast.Module:
         """Store a map of all fragment classes and their AST."""
+        fragments_module_name = (
+            self.config_dict.get("tool", {})
+            .get("ariadne-codegen", {})
+            .get("fragments_module_name", "fragments")
+        )
+
         for fragment_class in [
             x.name for x in module.body if isinstance(x, ast.ClassDef)
         ]:
-            self.imported_types[fragment_class] = ".fragments"
+            self.imported_types[fragment_class] = f".{fragments_module_name}"
 
         return super().generate_fragments_module(module, fragments_definitions)
 

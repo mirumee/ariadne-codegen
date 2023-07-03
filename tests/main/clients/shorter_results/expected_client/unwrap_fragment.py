@@ -1,4 +1,4 @@
-from .fragments import FragmentWithSingleField
+from .shorter_results_fragments import FragmentWithSingleField
 
 
 class UnwrapFragment(FragmentWithSingleField):
