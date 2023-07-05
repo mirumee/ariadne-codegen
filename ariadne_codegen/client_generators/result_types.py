@@ -248,6 +248,7 @@ class ResultTypesGenerator:
             name = self._process_field_name(field_name, field=field)
             field_definition = self._get_field_from_schema(type_name, field.name.value)
             annotation, field_types_names = parse_operation_field(
+                schema=self.schema,
                 field=field,
                 type_=cast(CodegenResultFieldType, field_definition.type),
                 directives=field.directives,
@@ -300,9 +301,19 @@ class ResultTypesGenerator:
                 fields.append(selection)
             elif isinstance(selection, FragmentSpreadNode):
                 fragment_def = self.fragments_definitions[selection.name.value]
-                if not self._unpack_fragment(fragment_def):
+                root_type_def = self.schema.type_map[root_type]
+                fragment_root_type_def = self.schema.type_map[
+                    fragment_def.type_condition.name.value
+                ]
+                if not self._unpack_fragment(fragment_def, root_type_def):
                     fragments.add(selection.name.value)
-                else:
+                elif fragment_def.type_condition.name.value == root_type or (
+                    is_abstract_type(fragment_root_type_def)
+                    and self.schema.is_sub_type(
+                        cast(GraphQLAbstractType, fragment_root_type_def),
+                        root_type_def,
+                    )
+                ):
                     self._unpacked_fragments.add(selection.name.value)
                     sub_fields, sub_fragments = self._resolve_selection_set(
                         fragment_def.selection_set, root_type
@@ -321,10 +332,19 @@ class ResultTypesGenerator:
         )
         return fields, fragments
 
-    def _unpack_fragment(self, fragment_def: FragmentDefinitionNode) -> bool:
+    def _unpack_fragment(
+        self,
+        fragment_def: FragmentDefinitionNode,
+        root_type_def: Optional[str] = None,
+    ) -> bool:
         if fragment_def.name and isinstance(
             self.schema.type_map.get(fragment_def.type_condition.name.value),
             GraphQLUnionType,
+        ):
+            return True
+        if (
+            root_type_def
+            and fragment_def.type_condition.name.value != root_type_def.name
         ):
             return True
         for fragment_selection in fragment_def.selection_set.selections:
