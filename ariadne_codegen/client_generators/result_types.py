@@ -11,6 +11,7 @@ from graphql import (
     GraphQLAbstractType,
     GraphQLEnumType,
     GraphQLField,
+    GraphQLNamedType,
     GraphQLNonNull,
     GraphQLObjectType,
     GraphQLScalarType,
@@ -335,7 +336,7 @@ class ResultTypesGenerator:
     def _unpack_fragment(
         self,
         fragment_def: FragmentDefinitionNode,
-        root_type_def: Optional[str] = None,
+        root_type_def: Optional[GraphQLNamedType] = None,
     ) -> bool:
         if fragment_def.name and isinstance(
             self.schema.type_map.get(fragment_def.type_condition.name.value),
