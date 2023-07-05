@@ -153,6 +153,17 @@ def test_main_shows_version():
             "shorter_results",
             CLIENTS_PATH / "shorter_results" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "fragments_on_abstract_types" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "fragments_on_abstract_types" / "queries.graphql",
+                    CLIENTS_PATH / "fragments_on_abstract_types" / "schema.graphql",
+                ),
+            ),
+            "fragments_on_abstract_types_client",
+            CLIENTS_PATH / "fragments_on_abstract_types" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
