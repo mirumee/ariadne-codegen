@@ -6,6 +6,7 @@
 - Added validation of defined operations against the schema.
 - Removed `mixin` directive from fragment string included in operation string sent to server.
 - Added support for `mixin` directive on fragments definitions.
+- Added support for fragments defined on subtype of field's type.
 
 
 ## 0.7.1 (2023-06-06)
