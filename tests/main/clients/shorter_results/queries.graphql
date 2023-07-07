@@ -69,3 +69,14 @@ fragment ListAnimalsFragment on Query {
 subscription SubscribeStrings {
   optionalListString
 }
+
+
+fragment FragmentWithSingleField on Query {
+  queryUnwrapFragment {
+    id
+  }
+}
+
+query UnwrapFragment {
+  ...FragmentWithSingleField
+}

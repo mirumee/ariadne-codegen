@@ -8,7 +8,6 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
-from .fragments import ListAnimalsFragment, ListAnimalsFragmentListAnimals
 from .get_a_scalar import GetAScalar
 from .get_animal_by_name import (
     GetAnimalByName,
@@ -29,12 +28,21 @@ from .list_strings_2 import ListStrings2
 from .list_strings_3 import ListStrings3
 from .list_strings_4 import ListStrings4
 from .list_type_a import ListTypeA, ListTypeAListOptionalTypeA
+from .shorter_results_fragments import (
+    FragmentWithSingleField,
+    FragmentWithSingleFieldQueryUnwrapFragment,
+    ListAnimalsFragment,
+    ListAnimalsFragmentListAnimals,
+)
 from .subscribe_strings import SubscribeStrings
+from .unwrap_fragment import UnwrapFragment
 
 __all__ = [
     "AsyncBaseClient",
     "BaseModel",
     "Client",
+    "FragmentWithSingleField",
+    "FragmentWithSingleFieldQueryUnwrapFragment",
     "GetAScalar",
     "GetAnimalByName",
     "GetAnimalByNameAnimalByNameAnimal",
@@ -61,5 +69,6 @@ __all__ = [
     "ListTypeA",
     "ListTypeAListOptionalTypeA",
     "SubscribeStrings",
+    "UnwrapFragment",
     "Upload",
 ]

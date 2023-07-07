@@ -37,6 +37,8 @@ type Query {
   animalByName(name: String!): Animal!
 
   justAScalar: MyScalar!
+
+  queryUnwrapFragment: TypeA!
 }
 
 type Subscription {

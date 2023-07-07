@@ -22,7 +22,9 @@ from .list_strings_2 import ListStrings2
 from .list_strings_3 import ListStrings3
 from .list_strings_4 import ListStrings4
 from .list_type_a import ListTypeA, ListTypeAListOptionalTypeA
+from .shorter_results_fragments import FragmentWithSingleFieldQueryUnwrapFragment
 from .subscribe_strings import SubscribeStrings
+from .unwrap_fragment import UnwrapFragment
 
 
 def gql(q: str) -> str:
@@ -215,3 +217,22 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         async for data in self.execute_ws(query=query, variables=variables):
             yield SubscribeStrings.parse_obj(data).optional_list_string
+
+    async def unwrap_fragment(self) -> FragmentWithSingleFieldQueryUnwrapFragment:
+        query = gql(
+            """
+            query UnwrapFragment {
+              ...FragmentWithSingleField
+            }
+
+            fragment FragmentWithSingleField on Query {
+              queryUnwrapFragment {
+                id
+              }
+            }
+            """
+        )
+        variables: dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return UnwrapFragment.parse_obj(data).query_unwrap_fragment
