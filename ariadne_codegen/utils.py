@@ -95,4 +95,6 @@ def process_name(
         processed_name = processed_name.lstrip("_")
     if plugin_manager:
         processed_name = plugin_manager.process_name(processed_name, node=node)
+    if set(name) == {"_"} and not processed_name:
+        return "underscore_named_field_"
     return processed_name

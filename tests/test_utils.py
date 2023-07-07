@@ -120,3 +120,36 @@ def test_process_name_triggers_plugin_manager_process_name(mocked_plugin_manager
     process_name("", convert_to_snake_case=False, plugin_manager=mocked_plugin_manager)
 
     assert mocked_plugin_manager.process_name.called
+
+
+@pytest.mark.parametrize("trim_leading_underscore", (True, False))
+def test_process_name_returns_default_value_for_name_with_only_underscore(
+    trim_leading_underscore,
+):
+    assert (
+        process_name(
+            "_",
+            convert_to_snake_case=True,
+            trim_leading_underscore=trim_leading_underscore,
+        )
+        == "underscore_named_field_"
+    )
+
+
+@pytest.mark.parametrize("trim_leading_underscore", (True, False))
+def test_process_name_returns_name_returned_from_plugin_for_name_with_only_underscore(
+    trim_leading_underscore, mocked_plugin_manager, mocker
+):
+    mocked_plugin_manager.process_name = mocker.MagicMock(
+        return_value="name_from_plugin"
+    )
+    
+    assert (
+        process_name(
+            "_",
+            convert_to_snake_case=True,
+            trim_leading_underscore=trim_leading_underscore,
+            plugin_manager=mocked_plugin_manager,
+        )
+        == "name_from_plugin"
+    )
