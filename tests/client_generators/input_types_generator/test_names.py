@@ -158,6 +158,7 @@ def test_generate_returns_module_with_valid_field_names(
         _foo: String!
         _Bar: String!
         ____baz_: String!
+        _: String!
     }
     """
 
@@ -175,4 +176,12 @@ def test_generate_returns_module_with_valid_field_names(
     )  # Round trip because invalid identifiers get picked up in parse
     class_def = get_class_def(parsed)
     field_names = get_assignment_target_names(class_def)
-    assert field_names == {"in_", "from_", "and_", "foo", "bar", "baz_"}
+    assert field_names == {
+        "in_",
+        "from_",
+        "and_",
+        "foo",
+        "bar",
+        "baz_",
+        "underscore_named_field_",
+    }
