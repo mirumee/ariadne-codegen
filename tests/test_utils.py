@@ -143,7 +143,7 @@ def test_process_name_returns_name_returned_from_plugin_for_name_with_only_under
     mocked_plugin_manager.process_name = mocker.MagicMock(
         return_value="name_from_plugin"
     )
-    
+
     assert (
         process_name(
             "_",
