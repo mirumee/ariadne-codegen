@@ -1,0 +1,26 @@
+type Query {
+  queryInterface: BaseInterface!
+  queryUnion: UnionAB!
+}
+
+interface BaseInterface {
+  id: ID!
+}
+
+interface InterfaceA implements BaseInterface {
+  id: ID!
+  valueA: String!
+}
+
+type TypeA implements InterfaceA & BaseInterface {
+  id: ID!
+  valueA: String!
+  another: String!
+}
+
+type TypeB {
+  id: ID!
+  valueB: String!
+}
+
+union UnionAB = TypeA | TypeB

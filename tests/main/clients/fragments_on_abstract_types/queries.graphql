@@ -1,0 +1,36 @@
+query queryWithFragmentOnSubInterface {
+  queryInterface {
+    ...fragmentA
+  }
+}
+
+fragment fragmentA on InterfaceA {
+  id
+  valueA
+}
+
+query queryWithFragmentOnSubInterfaceWithInlineFragment {
+  queryInterface {
+    ...fragmentAWithInlineFragment
+  }
+}
+
+fragment fragmentAWithInlineFragment on InterfaceA {
+  id
+  valueA
+  ... on TypeA {
+    another
+  }
+}
+
+query queryWithFragmentOnUnionMember {
+    queryUnion {
+        ...fragmentB
+    }
+}
+
+
+fragment fragmentB on TypeB {
+    id
+    valueB
+}

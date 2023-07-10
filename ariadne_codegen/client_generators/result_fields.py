@@ -7,15 +7,18 @@ from graphql import (
     FieldNode,
     FragmentDefinitionNode,
     FragmentSpreadNode,
+    GraphQLAbstractType,
     GraphQLEnumType,
     GraphQLInterfaceType,
     GraphQLList,
     GraphQLNonNull,
     GraphQLObjectType,
     GraphQLScalarType,
+    GraphQLSchema,
     GraphQLUnionType,
     InlineFragmentNode,
     SelectionSetNode,
+    is_abstract_type,
 )
 
 from ..codegen import (
@@ -50,6 +53,7 @@ FieldNames = namedtuple("FieldNames", ["class_name", "type_name"])
 
 
 def parse_operation_field(
+    schema: GraphQLSchema,
     field: FieldNode,
     type_: CodegenResultFieldType,
     directives: Optional[Tuple[DirectiveNode, ...]] = None,
@@ -62,6 +66,7 @@ def parse_operation_field(
         return generate_typename_annotation(typename_values), []
 
     annotation, field_types_names = parse_operation_field_type(
+        schema=schema,
         field=field,
         type_=type_,
         class_name=class_name,
@@ -89,6 +94,7 @@ def generate_typename_annotation(typename_values: List[str]) -> ast.Subscript:
 
 # pylint: disable=too-many-return-statements, too-many-branches
 def parse_operation_field_type(
+    schema: GraphQLSchema,
     field: FieldNode,
     type_: CodegenResultFieldType,
     nullable: bool = True,
@@ -114,17 +120,29 @@ def parse_operation_field_type(
         inline_fragments = get_inline_fragments_from_selection_set(
             field.selection_set, fragments_definitions
         )
-        if inline_fragments:
+        fragments_on_subtypes = get_fragments_on_subtype(
+            schema, field.selection_set, fragments_definitions, type_.name
+        )
+        if inline_fragments or fragments_on_subtypes:
             types = [
                 generate_annotation_name('"' + class_name + type_.name + '"', False)
             ]
             names = [FieldNames(class_name + type_.name, type_.name)]
-            for fragment in inline_fragments:
-                type_name = fragment.type_condition.name.value
+            fragments_types_names = sorted(
+                {
+                    f.type_condition.name.value
+                    for f in inline_fragments + fragments_on_subtypes
+                }
+            )
+            for fragment_type_name in fragments_types_names:
                 types.append(
-                    generate_annotation_name('"' + class_name + type_name + '"', False)
+                    generate_annotation_name(
+                        '"' + class_name + fragment_type_name + '"', False
+                    )
                 )
-                names.append(FieldNames(class_name + type_name, type_name))
+                names.append(
+                    FieldNames(class_name + fragment_type_name, fragment_type_name)
+                )
             return generate_union_annotation(types=types, nullable=nullable), names
 
         name = class_name + type_.name if add_type_name else class_name
@@ -151,6 +169,7 @@ def parse_operation_field_type(
         names = []
         for subtype in type_.types:
             sub_annotation, sub_names = parse_operation_field_type(
+                schema=schema,
                 field=field,
                 type_=subtype,
                 nullable=False,
@@ -166,6 +185,7 @@ def parse_operation_field_type(
 
     if isinstance(type_, GraphQLList):
         slice_, names = parse_operation_field_type(
+            schema=schema,
             field=field,
             type_=cast(CodegenResultFieldType, type_.of_type),
             class_name=class_name,
@@ -176,6 +196,7 @@ def parse_operation_field_type(
 
     if isinstance(type_, GraphQLNonNull):
         return parse_operation_field_type(
+            schema=schema,
             field=field,
             type_=type_.of_type,
             nullable=False,
@@ -209,6 +230,39 @@ def get_inline_fragments_from_selection_set(
             )
 
     return inline_fragments
+
+
+def get_fragments_on_subtype(
+    schema: GraphQLSchema,
+    selection_set: Optional[SelectionSetNode],
+    fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]],
+    root_type: str,
+) -> List[FragmentDefinitionNode]:
+    root_type_def = schema.get_type(root_type)
+    if (
+        not selection_set
+        or root_type_def is None
+        or not is_abstract_type(root_type_def)
+    ):
+        return []
+
+    root_type_def = cast(GraphQLAbstractType, root_type_def)
+    fragments_definitions = fragments_definitions or {}
+    fragments = []
+
+    for selection in selection_set.selections or []:
+        if isinstance(selection, FragmentSpreadNode):
+            fragment_def = fragments_definitions[selection.name.value]
+            fragment_root_type_def = schema.get_type(
+                fragment_def.type_condition.name.value
+            )
+
+            if fragment_root_type_def and schema.is_sub_type(
+                root_type_def, fragment_root_type_def
+            ):
+                fragments.append(fragment_def)
+
+    return fragments
 
 
 def annotate_nested_unions(annotation: AnnotationSlice) -> AnnotationSlice:

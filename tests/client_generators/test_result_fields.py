@@ -14,6 +14,7 @@ from graphql import (
     GraphQLNonNull,
     GraphQLObjectType,
     GraphQLScalarType,
+    GraphQLSchema,
     GraphQLUnionType,
     InlineFragmentNode,
     NamedTypeNode,
@@ -76,6 +77,7 @@ def test_parse_operation_field_returns_optional_annotation_if_given_nullable_dir
     directive, type_, expected_annotation
 ):
     annotation, _ = parse_operation_field(
+        schema=GraphQLSchema(),
         field=FieldNode(),
         type_=type_,
         directives=(DirectiveNode(name=NameNode(value=directive), arguments=()),),
@@ -91,6 +93,7 @@ def test_parse_operation_field_returns_typename_annotation_with_multiple_values(
     )
 
     annotation, _ = parse_operation_field(
+        schema=GraphQLSchema(),
         field=FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME)),
         type_=GraphQLNonNull(GraphQLScalarType("String")),
         typename_values=["TypeB", "TypeA"],
@@ -105,6 +108,7 @@ def test_parse_operation_field_returns_typename_annotation_with_single_value():
     )
 
     annotation, _ = parse_operation_field(
+        schema=GraphQLSchema(),
         field=FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME)),
         type_=GraphQLNonNull(GraphQLScalarType("String")),
         typename_values=["TypeA"],
@@ -142,6 +146,7 @@ def test_parse_operation_field_returns_annotation_with_annotated_nested_unions()
     )
 
     annotation, _ = parse_operation_field(
+        schema=GraphQLSchema(),
         field=FieldNode(name=NameNode(value="unionField")),
         type_=GraphQLUnionType(
             "UnionType",
@@ -194,7 +199,9 @@ def test_parse_operation_field_returns_annotation_with_annotated_nested_unions()
 def test_parse_operation_field_type_returns_annotation_for_scalar(
     type_, expected_annotation
 ):
-    annotation, names = parse_operation_field_type(field=FieldNode(), type_=type_)
+    annotation, names = parse_operation_field_type(
+        schema=GraphQLSchema(), field=FieldNode(), type_=type_
+    )
 
     assert compare_ast(annotation, expected_annotation)
     assert names == []
@@ -220,6 +227,7 @@ def test_parse_operation_field_type_returns_annotation_for_custom_scalar(
     type_, expected_annotation
 ):
     annotation, names = parse_operation_field_type(
+        schema=GraphQLSchema(),
         field=FieldNode(),
         type_=type_,
         custom_scalars={"SCALARXYZ": ScalarData(type_="ScalarXYZ")},
@@ -266,7 +274,7 @@ def test_parse_operation_field_type_returns_annotation_for_objects_and_interface
     type_, class_name, expected_annotation, expected_names
 ):
     annotation, names = parse_operation_field_type(
-        field=FieldNode(), type_=type_, class_name=class_name
+        schema=GraphQLSchema(), field=FieldNode(), type_=type_, class_name=class_name
     )
 
     assert compare_ast(annotation, expected_annotation)
@@ -294,6 +302,7 @@ def test_parse_operation_field_type_returns_union_for_interface_with_inline_frag
     ]
 
     annotation, names = parse_operation_field_type(
+        schema=GraphQLSchema(),
         field=FieldNode(
             selection_set=SelectionSetNode(
                 selections=(
@@ -350,6 +359,7 @@ def test_parse_operation_field_type_returns_union_inline_fragments_in_fragment()
     )
 
     annotation, names = parse_operation_field_type(
+        schema=GraphQLSchema(),
         field=FieldNode(
             selection_set=SelectionSetNode(
                 selections=(FragmentSpreadNode(name=NameNode(value="TestFragment")),)
@@ -384,7 +394,9 @@ def test_parse_operation_field_type_returns_union_inline_fragments_in_fragment()
 def test_parse_operation_field_type_returns_annotation_for_enums(
     type_, expected_annotation, expected_names
 ):
-    annotation, names = parse_operation_field_type(field=FieldNode(), type_=type_)
+    annotation, names = parse_operation_field_type(
+        schema=GraphQLSchema(), field=FieldNode(), type_=type_
+    )
 
     assert compare_ast(annotation, expected_annotation)
     assert names == expected_names
@@ -415,7 +427,10 @@ def test_parse_operation_field_type_returns_annotation_and_names_for_union():
     ]
 
     annotation, names = parse_operation_field_type(
-        field=FieldNode(), type_=type_, class_name="TestQueryField"
+        schema=GraphQLSchema(),
+        field=FieldNode(),
+        type_=type_,
+        class_name="TestQueryField",
     )
 
     assert compare_ast(annotation, expected_annotation)
@@ -469,7 +484,10 @@ def test_parse_operation_field_type_returns_annotation_for_list(
     type_, expected_annotation
 ):
     annotation, names = parse_operation_field_type(
-        field=FieldNode(), type_=type_, class_name="TestQueryField"
+        schema=GraphQLSchema(),
+        field=FieldNode(),
+        type_=type_,
+        class_name="TestQueryField",
     )
 
     assert compare_ast(annotation, expected_annotation)
