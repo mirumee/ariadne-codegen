@@ -33,8 +33,8 @@ from .constants import (
     ANY,
     ASYNC_ITERATOR,
     LIST,
+    MODEL_VALIDATE_METHOD,
     OPTIONAL,
-    PARSE_OBJ_METHOD,
     TYPING_MODULE,
     UNION,
 )
@@ -306,7 +306,9 @@ class ClientGenerator:
     def _generate_return_parsed_obj(self, return_type: str) -> ast.Return:
         return generate_return(
             generate_call(
-                func=generate_attribute(generate_name(return_type), PARSE_OBJ_METHOD),
+                func=generate_attribute(
+                    generate_name(return_type), MODEL_VALIDATE_METHOD
+                ),
                 args=[generate_name(self._data_variable)],
             )
         )
@@ -339,7 +341,7 @@ class ClientGenerator:
                 generate_call(
                     func=generate_attribute(
                         value=generate_name(return_type),
-                        attr=PARSE_OBJ_METHOD,
+                        attr=MODEL_VALIDATE_METHOD,
                     ),
                     args=[generate_name(self._data_variable)],
                 )

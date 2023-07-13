@@ -24,8 +24,8 @@ from graphql import (
 from ariadne_codegen.client_generators.constants import (
     FIELD_CLASS,
     LIST,
+    MODEL_VALIDATE_METHOD,
     OPTIONAL,
-    PARSE_OBJ_METHOD,
     UPLOAD_CLASS_NAME,
 )
 from ariadne_codegen.client_generators.input_fields import (
@@ -318,7 +318,7 @@ def test_parse_input_const_value_node_given_list_returns_correct_method_call(
                                         ),
                                         slice=ast.Constant(value="TestInput"),
                                     ),
-                                    attr=PARSE_OBJ_METHOD,
+                                    attr=MODEL_VALIDATE_METHOD,
                                 ),
                                 args=[
                                     ast.Dict(
@@ -380,7 +380,7 @@ def test_parse_input_const_value_node_given_list_returns_correct_method_call(
                                         ),
                                         slice=ast.Constant(value="TestInput"),
                                     ),
-                                    attr=PARSE_OBJ_METHOD,
+                                    attr=MODEL_VALIDATE_METHOD,
                                 ),
                                 args=[
                                     ast.Dict(

@@ -36,4 +36,4 @@ class Client(AsyncBaseClient):
         }
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return GetTest.parse_obj(data)
+        return GetTest.model_validate(data)

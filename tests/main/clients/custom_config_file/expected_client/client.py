@@ -18,4 +18,4 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return Test.parse_obj(data)
+        return Test.model_validate(data)

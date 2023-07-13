@@ -36,7 +36,7 @@ FIELD_CLASS = "Field"
 ALIAS_KEYWORD = "alias"
 DISCRIMINATOR_KEYWORD = "discriminator"
 UPDATE_FORWARD_REFS_METHOD = "update_forward_refs"
-PARSE_OBJ_METHOD = "parse_obj"
+MODEL_VALIDATE_METHOD = "model_validate"
 ENUM_MODULE = "enum"
 ENUM_CLASS = "Enum"
 

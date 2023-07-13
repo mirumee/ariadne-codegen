@@ -210,7 +210,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {"userData": user_data}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return CreateUser.parse_obj(data)
+        return CreateUser.model_validate(data)
 
     async def list_all_users(self) -> ListAllUsers:
         query = gql(
@@ -231,7 +231,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ListAllUsers.parse_obj(data)
+        return ListAllUsers.model_validate(data)
 
     async def list_users_by_country(
         self, country: Union[Optional[str], UnsetType] = UNSET
@@ -260,7 +260,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {"country": country}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ListUsersByCountry.parse_obj(data)
+        return ListUsersByCountry.model_validate(data)
 
     async def get_users_counter(self) -> AsyncIterator[GetUsersCounter]:
         query = gql(
@@ -272,7 +272,7 @@ class Client(AsyncBaseClient):
         )
         variables: dict[str, object] = {}
         async for data in self.execute_ws(query=query, variables=variables):
-            yield GetUsersCounter.parse_obj(data)
+            yield GetUsersCounter.model_validate(data)
 
     async def upload_file(self, file: Upload) -> UploadFile:
         query = gql(
@@ -285,7 +285,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {"file": file}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return UploadFile.parse_obj(data)
+        return UploadFile.model_validate(data)
 ```
 
 ### Base client
@@ -333,7 +333,7 @@ class UserPreferencesInput(BaseModel):
     )
     notifications_preferences: "NotificationsPreferencesInput" = Field(
         alias="notificationsPreferences",
-        default_factory=lambda: globals()["NotificationsPreferencesInput"].parse_obj(
+        default_factory=lambda: globals()["NotificationsPreferencesInput"].model_validate(
             {
                 "receiveMails": True,
                 "receivePushNotifications": True,

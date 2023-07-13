@@ -34,7 +34,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ExampleQuery1.parse_obj(data)
+        return ExampleQuery1.model_validate(data)
 
     async def example_query2(self) -> ExampleQuery2:
         query = gql(
@@ -62,7 +62,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ExampleQuery2.parse_obj(data)
+        return ExampleQuery2.model_validate(data)
 
     async def example_query3(self) -> ExampleQuery3:
         query = gql(
@@ -86,4 +86,4 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ExampleQuery3.parse_obj(data)
+        return ExampleQuery3.model_validate(data)

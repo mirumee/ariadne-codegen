@@ -28,7 +28,9 @@ class UserPreferencesInput(BaseModel):
     )
     notifications_preferences: "NotificationsPreferencesInput" = Field(
         alias="notificationsPreferences",
-        default_factory=lambda: globals()["NotificationsPreferencesInput"].parse_obj(
+        default_factory=lambda: globals()[
+            "NotificationsPreferencesInput"
+        ].model_validate(
             {
                 "receiveMails": True,
                 "receivePushNotifications": True,

@@ -23,7 +23,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return GetQueryA.parse_obj(data)
+        return GetQueryA.model_validate(data)
 
     async def get_query_b(self) -> GetQueryB:
         query = gql(
@@ -38,7 +38,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return GetQueryB.parse_obj(data)
+        return GetQueryB.model_validate(data)
 
     async def get_query_a_with_fragment(self) -> GetQueryAWithFragment:
         query = gql(
@@ -57,7 +57,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return GetQueryAWithFragment.parse_obj(data)
+        return GetQueryAWithFragment.model_validate(data)
 
     async def fragments_with_mixins(self) -> FragmentsWithMixins:
         query = gql(
@@ -83,4 +83,4 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return FragmentsWithMixins.parse_obj(data)
+        return FragmentsWithMixins.model_validate(data)

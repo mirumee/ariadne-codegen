@@ -32,7 +32,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return QueryWithFragmentOnSubInterface.parse_obj(data)
+        return QueryWithFragmentOnSubInterface.model_validate(data)
 
     async def query_with_fragment_on_sub_interface_with_inline_fragment(
         self,
@@ -58,7 +58,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return QueryWithFragmentOnSubInterfaceWithInlineFragment.parse_obj(data)
+        return QueryWithFragmentOnSubInterfaceWithInlineFragment.model_validate(data)
 
     async def query_with_fragment_on_union_member(
         self,
@@ -81,4 +81,4 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return QueryWithFragmentOnUnionMember.parse_obj(data)
+        return QueryWithFragmentOnUnionMember.model_validate(data)
