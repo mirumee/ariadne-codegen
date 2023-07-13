@@ -46,8 +46,8 @@ class BaseModel(PydanticBaseModel):
 
         return value
 
-    def dict(self, **kwargs: Any) -> Dict[str, Any]:
-        dict_ = super().dict(**kwargs)
+    def model_dump(self, **kwargs: Any) -> Dict[str, Any]:
+        dict_ = super().model_dump(**kwargs)
         return {key: self._serialize_value(value) for key, value in dict_.items()}
 
     def _serialize_value(self, value: Any) -> Any:

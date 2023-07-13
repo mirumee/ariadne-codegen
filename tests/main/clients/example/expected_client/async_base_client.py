@@ -165,7 +165,7 @@ class AsyncBaseClient:
 
     def _convert_value(self, value: Any) -> Any:
         if isinstance(value, BaseModel):
-            return value.dict(by_alias=True, exclude_unset=True)
+            return value.model_dump(by_alias=True, exclude_unset=True)
         if isinstance(value, list):
             return [self._convert_value(item) for item in value]
         return value
