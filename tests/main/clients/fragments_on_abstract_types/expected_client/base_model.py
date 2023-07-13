@@ -2,10 +2,8 @@ from io import IOBase
 from typing import Any, Dict, Type, Union, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import ConfigDict
-from pydantic.class_validators import validator
+from pydantic import ConfigDict, FieldValidationInfo, field_validator
 from pydantic.dataclasses import dataclass
-from pydantic.fields import ModelField
 
 from .scalars import SCALARS_PARSE_FUNCTIONS, SCALARS_SERIALIZE_FUNCTIONS
 
@@ -24,9 +22,12 @@ class BaseModel(PydanticBaseModel):
     )
 
     # pylint: disable=no-self-argument
-    @validator("*", pre=True)
-    def parse_custom_scalars(cls, value: Any, field: ModelField) -> Any:
-        return cls._parse_custom_scalar_value(value, field.annotation)
+    @field_validator("*", mode="before")
+    def parse_custom_scalars(cls, value: Any, info: FieldValidationInfo) -> Any:
+        annotation = cls.model_fields[info.field_name].annotation
+        if not annotation:
+            return value
+        return cls._parse_custom_scalar_value(value, annotation)
 
     @classmethod
     def _parse_custom_scalar_value(cls, value: Any, type_: Type[Any]) -> Any:
