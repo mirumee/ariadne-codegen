@@ -19,10 +19,9 @@ UNSET = UnsetType()
 
 
 class BaseModel(PydanticBaseModel):
-    class Config:
-        allow_population_by_field_name = True
-        validate_assignment = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(
+        populate_by_name=True, validate_assignment=True, arbitrary_types_allowed=True
+    )
 
     # pylint: disable=no-self-argument
     @validator("*", pre=True)
