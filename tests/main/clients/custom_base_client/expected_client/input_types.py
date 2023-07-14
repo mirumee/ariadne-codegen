@@ -6,4 +6,4 @@ class inputA(BaseModel):
     version: enumA
 
 
-inputA.update_forward_refs()
+inputA.model_rebuild()

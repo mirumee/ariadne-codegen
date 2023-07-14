@@ -12,4 +12,4 @@ class TestInput(BaseModel):
     d: Any
 
 
-TestInput.update_forward_refs()
+TestInput.model_rebuild()

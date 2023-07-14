@@ -18,6 +18,6 @@ class FragmentsWithMixinsQueryB(FragmentB, CommonMixin):
     pass
 
 
-FragmentsWithMixins.update_forward_refs()
-FragmentsWithMixinsQueryA.update_forward_refs()
-FragmentsWithMixinsQueryB.update_forward_refs()
+FragmentsWithMixins.model_rebuild()
+FragmentsWithMixinsQueryA.model_rebuild()
+FragmentsWithMixinsQueryB.model_rebuild()

@@ -10,5 +10,5 @@ class GetAuthenticatedUserMe(BaseModel):
     username: str
 
 
-GetAuthenticatedUser.update_forward_refs()
-GetAuthenticatedUserMe.update_forward_refs()
+GetAuthenticatedUser.model_rebuild()
+GetAuthenticatedUserMe.model_rebuild()

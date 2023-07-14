@@ -48,7 +48,7 @@ class NotificationsPreferencesInput(BaseModel):
     title: str
 
 
-UserCreateInput.update_forward_refs()
-LocationInput.update_forward_refs()
-UserPreferencesInput.update_forward_refs()
-NotificationsPreferencesInput.update_forward_refs()
+UserCreateInput.model_rebuild()
+LocationInput.model_rebuild()
+UserPreferencesInput.model_rebuild()
+NotificationsPreferencesInput.model_rebuild()

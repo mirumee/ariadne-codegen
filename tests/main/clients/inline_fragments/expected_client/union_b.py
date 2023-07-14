@@ -25,7 +25,7 @@ class UnionBQueryUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
 
 
-UnionB.update_forward_refs()
-UnionBQueryUTypeA.update_forward_refs()
-UnionBQueryUTypeB.update_forward_refs()
-UnionBQueryUTypeC.update_forward_refs()
+UnionB.model_rebuild()
+UnionBQueryUTypeA.model_rebuild()
+UnionBQueryUTypeB.model_rebuild()
+UnionBQueryUTypeC.model_rebuild()

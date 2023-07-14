@@ -11,5 +11,5 @@ class InterfaceCQueryI(BaseModel):
     id: str
 
 
-InterfaceC.update_forward_refs()
-InterfaceCQueryI.update_forward_refs()
+InterfaceC.model_rebuild()
+InterfaceCQueryI.model_rebuild()

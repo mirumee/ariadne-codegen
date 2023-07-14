@@ -6,7 +6,7 @@ from graphql import FragmentDefinitionNode, GraphQLSchema, build_schema, parse
 
 from ariadne_codegen.client_generators.constants import (
     ALIAS_KEYWORD,
-    UPDATE_FORWARD_REFS_METHOD,
+    MODEL_REBUILD_METHOD,
 )
 from ariadne_codegen.client_generators.fragments import FragmentsGenerator
 
@@ -162,7 +162,7 @@ def test_generate_returns_module_with_update_refs_calls(
         ast.Expr(
             value=ast.Call(
                 func=ast.Attribute(
-                    value=ast.Name(id="FragmentA"), attr=UPDATE_FORWARD_REFS_METHOD
+                    value=ast.Name(id="FragmentA"), attr=MODEL_REBUILD_METHOD
                 ),
                 args=[],
                 keywords=[],
@@ -171,7 +171,7 @@ def test_generate_returns_module_with_update_refs_calls(
         ast.Expr(
             value=ast.Call(
                 func=ast.Attribute(
-                    value=ast.Name(id="TestFragment"), attr=UPDATE_FORWARD_REFS_METHOD
+                    value=ast.Name(id="TestFragment"), attr=MODEL_REBUILD_METHOD
                 ),
                 args=[],
                 keywords=[],

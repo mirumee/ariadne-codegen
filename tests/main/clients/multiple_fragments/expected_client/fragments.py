@@ -42,11 +42,11 @@ class MinimalAFieldB(MinimalB):
     pass
 
 
-CompleteA.update_forward_refs()
-CompleteAFieldB.update_forward_refs()
-FullB.update_forward_refs()
-FullA.update_forward_refs()
-FullAFieldB.update_forward_refs()
-MinimalB.update_forward_refs()
-MinimalA.update_forward_refs()
-MinimalAFieldB.update_forward_refs()
+CompleteA.model_rebuild()
+CompleteAFieldB.model_rebuild()
+FullB.model_rebuild()
+FullA.model_rebuild()
+FullAFieldB.model_rebuild()
+MinimalB.model_rebuild()
+MinimalA.model_rebuild()
+MinimalAFieldB.model_rebuild()

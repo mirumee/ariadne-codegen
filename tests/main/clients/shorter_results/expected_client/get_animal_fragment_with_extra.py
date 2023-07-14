@@ -9,4 +9,4 @@ class GetAnimalFragmentWithExtra(ListAnimalsFragment):
     list_string: List[str] = Field(alias="listString")
 
 
-GetAnimalFragmentWithExtra.update_forward_refs()
+GetAnimalFragmentWithExtra.model_rebuild()

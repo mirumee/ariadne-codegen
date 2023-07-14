@@ -35,7 +35,7 @@ class ListInterfaceQueryListITypeB(BaseModel):
     field_b: str = Field(alias="fieldB")
 
 
-ListInterface.update_forward_refs()
-ListInterfaceQueryListIInterface.update_forward_refs()
-ListInterfaceQueryListITypeA.update_forward_refs()
-ListInterfaceQueryListITypeB.update_forward_refs()
+ListInterface.model_rebuild()
+ListInterfaceQueryListIInterface.model_rebuild()
+ListInterfaceQueryListITypeA.model_rebuild()
+ListInterfaceQueryListITypeB.model_rebuild()

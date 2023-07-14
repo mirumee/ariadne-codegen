@@ -3,7 +3,7 @@ from typing import cast
 
 from graphql import OperationDefinitionNode, build_ast_schema, parse
 
-from ariadne_codegen.client_generators.constants import UPDATE_FORWARD_REFS_METHOD
+from ariadne_codegen.client_generators.constants import MODEL_REBUILD_METHOD
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
 
 from ...utils import compare_ast
@@ -37,7 +37,7 @@ def test_generate_returns_module_with_enum_imports():
     )
 
 
-def test_generate_returns_module_with_update_forward_refs_calls():
+def test_generate_returns_module_with_model_rebuild_calls():
     query_str = """
     query CustomQuery {
         query1 {
@@ -62,9 +62,7 @@ def test_generate_returns_module_with_update_forward_refs_calls():
     expected_method_calls = [
         ast.Expr(
             value=ast.Call(
-                func=ast.Attribute(
-                    value=ast.Name(id=name), attr=UPDATE_FORWARD_REFS_METHOD
-                ),
+                func=ast.Attribute(value=ast.Name(id=name), attr=MODEL_REBUILD_METHOD),
                 args=[],
                 keywords=[],
             )

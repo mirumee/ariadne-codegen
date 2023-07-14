@@ -21,6 +21,6 @@ class QueryWithFragmentOnSubInterfaceQueryInterfaceInterfaceA(FragmentA):
     typename__: Literal["InterfaceA"] = Field(alias="__typename")
 
 
-QueryWithFragmentOnSubInterface.update_forward_refs()
-QueryWithFragmentOnSubInterfaceQueryInterfaceBaseInterface.update_forward_refs()
-QueryWithFragmentOnSubInterfaceQueryInterfaceInterfaceA.update_forward_refs()
+QueryWithFragmentOnSubInterface.model_rebuild()
+QueryWithFragmentOnSubInterfaceQueryInterfaceBaseInterface.model_rebuild()
+QueryWithFragmentOnSubInterfaceQueryInterfaceInterfaceA.model_rebuild()

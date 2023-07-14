@@ -16,5 +16,5 @@ class InterfaceWithTypenameQueryI(BaseModel):
     id: str
 
 
-InterfaceWithTypename.update_forward_refs()
-InterfaceWithTypenameQueryI.update_forward_refs()
+InterfaceWithTypename.model_rebuild()
+InterfaceWithTypenameQueryI.model_rebuild()

@@ -57,13 +57,13 @@ from .constants import (
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
     MIXIN_NAME,
+    MODEL_REBUILD_METHOD,
     OPTIONAL,
     PYDANTIC_MODULE,
     TYPENAME_ALIAS,
     TYPENAME_FIELD_NAME,
     TYPING_MODULE,
     UNION,
-    UPDATE_FORWARD_REFS_METHOD,
 )
 from .result_fields import FieldNames, is_union, parse_operation_field
 from .scalars import ScalarData, generate_scalar_imports
@@ -156,16 +156,14 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
-        update_forward_refs_calls = [
-            generate_expr(
-                generate_method_call(class_def.name, UPDATE_FORWARD_REFS_METHOD)
-            )
+        model_rebuild_calls = [
+            generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
             for class_def in self._class_defs
         ]
         module_body = (
             cast(List[ast.stmt], self._imports)
             + cast(List[ast.stmt], self._class_defs)
-            + cast(List[ast.stmt], update_forward_refs_calls)
+            + cast(List[ast.stmt], model_rebuild_calls)
         )
 
         module = generate_module(module_body)

@@ -18,5 +18,5 @@ class GetTestTestQuery(BaseModel):
     other: Any
 
 
-GetTest.update_forward_refs()
-GetTestTestQuery.update_forward_refs()
+GetTest.model_rebuild()
+GetTestTestQuery.model_rebuild()

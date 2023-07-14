@@ -5,4 +5,4 @@ class GetQueryAWithFragment(GetQueryAFragment):
     pass
 
 
-GetQueryAWithFragment.update_forward_refs()
+GetQueryAWithFragment.model_rebuild()

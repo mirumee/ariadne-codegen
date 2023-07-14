@@ -7,4 +7,4 @@ class GetUsersCounter(BaseModel):
     users_counter: int = Field(alias="usersCounter")
 
 
-GetUsersCounter.update_forward_refs()
+GetUsersCounter.model_rebuild()

@@ -15,5 +15,5 @@ class ListTypeAListOptionalTypeA(BaseModel):
     id: int
 
 
-ListTypeA.update_forward_refs()
-ListTypeAListOptionalTypeA.update_forward_refs()
+ListTypeA.model_rebuild()
+ListTypeAListOptionalTypeA.model_rebuild()

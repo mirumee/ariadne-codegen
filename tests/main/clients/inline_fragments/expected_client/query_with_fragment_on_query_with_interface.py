@@ -5,4 +5,4 @@ class QueryWithFragmentOnQueryWithInterface(FragmentOnQueryWithInterface):
     pass
 
 
-QueryWithFragmentOnQueryWithInterface.update_forward_refs()
+QueryWithFragmentOnQueryWithInterface.model_rebuild()

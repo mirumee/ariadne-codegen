@@ -9,4 +9,4 @@ class ListStrings4(BaseModel):
     list_string: List[str] = Field(alias="listString")
 
 
-ListStrings4.update_forward_refs()
+ListStrings4.model_rebuild()

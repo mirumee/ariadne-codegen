@@ -351,10 +351,10 @@ class NotificationsPreferencesInput(BaseModel):
     title: str
 
 
-UserCreateInput.update_forward_refs()
-LocationInput.update_forward_refs()
-UserPreferencesInput.update_forward_refs()
-NotificationsPreferencesInput.update_forward_refs()
+UserCreateInput.model_rebuild()
+LocationInput.model_rebuild()
+UserPreferencesInput.model_rebuild()
+NotificationsPreferencesInput.model_rebuild()
 ```
 
 ### Enums
@@ -398,8 +398,8 @@ class CreateUserUserCreate(BaseModel):
     id: str
 
 
-CreateUser.update_forward_refs()
-CreateUserUserCreate.update_forward_refs()
+CreateUser.model_rebuild()
+CreateUserUserCreate.model_rebuild()
 ```
 
 ```py
@@ -428,9 +428,9 @@ class ListAllUsersUsersLocation(BaseModel):
     country: Optional[str]
 
 
-ListAllUsers.update_forward_refs()
-ListAllUsersUsers.update_forward_refs()
-ListAllUsersUsersLocation.update_forward_refs()
+ListAllUsers.model_rebuild()
+ListAllUsersUsers.model_rebuild()
+ListAllUsersUsersLocation.model_rebuild()
 ```
 
 ```py
@@ -453,8 +453,8 @@ class ListUsersByCountryUsers(BasicUser, UserPersonalData):
     favourite_color: Optional[Color] = Field(alias="favouriteColor")
 
 
-ListUsersByCountry.update_forward_refs()
-ListUsersByCountryUsers.update_forward_refs()
+ListUsersByCountry.model_rebuild()
+ListUsersByCountryUsers.model_rebuild()
 ```
 
 ```py
@@ -469,7 +469,7 @@ class GetUsersCounter(BaseModel):
     users_counter: int = Field(alias="usersCounter")
 
 
-GetUsersCounter.update_forward_refs()
+GetUsersCounter.model_rebuild()
 ```
 
 ```py
@@ -484,7 +484,7 @@ class UploadFile(BaseModel):
     file_upload: bool = Field(alias="fileUpload")
 
 
-UploadFile.update_forward_refs()
+UploadFile.model_rebuild()
 ```
 
 ### Fragments file
@@ -511,8 +511,8 @@ class UserPersonalData(BaseModel):
     last_name: Optional[str] = Field(alias="lastName")
 
 
-BasicUser.update_forward_refs()
-UserPersonalData.update_forward_refs()
+BasicUser.model_rebuild()
+UserPersonalData.model_rebuild()
 ```
 
 ### Init file

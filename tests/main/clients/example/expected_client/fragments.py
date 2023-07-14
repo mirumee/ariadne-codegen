@@ -15,5 +15,5 @@ class UserPersonalData(BaseModel):
     last_name: Optional[str] = Field(alias="lastName")
 
 
-BasicUser.update_forward_refs()
-UserPersonalData.update_forward_refs()
+BasicUser.model_rebuild()
+UserPersonalData.model_rebuild()

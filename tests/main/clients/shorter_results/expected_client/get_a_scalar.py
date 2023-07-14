@@ -8,4 +8,4 @@ class GetAScalar(BaseModel):
     just_a_scalar: MyScalar = Field(alias="justAScalar")
 
 
-GetAScalar.update_forward_refs()
+GetAScalar.model_rebuild()

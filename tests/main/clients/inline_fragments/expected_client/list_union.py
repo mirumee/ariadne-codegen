@@ -34,7 +34,7 @@ class ListUnionQueryListUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
 
 
-ListUnion.update_forward_refs()
-ListUnionQueryListUTypeA.update_forward_refs()
-ListUnionQueryListUTypeB.update_forward_refs()
-ListUnionQueryListUTypeC.update_forward_refs()
+ListUnion.model_rebuild()
+ListUnionQueryListUTypeA.model_rebuild()
+ListUnionQueryListUTypeB.model_rebuild()
+ListUnionQueryListUTypeC.model_rebuild()

@@ -21,6 +21,6 @@ class QueryWithFragmentOnUnionMemberQueryUnionTypeB(FragmentB):
     typename__: Literal["TypeB"] = Field(alias="__typename")
 
 
-QueryWithFragmentOnUnionMember.update_forward_refs()
-QueryWithFragmentOnUnionMemberQueryUnionTypeA.update_forward_refs()
-QueryWithFragmentOnUnionMemberQueryUnionTypeB.update_forward_refs()
+QueryWithFragmentOnUnionMember.model_rebuild()
+QueryWithFragmentOnUnionMemberQueryUnionTypeA.model_rebuild()
+QueryWithFragmentOnUnionMemberQueryUnionTypeB.model_rebuild()

@@ -11,4 +11,4 @@ class ListStrings1(BaseModel):
     )
 
 
-ListStrings1.update_forward_refs()
+ListStrings1.model_rebuild()
