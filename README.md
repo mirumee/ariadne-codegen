@@ -128,7 +128,7 @@ To handle subscriptions, default `AsyncBaseClient` uses [websockets](https://git
 
 Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary is an instance of `Upload`. If at least one instance is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
 
-Dataclass `Upload` is included in generated client and can be imported from it: 
+Class `Upload` is included in generated client and can be imported from it: 
 
 ```py
 from {target_package_name} import Upload

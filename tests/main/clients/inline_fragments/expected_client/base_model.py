@@ -3,7 +3,6 @@ from typing import Any, Dict, Type, Union, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict, FieldValidationInfo, field_validator
-from pydantic.dataclasses import dataclass
 
 from .scalars import SCALARS_PARSE_FUNCTIONS, SCALARS_SERIALIZE_FUNCTIONS
 
@@ -61,8 +60,8 @@ class BaseModel(PydanticBaseModel):
         return value
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class Upload:
-    filename: str
-    content: IOBase
-    content_type: str
+    def __init__(self, filename: str, content: IOBase, content_type: str):
+        self.filename = filename
+        self.content = content
+        self.content_type = content_type
