@@ -57,6 +57,9 @@ class BaseModel(PydanticBaseModel):
         if isinstance(value, list):
             return [self._serialize_value(item) for item in value]
 
+        if isinstance(value, dict):
+            return {key: self._serialize_value(val) for key, val in value.items()}
+
         return value
 
 
