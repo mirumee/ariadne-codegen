@@ -17,7 +17,9 @@ UNSET = UnsetType()
 
 class BaseModel(PydanticBaseModel):
     model_config = ConfigDict(
-        populate_by_name=True, validate_assignment=True, arbitrary_types_allowed=True
+        populate_by_name=True,
+        validate_assignment=True,
+        arbitrary_types_allowed=True,
     )
 
     # pylint: disable=no-self-argument
