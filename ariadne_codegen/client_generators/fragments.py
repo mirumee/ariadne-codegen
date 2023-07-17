@@ -5,7 +5,7 @@ from graphql import FragmentDefinitionNode, GraphQLSchema
 
 from ..codegen import generate_expr, generate_method_call, generate_module
 from ..plugins.manager import PluginManager
-from .constants import UPDATE_FORWARD_REFS_METHOD
+from .constants import MODEL_REBUILD_METHOD
 from .result_types import ResultTypesGenerator
 from .scalars import ScalarData
 
@@ -61,15 +61,15 @@ class FragmentsGenerator:
         sorted_class_defs = self._get_sorted_class_defs(
             class_defs_dict=class_defs_dict, dependencies_dict=dependencies_dict
         )
-        update_forward_refs_calls = [
-            generate_expr(generate_method_call(c.name, UPDATE_FORWARD_REFS_METHOD))
+        model_rebuild_calls = [
+            generate_expr(generate_method_call(c.name, MODEL_REBUILD_METHOD))
             for c in sorted_class_defs
         ]
 
         module = generate_module(
             body=cast(List[ast.stmt], imports)
             + cast(List[ast.stmt], sorted_class_defs)
-            + cast(List[ast.stmt], update_forward_refs_calls)
+            + cast(List[ast.stmt], model_rebuild_calls)
         )
         if self.plugin_manager:
             module = self.plugin_manager.generate_fragments_module(

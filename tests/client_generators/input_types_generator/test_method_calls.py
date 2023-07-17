@@ -2,13 +2,13 @@ import ast
 
 from graphql import build_ast_schema, parse
 
-from ariadne_codegen.client_generators.constants import UPDATE_FORWARD_REFS_METHOD
+from ariadne_codegen.client_generators.constants import MODEL_REBUILD_METHOD
 from ariadne_codegen.client_generators.input_types import InputTypesGenerator
 
 from ...utils import compare_ast, filter_ast_objects
 
 
-def test_generate_returns_modules_with_update_forward_refs_calls(
+def test_generate_returns_modules_with_model_rebuild_calls(
     base_model_import, upload_import
 ):
     schema_str = """
@@ -28,7 +28,7 @@ def test_generate_returns_modules_with_update_forward_refs_calls(
         ast.Expr(
             value=ast.Call(
                 func=ast.Attribute(
-                    value=ast.Name(id="CustomInput"), attr=UPDATE_FORWARD_REFS_METHOD
+                    value=ast.Name(id="CustomInput"), attr=MODEL_REBUILD_METHOD
                 ),
                 args=[],
                 keywords=[],
@@ -37,7 +37,7 @@ def test_generate_returns_modules_with_update_forward_refs_calls(
         ast.Expr(
             value=ast.Call(
                 func=ast.Attribute(
-                    value=ast.Name(id="TestInput"), attr=UPDATE_FORWARD_REFS_METHOD
+                    value=ast.Name(id="TestInput"), attr=MODEL_REBUILD_METHOD
                 ),
                 args=[],
                 keywords=[],
@@ -46,7 +46,7 @@ def test_generate_returns_modules_with_update_forward_refs_calls(
         ast.Expr(
             value=ast.Call(
                 func=ast.Attribute(
-                    value=ast.Name(id="NestedInput"), attr=UPDATE_FORWARD_REFS_METHOD
+                    value=ast.Name(id="NestedInput"), attr=MODEL_REBUILD_METHOD
                 ),
                 args=[],
                 keywords=[],

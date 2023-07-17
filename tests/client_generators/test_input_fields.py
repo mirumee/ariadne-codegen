@@ -19,17 +19,19 @@ from graphql import (
     ObjectFieldNode,
     ObjectValueNode,
     StringValueNode,
+    parse,
 )
 
 from ariadne_codegen.client_generators.constants import (
     FIELD_CLASS,
     LIST,
+    MODEL_VALIDATE_METHOD,
     OPTIONAL,
-    PARSE_OBJ_METHOD,
     UPLOAD_CLASS_NAME,
 )
 from ariadne_codegen.client_generators.input_fields import (
     parse_input_const_value_node,
+    parse_input_field_default_value,
     parse_input_field_type,
 )
 from ariadne_codegen.client_generators.scalars import ScalarData
@@ -318,7 +320,7 @@ def test_parse_input_const_value_node_given_list_returns_correct_method_call(
                                         ),
                                         slice=ast.Constant(value="TestInput"),
                                     ),
-                                    attr=PARSE_OBJ_METHOD,
+                                    attr=MODEL_VALIDATE_METHOD,
                                 ),
                                 args=[
                                     ast.Dict(
@@ -380,7 +382,7 @@ def test_parse_input_const_value_node_given_list_returns_correct_method_call(
                                         ),
                                         slice=ast.Constant(value="TestInput"),
                                     ),
-                                    attr=PARSE_OBJ_METHOD,
+                                    attr=MODEL_VALIDATE_METHOD,
                                 ),
                                 args=[
                                     ast.Dict(
@@ -408,3 +410,9 @@ def test_parse_input_const_value_node_given_object_returns_correct_method_call(
     assert compare_ast(
         parse_input_const_value_node(node=node, field_type=field_type), expected_result
     )
+
+
+def test_parse_input_field_default_value_returns_none_constant_for_optional_field():
+    node = parse("input TestInput { fieldA: String }").definitions[0].fields[0]
+
+    assert compare_ast(parse_input_field_default_value(node, ""), ast.Constant(None))

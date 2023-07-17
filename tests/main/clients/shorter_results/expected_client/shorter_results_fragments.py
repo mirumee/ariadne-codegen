@@ -23,7 +23,7 @@ class ListAnimalsFragmentListAnimals(BaseModel):
     name: str
 
 
-FragmentWithSingleField.update_forward_refs()
-FragmentWithSingleFieldQueryUnwrapFragment.update_forward_refs()
-ListAnimalsFragment.update_forward_refs()
-ListAnimalsFragmentListAnimals.update_forward_refs()
+FragmentWithSingleField.model_rebuild()
+FragmentWithSingleFieldQueryUnwrapFragment.model_rebuild()
+ListAnimalsFragment.model_rebuild()
+ListAnimalsFragmentListAnimals.model_rebuild()

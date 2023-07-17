@@ -7,4 +7,4 @@ class Test(BaseModel):
     test_query: str = Field(alias="testQuery")
 
 
-Test.update_forward_refs()
+Test.model_rebuild()

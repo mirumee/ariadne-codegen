@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import httpx
 from pydantic import BaseModel
-from pydantic.json import pydantic_encoder
+from pydantic_core import to_jsonable_python
 
 from .base_model import UNSET, Upload
 from .exceptions import (
@@ -165,7 +165,7 @@ class AsyncBaseClient:
 
     def _convert_value(self, value: Any) -> Any:
         if isinstance(value, BaseModel):
-            return value.dict(by_alias=True, exclude_unset=True)
+            return value.model_dump(by_alias=True, exclude_unset=True)
         if isinstance(value, list):
             return [self._convert_value(item) for item in value]
         return value
@@ -219,14 +219,14 @@ class AsyncBaseClient:
         files_map: Dict[str, List[str]],
     ) -> httpx.Response:
         data = {
-            "operations": json.dumps(payload, default=pydantic_encoder),
-            "map": json.dumps(files_map, default=pydantic_encoder),
+            "operations": json.dumps(payload, default=to_jsonable_python),
+            "map": json.dumps(files_map, default=to_jsonable_python),
         }
 
         return await self.http_client.post(url=self.url, data=data, files=files)
 
     async def _execute_json(self, payload: Dict[str, Any]) -> httpx.Response:
-        content = json.dumps(payload, default=pydantic_encoder)
+        content = json.dumps(payload, default=to_jsonable_python)
         return await self.http_client.post(
             url=self.url, content=content, headers={"Content-Type": "application/json"}
         )

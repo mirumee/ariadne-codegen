@@ -11,5 +11,5 @@ class GetQueryAQueryA(BaseModel):
     field_a: int = Field(alias="fieldA")
 
 
-GetQueryA.update_forward_refs()
-GetQueryAQueryA.update_forward_refs()
+GetQueryA.model_rebuild()
+GetQueryAQueryA.model_rebuild()

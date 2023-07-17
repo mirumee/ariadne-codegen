@@ -40,7 +40,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return InterfaceA.parse_obj(data)
+        return InterfaceA.model_validate(data)
 
     async def interface_b(self) -> InterfaceB:
         query = gql(
@@ -59,7 +59,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return InterfaceB.parse_obj(data)
+        return InterfaceB.model_validate(data)
 
     async def interface_c(self) -> InterfaceC:
         query = gql(
@@ -74,7 +74,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return InterfaceC.parse_obj(data)
+        return InterfaceC.model_validate(data)
 
     async def list_interface(self) -> ListInterface:
         query = gql(
@@ -96,7 +96,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ListInterface.parse_obj(data)
+        return ListInterface.model_validate(data)
 
     async def interface_with_typename(self) -> InterfaceWithTypename:
         query = gql(
@@ -112,7 +112,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return InterfaceWithTypename.parse_obj(data)
+        return InterfaceWithTypename.model_validate(data)
 
     async def union_a(self) -> UnionA:
         query = gql(
@@ -135,7 +135,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return UnionA.parse_obj(data)
+        return UnionA.model_validate(data)
 
     async def union_b(self) -> UnionB:
         query = gql(
@@ -154,7 +154,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return UnionB.parse_obj(data)
+        return UnionB.model_validate(data)
 
     async def list_union(self) -> ListUnion:
         query = gql(
@@ -177,7 +177,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ListUnion.parse_obj(data)
+        return ListUnion.model_validate(data)
 
     async def query_with_fragment_on_interface(self) -> QueryWithFragmentOnInterface:
         query = gql(
@@ -203,7 +203,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return QueryWithFragmentOnInterface.parse_obj(data)
+        return QueryWithFragmentOnInterface.model_validate(data)
 
     async def query_with_fragment_on_union(self) -> QueryWithFragmentOnUnion:
         query = gql(
@@ -230,7 +230,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return QueryWithFragmentOnUnion.parse_obj(data)
+        return QueryWithFragmentOnUnion.model_validate(data)
 
     async def query_with_fragment_on_query_with_interface(
         self,
@@ -257,7 +257,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return QueryWithFragmentOnQueryWithInterface.parse_obj(data)
+        return QueryWithFragmentOnQueryWithInterface.model_validate(data)
 
     async def query_with_fragment_on_query_with_union(
         self,
@@ -285,4 +285,4 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return QueryWithFragmentOnQueryWithUnion.parse_obj(data)
+        return QueryWithFragmentOnQueryWithUnion.model_validate(data)

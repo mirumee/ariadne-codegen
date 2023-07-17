@@ -12,5 +12,5 @@ class ExampleQuery3ExampleQuery(CompleteA):
     pass
 
 
-ExampleQuery3.update_forward_refs()
-ExampleQuery3ExampleQuery.update_forward_refs()
+ExampleQuery3.model_rebuild()
+ExampleQuery3ExampleQuery.model_rebuild()

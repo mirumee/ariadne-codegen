@@ -13,5 +13,5 @@ class CreateUserUserCreate(BaseModel):
     id: str
 
 
-CreateUser.update_forward_refs()
-CreateUserUserCreate.update_forward_refs()
+CreateUser.model_rebuild()
+CreateUserUserCreate.model_rebuild()

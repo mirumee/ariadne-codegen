@@ -12,5 +12,5 @@ class ExampleQuery1ExampleQuery(MinimalA):
     value: str
 
 
-ExampleQuery1.update_forward_refs()
-ExampleQuery1ExampleQuery.update_forward_refs()
+ExampleQuery1.model_rebuild()
+ExampleQuery1ExampleQuery.model_rebuild()

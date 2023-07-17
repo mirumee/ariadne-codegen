@@ -9,4 +9,4 @@ class Test(BaseModel):
     test_query: Optional[int] = Field(alias="testQuery")
 
 
-Test.update_forward_refs()
+Test.model_rebuild()

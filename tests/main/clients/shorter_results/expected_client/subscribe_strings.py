@@ -9,4 +9,4 @@ class SubscribeStrings(BaseModel):
     optional_list_string: Optional[List[str]] = Field(alias="optionalListString")
 
 
-SubscribeStrings.update_forward_refs()
+SubscribeStrings.model_rebuild()

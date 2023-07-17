@@ -30,7 +30,7 @@ class GetAnimalByNameAnimalByNameDog(BaseModel):
     puppies: int
 
 
-GetAnimalByName.update_forward_refs()
-GetAnimalByNameAnimalByNameAnimal.update_forward_refs()
-GetAnimalByNameAnimalByNameCat.update_forward_refs()
-GetAnimalByNameAnimalByNameDog.update_forward_refs()
+GetAnimalByName.model_rebuild()
+GetAnimalByNameAnimalByNameAnimal.model_rebuild()
+GetAnimalByNameAnimalByNameCat.model_rebuild()
+GetAnimalByNameAnimalByNameDog.model_rebuild()

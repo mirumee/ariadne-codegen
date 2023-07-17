@@ -4,10 +4,9 @@ from typing import Any, Optional
 
 import httpx
 import pytest
-from pydantic import BaseModel
 
 from ariadne_codegen.client_generators.dependencies.base_client import BaseClient
-from ariadne_codegen.client_generators.dependencies.base_model import UNSET
+from ariadne_codegen.client_generators.dependencies.base_model import UNSET, BaseModel
 from ariadne_codegen.client_generators.dependencies.exceptions import (
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
@@ -119,14 +118,14 @@ def test_execute_sends_payload_without_unset_arguments(httpx_mock):
 def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
     class TestInputB(BaseModel):
         required_b: str
-        optional_b: Optional[str]
+        optional_b: Optional[str] = None
 
     class TestInputA(BaseModel):
         required_a: str
-        optional_a: Optional[str]
-        input_b1: Optional[TestInputB]
-        input_b2: Optional[TestInputB]
-        input_b3: Optional[TestInputB]
+        optional_a: Optional[str] = None
+        input_b1: Optional[TestInputB] = None
+        input_b2: Optional[TestInputB] = None
+        input_b3: Optional[TestInputB] = None
 
     httpx_mock.add_response()
     client = BaseClient(url="http://base_url")

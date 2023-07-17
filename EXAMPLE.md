@@ -210,7 +210,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {"userData": user_data}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return CreateUser.parse_obj(data)
+        return CreateUser.model_validate(data)
 
     async def list_all_users(self) -> ListAllUsers:
         query = gql(
@@ -231,7 +231,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ListAllUsers.parse_obj(data)
+        return ListAllUsers.model_validate(data)
 
     async def list_users_by_country(
         self, country: Union[Optional[str], UnsetType] = UNSET
@@ -260,7 +260,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {"country": country}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return ListUsersByCountry.parse_obj(data)
+        return ListUsersByCountry.model_validate(data)
 
     async def get_users_counter(self) -> AsyncIterator[GetUsersCounter]:
         query = gql(
@@ -272,7 +272,7 @@ class Client(AsyncBaseClient):
         )
         variables: dict[str, object] = {}
         async for data in self.execute_ws(query=query, variables=variables):
-            yield GetUsersCounter.parse_obj(data)
+            yield GetUsersCounter.model_validate(data)
 
     async def upload_file(self, file: Upload) -> UploadFile:
         query = gql(
@@ -285,7 +285,7 @@ class Client(AsyncBaseClient):
         variables: dict[str, object] = {"file": file}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return UploadFile.parse_obj(data)
+        return UploadFile.model_validate(data)
 ```
 
 ### Base client
@@ -312,16 +312,16 @@ from .enums import Color
 
 
 class UserCreateInput(BaseModel):
-    first_name: Optional[str] = Field(alias="firstName")
-    last_name: Optional[str] = Field(alias="lastName")
+    first_name: Optional[str] = Field(alias="firstName", default=None)
+    last_name: Optional[str] = Field(alias="lastName", default=None)
     email: str
-    favourite_color: Optional[Color] = Field(alias="favouriteColor")
-    location: Optional["LocationInput"]
+    favourite_color: Optional[Color] = Field(alias="favouriteColor", default=None)
+    location: Optional["LocationInput"] = None
 
 
 class LocationInput(BaseModel):
-    city: Optional[str]
-    country: Optional[str]
+    city: Optional[str] = None
+    country: Optional[str] = None
 
 
 class UserPreferencesInput(BaseModel):
@@ -333,7 +333,9 @@ class UserPreferencesInput(BaseModel):
     )
     notifications_preferences: "NotificationsPreferencesInput" = Field(
         alias="notificationsPreferences",
-        default_factory=lambda: globals()["NotificationsPreferencesInput"].parse_obj(
+        default_factory=lambda: globals()[
+            "NotificationsPreferencesInput"
+        ].model_validate(
             {
                 "receiveMails": True,
                 "receivePushNotifications": True,
@@ -351,10 +353,10 @@ class NotificationsPreferencesInput(BaseModel):
     title: str
 
 
-UserCreateInput.update_forward_refs()
-LocationInput.update_forward_refs()
-UserPreferencesInput.update_forward_refs()
-NotificationsPreferencesInput.update_forward_refs()
+UserCreateInput.model_rebuild()
+LocationInput.model_rebuild()
+UserPreferencesInput.model_rebuild()
+NotificationsPreferencesInput.model_rebuild()
 ```
 
 ### Enums
@@ -398,8 +400,8 @@ class CreateUserUserCreate(BaseModel):
     id: str
 
 
-CreateUser.update_forward_refs()
-CreateUserUserCreate.update_forward_refs()
+CreateUser.model_rebuild()
+CreateUserUserCreate.model_rebuild()
 ```
 
 ```py
@@ -428,9 +430,9 @@ class ListAllUsersUsersLocation(BaseModel):
     country: Optional[str]
 
 
-ListAllUsers.update_forward_refs()
-ListAllUsersUsers.update_forward_refs()
-ListAllUsersUsersLocation.update_forward_refs()
+ListAllUsers.model_rebuild()
+ListAllUsersUsers.model_rebuild()
+ListAllUsersUsersLocation.model_rebuild()
 ```
 
 ```py
@@ -453,8 +455,8 @@ class ListUsersByCountryUsers(BasicUser, UserPersonalData):
     favourite_color: Optional[Color] = Field(alias="favouriteColor")
 
 
-ListUsersByCountry.update_forward_refs()
-ListUsersByCountryUsers.update_forward_refs()
+ListUsersByCountry.model_rebuild()
+ListUsersByCountryUsers.model_rebuild()
 ```
 
 ```py
@@ -469,7 +471,7 @@ class GetUsersCounter(BaseModel):
     users_counter: int = Field(alias="usersCounter")
 
 
-GetUsersCounter.update_forward_refs()
+GetUsersCounter.model_rebuild()
 ```
 
 ```py
@@ -484,7 +486,7 @@ class UploadFile(BaseModel):
     file_upload: bool = Field(alias="fileUpload")
 
 
-UploadFile.update_forward_refs()
+UploadFile.model_rebuild()
 ```
 
 ### Fragments file
@@ -511,8 +513,8 @@ class UserPersonalData(BaseModel):
     last_name: Optional[str] = Field(alias="lastName")
 
 
-BasicUser.update_forward_refs()
-UserPersonalData.update_forward_refs()
+BasicUser.model_rebuild()
+UserPersonalData.model_rebuild()
 ```
 
 ### Init file

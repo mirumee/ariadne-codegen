@@ -15,5 +15,5 @@ class ListUsersByCountryUsers(BasicUser, UserPersonalData):
     favourite_color: Optional[Color] = Field(alias="favouriteColor")
 
 
-ListUsersByCountry.update_forward_refs()
-ListUsersByCountryUsers.update_forward_refs()
+ListUsersByCountry.model_rebuild()
+ListUsersByCountryUsers.model_rebuild()

@@ -7,16 +7,16 @@ from .enums import Color
 
 
 class UserCreateInput(BaseModel):
-    first_name: Optional[str] = Field(alias="firstName")
-    last_name: Optional[str] = Field(alias="lastName")
+    first_name: Optional[str] = Field(alias="firstName", default=None)
+    last_name: Optional[str] = Field(alias="lastName", default=None)
     email: str
-    favourite_color: Optional[Color] = Field(alias="favouriteColor")
-    location: Optional["LocationInput"]
+    favourite_color: Optional[Color] = Field(alias="favouriteColor", default=None)
+    location: Optional["LocationInput"] = None
 
 
 class LocationInput(BaseModel):
-    city: Optional[str]
-    country: Optional[str]
+    city: Optional[str] = None
+    country: Optional[str] = None
 
 
 class UserPreferencesInput(BaseModel):
@@ -28,7 +28,9 @@ class UserPreferencesInput(BaseModel):
     )
     notifications_preferences: "NotificationsPreferencesInput" = Field(
         alias="notificationsPreferences",
-        default_factory=lambda: globals()["NotificationsPreferencesInput"].parse_obj(
+        default_factory=lambda: globals()[
+            "NotificationsPreferencesInput"
+        ].model_validate(
             {
                 "receiveMails": True,
                 "receivePushNotifications": True,
@@ -46,7 +48,7 @@ class NotificationsPreferencesInput(BaseModel):
     title: str
 
 
-UserCreateInput.update_forward_refs()
-LocationInput.update_forward_refs()
-UserPreferencesInput.update_forward_refs()
-NotificationsPreferencesInput.update_forward_refs()
+UserCreateInput.model_rebuild()
+LocationInput.model_rebuild()
+UserPreferencesInput.model_rebuild()
+NotificationsPreferencesInput.model_rebuild()

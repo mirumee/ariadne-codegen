@@ -6,8 +6,8 @@ from graphql import build_ast_schema, parse
 from ariadne_codegen.client_generators.constants import (
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
+    MODEL_VALIDATE_METHOD,
     OPTIONAL,
-    PARSE_OBJ_METHOD,
 )
 from ariadne_codegen.client_generators.input_types import InputTypesGenerator
 
@@ -178,7 +178,7 @@ def test_generate_returns_module_with_parsed_inputs_object_field_with_default_va
                                 ),
                                 slice=ast.Constant(value="SecondInput"),
                             ),
-                            attr=PARSE_OBJ_METHOD,
+                            attr=MODEL_VALIDATE_METHOD,
                         ),
                         args=[
                             ast.Dict(
@@ -250,7 +250,7 @@ def test_generate_returns_module_with_parsed_nested_object_as_default_value(
                                 ),
                                 slice=ast.Constant(value="SecondInput"),
                             ),
-                            attr=PARSE_OBJ_METHOD,
+                            attr=MODEL_VALIDATE_METHOD,
                         ),
                         args=[
                             ast.Dict(

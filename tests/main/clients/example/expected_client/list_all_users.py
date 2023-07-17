@@ -21,6 +21,6 @@ class ListAllUsersUsersLocation(BaseModel):
     country: Optional[str]
 
 
-ListAllUsers.update_forward_refs()
-ListAllUsersUsers.update_forward_refs()
-ListAllUsersUsersLocation.update_forward_refs()
+ListAllUsers.model_rebuild()
+ListAllUsersUsers.model_rebuild()
+ListAllUsersUsersLocation.model_rebuild()

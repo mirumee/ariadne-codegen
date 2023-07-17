@@ -5,4 +5,4 @@ class QueryWithFragmentOnQueryWithUnion(FragmentOnQueryWithUnion):
     pass
 
 
-QueryWithFragmentOnQueryWithUnion.update_forward_refs()
+QueryWithFragmentOnQueryWithUnion.model_rebuild()

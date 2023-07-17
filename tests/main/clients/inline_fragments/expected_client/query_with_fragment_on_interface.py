@@ -30,7 +30,7 @@ class QueryWithFragmentOnInterfaceQueryITypeB(BaseModel):
     field_b: str = Field(alias="fieldB")
 
 
-QueryWithFragmentOnInterface.update_forward_refs()
-QueryWithFragmentOnInterfaceQueryIInterface.update_forward_refs()
-QueryWithFragmentOnInterfaceQueryITypeA.update_forward_refs()
-QueryWithFragmentOnInterfaceQueryITypeB.update_forward_refs()
+QueryWithFragmentOnInterface.model_rebuild()
+QueryWithFragmentOnInterfaceQueryIInterface.model_rebuild()
+QueryWithFragmentOnInterfaceQueryITypeA.model_rebuild()
+QueryWithFragmentOnInterfaceQueryITypeB.model_rebuild()

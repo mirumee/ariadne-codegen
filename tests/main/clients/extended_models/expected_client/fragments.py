@@ -22,7 +22,7 @@ class GetQueryAFragmentQueryA(BaseModel, MixinA, CommonMixin):
     field_a: int = Field(alias="fieldA")
 
 
-FragmentA.update_forward_refs()
-FragmentB.update_forward_refs()
-GetQueryAFragment.update_forward_refs()
-GetQueryAFragmentQueryA.update_forward_refs()
+FragmentA.model_rebuild()
+FragmentB.model_rebuild()
+GetQueryAFragment.model_rebuild()
+GetQueryAFragmentQueryA.model_rebuild()

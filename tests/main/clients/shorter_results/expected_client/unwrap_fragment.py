@@ -5,4 +5,4 @@ class UnwrapFragment(FragmentWithSingleField):
     pass
 
 
-UnwrapFragment.update_forward_refs()
+UnwrapFragment.model_rebuild()

@@ -13,5 +13,5 @@ class FragmentB(BaseModel):
     value_b: str = Field(alias="valueB")
 
 
-FragmentA.update_forward_refs()
-FragmentB.update_forward_refs()
+FragmentA.model_rebuild()
+FragmentB.model_rebuild()

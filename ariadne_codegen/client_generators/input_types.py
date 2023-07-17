@@ -28,11 +28,11 @@ from .constants import (
     BASE_MODEL_CLASS_NAME,
     FIELD_CLASS,
     LIST,
+    MODEL_REBUILD_METHOD,
     OPTIONAL,
     PYDANTIC_MODULE,
     TYPING_MODULE,
     UNION,
-    UPDATE_FORWARD_REFS_METHOD,
 )
 from .input_fields import parse_input_field_default_value, parse_input_field_type
 from .scalars import ScalarData, generate_scalar_imports
@@ -79,14 +79,14 @@ class InputTypesGenerator:
                 scalar_data = self.custom_scalars[scalar_name]
                 self._imports.extend(generate_scalar_imports(scalar_data))
 
-        update_forward_refs_calls = [
-            generate_expr(generate_method_call(c.name, UPDATE_FORWARD_REFS_METHOD))
+        model_rebuild_calls = [
+            generate_expr(generate_method_call(c.name, MODEL_REBUILD_METHOD))
             for c in self._class_defs
         ]
         module_body = (
             cast(List[ast.stmt], self._imports)
             + cast(List[ast.stmt], self._class_defs)
-            + cast(List[ast.stmt], update_forward_refs_calls)
+            + cast(List[ast.stmt], model_rebuild_calls)
         )
         module = generate_module(body=module_body)
         if self.plugin_manager:

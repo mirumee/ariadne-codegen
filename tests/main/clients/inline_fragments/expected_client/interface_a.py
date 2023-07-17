@@ -28,7 +28,7 @@ class InterfaceAQueryITypeB(BaseModel):
     field_b: str = Field(alias="fieldB")
 
 
-InterfaceA.update_forward_refs()
-InterfaceAQueryIInterface.update_forward_refs()
-InterfaceAQueryITypeA.update_forward_refs()
-InterfaceAQueryITypeB.update_forward_refs()
+InterfaceA.model_rebuild()
+InterfaceAQueryIInterface.model_rebuild()
+InterfaceAQueryITypeA.model_rebuild()
+InterfaceAQueryITypeB.model_rebuild()

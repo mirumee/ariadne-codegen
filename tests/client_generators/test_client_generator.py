@@ -10,8 +10,8 @@ from ariadne_codegen.client_generators.constants import (
     ANY,
     ASYNC_ITERATOR,
     LIST,
+    MODEL_VALIDATE_METHOD,
     OPTIONAL,
-    PARSE_OBJ_METHOD,
     TYPING_MODULE,
     UNION,
 )
@@ -326,7 +326,9 @@ def test_add_method_generates_correct_async_method_body(
         ),
         ast.Return(
             value=ast.Call(
-                func=ast.Attribute(value=ast.Name(id="ListXyz"), attr=PARSE_OBJ_METHOD),
+                func=ast.Attribute(
+                    value=ast.Name(id="ListXyz"), attr=MODEL_VALIDATE_METHOD
+                ),
                 args=[ast.Name(id="data")],
                 keywords=[],
             )
@@ -476,7 +478,9 @@ def test_add_method_generates_correct_method_body(
         ),
         ast.Return(
             value=ast.Call(
-                func=ast.Attribute(value=ast.Name(id="ListXyz"), attr=PARSE_OBJ_METHOD),
+                func=ast.Attribute(
+                    value=ast.Name(id="ListXyz"), attr=MODEL_VALIDATE_METHOD
+                ),
                 args=[ast.Name(id="data")],
                 keywords=[],
             )
@@ -563,7 +567,7 @@ def test_add_method_generates_async_generator_for_subscription_definition(
                             value=ast.Call(
                                 func=ast.Attribute(
                                     value=ast.Name(id="GetCounter"),
-                                    attr=PARSE_OBJ_METHOD,
+                                    attr=MODEL_VALIDATE_METHOD,
                                 ),
                                 args=[ast.Name(id="data")],
                                 keywords=[],

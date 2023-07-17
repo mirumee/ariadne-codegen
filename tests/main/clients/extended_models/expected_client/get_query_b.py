@@ -13,5 +13,5 @@ class GetQueryBQueryB(BaseModel, MixinB, CommonMixin):
     field_b: str = Field(alias="fieldB")
 
 
-GetQueryB.update_forward_refs()
-GetQueryBQueryB.update_forward_refs()
+GetQueryB.model_rebuild()
+GetQueryBQueryB.model_rebuild()

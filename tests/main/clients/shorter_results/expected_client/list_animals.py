@@ -35,7 +35,7 @@ class ListAnimalsListAnimalsDog(BaseModel):
     puppies: int
 
 
-ListAnimals.update_forward_refs()
-ListAnimalsListAnimalsAnimal.update_forward_refs()
-ListAnimalsListAnimalsCat.update_forward_refs()
-ListAnimalsListAnimalsDog.update_forward_refs()
+ListAnimals.model_rebuild()
+ListAnimalsListAnimalsAnimal.model_rebuild()
+ListAnimalsListAnimalsCat.model_rebuild()
+ListAnimalsListAnimalsDog.model_rebuild()

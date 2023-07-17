@@ -14,6 +14,7 @@ from graphql import (
     InputValueDefinitionNode,
     IntValueNode,
     ListValueNode,
+    NonNullTypeNode,
     NullValueNode,
     ObjectValueNode,
     StringValueNode,
@@ -33,7 +34,7 @@ from ..codegen import (
     generate_subscript,
 )
 from ..exceptions import ParsingError
-from .constants import ANY, FIELD_CLASS, INPUT_SCALARS_MAP, PARSE_OBJ_METHOD
+from .constants import ANY, FIELD_CLASS, INPUT_SCALARS_MAP, MODEL_VALIDATE_METHOD
 from .scalars import ScalarData
 from .types import Annotation, CodegenInputFieldType
 
@@ -92,11 +93,16 @@ def parse_input_field_type(
 def parse_input_field_default_value(
     node: InputValueDefinitionNode, field_type: str = ""
 ) -> Optional[ast.expr]:
+    default_value = None
     if node and node.default_value:
-        return parse_input_const_value_node(
+        default_value = parse_input_const_value_node(
             node=node.default_value, field_type=field_type
         )
-    return None
+
+    if not default_value and not isinstance(node.type, NonNullTypeNode):
+        return generate_constant(None)
+
+    return default_value
 
 
 # pylint: disable=too-many-return-statements
@@ -176,7 +182,7 @@ def parse_input_const_value_node(
                                         ),
                                         slice_=generate_constant(field_type),
                                     ),
-                                    attr=PARSE_OBJ_METHOD,
+                                    attr=MODEL_VALIDATE_METHOD,
                                 ),
                                 args=[dict_],
                             )

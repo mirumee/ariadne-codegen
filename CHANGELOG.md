@@ -8,6 +8,7 @@
 - Added support for `mixin` directive on fragments definitions.
 - Added support for fragments defined on subtype of field's type.
 - Added default representation for a field name consisting only of underscores.
+- Changed generated client and models to use pydantic v2.
 
 
 ## 0.7.1 (2023-06-06)

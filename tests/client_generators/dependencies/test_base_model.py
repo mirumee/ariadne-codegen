@@ -41,7 +41,7 @@ from ariadne_codegen.client_generators.dependencies.base_model import BaseModel
         ),
     ],
 )
-def test_parse_obj_applies_parse_on_every_list_element(
+def test_model_validate_applies_parse_on_every_list_element(
     annotation, value, expected_args, mocker
 ):
     mocked_parse = mocker.MagicMock(side_effect=lambda s: s)
@@ -54,13 +54,13 @@ def test_parse_obj_applies_parse_on_every_list_element(
     class TestModel(BaseModel):
         field: annotation
 
-    TestModel.parse_obj({"field": value})
+    TestModel.model_validate({"field": value})
 
     assert mocked_parse.call_count == len(expected_args)
     assert {c.args[0] for c in mocked_parse.call_args_list} == expected_args
 
 
-def test_parse_obj_doesnt_apply_parse_on_not_matching_type(mocker):
+def test_model_validate_doesnt_apply_parse_on_not_matching_type(mocker):
     mocked_parse = mocker.MagicMock(side_effect=lambda s: s)
     mocker.patch(
         "ariadne_codegen.client_generators.dependencies.base_model."
@@ -79,7 +79,7 @@ def test_parse_obj_doesnt_apply_parse_on_not_matching_type(mocker):
         field_h: Optional[List[Optional[int]]]
         field_i: Optional[List[Optional[int]]]
 
-    TestModel.parse_obj(
+    TestModel.model_validate(
         {
             "field_a": 1,
             "field_b": 2,
@@ -96,7 +96,7 @@ def test_parse_obj_doesnt_apply_parse_on_not_matching_type(mocker):
     assert not mocked_parse.called
 
 
-def test_parse_obj_applies_parse_only_once_for_every_element(mocker):
+def test_model_validate_applies_parse_only_once_for_every_element(mocker):
     mocked_parse = mocker.MagicMock(side_effect=lambda s: s)
     mocker.patch(
         "ariadne_codegen.client_generators.dependencies.base_model."
@@ -115,7 +115,7 @@ def test_parse_obj_applies_parse_only_once_for_every_element(mocker):
         value: str
         field_b: TestModelB
 
-    TestModelA.parse_obj(
+    TestModelA.model_validate(
         {"value": "a", "field_b": {"value": "b", "field_c": {"value": "c"}}}
     )
 
@@ -159,7 +159,7 @@ def test_parse_obj_applies_parse_only_once_for_every_element(mocker):
         ),
     ],
 )
-def test_dict_applies_serialize_on_every_list_element(
+def test_model_dump_applies_serialize_on_every_list_element(
     annotation, value, expected_args, mocker
 ):
     mocked_serialize = mocker.MagicMock(side_effect=lambda s: s)
@@ -172,13 +172,13 @@ def test_dict_applies_serialize_on_every_list_element(
     class TestModel(BaseModel):
         field: annotation
 
-    TestModel.parse_obj({"field": value}).dict()
+    TestModel.model_validate({"field": value}).model_dump()
 
     assert mocked_serialize.call_count == len(expected_args)
     assert {c.args[0] for c in mocked_serialize.call_args_list} == expected_args
 
 
-def test_dict_doesnt_apply_serialize_on_not_matching_type(mocker):
+def test_model_dump_doesnt_apply_serialize_on_not_matching_type(mocker):
     mocked_serialize = mocker.MagicMock(side_effect=lambda s: s)
     mocker.patch(
         "ariadne_codegen.client_generators.dependencies.base_model."
@@ -197,7 +197,7 @@ def test_dict_doesnt_apply_serialize_on_not_matching_type(mocker):
         field_h: Optional[List[Optional[int]]]
         field_i: Optional[List[Optional[int]]]
 
-    TestModel.parse_obj(
+    TestModel.model_validate(
         {
             "field_a": 1,
             "field_b": 2,
@@ -209,12 +209,12 @@ def test_dict_doesnt_apply_serialize_on_not_matching_type(mocker):
             "field_h": [9, None],
             "field_i": None,
         }
-    ).dict()
+    ).model_dump()
 
     assert not mocked_serialize.called
 
 
-def test_dict_applies_serialize_only_once_for_every_element(mocker):
+def test_model_dump_applies_serialize_only_once_for_every_element(mocker):
     mocked_serialize = mocker.MagicMock(side_effect=lambda s: s)
     mocker.patch(
         "ariadne_codegen.client_generators.dependencies.base_model."
@@ -233,9 +233,9 @@ def test_dict_applies_serialize_only_once_for_every_element(mocker):
         value: str
         field_b: TestModelB
 
-    TestModelA.parse_obj(
+    TestModelA.model_validate(
         {"value": "a", "field_b": {"value": "b", "field_c": {"value": "c"}}}
-    ).dict()
+    ).model_dump()
 
     assert mocked_serialize.call_count == 3
     assert {c.args[0] for c in mocked_serialize.call_args_list} == {"a", "b", "c"}

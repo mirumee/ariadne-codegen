@@ -7,4 +7,4 @@ class UploadFile(BaseModel):
     file_upload: bool = Field(alias="fileUpload")
 
 
-UploadFile.update_forward_refs()
+UploadFile.model_rebuild()

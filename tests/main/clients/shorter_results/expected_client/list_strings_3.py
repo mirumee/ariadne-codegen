@@ -9,4 +9,4 @@ class ListStrings3(BaseModel):
     list_optional_string: List[Optional[str]] = Field(alias="listOptionalString")
 
 
-ListStrings3.update_forward_refs()
+ListStrings3.model_rebuild()
