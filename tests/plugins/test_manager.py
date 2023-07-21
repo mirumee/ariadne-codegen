@@ -234,32 +234,6 @@ def test_generate_scalars_module_calls_plugins_generate_scalars_module(
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_scalars_module.called
 
 
-def test_generate_scalars_parse_dict_calls_plugins_generate_scalars_parse_dict(
-    plugin_manager_with_mocked_plugins,
-):
-    plugin_manager_with_mocked_plugins.generate_scalars_parse_dict(ast.Dict())
-
-    assert plugin_manager_with_mocked_plugins.plugins[
-        0
-    ].generate_scalars_parse_dict.called
-    assert plugin_manager_with_mocked_plugins.plugins[
-        1
-    ].generate_scalars_parse_dict.called
-
-
-def test_generate_scalars_serialize_dict_calls_plugins_generate_scalars_serialize_dict(
-    plugin_manager_with_mocked_plugins,
-):
-    plugin_manager_with_mocked_plugins.generate_scalars_serialize_dict(ast.Dict())
-
-    assert plugin_manager_with_mocked_plugins.plugins[
-        0
-    ].generate_scalars_serialize_dict.called
-    assert plugin_manager_with_mocked_plugins.plugins[
-        1
-    ].generate_scalars_serialize_dict.called
-
-
 def test_generate_client_code_calls_plugins_generate_client_code(
     plugin_manager_with_mocked_plugins,
 ):
