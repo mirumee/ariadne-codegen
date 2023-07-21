@@ -207,22 +207,6 @@ def generate_scalars_module(self, module: ast.Module) -> ast.Module:
 
 Hook executed on generation of module with mappings for custom scalars. Later is saved as `scalars.py`.
 
-### generate_scalars_parse_dict
-
-```py
-def generate_scalars_parse_dict(self, dict_: ast.Dict) -> ast.Dict:
-```
-
-Hook executed on generation of dictionary with custom scalars parse methods.
-
-### generate_scalars_serialize_dict
-
-```py
-def generate_scalars_serialize_dict(self, dict_: ast.Dict) -> ast.Dict:
-```
-
-Hook executed on generation of dictionary with custom scalars serialize methods.
-
 ### generate_client_code
 
 ```py

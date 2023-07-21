@@ -120,12 +120,6 @@ class Plugin:
     def generate_scalars_module(self, module: ast.Module) -> ast.Module:
         return module
 
-    def generate_scalars_parse_dict(self, dict_: ast.Dict) -> ast.Dict:
-        return dict_
-
-    def generate_scalars_serialize_dict(self, dict_: ast.Dict) -> ast.Dict:
-        return dict_
-
     def generate_client_code(self, generated_code: str) -> str:
         return generated_code
 
