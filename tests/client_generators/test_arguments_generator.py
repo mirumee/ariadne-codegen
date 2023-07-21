@@ -302,14 +302,16 @@ def test_generate_returns_arguments_with_custom_scalar_and_used_serialize_method
     generator = ArgumentsGenerator(
         schema=build_schema(schema_str),
         custom_scalars={
-            "SCALARABC": ScalarData(type_="ScalarABC", serialize="serialize_abc")
+            "SCALARABC": ScalarData(
+                type_="ScalarABC", serialize="serialize_abc", graphql_name="SCALARABC"
+            )
         },
     )
     expected_arguments = ast.arguments(
         posonlyargs=[],
         args=[
             ast.arg(arg="self"),
-            ast.arg(arg="arg", annotation=ast.Name(id="ScalarABC")),
+            ast.arg(arg="arg", annotation=ast.Name(id="SCALARABC")),
         ],
         kwonlyargs=[],
         kw_defaults=[],

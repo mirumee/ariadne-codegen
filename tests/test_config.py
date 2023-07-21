@@ -104,6 +104,7 @@ def test_get_client_settings_returns_client_settings_object(tmp_path):
             serialize="serialize_id",
             parse="parse_id",
             import_=".custom_scalars",
+            graphql_name="ID",
         )
     }
 

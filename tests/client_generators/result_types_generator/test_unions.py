@@ -33,6 +33,7 @@ def test_generate_returns_module_with_handled_typename_field():
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
     expected_fields_implementations = [
         ast.AnnAssign(
@@ -185,6 +186,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
 
     module = generator.generate()

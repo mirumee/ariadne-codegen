@@ -25,6 +25,7 @@ def test_generate_returns_module_with_enum_imports():
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -52,10 +53,15 @@ def test_generate_returns_module_with_used_custom_scalars_imports():
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        custom_scalars={"SCALARA": ScalarData(type_=".custom_scalars.ScalarA")},
+        scalars_module_name="scalars",
+        custom_scalars={
+            "SCALARA": ScalarData(
+                type_=".custom_scalars.ScalarA", graphql_name="SCALARA"
+            )
+        },
     )
     expected_import = ast.ImportFrom(
-        module=".custom_scalars", names=[ast.alias("ScalarA")], level=0
+        module="scalars", names=[ast.alias("SCALARA")], level=1
     )
 
     module = generator.generate()
@@ -74,6 +80,7 @@ def test_generate_returns_module_with_used_fragment_import():
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
         fragments_module_name="fragments",
         fragments_definitions={
             "TestFragment": parse(
