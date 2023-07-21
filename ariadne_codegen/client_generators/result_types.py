@@ -66,7 +66,7 @@ from .constants import (
     UNION,
 )
 from .result_fields import FieldNames, is_union, parse_operation_field
-from .scalars import ScalarData, generate_scalar_imports
+from .scalars import ScalarData
 from .types import CodegenResultFieldType
 
 
@@ -76,6 +76,7 @@ class ResultTypesGenerator:
         schema: GraphQLSchema,
         operation_definition: ExecutableDefinitionNode,
         enums_module_name: str,
+        scalars_module_name: str,
         fragments_module_name: Optional[str] = None,
         fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
@@ -90,6 +91,7 @@ class ResultTypesGenerator:
         self._operation_name = self.operation_definition.name.value
 
         self.enums_module_name = enums_module_name
+        self.scalars_module_name = scalars_module_name
         self.fragments_module_name = fragments_module_name
         self.fragments_definitions = (
             fragments_definitions if fragments_definitions else {}
@@ -521,10 +523,18 @@ class ResultTypesGenerator:
             self._imports.append(
                 generate_import_from(self._used_enums, self.enums_module_name, 1)
             )
+
         if self._used_scalars:
-            for scalar_name in self._used_scalars:
-                scalar_data = self.custom_scalars[scalar_name]
-                self._imports.extend(generate_scalar_imports(scalar_data))
+            self._imports.append(
+                generate_import_from(
+                    names=[
+                        self.custom_scalars[scalar_name].annotation_type_name
+                        for scalar_name in self._used_scalars
+                    ],
+                    from_=self.scalars_module_name,
+                    level=1,
+                )
+            )
 
         if (
             isinstance(self.operation_definition, OperationDefinitionNode)

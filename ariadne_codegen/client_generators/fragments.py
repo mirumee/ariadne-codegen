@@ -15,6 +15,7 @@ class FragmentsGenerator:
         self,
         schema: GraphQLSchema,
         enums_module_name: str,
+        scalars_module_name: str,
         fragments_definitions: Dict[str, FragmentDefinitionNode],
         exclude_names: Optional[Set[str]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
@@ -24,6 +25,7 @@ class FragmentsGenerator:
     ) -> None:
         self.schema = schema
         self.enums_module_name = enums_module_name
+        self.scalars_module_name = scalars_module_name
         self.exclude_names = exclude_names or set()
         self.fragments_definitions = fragments_definitions
         self.base_model_import = base_model_import
@@ -47,6 +49,7 @@ class FragmentsGenerator:
                 schema=self.schema,
                 operation_definition=fragmanet_def,
                 enums_module_name=self.enums_module_name,
+                scalars_module_name=self.scalars_module_name,
                 fragments_definitions=self.fragments_definitions,
                 base_model_import=self.base_model_import,
                 convert_to_snake_case=self.convert_to_snake_case,

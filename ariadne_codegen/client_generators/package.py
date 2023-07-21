@@ -92,6 +92,7 @@ class PackageGenerator:
         self.input_types_module_name = input_types_module_name
         self.fragments_module_name = fragments_module_name
         self.client_file_name = client_file_name
+        self.scalars_module_name = "scalars"
 
         self.include_comments = include_comments
         self.queries_source = queries_source
@@ -120,6 +121,7 @@ class PackageGenerator:
                 base_client=self.base_client_name,
                 enums_module_name=self.enums_module_name,
                 input_types_module_name=self.input_types_module_name,
+                scalars_module_name=self.scalars_module_name,
                 arguments_generator=ArgumentsGenerator(
                     schema=self.schema,
                     convert_to_snake_case=self.convert_to_snake_case,
@@ -143,6 +145,7 @@ class PackageGenerator:
             else InputTypesGenerator(
                 schema=self.schema,
                 enums_module=self.enums_module_name,
+                scalars_module_name=self.scalars_module_name,
                 base_model_import=self.base_model_import,
                 upload_import=self.upload_import,
                 convert_to_snake_case=self.convert_to_snake_case,
@@ -166,7 +169,6 @@ class PackageGenerator:
             scalars_data=list(self.custom_scalars.values()),
             plugin_manager=self.plugin_manager,
         )
-        self.scalars_definitions_file_name = "scalars"
 
         self._unpacked_fragments: Set[str] = set()
 
@@ -180,7 +182,7 @@ class PackageGenerator:
         self._generate_result_types()
         self._generate_fragments()
         self._copy_files()
-        self._generate_scalars_definitions()
+        self._generate_scalars_module()
         self._generate_client()
         self._generate_init()
 
@@ -205,6 +207,7 @@ class PackageGenerator:
             schema=self.schema,
             operation_definition=definition,
             enums_module_name=self.enums_module_name,
+            scalars_module_name=self.scalars_module_name,
             fragments_module_name=self.fragments_module_name,
             fragments_definitions=self.fragments_definitions,
             base_model_import=self.base_model_import,
@@ -244,7 +247,7 @@ class PackageGenerator:
                 self.base_model_file_path.name,
                 f"{self.enums_module_name}.py",
                 f"{self.input_types_module_name}.py",
-                f"{self.scalars_definitions_file_name}.py",
+                f"{self.scalars_module_name}.py",
                 f"{self.fragments_module_name}.py",
             ]
             + list(self.result_types_files.keys())
@@ -332,6 +335,7 @@ class PackageGenerator:
         generator = FragmentsGenerator(
             schema=self.schema,
             enums_module_name=self.enums_module_name,
+            scalars_module_name=self.scalars_module_name,
             fragments_definitions=self.fragments_definitions,
             exclude_names=self._unpacked_fragments,
             base_model_import=self.base_model_import,
@@ -379,11 +383,11 @@ class PackageGenerator:
             level=1,
         )
 
-    def _generate_scalars_definitions(self):
+    def _generate_scalars_module(self):
+        if not self.custom_scalars:
+            return
         module = self.scalars_definitions_generator.generate()
-        scalars_file_path = (
-            self.package_path / f"{self.scalars_definitions_file_name}.py"
-        )
+        scalars_file_path = self.package_path / f"{self.scalars_module_name}.py"
         code = self._proccess_generated_code(ast_to_str(module))
         if self.plugin_manager:
             code = self.plugin_manager.generate_scalars_code(code)

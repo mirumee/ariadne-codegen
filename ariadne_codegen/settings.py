@@ -63,6 +63,10 @@ class ClientSettings(BaseSettings):
         super().__post_init__()
 
         self._set_default_base_client_data()
+
+        for name, data in self.scalars.items():
+            data.graphql_name = name
+
         assert_path_exists(self.queries_path)
 
         assert_string_is_valid_python_identifier(self.target_package_name)

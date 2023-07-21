@@ -84,10 +84,11 @@ class ShorterResultsPlugin(Plugin):
                 continue
 
             for name in stmt.names:
+                from_ = "." * stmt.level + stmt.module
                 if name.asname is not None:
-                    self.imported_types[name.asname] = stmt.module
+                    self.imported_types[name.asname] = from_
                 else:
-                    self.imported_types[name.name] = stmt.module
+                    self.imported_types[name.name] = from_
 
         return super().generate_result_types_module(module, operation_definition)
 

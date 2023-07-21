@@ -37,6 +37,9 @@ ALIAS_KEYWORD = "alias"
 DISCRIMINATOR_KEYWORD = "discriminator"
 MODEL_REBUILD_METHOD = "model_rebuild"
 MODEL_VALIDATE_METHOD = "model_validate"
+PLAIN_SERIALIZER = "PlainSerializer"
+BEFORE_VALIDATOR = "BeforeValidator"
+
 ENUM_MODULE = "enum"
 ENUM_CLASS = "Enum"
 
