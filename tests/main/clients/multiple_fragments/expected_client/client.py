@@ -1,3 +1,5 @@
+from typing import Dict
+
 from .async_base_client import AsyncBaseClient
 from .example_query1 import ExampleQuery1
 from .example_query2 import ExampleQuery2
@@ -31,7 +33,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ExampleQuery1.model_validate(data)
@@ -59,7 +61,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ExampleQuery2.model_validate(data)
@@ -83,7 +85,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ExampleQuery3.model_validate(data)

@@ -32,6 +32,7 @@ from .arguments import ArgumentsGenerator
 from .constants import (
     ANY,
     ASYNC_ITERATOR,
+    DICT,
     LIST,
     MODEL_VALIDATE_METHOD,
     OPTIONAL,
@@ -65,7 +66,7 @@ class ClientGenerator:
         self._imports: List[ast.ImportFrom] = []
         self._add_import(
             generate_import_from(
-                [OPTIONAL, LIST, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE
+                [OPTIONAL, LIST, DICT, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE
             )
         )
         self._add_import(base_client_import)
@@ -262,7 +263,7 @@ class ClientGenerator:
         return generate_ann_assign(
             target=self._variables_dict_variable,
             annotation=generate_subscript(
-                generate_name("dict"),
+                generate_name("Dict"),
                 generate_tuple([generate_name("str"), generate_name("object")]),
             ),
             value=arguments_dict,

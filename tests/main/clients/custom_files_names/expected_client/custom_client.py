@@ -1,3 +1,5 @@
+from typing import Dict
+
 from .async_base_client import AsyncBaseClient
 from .custom_input_types import inputA
 from .get_query_a import GetQueryA
@@ -18,7 +20,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {"dataA": data_a}
+        variables: Dict[str, object] = {"dataA": data_a}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetQueryA.model_validate(data)
