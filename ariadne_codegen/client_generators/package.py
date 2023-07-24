@@ -44,6 +44,7 @@ class PackageGenerator:
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
         fragments_module_name: str = "fragments",
+        scalars_module_name: str = "scalars",
         include_comments: bool = True,
         queries_source: str = "",
         schema_source: str = "",
@@ -91,8 +92,8 @@ class PackageGenerator:
         self.enums_module_name = enums_module_name
         self.input_types_module_name = input_types_module_name
         self.fragments_module_name = fragments_module_name
+        self.scalars_module_name = scalars_module_name
         self.client_file_name = client_file_name
-        self.scalars_module_name = "scalars"
 
         self.include_comments = include_comments
         self.queries_source = queries_source

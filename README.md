@@ -73,6 +73,7 @@ Optional settings:
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `fragments_module_name` (defaults to `"fragments"`) - name of file with generated fragments models
+- `scalars_module_name` (defaults to `"scalars"`) - name of file with generated annotations for custom scalars
 - `include_comments` (defaults to `true`) - a flag that specifies whether to include comments in generated files
 - `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead

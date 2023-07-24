@@ -51,6 +51,7 @@ class ClientSettings(BaseSettings):
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     fragments_module_name: str = "fragments"
+    scalars_module_name: str = "scalars"
     include_comments: bool = True
     convert_to_snake_case: bool = True
     async_client: bool = True
