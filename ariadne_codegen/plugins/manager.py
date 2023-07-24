@@ -206,3 +206,21 @@ class PluginManager:
                 plugin.schema = processed_schema
 
         return processed_schema
+
+    def generate_scalar_annotation(
+        self, type_annotation: ast.Assign, scalar_name: str
+    ) -> ast.Assign:
+        return self._apply_plugins_on_object(
+            "generate_scalar_annotation",
+            type_annotation,
+            scalar_name=scalar_name,
+        )
+
+    def generate_scalar_imports(
+        self, imports: List[ast.ImportFrom], scalar_name: str
+    ) -> List[ast.ImportFrom]:
+        return self._apply_plugins_on_object(
+            "generate_scalar_imports",
+            imports,
+            scalar_name=scalar_name,
+        )

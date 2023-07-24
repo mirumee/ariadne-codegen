@@ -224,3 +224,54 @@ def test_generate_returns_module_with_correct_type_annotation(
     assert len(generated_assigns) == 1
     generated_assign = generated_assigns[0]
     assert compare_ast(generated_assign, expected_assign)
+
+
+def test_generate_triggers_generate_scalars_module_plugin_hook(mocked_plugin_manager):
+    generator = ScalarsDefinitionsGenerator(
+        scalars_data=[ScalarData(type_="str", graphql_name="ScalarSTR")],
+        plugin_manager=mocked_plugin_manager,
+    )
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_scalars_module.called
+
+
+def test_generate_triggers_generate_scalar_annotation_plugin_hook_for_every_scalar(
+    mocked_plugin_manager,
+):
+    generator = ScalarsDefinitionsGenerator(
+        scalars_data=[
+            ScalarData(type_="str", graphql_name="ScalarA"),
+            ScalarData(type_="str", graphql_name="ScalarB"),
+        ],
+        plugin_manager=mocked_plugin_manager,
+    )
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_scalar_annotation.call_count == 2
+    assert [
+        c.kwargs["scalar_name"]
+        for c in mocked_plugin_manager.generate_scalar_annotation.mock_calls
+    ] == ["ScalarA", "ScalarB"]
+
+
+def test_generate_triggers_generate_scalar_imports_plugin_hook_for_every_scalar(
+    mocked_plugin_manager,
+):
+    generator = ScalarsDefinitionsGenerator(
+        scalars_data=[
+            ScalarData(type_="str", graphql_name="ScalarA"),
+            ScalarData(type_="str", graphql_name="ScalarB"),
+        ],
+        plugin_manager=mocked_plugin_manager,
+    )
+
+    generator.generate()
+
+    assert mocked_plugin_manager.generate_scalar_imports.call_count == 2
+    assert [
+        c.kwargs["scalar_name"]
+        for c in mocked_plugin_manager.generate_scalar_imports.mock_calls
+    ] == ["ScalarA", "ScalarB"]

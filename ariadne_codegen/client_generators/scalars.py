@@ -130,8 +130,18 @@ class ScalarsDefinitionsGenerator:
                 targets=[data.annotation_type_name], value=annotated_values[0]
             )
 
+        if self.plugin_manager:
+            type_assign = self.plugin_manager.generate_scalar_annotation(
+                type_assign, scalar_name=data.graphql_name
+            )
         self._types_assigns.append(type_assign)
-        self._imports.extend(generate_scalar_imports(data))
+
+        imports = generate_scalar_imports(data)
+        if self.plugin_manager:
+            imports = self.plugin_manager.generate_scalar_imports(
+                imports, scalar_name=data.graphql_name
+            )
+        self._imports.extend(imports)
 
     def generate(self) -> ast.Module:
         module = generate_module(

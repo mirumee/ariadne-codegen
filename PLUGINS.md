@@ -299,6 +299,28 @@ Hook executed on creating `GraphQLSchema` object from path or url provided in se
 To ensure all plugins have current version of schema, result of this hook is propagated to all plugins, updating their `schema` field. 
 
 
+### generate_scalar_annotation
+
+```py
+def generate_scalar_annotation(
+    self, type_annotation: ast.Assign, scalar_name: str
+) -> ast.Assign:
+```
+
+Hook executed on generation of annotation which will be used to represent `scalar_name` scalar in generated package.
+
+
+### generate_scalar_imports
+
+```py
+def generate_scalar_imports(
+    self, imports: List[ast.ImportFrom], scalar_name: str
+) -> List[ast.ImportFrom]:
+```
+
+Hook executed on generation of imports necessary to create custom scalar annotation.
+
+
 ## Example
 
 This example plugin adds `__version__ = "..."` to generated `__init__.py` file.
