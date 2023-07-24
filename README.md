@@ -155,7 +155,7 @@ serialize = "function used to serialize scalar"
 parse = "function used to create scalar instance from serialized form"
 ```
 
-For scalar each custom scalar there will generated annotation in `{scalars_module_name}.py`, it will be used in all occurrences of `{graphql scalar name}`. If provided, `serialize` and `parse` will be used for serialization and deserialization.
+For each custom scalar there will generated annotation in `{scalars_module_name}.py`, it will be used in all occurrences of `{graphql scalar name}`. If provided, `serialize` and `parse` will be used for serialization and deserialization.
 If `type`/`serialize`/`parse` contains at least one `.` then string will be split by it's last occurrence. First part will be used as module to import from, and second part as type/method name. For example, `type = "custom_scalars.a.ScalarA"` will produce `from custom_scalars.a import ScalarA`.
 
 
