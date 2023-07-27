@@ -263,7 +263,7 @@ class ClientGenerator:
         return generate_ann_assign(
             target=self._variables_dict_variable,
             annotation=generate_subscript(
-                generate_name("Dict"),
+                generate_name(DICT),
                 generate_tuple([generate_name("str"), generate_name("object")]),
             ),
             value=arguments_dict,
