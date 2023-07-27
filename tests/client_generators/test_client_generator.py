@@ -451,7 +451,7 @@ def test_add_method_generates_correct_method_body(
         ast.AnnAssign(
             target=ast.Name(id="variables"),
             annotation=ast.Subscript(
-                value=ast.Name(id="Dict"),
+                value=ast.Name(id=DICT),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
