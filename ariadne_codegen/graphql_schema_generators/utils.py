@@ -13,19 +13,11 @@ from ..codegen import (
 )
 
 
-def _keep_dict_tuple_capitalized(obj):
-    if isinstance(obj, dict):
-        return "Dict"
-    if isinstance(obj, tuple):
-        return "Tuple"
-    return obj.__class__.__name__
-
-
 def get_named_type(type_: GraphQLNamedType, type_map_name: str) -> ast.Call:
     return generate_call(
         func=generate_name("cast"),
         args=[
-            generate_name(_keep_dict_tuple_capitalized(type_)),
+            generate_name(type_.__class__.__name__),
             generate_subscript(
                 value=generate_name(type_map_name),
                 slice_=generate_constant(type_.name),
