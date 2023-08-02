@@ -1,4 +1,4 @@
-from typing import AsyncIterator, List, Optional, Union
+from typing import AsyncIterator, Dict, List, Optional, Union
 
 from .async_base_client import AsyncBaseClient
 from .custom_scalars import MyScalar
@@ -43,7 +43,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetAuthenticatedUser.model_validate(data).me
@@ -56,7 +56,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListStrings1.model_validate(data).optional_list_optional_string
@@ -69,7 +69,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListStrings2.model_validate(data).optional_list_string
@@ -82,7 +82,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListStrings3.model_validate(data).list_optional_string
@@ -95,7 +95,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListStrings4.model_validate(data).list_string
@@ -110,7 +110,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListTypeA.model_validate(data).list_optional_type_a
@@ -138,7 +138,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {"name": name}
+        variables: Dict[str, object] = {"name": name}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetAnimalByName.model_validate(data).animal_by_name
@@ -168,7 +168,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListAnimals.model_validate(data).list_animals
@@ -188,7 +188,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.model_validate(data)
@@ -201,7 +201,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return GetAScalar.model_validate(data).just_a_scalar
@@ -214,7 +214,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         async for data in self.execute_ws(query=query, variables=variables):
             yield SubscribeStrings.model_validate(data).optional_list_string
 
@@ -232,7 +232,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return UnwrapFragment.model_validate(data).query_unwrap_fragment

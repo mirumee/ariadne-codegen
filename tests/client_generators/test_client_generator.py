@@ -9,6 +9,7 @@ from ariadne_codegen.client_generators.client import ClientGenerator
 from ariadne_codegen.client_generators.constants import (
     ANY,
     ASYNC_ITERATOR,
+    DICT,
     LIST,
     MODEL_VALIDATE_METHOD,
     OPTIONAL,
@@ -191,6 +192,7 @@ def test_generate_returns_module_with_correct_imports(
             names=[
                 ast.alias(name=OPTIONAL),
                 ast.alias(name=LIST),
+                ast.alias(name=DICT),
                 ast.alias(name=ANY),
                 ast.alias(name=UNION),
                 ast.alias(name=ASYNC_ITERATOR),
@@ -295,7 +297,7 @@ def test_add_method_generates_correct_async_method_body(
         ast.AnnAssign(
             target=ast.Name(id="variables"),
             annotation=ast.Subscript(
-                value=ast.Name(id="dict"),
+                value=ast.Name(id=DICT),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
@@ -449,7 +451,7 @@ def test_add_method_generates_correct_method_body(
         ast.AnnAssign(
             target=ast.Name(id="variables"),
             annotation=ast.Subscript(
-                value=ast.Name(id="dict"),
+                value=ast.Name(id=DICT),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
@@ -545,7 +547,7 @@ def test_add_method_generates_async_generator_for_subscription_definition(
             ast.AnnAssign(
                 target=ast.Name(id="variables"),
                 annotation=ast.Subscript(
-                    value=ast.Name(id="dict"),
+                    value=ast.Name(id=DICT),
                     slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
                 ),
                 value=ast.Dict(keys=[], values=[]),

@@ -118,7 +118,7 @@ class AsyncBaseClient:
                 errors_dicts=errors, data=data
             )
 
-        return cast(dict[str, Any], data)
+        return cast(Dict[str, Any], data)
 
     async def execute_ws(
         self, query: str, variables: Optional[Dict[str, Any]] = None

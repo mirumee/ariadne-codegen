@@ -1,3 +1,5 @@
+from typing import Dict
+
 from .async_base_client import AsyncBaseClient
 from .query_with_fragment_on_sub_interface import QueryWithFragmentOnSubInterface
 from .query_with_fragment_on_sub_interface_with_inline_fragment import (
@@ -29,7 +31,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return QueryWithFragmentOnSubInterface.model_validate(data)
@@ -55,7 +57,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return QueryWithFragmentOnSubInterfaceWithInlineFragment.model_validate(data)
@@ -78,7 +80,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return QueryWithFragmentOnUnionMember.model_validate(data)

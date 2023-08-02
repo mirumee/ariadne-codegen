@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Optional, Union
+from typing import AsyncIterator, Dict, Optional, Union
 
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType, Upload
@@ -25,7 +25,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {"userData": user_data}
+        variables: Dict[str, object] = {"userData": user_data}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return CreateUser.model_validate(data)
@@ -46,7 +46,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListAllUsers.model_validate(data)
@@ -75,7 +75,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {"country": country}
+        variables: Dict[str, object] = {"country": country}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return ListUsersByCountry.model_validate(data)
@@ -88,7 +88,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {}
+        variables: Dict[str, object] = {}
         async for data in self.execute_ws(query=query, variables=variables):
             yield GetUsersCounter.model_validate(data)
 
@@ -100,7 +100,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: dict[str, object] = {"file": file}
+        variables: Dict[str, object] = {"file": file}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
         return UploadFile.model_validate(data)
