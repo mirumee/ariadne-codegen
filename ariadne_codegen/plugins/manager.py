@@ -160,12 +160,6 @@ class PluginManager:
     def generate_scalars_module(self, module: ast.Module) -> ast.Module:
         return self._apply_plugins_on_object("generate_scalars_module", module)
 
-    def generate_scalars_parse_dict(self, dict_: ast.Dict) -> ast.Dict:
-        return self._apply_plugins_on_object("generate_scalars_parse_dict", dict_)
-
-    def generate_scalars_serialize_dict(self, dict_: ast.Dict) -> ast.Dict:
-        return self._apply_plugins_on_object("generate_scalars_serialize_dict", dict_)
-
     def generate_client_code(self, generated_code: str) -> str:
         return self._apply_plugins_on_object("generate_client_code", generated_code)
 
@@ -212,3 +206,21 @@ class PluginManager:
                 plugin.schema = processed_schema
 
         return processed_schema
+
+    def generate_scalar_annotation(
+        self, type_annotation: ast.Assign, scalar_name: str
+    ) -> ast.Assign:
+        return self._apply_plugins_on_object(
+            "generate_scalar_annotation",
+            type_annotation,
+            scalar_name=scalar_name,
+        )
+
+    def generate_scalar_imports(
+        self, imports: List[ast.ImportFrom], scalar_name: str
+    ) -> List[ast.ImportFrom]:
+        return self._apply_plugins_on_object(
+            "generate_scalar_imports",
+            imports,
+            scalar_name=scalar_name,
+        )

@@ -19,7 +19,7 @@ from ariadne_codegen.plugins.manager import PluginManager
 
 
 @pytest.fixture
-def plugin_manager_with_mocked_plugins(mocker):
+def plugin_manager_with_mocked_plugins(mocker) -> PluginManager:
     return PluginManager(
         schema=GraphQLSchema(),
         plugins_types=[mocker.MagicMock(), mocker.MagicMock()],
@@ -234,32 +234,6 @@ def test_generate_scalars_module_calls_plugins_generate_scalars_module(
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_scalars_module.called
 
 
-def test_generate_scalars_parse_dict_calls_plugins_generate_scalars_parse_dict(
-    plugin_manager_with_mocked_plugins,
-):
-    plugin_manager_with_mocked_plugins.generate_scalars_parse_dict(ast.Dict())
-
-    assert plugin_manager_with_mocked_plugins.plugins[
-        0
-    ].generate_scalars_parse_dict.called
-    assert plugin_manager_with_mocked_plugins.plugins[
-        1
-    ].generate_scalars_parse_dict.called
-
-
-def test_generate_scalars_serialize_dict_calls_plugins_generate_scalars_serialize_dict(
-    plugin_manager_with_mocked_plugins,
-):
-    plugin_manager_with_mocked_plugins.generate_scalars_serialize_dict(ast.Dict())
-
-    assert plugin_manager_with_mocked_plugins.plugins[
-        0
-    ].generate_scalars_serialize_dict.called
-    assert plugin_manager_with_mocked_plugins.plugins[
-        1
-    ].generate_scalars_serialize_dict.called
-
-
 def test_generate_client_code_calls_plugins_generate_client_code(
     plugin_manager_with_mocked_plugins,
 ):
@@ -378,3 +352,25 @@ def test_process_schema_updates_plugins_schema_field():
     assert dumb_plugin1.schema is not org_schema
     assert dump_plugin2.schema is not org_schema
     assert schema_plugin.schema is not org_schema
+
+
+def test_generate_scalar_annotation_calls_plugins_generate_scalar_annotation(
+    plugin_manager_with_mocked_plugins,
+):
+    plugin_manager_with_mocked_plugins.generate_scalar_annotation(
+        ast.Assign(), "ScalarName"
+    )
+
+    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
+    assert plugin1.generate_scalar_annotation.called
+    assert plugin2.generate_scalar_annotation.called
+
+
+def test_generate_scalar_imports_calls_plugins_generate_scalar_imports(
+    plugin_manager_with_mocked_plugins,
+):
+    plugin_manager_with_mocked_plugins.generate_scalar_imports([], "ScalarName")
+
+    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
+    assert plugin1.generate_scalar_imports.called
+    assert plugin2.generate_scalar_imports.called

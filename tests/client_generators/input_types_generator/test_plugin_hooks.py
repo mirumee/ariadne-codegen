@@ -25,6 +25,7 @@ def test_generator_triggers_generate_input_class_hook_for_every_input_type(
     InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
+        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
         plugin_manager=mocked_plugin_manager,
@@ -57,6 +58,7 @@ def test_generator_triggers_generate_input_field_hook_for_every_input_field(
     InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
+        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
         plugin_manager=mocked_plugin_manager,
@@ -78,6 +80,7 @@ def test_generate_triggers_generate_inputs_module_hook(
     generator = InputTypesGenerator(
         schema=GraphQLSchema(),
         enums_module="enums",
+        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
         plugin_manager=mocked_plugin_manager,
@@ -105,6 +108,7 @@ def test_generate_triggers_process_name_hook_for_every_field(
     InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
+        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
         convert_to_snake_case=False,

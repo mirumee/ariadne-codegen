@@ -1,10 +1,10 @@
-from datetime import datetime
 from typing import Any, Dict
 
 from .async_base_client import AsyncBaseClient
-from .custom_scalars import Code, serialize_code
+from .custom_scalars import serialize_code
 from .get_test import GetTest
 from .input_types import TestInput
+from .scalars import CODE, CUSTOMID, DATETIME
 
 
 def gql(q: str) -> str:
@@ -13,7 +13,7 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def get_test(
-        self, date: datetime, code: Code, id: int, input: TestInput, other: Any
+        self, date: DATETIME, code: CODE, id: CUSTOMID, input: TestInput, other: Any
     ) -> GetTest:
         query = gql(
             """

@@ -51,6 +51,7 @@ class ClientSettings(BaseSettings):
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     fragments_module_name: str = "fragments"
+    scalars_module_name: str = "scalars"
     include_comments: bool = True
     convert_to_snake_case: bool = True
     async_client: bool = True
@@ -63,6 +64,10 @@ class ClientSettings(BaseSettings):
         super().__post_init__()
 
         self._set_default_base_client_data()
+
+        for name, data in self.scalars.items():
+            data.graphql_name = name
+
         assert_path_exists(self.queries_path)
 
         assert_string_is_valid_python_identifier(self.target_package_name)

@@ -35,6 +35,7 @@ def test_generate_adds_base_class_to_generated_type_provided_by_mixin_directive(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -68,6 +69,7 @@ def test_generate_handles_multiple_mixin_directives():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -112,6 +114,7 @@ def test_generate_handles_multiple_mixin_directives_on_one_field():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -162,6 +165,7 @@ def test_generator_with_incorrect_data_passed_to_mixin_raises_parsing_error(
                 OperationDefinitionNode, parse(query_str).definitions[0]
             ),
             enums_module_name="enums",
+            scalars_module_name="scalars",
         )
 
 
@@ -193,6 +197,7 @@ def test_generator_returns_module_with_handled_skip_and_include_directives(direc
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
 
     module = generator.generate()

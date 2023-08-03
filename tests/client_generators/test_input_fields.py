@@ -93,16 +93,16 @@ def test_parse_input_field_type_returns_annotation_for_scalar(
 @pytest.mark.parametrize(
     "type_, expected_annotation",
     [
-        (GraphQLNonNull(GraphQLScalarType("SCALARXYZ")), ast.Name(id="ScalarXYZ")),
+        (GraphQLNonNull(GraphQLScalarType("SCALARXYZ")), ast.Name(id="SCALARXYZ")),
         (
             GraphQLScalarType("SCALARXYZ"),
-            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="ScalarXYZ")),
+            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="SCALARXYZ")),
         ),
         (
             GraphQLNonNull(
                 GraphQLList(type_=GraphQLNonNull(GraphQLScalarType("SCALARXYZ")))
             ),
-            ast.Subscript(value=ast.Name(id=LIST), slice=ast.Name("ScalarXYZ")),
+            ast.Subscript(value=ast.Name(id=LIST), slice=ast.Name("SCALARXYZ")),
         ),
     ],
 )
@@ -110,7 +110,10 @@ def test_parse_input_field_type_returns_annotation_for_custom_scalar(
     type_, expected_annotation
 ):
     annotation, type_name = parse_input_field_type(
-        type_=type_, custom_scalars={"SCALARXYZ": ScalarData(type_="ScalarXYZ")}
+        type_=type_,
+        custom_scalars={
+            "SCALARXYZ": ScalarData(type_="ScalarXYZ", graphql_name="SCALARXYZ")
+        },
     )
 
     assert compare_ast(annotation, expected_annotation)

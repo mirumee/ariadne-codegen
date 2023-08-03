@@ -1,10 +1,9 @@
-from datetime import datetime
 from typing import Any
 
 from pydantic import Field
 
 from .base_model import BaseModel
-from .custom_scalars import Code
+from .scalars import CODE, CUSTOMID, DATETIME
 
 
 class GetTest(BaseModel):
@@ -12,9 +11,9 @@ class GetTest(BaseModel):
 
 
 class GetTestTestQuery(BaseModel):
-    date: datetime
-    code: Code
-    id: int
+    date: DATETIME
+    code: CODE
+    id: CUSTOMID
     other: Any
 
 

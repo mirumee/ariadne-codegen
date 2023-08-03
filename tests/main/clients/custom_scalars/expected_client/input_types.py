@@ -1,14 +1,13 @@
-from datetime import datetime
 from typing import Any
 
 from .base_model import BaseModel
-from .custom_scalars import Code
+from .scalars import CODE, CUSTOMID, DATETIME
 
 
 class TestInput(BaseModel):
-    a: datetime
-    b: Code
-    c: int
+    a: DATETIME
+    b: CODE
+    c: CUSTOMID
     d: Any
 
 

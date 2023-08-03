@@ -473,6 +473,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
         fragments=[parse("fragment TestFragment on CustomType { id }").definitions[0]],
+        custom_scalars={"SCALARABC": ScalarData(type_="str", graphql_name="SCALARABC")},
     )
     query_str = """
     query CustomQuery {
@@ -495,7 +496,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             f"{generator.input_types_module_name}.py",
             f"{generator.enums_module_name}.py",
             "custom_query.py",
-            f"{generator.scalars_definitions_file_name}.py",
+            f"{generator.scalars_module_name}.py",
             f"{generator.fragments_module_name}.py",
         ]
     )
@@ -534,7 +535,9 @@ def test_generate_creates_client_with_custom_scalars_imports(tmp_path):
         package_name,
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
-        custom_scalars={"SCALARABC": ScalarData(type_=".abc.ScalarABC")},
+        custom_scalars={
+            "SCALARABC": ScalarData(type_=".abc.ScalarABC", graphql_name="SCALARABC")
+        },
     )
     query_str = """
     query CustomQuery($id: ID!, $param: SCALARABC) {
@@ -551,7 +554,7 @@ def test_generate_creates_client_with_custom_scalars_imports(tmp_path):
     with package_path.joinpath(
         f"{generator.client_file_name}.py"
     ).open() as client_file:
-        assert "from .abc import ScalarABC" in client_file.read()
+        assert "from .scalars import SCALARABC" in client_file.read()
 
 
 def test_generate_triggers_generate_client_code_hook(mocked_plugin_manager, tmp_path):
@@ -639,6 +642,7 @@ def test_generate_triggers_generate_scalars_code_hook(mocked_plugin_manager, tmp
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
         plugin_manager=mocked_plugin_manager,
+        custom_scalars={"SCALARABC": ScalarData(type_="str", graphql_name="SCALARABC")},
     ).generate()
 
     assert mocked_plugin_manager.generate_scalars_code.called

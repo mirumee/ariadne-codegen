@@ -73,6 +73,7 @@ Optional settings:
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `fragments_module_name` (defaults to `"fragments"`) - name of file with generated fragments models
+- `scalars_module_name` (defaults to `"scalars"`) - name of file with generated annotations for custom scalars
 - `include_comments` (defaults to `true`) - a flag that specifies whether to include comments in generated files
 - `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
@@ -154,7 +155,7 @@ serialize = "function used to serialize scalar"
 parse = "function used to create scalar instance from serialized form"
 ```
 
-All occurrences of `{graphql scalar name}` will be represented as `type`. If provided, `serialize` and `parse` will be used for serialization and deserialization.
+For each custom scalar there will be an annotation generated in `{scalars_module_name}.py`, it will be used in all occurrences of `{graphql scalar name}`. If provided, `serialize` and `parse` will be used for serialization and deserialization.
 If `type`/`serialize`/`parse` contains at least one `.` then string will be split by it's last occurrence. First part will be used as module to import from, and second part as type/method name. For example, `type = "custom_scalars.a.ScalarA"` will produce `from custom_scalars.a import ScalarA`.
 
 
@@ -167,6 +168,12 @@ In this case scalar is mapped to built-in `str` which doesn't require custom `se
 type = "str"
 ```
 
+```py
+# scalars.py
+
+SCALARA = str
+```
+
 
 ### Example with type supported by pydantic
 
@@ -177,6 +184,13 @@ In this scenario scalar is represented as `datetime`, so it needs to be imported
 type = "datetime.datetime"
 ```
 
+```py
+# scalars.py
+
+from datetime import datetime
+
+DATETIME = datetime
+```
 
 ### Example with fully custom type
 
@@ -193,6 +207,15 @@ parse = ".type_b.parse_b"
 serialize = ".type_b.serialize_b"
 ```
 
+```py
+# scalars.py
+
+from typing import Annotated
+
+from .type_b import TypeB, parse_b, serialize_b
+
+SCALARB = Annotated[TypeB, PlainSerializer(serialize_b), BeforeValidator(parse_b)]
+```
 
 ## Extending generated types
 

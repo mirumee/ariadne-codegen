@@ -41,6 +41,7 @@ def test_generate_returns_module_with_query_names_converted_to_snake_case():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -98,6 +99,7 @@ def test_generate_returns_module_with_handled_graphql_alias(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        scalars_module_name="scalars",
         convert_to_snake_case=convert_to_snake_case,
     )
 
@@ -127,6 +129,7 @@ def test_generate_returns_module_with_valid_field_names():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        scalars_module_name="scalars",
         convert_to_snake_case=True,
     )
 

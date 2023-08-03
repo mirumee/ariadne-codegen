@@ -35,7 +35,7 @@ from .constants import (
     UNION,
 )
 from .input_fields import parse_input_field_default_value, parse_input_field_type
-from .scalars import ScalarData, generate_scalar_imports
+from .scalars import ScalarData
 
 
 class InputTypesGenerator:
@@ -43,6 +43,7 @@ class InputTypesGenerator:
         self,
         schema: GraphQLSchema,
         enums_module: str,
+        scalars_module_name: str,
         base_model_import: ast.ImportFrom,
         upload_import: ast.ImportFrom,
         convert_to_snake_case: bool = True,
@@ -52,6 +53,7 @@ class InputTypesGenerator:
         self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
         self.enums_module = enums_module
+        self.scalars_module_name = scalars_module_name
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
 
@@ -75,9 +77,16 @@ class InputTypesGenerator:
             )
 
         if self._used_scalars:
-            for scalar_name in self._used_scalars:
-                scalar_data = self.custom_scalars[scalar_name]
-                self._imports.extend(generate_scalar_imports(scalar_data))
+            self._imports.append(
+                generate_import_from(
+                    names=[
+                        self.custom_scalars[scalar_name].annotation_type_name
+                        for scalar_name in self._used_scalars
+                    ],
+                    from_=self.scalars_module_name,
+                    level=1,
+                )
+            )
 
         model_rebuild_calls = [
             generate_expr(generate_method_call(c.name, MODEL_REBUILD_METHOD))

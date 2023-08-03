@@ -55,6 +55,7 @@ def test_get_classes_returns_list_with_types_generated_from_fragment():
         schema=build_schema(SCHEMA_STR),
         operation_definition=fragment_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
     )
 
     generated_class_defs = generator.get_classes()
@@ -108,6 +109,7 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
         schema=build_schema(SCHEMA_STR),
         operation_definition=fragment_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
         fragments_definitions={
             "TestFragment": fragment_definition,
             "TestNestedFragment": nested_fragment_definition,
@@ -140,6 +142,7 @@ def test_get_classes_returns_empty_list_for_fragment_on_union():
         schema=build_schema(SCHEMA_STR),
         operation_definition=fragment_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
         fragments_definitions={"TestFragment": fragment_definition},
     )
 
@@ -167,6 +170,7 @@ def test_get_classes_returns_empty_list_for_fragment_with_inline_fragments():
         schema=build_schema(SCHEMA_STR),
         operation_definition=fragment_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
         fragments_definitions={"TestFragment": fragment_definition},
     )
 
@@ -189,6 +193,7 @@ def test_get_classes_returns_fragment_classes_with_handled_mixin_directive():
         schema=build_schema(SCHEMA_STR),
         operation_definition=fragment_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
         fragments_definitions={"TestFragment": fragment_definition},
     )
 
@@ -217,6 +222,7 @@ def test_get_imports_returns_mixin_imports():
         schema=build_schema(SCHEMA_STR),
         operation_definition=fragment_definition,
         enums_module_name="enums",
+        scalars_module_name="scalars",
         fragments_definitions={"TestFragment": fragment_definition},
     )
 
