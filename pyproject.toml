@@ -73,6 +73,7 @@ testpaths = ["tests"]
 
 [tool.isort]
 profile = "black"
+combine_as_imports = true
 
 [tool.hatch.build]
 include = ["ariadne_codegen/**/*.py", "ariadne_codegen/py.typed"]
