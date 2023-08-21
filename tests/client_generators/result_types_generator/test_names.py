@@ -120,6 +120,7 @@ def test_generate_returns_module_with_valid_field_names():
             _field4
             _Field5
             _
+            schema
         }
     }
     """
@@ -140,4 +141,10 @@ def test_generate_returns_module_with_valid_field_names():
     )  # Round trip because invalid identifiers get picked up in parse
     class_def = get_class_def(parsed, name_filter="CustomQueryCamelCaseQuery")
     field_names = get_assignment_target_names(class_def)
-    assert field_names == {"in_", "field4", "field5", "underscore_named_field_"}
+    assert field_names == {
+        "in_",
+        "field4",
+        "field5",
+        "underscore_named_field_",
+        "schema_",
+    }

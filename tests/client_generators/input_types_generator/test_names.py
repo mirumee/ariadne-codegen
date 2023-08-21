@@ -160,6 +160,7 @@ def test_generate_returns_module_with_valid_field_names(
         _Bar: String!
         ____baz_: String!
         _: String!
+        schema: String!
     }
     """
 
@@ -186,4 +187,5 @@ def test_generate_returns_module_with_valid_field_names(
         "bar",
         "baz_",
         "underscore_named_field_",
+        "schema_",
     }
