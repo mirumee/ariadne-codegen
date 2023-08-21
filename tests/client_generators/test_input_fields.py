@@ -418,4 +418,32 @@ def test_parse_input_const_value_node_given_object_returns_correct_method_call(
 def test_parse_input_field_default_value_returns_none_constant_for_optional_field():
     node = parse("input TestInput { fieldA: String }").definitions[0].fields[0]
 
-    assert compare_ast(parse_input_field_default_value(node, ""), ast.Constant(None))
+    assert compare_ast(
+        parse_input_field_default_value(
+            node,
+            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
+            "",
+        ),
+        ast.Constant(None),
+    )
+
+
+def test_parse_input_field_default_value_returns_none_constant_without_node():
+    assert compare_ast(
+        parse_input_field_default_value(
+            None,
+            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
+            "",
+        ),
+        ast.Constant(None),
+    )
+
+
+def test_parse_input_field_default_value_returns_none_for_non_nullable_node():
+    node = parse("input TestInput { fieldA: String! }").definitions[0].fields[0]
+
+    assert parse_input_field_default_value(node, ast.Name(id="str"), "") is None
+
+
+def test_parse_input_field_default_value_returns_none_for_non_optional_annotation():
+    assert parse_input_field_default_value(None, ast.Name(id="str"), "") is None

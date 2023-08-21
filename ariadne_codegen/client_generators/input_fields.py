@@ -34,7 +34,13 @@ from ..codegen import (
     generate_subscript,
 )
 from ..exceptions import ParsingError
-from .constants import ANY, FIELD_CLASS, INPUT_SCALARS_MAP, MODEL_VALIDATE_METHOD
+from .constants import (
+    ANY,
+    FIELD_CLASS,
+    INPUT_SCALARS_MAP,
+    MODEL_VALIDATE_METHOD,
+    OPTIONAL,
+)
 from .scalars import ScalarData
 from .types import Annotation, CodegenInputFieldType
 
@@ -92,18 +98,23 @@ def parse_input_field_type(
 
 
 def parse_input_field_default_value(
-    node: InputValueDefinitionNode, field_type: str = ""
+    node: Optional[InputValueDefinitionNode],
+    annotation: Annotation,
+    field_type: str = "",
 ) -> Optional[ast.expr]:
-    default_value = None
     if node and node.default_value:
-        default_value = parse_input_const_value_node(
+        return parse_input_const_value_node(
             node=node.default_value, field_type=field_type
         )
 
-    if not default_value and not isinstance(node.type, NonNullTypeNode):
+    if (node and not isinstance(node.type, NonNullTypeNode)) or (
+        isinstance(annotation, ast.Subscript)
+        and isinstance(annotation.value, ast.Name)
+        and annotation.value.id == OPTIONAL
+    ):
         return generate_constant(None)
 
-    return default_value
+    return None
 
 
 # pylint: disable=too-many-return-statements
