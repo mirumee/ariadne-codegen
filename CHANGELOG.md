@@ -11,6 +11,7 @@
 - Changed generated client and models to use pydantic v2.
 - Changed custom scalars implementation to utilize pydantic's `BeforeValidator` and `PlainSerializer`. Added `scalars_module_name` option. Replaced `generate_scalars_parse_dict` and `generate_scalars_serialize_dict` with `generate_scalar_annotation` and `generate_scalar_imports` plugin hooks.
 - Fixed generating default values of input types from remote schemas.
+- Changed generating of input and result field names to add `_` to names reserved by pydantic.
 
 
 ## 0.7.1 (2023-06-06)
