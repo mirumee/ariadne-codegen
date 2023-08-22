@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.8.0 (2023-08-22)
 
 - Added support for `Upload` scalar. Added support for file uploads to `AsyncBaseClient` and `BaseClient`.
 - Added validation of defined operations against the schema.
