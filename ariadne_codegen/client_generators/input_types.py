@@ -127,6 +127,7 @@ class InputTypesGenerator:
                 plugin_manager=self.plugin_manager,
                 node=field,
                 trim_leading_underscore=True,
+                handle_pydantic_resrved_field_names=True,
             )
             annotation, field_type = parse_input_field_type(
                 field.type, custom_scalars=self.custom_scalars

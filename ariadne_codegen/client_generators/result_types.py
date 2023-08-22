@@ -379,6 +379,7 @@ class ResultTypesGenerator:
             plugin_manager=self.plugin_manager,
             node=field,
             trim_leading_underscore=True,
+            handle_pydantic_resrved_field_names=True,
         )
 
     def _get_field_from_schema(self, type_name: str, field_name: str) -> GraphQLField:

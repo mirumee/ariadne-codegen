@@ -8,8 +8,13 @@ import isort
 from autoflake import fix_code  # type: ignore
 from black import Mode, format_str
 from graphql import Node
+from pydantic import BaseModel
 
 from .plugins.manager import PluginManager
+
+PYDANTIC_RESERVED_FIELD_NAMES = [
+    name for name in dir(BaseModel) if not name.startswith("_")
+]
 
 
 def ast_to_str(
@@ -83,6 +88,7 @@ def process_name(
     plugin_manager: Optional[PluginManager] = None,
     node: Optional[Node] = None,
     trim_leading_underscore: bool = False,
+    handle_pydantic_resrved_field_names: bool = False,
 ) -> str:
     """Processes the GraphQL name to remove keywords
     and optionally convert to snake_case."""
@@ -90,6 +96,11 @@ def process_name(
     if convert_to_snake_case:
         processed_name = str_to_snake_case(processed_name)
     if iskeyword(processed_name):
+        processed_name += "_"
+    if (
+        handle_pydantic_resrved_field_names
+        and processed_name in PYDANTIC_RESERVED_FIELD_NAMES
+    ):
         processed_name += "_"
     if trim_leading_underscore:
         processed_name = processed_name.lstrip("_")
