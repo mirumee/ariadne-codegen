@@ -25,7 +25,7 @@ dependencies = [
   "graphql-core>=3.2.0,<3.3",
   "toml~=0.10",
   "httpx~=0.23",
-  "pydantic~=2.0",
+  "pydantic>=2.0.0,<3.0.0",
   "black",
   "isort",
   "autoflake",
