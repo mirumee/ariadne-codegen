@@ -570,7 +570,9 @@ class ResultTypesGenerator:
                         self.fragments_definitions[name].selection_set
                     )
                 )
-            elif isinstance(node, FieldNode) and node.selection_set:
+            elif (
+                isinstance(node, (FieldNode, InlineFragmentNode)) and node.selection_set
+            ):
                 names = names.union(self._get_fragments_names(node.selection_set))
         return names
 
