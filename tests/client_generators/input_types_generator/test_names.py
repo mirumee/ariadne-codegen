@@ -137,7 +137,6 @@ def test_generate_returns_module_with_fields_names_converted_to_snake_case(
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )
@@ -167,7 +166,6 @@ def test_generate_returns_module_with_valid_field_names(
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )

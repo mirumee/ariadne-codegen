@@ -50,7 +50,6 @@ def test_get_operation_as_str_returns_str_with_added_typename():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
     )
 
     result = generator.get_operation_as_str()
@@ -107,7 +106,6 @@ def test_get_operation_as_str_returns_str_with_used_fragments():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={
             "TestFragment1": cast(
                 FragmentDefinitionNode, parse(used_fragment1).definitions[0]
@@ -147,7 +145,6 @@ def test_get_operation_as_str_returns_str_with_fragment_used_by_another_fragment
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={
             "TestFragment": cast(
                 FragmentDefinitionNode, parse(test_fragment_str).definitions[0]
@@ -202,7 +199,6 @@ def test_get_operation_as_str_returns_fragment_used_within_nested_inline_fragmen
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={
             "OuterFragment": cast(
                 FragmentDefinitionNode, parse(outer_fragment).definitions[0]
@@ -243,7 +239,6 @@ def test_get_operation_as_str_returns_operation_without_mixin_directive():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
     )
 
     result = generator.get_operation_as_str()
@@ -295,7 +290,6 @@ def test_get_operation_as_str_returns_fragments_str_without_mixin_directive():
             OperationDefinitionNode, parse(operation_definition).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={
             "TestFragment1": fragment_without_mixin,
             "TestFragment2": fragment_with_mixin,

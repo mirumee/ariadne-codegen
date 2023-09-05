@@ -210,16 +210,16 @@ def test_parse_operation_field_type_returns_annotation_for_scalar(
 @pytest.mark.parametrize(
     "type_, expected_annotation",
     [
-        (GraphQLNonNull(GraphQLScalarType("SCALARXYZ")), ast.Name(id="SCALARXYZ")),
+        (GraphQLNonNull(GraphQLScalarType("SCALARXYZ")), ast.Name(id="ScalarXYZ")),
         (
             GraphQLScalarType("SCALARXYZ"),
-            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="SCALARXYZ")),
+            ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="ScalarXYZ")),
         ),
         (
             GraphQLNonNull(
                 GraphQLList(type_=GraphQLNonNull(GraphQLScalarType("SCALARXYZ")))
             ),
-            ast.Subscript(value=ast.Name(id=LIST), slice=ast.Name(id="SCALARXYZ")),
+            ast.Subscript(value=ast.Name(id=LIST), slice=ast.Name(id="ScalarXYZ")),
         ),
     ],
 )

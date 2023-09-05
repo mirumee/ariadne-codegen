@@ -46,7 +46,6 @@ def test_generate_returns_module_with_model_rebuild_calls():
         schema=build_ast_schema(parse(SCHEMA_STR)),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        scalars_module_name="scalars",
     )
 
     module = generator.generate()

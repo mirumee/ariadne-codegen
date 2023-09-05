@@ -105,7 +105,6 @@ def test_generate_returns_module_with_class_for_every_fragment(
     generator = FragmentsGenerator(
         schema=schema,
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={"FragmentA": fragment_a, "FragmentB": fragment_b},
         convert_to_snake_case=True,
     )
@@ -122,7 +121,6 @@ def test_generate_returns_module_with_correct_order_of_classes(
     generator = FragmentsGenerator(
         schema=schema,
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={
             "TestFragment": test_fragment,
             "FragmentA": fragment_a,
@@ -142,7 +140,6 @@ def test_generate_returns_module_without_models_for_excluded_fragments(
     generator = FragmentsGenerator(
         schema=schema,
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={
             "TestFragment": test_fragment,
             "FragmentA": fragment_a,
@@ -184,7 +181,6 @@ def test_generate_returns_module_with_update_refs_calls(
     generator = FragmentsGenerator(
         schema=schema,
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={
             "TestFragment": test_fragment,
             "FragmentA": fragment_a,
@@ -202,7 +198,6 @@ def test_generate_triggers_generate_fragments_module_hook(mocked_plugin_manager)
     generator = FragmentsGenerator(
         schema=GraphQLSchema(),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={},
         plugin_manager=mocked_plugin_manager,
     )

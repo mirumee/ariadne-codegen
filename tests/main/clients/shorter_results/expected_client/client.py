@@ -1,6 +1,7 @@
 from typing import AsyncIterator, Dict, List, Optional, Union
 
 from .async_base_client import AsyncBaseClient
+from .custom_scalars import MyScalar
 from .get_a_scalar import GetAScalar
 from .get_animal_by_name import (
     GetAnimalByName,
@@ -21,7 +22,6 @@ from .list_strings_2 import ListStrings2
 from .list_strings_3 import ListStrings3
 from .list_strings_4 import ListStrings4
 from .list_type_a import ListTypeA, ListTypeAListOptionalTypeA
-from .scalars import MyScalar_
 from .shorter_results_fragments import FragmentWithSingleFieldQueryUnwrapFragment
 from .subscribe_strings import SubscribeStrings
 from .unwrap_fragment import UnwrapFragment
@@ -193,7 +193,7 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.model_validate(data)
 
-    async def get_a_scalar(self) -> MyScalar_:
+    async def get_a_scalar(self) -> MyScalar:
         query = gql(
             """
             query GetAScalar {

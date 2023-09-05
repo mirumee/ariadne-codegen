@@ -1,13 +1,16 @@
-from typing import Any
+from datetime import datetime
+from typing import Annotated, Any
+
+from pydantic import PlainSerializer
 
 from .base_model import BaseModel
-from .scalars import CODE, CUSTOMID, DATETIME
+from .custom_scalars import Code, serialize_code
 
 
 class TestInput(BaseModel):
-    a: DATETIME
-    b: CODE
-    c: CUSTOMID
+    a: datetime
+    b: Annotated[Code, PlainSerializer(serialize_code)]
+    c: int
     d: Any
 
 

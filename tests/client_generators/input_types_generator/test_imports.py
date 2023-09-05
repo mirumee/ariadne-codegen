@@ -22,7 +22,6 @@ def test_generate_returns_module_with_enum_imports(base_model_import, upload_imp
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )
@@ -49,7 +48,6 @@ def test_generate_returns_module_with_used_custom_scalars_imports(
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
         custom_scalars={
@@ -59,7 +57,7 @@ def test_generate_returns_module_with_used_custom_scalars_imports(
         },
     )
     expected_import = ast.ImportFrom(
-        module="scalars", names=[ast.alias("SCALARA")], level=1
+        module=".custom_scalars", names=[ast.alias("ScalarA")], level=0
     )
 
     module = generator.generate()
@@ -79,7 +77,6 @@ def test_generate_returns_module_with_upload_import(base_model_import, upload_im
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )
