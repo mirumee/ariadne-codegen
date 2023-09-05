@@ -164,6 +164,65 @@ def test_get_operation_as_str_returns_str_with_fragment_used_by_another_fragment
     assert "fragment NestedFragment on CustomType2" in result
 
 
+def test_get_operation_as_str_returns_fragment_used_within_nested_inline_fragment():
+    query_str = """
+        query CustomQuery {
+            query2 {
+                id
+                ...OuterFragment
+            }
+        }
+    """
+    outer_fragment = """
+        fragment OuterFragment on CustomType {
+            unionType {
+                ... on CustomType1 {
+                    ...InnerFragment1
+                }
+                ... on CustomType2 {
+                    ...InnerFragment2
+                }
+            }
+        }
+    """
+    inner_fragment1 = """
+        fragment InnerFragment1 on CustomType1 {
+            fielda
+        }
+    """
+    inner_fragment2 = """
+        fragment InnerFragment2 on CustomType2 {
+            fieldb
+        }
+    """
+
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+        scalars_module_name="scalars",
+        fragments_definitions={
+            "OuterFragment": cast(
+                FragmentDefinitionNode, parse(outer_fragment).definitions[0]
+            ),
+            "InnerFragment1": cast(
+                FragmentDefinitionNode, parse(inner_fragment1).definitions[0]
+            ),
+            "InnerFragment2": cast(
+                FragmentDefinitionNode, parse(inner_fragment2).definitions[0]
+            ),
+        },
+    )
+
+    result = generator.get_operation_as_str()
+
+    assert "fragment OuterFragment on CustomType" in result
+    assert "fragment InnerFragment1 on CustomType1" in result
+    assert "fragment InnerFragment2 on CustomType2" in result
+
+
 def test_get_operation_as_str_returns_operation_without_mixin_directive():
     query_str = """
         query CustomQuery {
