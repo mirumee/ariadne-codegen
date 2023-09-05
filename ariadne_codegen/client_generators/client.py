@@ -49,7 +49,6 @@ class ClientGenerator:
         base_client: str,
         enums_module_name: str,
         input_types_module_name: str,
-        scalars_module_name: str,
         arguments_generator: ArgumentsGenerator,
         base_client_import: ast.ImportFrom,
         unset_import: ast.ImportFrom,
@@ -60,7 +59,6 @@ class ClientGenerator:
         self.name = name
         self.enums_module_name = enums_module_name
         self.input_types_module_name = input_types_module_name
-        self.scalars_module_name = scalars_module_name
         self.plugin_manager = plugin_manager
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.arguments_generator = arguments_generator
@@ -102,13 +100,6 @@ class ClientGenerator:
             scalar_data = self.custom_scalars[custom_scalar_name]
             for import_ in generate_scalar_imports(scalar_data):
                 self._add_import(import_)
-            self._add_import(
-                generate_import_from(
-                    names=[scalar_data.annotation_type_name],
-                    from_=self.scalars_module_name,
-                    level=1,
-                )
-            )
 
         gql_func = self._generate_gql_func()
         gql_func.lineno = len(self._imports) + 1

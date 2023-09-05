@@ -31,6 +31,7 @@ from ..codegen import (
     generate_list,
     generate_list_annotation,
     generate_name,
+    generate_nullable_annotation,
     generate_subscript,
 )
 from ..exceptions import ParsingError
@@ -41,7 +42,7 @@ from .constants import (
     MODEL_VALIDATE_METHOD,
     OPTIONAL,
 )
-from .scalars import ScalarData
+from .scalars import ScalarData, generate_input_scalar_annotation
 from .types import Annotation, CodegenInputFieldType
 
 
@@ -61,13 +62,10 @@ def parse_input_field_type(
             )
 
         if custom_scalars and type_.name in custom_scalars:
-            return (
-                generate_annotation_name(
-                    name=custom_scalars[type_.name].annotation_type_name,
-                    nullable=nullable,
-                ),
-                type_.name,
-            )
+            annotation = generate_input_scalar_annotation(custom_scalars[type_.name])
+            if nullable:
+                annotation = generate_nullable_annotation(annotation)
+            return (annotation, type_.name)
 
         return generate_annotation_name(name=ANY, nullable=nullable), ""
 

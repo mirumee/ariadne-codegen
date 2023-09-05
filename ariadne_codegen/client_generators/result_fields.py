@@ -46,7 +46,7 @@ from .constants import (
     TYPENAME_FIELD_NAME,
     UNION,
 )
-from .scalars import ScalarData
+from .scalars import ScalarData, generate_result_scalar_annotation
 from .types import Annotation, AnnotationSlice, CodegenResultFieldType
 
 FieldNames = namedtuple("FieldNames", ["class_name", "type_name"])
@@ -108,10 +108,11 @@ def parse_operation_field_type(
         if type_.name in SIMPLE_TYPE_MAP:
             return (generate_annotation_name(SIMPLE_TYPE_MAP[type_.name], nullable), [])
         if custom_scalars and type_.name in custom_scalars:
+            annotation = generate_result_scalar_annotation(custom_scalars[type_.name])
+            if nullable:
+                annotation = generate_nullable_annotation(annotation)
             return (
-                generate_annotation_name(
-                    custom_scalars[type_.name].annotation_type_name, nullable
-                ),
+                annotation,
                 [FieldNames(custom_scalars[type_.name].type_name, type_.name)],
             )
         return (generate_annotation_name(ANY, nullable), [])
@@ -274,7 +275,7 @@ def annotate_nested_unions(annotation: AnnotationSlice) -> AnnotationSlice:
             ]
         )
 
-    if isinstance(annotation, ast.Name):
+    if isinstance(annotation, (ast.Name, ast.Call)):
         return annotation
 
     if isinstance(annotation.value, ast.Name) and annotation.value.id == UNION:
