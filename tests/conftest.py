@@ -13,10 +13,7 @@ def mocked_plugin_manager(mocker):
     manager.generate_result_class.side_effect = no_effect_method
     manager.generate_result_types_code.side_effect = no_effect_method
     manager.copy_code.side_effect = no_effect_method
-    manager.generate_scalars_code.side_effect = no_effect_method
     manager.generate_init_code.side_effect = no_effect_method
     manager.process_name.side_effect = no_effect_method
     manager.generate_fragments_module.side_effect = no_effect_method
-    manager.generate_scalars_module.side_effect = no_effect_method
-    manager.generate_scalar_imports.side_effect = no_effect_method
     return manager

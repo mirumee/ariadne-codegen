@@ -225,15 +225,6 @@ def test_generate_result_field_calls_plugins_generate_result_field(
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_result_field.called
 
 
-def test_generate_scalars_module_calls_plugins_generate_scalars_module(
-    plugin_manager_with_mocked_plugins,
-):
-    plugin_manager_with_mocked_plugins.generate_scalars_module(ast.Module())
-
-    assert plugin_manager_with_mocked_plugins.plugins[0].generate_scalars_module.called
-    assert plugin_manager_with_mocked_plugins.plugins[1].generate_scalars_module.called
-
-
 def test_generate_client_code_calls_plugins_generate_client_code(
     plugin_manager_with_mocked_plugins,
 ):
@@ -279,15 +270,6 @@ def test_copy_code_calls_plugins_copy_code(plugin_manager_with_mocked_plugins):
 
     assert plugin_manager_with_mocked_plugins.plugins[0].copy_code.called
     assert plugin_manager_with_mocked_plugins.plugins[1].copy_code.called
-
-
-def test_generate_scalars_code_calls_plugins_generate_scalars_code(
-    plugin_manager_with_mocked_plugins,
-):
-    plugin_manager_with_mocked_plugins.generate_scalars_code("")
-
-    assert plugin_manager_with_mocked_plugins.plugins[0].generate_scalars_code.called
-    assert plugin_manager_with_mocked_plugins.plugins[1].generate_scalars_code.called
 
 
 def test_generate_init_code_calls_plugins_generate_init_code(
@@ -352,25 +334,3 @@ def test_process_schema_updates_plugins_schema_field():
     assert dumb_plugin1.schema is not org_schema
     assert dump_plugin2.schema is not org_schema
     assert schema_plugin.schema is not org_schema
-
-
-def test_generate_scalar_annotation_calls_plugins_generate_scalar_annotation(
-    plugin_manager_with_mocked_plugins,
-):
-    plugin_manager_with_mocked_plugins.generate_scalar_annotation(
-        ast.Assign(), "ScalarName"
-    )
-
-    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
-    assert plugin1.generate_scalar_annotation.called
-    assert plugin2.generate_scalar_annotation.called
-
-
-def test_generate_scalar_imports_calls_plugins_generate_scalar_imports(
-    plugin_manager_with_mocked_plugins,
-):
-    plugin_manager_with_mocked_plugins.generate_scalar_imports([], "ScalarName")
-
-    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
-    assert plugin1.generate_scalar_imports.called
-    assert plugin2.generate_scalar_imports.called
