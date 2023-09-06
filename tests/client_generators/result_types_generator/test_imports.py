@@ -6,7 +6,7 @@ from graphql import OperationDefinitionNode, build_ast_schema, parse
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
 from ariadne_codegen.client_generators.scalars import ScalarData
 
-from ...utils import compare_ast, filter_imports
+from ...utils import compare_ast, filter_imports, sorted_imports
 from .schema import SCHEMA_STR
 
 
@@ -54,19 +54,24 @@ def test_generate_returns_module_with_used_custom_scalars_imports():
         enums_module_name="enums",
         custom_scalars={
             "SCALARA": ScalarData(
-                type_=".custom_scalars.ScalarA", graphql_name="SCALARA"
+                type_=".custom_scalars.ScalarA",
+                graphql_name="SCALARA",
+                parse=".custom_scalars.parse_scalar_a",
             )
         },
     )
-    expected_import = ast.ImportFrom(
-        module=".custom_scalars", names=[ast.alias("ScalarA")], level=0
-    )
+    expected_imports = [
+        ast.ImportFrom(module=".custom_scalars", names=[ast.alias("ScalarA")], level=0),
+        ast.ImportFrom(
+            module=".custom_scalars", names=[ast.alias("parse_scalar_a")], level=0
+        ),
+    ]
 
     module = generator.generate()
 
     assert isinstance(module, ast.Module)
-    import_ = filter_imports(module)[-1]
-    assert compare_ast(import_, expected_import)
+    imports = filter_imports(module)[-2:]
+    assert compare_ast(sorted_imports(imports), sorted_imports(expected_imports))
 
 
 def test_generate_returns_module_with_used_fragment_import():

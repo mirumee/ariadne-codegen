@@ -168,7 +168,9 @@ def test_generate_returns_module_with_correct_imports(
     """
     scalars = {
         "TestScalar": ScalarData(
-            type_=".custom_scalars.TestScalarType", graphql_name="TestScalar"
+            type_=".custom_scalars.TestScalarType",
+            graphql_name="TestScalar",
+            serialize=".custom_scalars.serialize_test_scalar",
         )
     }
     generator = ClientGenerator(
@@ -192,6 +194,11 @@ def test_generate_returns_module_with_correct_imports(
         ast.ImportFrom(module="inputs", names=[ast.alias(name="TestInput")], level=1),
         ast.ImportFrom(
             module=".custom_scalars", names=[ast.alias(name="TestScalarType")], level=0
+        ),
+        ast.ImportFrom(
+            module=".custom_scalars",
+            names=[ast.alias(name="serialize_test_scalar")],
+            level=0,
         ),
         ast.ImportFrom(module="list_xyz", names=[ast.alias(name="ListXyz")], level=1),
         ast.ImportFrom(
