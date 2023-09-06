@@ -1,0 +1,11 @@
+query getA {
+  queryA
+}
+
+query getB($value: CUSTOMSCALAR!) {
+  queryB(value: $value)
+}
+
+query getC($customInput: CustomInput!) {
+  queryC(customInput: $customInput)
+}

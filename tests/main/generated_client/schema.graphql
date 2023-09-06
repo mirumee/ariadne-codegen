@@ -1,0 +1,11 @@
+scalar CUSTOMSCALAR
+
+type Query {
+  queryA: CUSTOMSCALAR!
+  queryB(value: CUSTOMSCALAR!): CUSTOMSCALAR!
+  queryC(customInput: CustomInput!): CUSTOMSCALAR!
+}
+
+input CustomInput {
+  value: CUSTOMSCALAR!
+}

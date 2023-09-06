@@ -33,6 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "ariadne",
   "pytest",
   "pylint",
   "mypy",
