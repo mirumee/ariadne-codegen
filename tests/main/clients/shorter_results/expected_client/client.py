@@ -1,8 +1,7 @@
 from typing import AsyncIterator, Dict, List, Optional, Union
 
 from .async_base_client import AsyncBaseClient
-from .custom_scalars import MyScalar
-from .get_a_scalar import GetAScalar
+from .custom_scalars import ComplexScalar, SimpleScalar
 from .get_animal_by_name import (
     GetAnimalByName,
     GetAnimalByNameAnimalByNameAnimal,
@@ -11,6 +10,8 @@ from .get_animal_by_name import (
 )
 from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
+from .get_complex_scalar import GetComplexScalar
+from .get_simple_scalar import GetSimpleScalar
 from .list_animals import (
     ListAnimals,
     ListAnimalsListAnimalsAnimal,
@@ -193,18 +194,31 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.model_validate(data)
 
-    async def get_a_scalar(self) -> MyScalar:
+    async def get_simple_scalar(self) -> SimpleScalar:
         query = gql(
             """
-            query GetAScalar {
-              justAScalar
+            query GetSimpleScalar {
+              justSimpleScalar
             }
             """
         )
         variables: Dict[str, object] = {}
         response = await self.execute(query=query, variables=variables)
         data = self.get_data(response)
-        return GetAScalar.model_validate(data).just_a_scalar
+        return GetSimpleScalar.model_validate(data).just_simple_scalar
+
+    async def get_complex_scalar(self) -> ComplexScalar:
+        query = gql(
+            """
+            query GetComplexScalar {
+              justComplexScalar
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = await self.execute(query=query, variables=variables)
+        data = self.get_data(response)
+        return GetComplexScalar.model_validate(data).just_complex_scalar
 
     async def subscribe_strings(self) -> AsyncIterator[Optional[List[str]]]:
         query = gql(

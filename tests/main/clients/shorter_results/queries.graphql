@@ -56,8 +56,12 @@ query GetAnimalFragmentWithExtra {
   listString
 }
 
-query GetAScalar {
-  justAScalar
+query GetSimpleScalar {
+  justSimpleScalar
+}
+
+query GetComplexScalar {
+  justComplexScalar
 }
 
 fragment ListAnimalsFragment on Query {

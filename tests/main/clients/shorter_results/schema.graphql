@@ -1,4 +1,5 @@
-scalar MyScalar
+scalar SimpleScalar
+scalar ComplexScalar
 
 type TypeA {
   id: Int!
@@ -36,7 +37,8 @@ type Query {
   listAnimals: [Animal!]!
   animalByName(name: String!): Animal!
 
-  justAScalar: MyScalar!
+  justSimpleScalar: SimpleScalar!
+  justComplexScalar: ComplexScalar!
 
   queryUnwrapFragment: TypeA!
 }
