@@ -246,7 +246,7 @@ class ResultTypesGenerator:
             field_name = self._get_field_name(field)
             name = self._process_field_name(field_name, field=field)
             field_definition = self._get_field_from_schema(type_name, field.name.value)
-            annotation, field_types_names = parse_operation_field(
+            annotation, default_value, field_types_names = parse_operation_field(
                 schema=self.schema,
                 field=field,
                 type_=cast(CodegenResultFieldType, field_definition.type),
@@ -261,6 +261,7 @@ class ResultTypesGenerator:
                 target=name,
                 annotation=annotation,
                 lineno=lineno,
+                value=default_value,
             )
             field_implementation = self._process_field_implementation(
                 field_implementation, field_schema_name=field_name, field=field

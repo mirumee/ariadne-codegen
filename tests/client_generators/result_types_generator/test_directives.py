@@ -185,6 +185,7 @@ def test_generator_returns_module_with_handled_skip_and_include_directives(direc
             value=ast.Name(id=OPTIONAL),
             slice=ast.Name(id='"CustomQueryQuery3Field1"'),
         ),
+        value=ast.Constant(value=None),
         simple=1,
     )
     generator = ResultTypesGenerator(

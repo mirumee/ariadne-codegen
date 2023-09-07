@@ -61,10 +61,11 @@ def parse_operation_field(
     typename_values: Optional[List[str]] = None,
     custom_scalars: Optional[Dict[str, ScalarData]] = None,
     fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
-) -> Tuple[Annotation, List[FieldNames]]:
+) -> Tuple[Annotation, Optional[ast.expr], List[FieldNames]]:
     if field.name and field.name.value == TYPENAME_FIELD_NAME and typename_values:
-        return generate_typename_annotation(typename_values), []
+        return generate_typename_annotation(typename_values), None, []
 
+    default_value: Optional[ast.expr] = None
     annotation, field_types_names = parse_operation_field_type(
         schema=schema,
         field=field,
@@ -83,7 +84,8 @@ def parse_operation_field(
         directives_names = [d.name.value for d in directives]
         if any(n in nullable_directives for n in directives_names):
             annotation = generate_nullable_annotation(annotation)
-    return annotation, field_types_names
+            default_value = generate_constant(None)
+    return annotation, default_value, field_types_names
 
 
 def generate_typename_annotation(typename_values: List[str]) -> ast.Subscript:

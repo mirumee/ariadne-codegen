@@ -76,7 +76,7 @@ from ..utils import compare_ast
 def test_parse_operation_field_returns_optional_annotation_if_given_nullable_directive(
     directive, type_, expected_annotation
 ):
-    annotation, _ = parse_operation_field(
+    annotation, _, _ = parse_operation_field(
         schema=GraphQLSchema(),
         field=FieldNode(),
         type_=type_,
@@ -92,7 +92,7 @@ def test_parse_operation_field_returns_typename_annotation_with_multiple_values(
         slice=ast.Tuple(elts=[ast.Name(id='"TypeA"'), ast.Name(id='"TypeB"')]),
     )
 
-    annotation, _ = parse_operation_field(
+    annotation, _, _ = parse_operation_field(
         schema=GraphQLSchema(),
         field=FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME)),
         type_=GraphQLNonNull(GraphQLScalarType("String")),
@@ -107,7 +107,7 @@ def test_parse_operation_field_returns_typename_annotation_with_single_value():
         value=ast.Name(id=LITERAL), slice=ast.Name(id='"TypeA"')
     )
 
-    annotation, _ = parse_operation_field(
+    annotation, _, _ = parse_operation_field(
         schema=GraphQLSchema(),
         field=FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME)),
         type_=GraphQLNonNull(GraphQLScalarType("String")),
@@ -145,7 +145,7 @@ def test_parse_operation_field_returns_annotation_with_annotated_nested_unions()
         ),
     )
 
-    annotation, _ = parse_operation_field(
+    annotation, _, _ = parse_operation_field(
         schema=GraphQLSchema(),
         field=FieldNode(name=NameNode(value="unionField")),
         type_=GraphQLUnionType(
