@@ -16,6 +16,7 @@ class BaseModel(PydanticBaseModel):
         populate_by_name=True,
         validate_assignment=True,
         arbitrary_types_allowed=True,
+        protected_namespaces=(),
     )
 
 
