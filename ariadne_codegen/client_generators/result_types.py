@@ -50,6 +50,7 @@ from .constants import (
     ANNOTATED,
     ANY,
     BASE_MODEL_CLASS_NAME,
+    BEFORE_VALIDATOR,
     DISCRIMINATOR_KEYWORD,
     FIELD_CLASS,
     LIST,
@@ -66,7 +67,7 @@ from .constants import (
     UNION,
 )
 from .result_fields import FieldNames, is_union, parse_operation_field
-from .scalars import ScalarData
+from .scalars import ScalarData, generate_scalar_imports
 from .types import CodegenResultFieldType
 
 
@@ -76,7 +77,6 @@ class ResultTypesGenerator:
         schema: GraphQLSchema,
         operation_definition: ExecutableDefinitionNode,
         enums_module_name: str,
-        scalars_module_name: str,
         fragments_module_name: Optional[str] = None,
         fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
@@ -89,9 +89,7 @@ class ResultTypesGenerator:
         if not self.operation_definition.name:
             raise NotSupported("Operations without name are not supported.")
         self._operation_name = self.operation_definition.name.value
-
         self.enums_module_name = enums_module_name
-        self.scalars_module_name = scalars_module_name
         self.fragments_module_name = fragments_module_name
         self.fragments_definitions = (
             fragments_definitions if fragments_definitions else {}
@@ -104,7 +102,7 @@ class ResultTypesGenerator:
             generate_import_from(
                 [OPTIONAL, UNION, ANY, LIST, LITERAL, ANNOTATED], TYPING_MODULE
             ),
-            generate_import_from([FIELD_CLASS], PYDANTIC_MODULE),
+            generate_import_from([FIELD_CLASS, BEFORE_VALIDATOR], PYDANTIC_MODULE),
             base_model_import
             or generate_import_from([BASE_MODEL_CLASS_NAME], PYDANTIC_MODULE),
         ]
@@ -525,17 +523,9 @@ class ResultTypesGenerator:
                 generate_import_from(self._used_enums, self.enums_module_name, 1)
             )
 
-        if self._used_scalars:
-            self._imports.append(
-                generate_import_from(
-                    names=[
-                        self.custom_scalars[scalar_name].annotation_type_name
-                        for scalar_name in self._used_scalars
-                    ],
-                    from_=self.scalars_module_name,
-                    level=1,
-                )
-            )
+        for scalar_name in self._used_scalars:
+            scalar_data = self.custom_scalars[scalar_name]
+            self._imports.extend(generate_scalar_imports(scalar_data))
 
         if (
             isinstance(self.operation_definition, OperationDefinitionNode)

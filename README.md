@@ -73,7 +73,6 @@ Optional settings:
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `fragments_module_name` (defaults to `"fragments"`) - name of file with generated fragments models
-- `scalars_module_name` (defaults to `"scalars"`) - name of file with generated annotations for custom scalars
 - `include_comments` (defaults to `true`) - a flag that specifies whether to include comments in generated files
 - `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
@@ -155,7 +154,7 @@ serialize = "function used to serialize scalar"
 parse = "function used to create scalar instance from serialized form"
 ```
 
-For each custom scalar there will be an annotation generated in `{scalars_module_name}.py`, it will be used in all occurrences of `{graphql scalar name}`. If provided, `serialize` and `parse` will be used for serialization and deserialization.
+For each custom scalar client will use given `type` in all occurrences of `{graphql scalar name}`. If provided, `serialize` and `parse` will be used for serialization and deserialization. In result models `type` will be annotated with `BeforeValidator`, eg. `Annotated[type, BeforeValidator(parse)]`. In inputs annotation will use `PlainSerializer`, eg. `Annotated[type, PlainSerializer(serialize)]`.
 If `type`/`serialize`/`parse` contains at least one `.` then string will be split by it's last occurrence. First part will be used as module to import from, and second part as type/method name. For example, `type = "custom_scalars.a.ScalarA"` will produce `from custom_scalars.a import ScalarA`.
 
 
@@ -168,12 +167,6 @@ In this case scalar is mapped to built-in `str` which doesn't require custom `se
 type = "str"
 ```
 
-```py
-# scalars.py
-
-SCALARA = str
-```
-
 
 ### Example with type supported by pydantic
 
@@ -184,17 +177,9 @@ In this scenario scalar is represented as `datetime`, so it needs to be imported
 type = "datetime.datetime"
 ```
 
-```py
-# scalars.py
-
-from datetime import datetime
-
-DATETIME = datetime
-```
-
 ### Example with fully custom type
 
-In this example scalar is represented as class `TypeB`. Pydantic can\`t handle  serialization and deserialization so custom `parse` and `serialize` is necessary. To provide `type`, `parse` and `serialize` implementation we can use `files_to_include` to copy `type_b.py` file.
+In this example scalar is represented as class `TypeB`. Pydantic can\`t handle serialization and deserialization so custom `parse` and `serialize` is necessary. To provide `type`, `parse` and `serialize` implementation we can use `files_to_include` to copy `type_b.py` file.
 
 ```toml
 [tool.ariadne-codegen]
@@ -208,14 +193,31 @@ serialize = ".type_b.serialize_b"
 ```
 
 ```py
-# scalars.py
+# inputs.py
 
-from typing import Annotated
-
-from .type_b import TypeB, parse_b, serialize_b
-
-SCALARB = Annotated[TypeB, PlainSerializer(serialize_b), BeforeValidator(parse_b)]
+class TestInput(BaseModel):
+    value_b: Annotated[TypeB, PlainSerializer(serialize_b)]
 ```
+
+```py
+# get_b.py
+
+class GetB(BaseModel):
+    query_b: Annotated[TypeB, BeforeValidator(parse_b)]
+```
+
+```py
+# client.py
+
+class Client(AsyncBaseClient):
+    async def test_mutation(self, value: TypeB) -> TestMutation:
+        ...
+        variables: Dict[str, object] = {
+            "value": serialize_b(value),
+        }
+        ...
+```
+
 
 ## Extending generated types
 

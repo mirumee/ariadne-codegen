@@ -7,5 +7,10 @@ files_to_include = ["custom_scalars.py"]
 fragments_module_name = "shorter_results_fragments"
 plugins = ["ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin"]
 
-[tool.ariadne-codegen.scalars.MyScalar]
-type = ".custom_scalars.MyScalar"
+[tool.ariadne-codegen.scalars.SimpleScalar]
+type = ".custom_scalars.SimpleScalar"
+
+[tool.ariadne-codegen.scalars.ComplexScalar]
+type = ".custom_scalars.ComplexScalar"
+parse = ".custom_scalars.parse_complex_scalar"
+serialize = ".custom_scalars.serialize_complex_scalar"

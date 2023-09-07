@@ -15,7 +15,6 @@ def test_generate_triggers_generate_result_types_module_hook(mocked_plugin_manag
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         plugin_manager=mocked_plugin_manager,
     )
 
@@ -34,7 +33,6 @@ def test_get_operation_as_str_triggers_generate_operation_str_hook(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         plugin_manager=mocked_plugin_manager,
     )
 
@@ -54,7 +52,6 @@ def test_generator_triggers_generate_result_class_hook_for_every_class(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         plugin_manager=mocked_plugin_manager,
     )
 
@@ -84,7 +81,6 @@ def test_generator_triggers_generate_result_field_hook_for_every_field(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         plugin_manager=mocked_plugin_manager,
     )
 
@@ -113,7 +109,6 @@ def test_generator_triggers_process_name_hook_for_every_field(mocked_plugin_mana
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         convert_to_snake_case=False,
         plugin_manager=mocked_plugin_manager,
     )
@@ -138,7 +133,6 @@ def test_generator_triggers_generate_result_class_hook_for_class_with_empty_body
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         plugin_manager=mocked_plugin_manager,
         fragments_definitions={
             "CustomFragment": parse(
@@ -177,7 +171,6 @@ def test_generator_triggers_generate_result_class_hook_once_for_class(
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         plugin_manager=mocked_plugin_manager,
     )
 

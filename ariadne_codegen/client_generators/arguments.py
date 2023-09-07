@@ -143,7 +143,7 @@ class ArgumentsGenerator:
                 name = INPUT_SCALARS_MAP.get(name, ANY)
             else:
                 used_custom_scalar = name
-                name = self.custom_scalars[name].annotation_type_name
+                name = self.custom_scalars[name].type_name
         else:
             raise ParsingError(f"Incorrect argument type {name}")
 

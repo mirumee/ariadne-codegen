@@ -311,7 +311,7 @@ def test_generate_returns_arguments_with_custom_scalar_and_used_serialize_method
         posonlyargs=[],
         args=[
             ast.arg(arg="self"),
-            ast.arg(arg="arg", annotation=ast.Name(id="SCALARABC")),
+            ast.arg(arg="arg", annotation=ast.Name(id="ScalarABC")),
         ],
         kwonlyargs=[],
         kw_defaults=[],

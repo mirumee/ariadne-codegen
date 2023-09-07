@@ -31,7 +31,6 @@ def test_generate_returns_module_with_correct_class_name(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
         unset_import=unset_import,
@@ -53,7 +52,6 @@ def test_generate_returns_module_with_gql_lambda_definition(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
         unset_import=unset_import,
@@ -90,7 +88,6 @@ def test_generate_triggers_generate_gql_function_hook(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
         unset_import=unset_import,
@@ -111,7 +108,6 @@ def test_generate_triggers_generate_client_class_hook(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
         unset_import=unset_import,
@@ -131,7 +127,6 @@ def test_generate_triggers_generate_client_module_hook(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
         unset_import=unset_import,
@@ -171,13 +166,18 @@ def test_generate_returns_module_with_correct_imports(
         }
     }
     """
-    scalars = {"TestScalar": ScalarData(type_="str", graphql_name="TestScalar")}
+    scalars = {
+        "TestScalar": ScalarData(
+            type_=".custom_scalars.TestScalarType",
+            graphql_name="TestScalar",
+            serialize=".custom_scalars.serialize_test_scalar",
+        )
+    }
     generator = ClientGenerator(
         "Client",
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(
             schema=build_schema(schema_str), custom_scalars=scalars
         ),
@@ -192,7 +192,14 @@ def test_generate_returns_module_with_correct_imports(
         upload_import,
         ast.ImportFrom(module="enums", names=[ast.alias(name="TestEnum")], level=1),
         ast.ImportFrom(module="inputs", names=[ast.alias(name="TestInput")], level=1),
-        ast.ImportFrom(module="scalars", names=[ast.alias(name="TestScalar")], level=1),
+        ast.ImportFrom(
+            module=".custom_scalars", names=[ast.alias(name="TestScalarType")], level=0
+        ),
+        ast.ImportFrom(
+            module=".custom_scalars",
+            names=[ast.alias(name="serialize_test_scalar")],
+            level=0,
+        ),
         ast.ImportFrom(module="list_xyz", names=[ast.alias(name="ListXyz")], level=1),
         ast.ImportFrom(
             module=TYPING_MODULE,
@@ -231,7 +238,6 @@ def test_add_method_adds_async_method_definition(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
         unset_import=unset_import,
@@ -285,7 +291,6 @@ def test_add_method_generates_correct_async_method_body(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=async_base_client_import,
         unset_import=unset_import,
@@ -387,7 +392,6 @@ def test_add_method_adds_method_definition(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=base_client_import,
         unset_import=unset_import,
@@ -441,7 +445,6 @@ def test_add_method_generates_correct_method_body(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=base_client_import,
         unset_import=unset_import,
@@ -530,7 +533,6 @@ def test_add_method_generates_async_generator_for_subscription_definition(
         base_client="AsyncBaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=async_base_client_import,
         unset_import=unset_import,
@@ -624,7 +626,6 @@ def test_add_method_raises_not_supported_for_not_async_subscription(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(GraphQLSchema()),
         base_client_import=base_client_import,
         unset_import=unset_import,
@@ -668,7 +669,6 @@ def test_add_method_triggers_generate_client_method_hook(
         base_client="BaseClient",
         enums_module_name="enums",
         input_types_module_name="inputs",
-        scalars_module_name="scalars",
         arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=base_client_import,
         unset_import=unset_import,

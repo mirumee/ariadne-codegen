@@ -1,9 +1,10 @@
-from typing import Any
+from datetime import datetime
+from typing import Annotated, Any
 
-from pydantic import Field
+from pydantic import BeforeValidator, Field
 
 from .base_model import BaseModel
-from .scalars import CODE, CUSTOMID, DATETIME
+from .custom_scalars import Code, parse_code
 
 
 class GetTest(BaseModel):
@@ -11,9 +12,9 @@ class GetTest(BaseModel):
 
 
 class GetTestTestQuery(BaseModel):
-    date: DATETIME
-    code: CODE
-    id: CUSTOMID
+    date: datetime
+    code: Annotated[Code, BeforeValidator(parse_code)]
+    id: int
     other: Any
 
 

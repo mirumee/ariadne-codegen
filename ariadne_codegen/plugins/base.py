@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 from graphql import (
     ExecutableDefinitionNode,
@@ -117,9 +117,6 @@ class Plugin:
     ) -> ast.AnnAssign:
         return field_implementation
 
-    def generate_scalars_module(self, module: ast.Module) -> ast.Module:
-        return module
-
     def generate_client_code(self, generated_code: str) -> str:
         return generated_code
 
@@ -134,9 +131,6 @@ class Plugin:
 
     def copy_code(self, copied_code: str) -> str:
         return copied_code
-
-    def generate_scalars_code(self, generated_code: str) -> str:
-        return generated_code
 
     def generate_init_code(self, generated_code: str) -> str:
         return generated_code
@@ -155,15 +149,3 @@ class Plugin:
 
     def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
         return schema
-
-    # pylint: disable=unused-argument
-    def generate_scalar_annotation(
-        self, type_annotation: ast.Assign, scalar_name: str
-    ) -> ast.Assign:
-        return type_annotation
-
-    # pylint: disable=unused-argument
-    def generate_scalar_imports(
-        self, imports: List[ast.ImportFrom], scalar_name: str
-    ) -> List[ast.ImportFrom]:
-        return imports

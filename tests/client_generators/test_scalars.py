@@ -6,16 +6,15 @@ from ariadne_codegen.client_generators.constants import (
     ANNOTATED,
     BEFORE_VALIDATOR,
     PLAIN_SERIALIZER,
-    PYDANTIC_MODULE,
-    TYPING_MODULE,
 )
 from ariadne_codegen.client_generators.scalars import (
     ScalarData,
-    ScalarsDefinitionsGenerator,
+    generate_input_scalar_annotation,
+    generate_result_scalar_annotation,
     generate_scalar_imports,
 )
 
-from ..utils import compare_ast, filter_ast_objects, sorted_imports
+from ..utils import compare_ast, sorted_imports
 
 
 @pytest.mark.parametrize(
@@ -78,200 +77,71 @@ def test_generate_scalar_imports_for_data_with_import_raises_deprecation_warning
         assert compare_ast(generate_scalar_imports(data), expected_imports)
 
 
-def test_generate_without_scalars_returns_module_with_only_imports():
-    expected_imports = [
-        ast.ImportFrom(names=[ast.alias(ANNOTATED)], module=TYPING_MODULE, level=0),
-        ast.ImportFrom(
-            names=[ast.alias(PLAIN_SERIALIZER), ast.alias(BEFORE_VALIDATOR)],
-            module=PYDANTIC_MODULE,
-            level=0,
-        ),
-    ]
+def test_generate_input_scalar_annotation_returns_annotation_only_with_type():
+    scalar_data = ScalarData(type_=".custom_types.TypeA", graphql_name="TYPEA")
+    expected_annotation = ast.Name(id="TypeA")
 
-    module = ScalarsDefinitionsGenerator().generate()
+    annotation = generate_input_scalar_annotation(scalar_data)
 
-    assert compare_ast(module.body, expected_imports)
+    assert compare_ast(annotation, expected_annotation)
 
 
-def test_generate_return_module_with_annotation_type_for_every_scalar():
-    generator = ScalarsDefinitionsGenerator(
-        scalars_data=[
-            ScalarData(type_="str", graphql_name="ScalarSTR"),
-            ScalarData(type_="datetime.datetime", graphql_name="ScalarDatetime"),
-            ScalarData(
-                type_=".scalar_a.ScalarA",
-                serialize=".scalar_a.serialize_a",
-                parse=".scalar_a.parse_a",
-                graphql_name="ScalarA",
-            ),
-            ScalarData(
-                type_=".scalar_b.ScalarB",
-                serialize=".scalar_b.serialize_b",
-                graphql_name="ScalarB",
-            ),
-            ScalarData(
-                type_=".scalar_c.ScalarC",
-                parse=".scalar_c.parse_c",
-                graphql_name="ScalarC",
-            ),
-        ]
+def test_generate_input_scalar_annotation_returns_annotation_with_serialize():
+    scalar_data = ScalarData(
+        type_=".custom_types.TypeA",
+        graphql_name="TYPEA",
+        serialize=".custom_types.serialize_type_a",
+        parse=".custom_types.parse_type_a",
     )
-
-    module = generator.generate()
-
-    types_names = [
-        stmt.targets[0].id for stmt in module.body if isinstance(stmt, ast.Assign)
-    ]
-    assert types_names == [
-        "ScalarSTR",
-        "ScalarDatetime",
-        "ScalarA_",
-        "ScalarB_",
-        "ScalarC_",
-    ]
-
-
-@pytest.mark.parametrize(
-    "scalar_data, expected_assign",
-    [
-        (
-            ScalarData(type_="str", graphql_name="ScalarA"),
-            ast.Assign(targets=[ast.Name(id="ScalarA")], value=ast.Name(id="str")),
-        ),
-        (
-            ScalarData(type_="SameName", graphql_name="SameName"),
-            ast.Assign(
-                targets=[ast.Name(id="SameName_")], value=ast.Name(id="SameName")
-            ),
-        ),
-        (
-            ScalarData(type_="TypeA", serialize="serialize_a", graphql_name="ScalarA"),
-            ast.Assign(
-                targets=[ast.Name(id="ScalarA")],
-                value=ast.Subscript(
-                    value=ast.Name(id=ANNOTATED),
-                    slice=ast.Tuple(
-                        elts=[
-                            ast.Name("TypeA"),
-                            ast.Call(
-                                func=ast.Name(id=PLAIN_SERIALIZER),
-                                args=[ast.Name(id="serialize_a")],
-                                keywords=[],
-                            ),
-                        ]
-                    ),
+    expected_annotation = ast.Subscript(
+        value=ast.Name(id=ANNOTATED),
+        slice=ast.Tuple(
+            elts=[
+                ast.Name(id="TypeA"),
+                ast.Call(
+                    func=ast.Name(id=PLAIN_SERIALIZER),
+                    args=[ast.Name(id="serialize_type_a")],
+                    keywords=[],
                 ),
-            ),
+            ]
         ),
-        (
-            ScalarData(type_="TypeA", parse="parse_a", graphql_name="ScalarA"),
-            ast.Assign(
-                targets=[ast.Name(id="ScalarA")],
-                value=ast.Subscript(
-                    value=ast.Name(id=ANNOTATED),
-                    slice=ast.Tuple(
-                        elts=[
-                            ast.Name("TypeA"),
-                            ast.Call(
-                                func=ast.Name(id=BEFORE_VALIDATOR),
-                                args=[ast.Name(id="parse_a")],
-                                keywords=[],
-                            ),
-                        ]
-                    ),
+    )
+
+    annotation = generate_input_scalar_annotation(scalar_data)
+
+    assert compare_ast(annotation, expected_annotation)
+
+
+def test_generate_result_scalar_annotation_returns_annotation_only_with_type():
+    scalar_data = ScalarData(type_=".custom_types.TypeA", graphql_name="TYPEA")
+    expected_annotation = ast.Name(id="TypeA")
+
+    annotation = generate_result_scalar_annotation(scalar_data)
+
+    assert compare_ast(annotation, expected_annotation)
+
+
+def test_generate_result_scalar_annotation_returns_annotation_with_parse():
+    scalar_data = ScalarData(
+        type_=".custom_types.TypeA",
+        graphql_name="TYPEA",
+        serialize=".custom_types.serialize_type_a",
+        parse=".custom_types.parse_type_a",
+    )
+    expected_annotation = ast.Subscript(
+        value=ast.Name(id=ANNOTATED),
+        slice=ast.Tuple(
+            elts=[
+                ast.Name(id="TypeA"),
+                ast.Call(
+                    func=ast.Name(id=BEFORE_VALIDATOR),
+                    args=[ast.Name(id="parse_type_a")],
+                    keywords=[],
                 ),
-            ),
+            ]
         ),
-        (
-            ScalarData(
-                type_="TypeA",
-                serialize="serialize_a",
-                parse="parse_a",
-                graphql_name="ScalarA",
-            ),
-            ast.Assign(
-                targets=[ast.Name(id="ScalarA")],
-                value=ast.Subscript(
-                    value=ast.Name(id=ANNOTATED),
-                    slice=ast.Tuple(
-                        elts=[
-                            ast.Name("TypeA"),
-                            ast.Call(
-                                func=ast.Name(id=PLAIN_SERIALIZER),
-                                args=[ast.Name(id="serialize_a")],
-                                keywords=[],
-                            ),
-                            ast.Call(
-                                func=ast.Name(id=BEFORE_VALIDATOR),
-                                args=[ast.Name(id="parse_a")],
-                                keywords=[],
-                            ),
-                        ]
-                    ),
-                ),
-            ),
-        ),
-    ],
-)
-def test_generate_returns_module_with_correct_type_annotation(
-    scalar_data, expected_assign
-):
-    generator = ScalarsDefinitionsGenerator(scalars_data=[scalar_data])
-
-    module = generator.generate()
-
-    generated_assigns = filter_ast_objects(module, ast.Assign)
-    assert len(generated_assigns) == 1
-    generated_assign = generated_assigns[0]
-    assert compare_ast(generated_assign, expected_assign)
-
-
-def test_generate_triggers_generate_scalars_module_plugin_hook(mocked_plugin_manager):
-    generator = ScalarsDefinitionsGenerator(
-        scalars_data=[ScalarData(type_="str", graphql_name="ScalarSTR")],
-        plugin_manager=mocked_plugin_manager,
     )
 
-    generator.generate()
+    annotation = generate_result_scalar_annotation(scalar_data)
 
-    assert mocked_plugin_manager.generate_scalars_module.called
-
-
-def test_generate_triggers_generate_scalar_annotation_plugin_hook_for_every_scalar(
-    mocked_plugin_manager,
-):
-    generator = ScalarsDefinitionsGenerator(
-        scalars_data=[
-            ScalarData(type_="str", graphql_name="ScalarA"),
-            ScalarData(type_="str", graphql_name="ScalarB"),
-        ],
-        plugin_manager=mocked_plugin_manager,
-    )
-
-    generator.generate()
-
-    assert mocked_plugin_manager.generate_scalar_annotation.call_count == 2
-    assert [
-        c.kwargs["scalar_name"]
-        for c in mocked_plugin_manager.generate_scalar_annotation.mock_calls
-    ] == ["ScalarA", "ScalarB"]
-
-
-def test_generate_triggers_generate_scalar_imports_plugin_hook_for_every_scalar(
-    mocked_plugin_manager,
-):
-    generator = ScalarsDefinitionsGenerator(
-        scalars_data=[
-            ScalarData(type_="str", graphql_name="ScalarA"),
-            ScalarData(type_="str", graphql_name="ScalarB"),
-        ],
-        plugin_manager=mocked_plugin_manager,
-    )
-
-    generator.generate()
-
-    assert mocked_plugin_manager.generate_scalar_imports.call_count == 2
-    assert [
-        c.kwargs["scalar_name"]
-        for c in mocked_plugin_manager.generate_scalar_imports.mock_calls
-    ] == ["ScalarA", "ScalarB"]
+    assert compare_ast(annotation, expected_annotation)

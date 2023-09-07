@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Fixed generating operation string for nested inline fragments.
+- Removed scalars module. Changed generated models and client to use annotated types for custom scalars. Removed `scalars_module_name` option. Removed `generate_scalars_module`, `generate_scalars_cod`, `generate_scalar_annotation` and `generate_scalar_imports` plugin hooks.
 
 
 ## 0.8.0 (2023-08-22)

@@ -56,7 +56,6 @@ def test_generate_returns_modules_with_model_rebuild_calls(
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )

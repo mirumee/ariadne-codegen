@@ -8,7 +8,6 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
-from .get_a_scalar import GetAScalar
 from .get_animal_by_name import (
     GetAnimalByName,
     GetAnimalByNameAnimalByNameAnimal,
@@ -17,6 +16,8 @@ from .get_animal_by_name import (
 )
 from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 from .get_authenticated_user import GetAuthenticatedUser, GetAuthenticatedUserMe
+from .get_complex_scalar import GetComplexScalar
+from .get_simple_scalar import GetSimpleScalar
 from .list_animals import (
     ListAnimals,
     ListAnimalsListAnimalsAnimal,
@@ -43,7 +44,6 @@ __all__ = [
     "Client",
     "FragmentWithSingleField",
     "FragmentWithSingleFieldQueryUnwrapFragment",
-    "GetAScalar",
     "GetAnimalByName",
     "GetAnimalByNameAnimalByNameAnimal",
     "GetAnimalByNameAnimalByNameCat",
@@ -51,6 +51,8 @@ __all__ = [
     "GetAnimalFragmentWithExtra",
     "GetAuthenticatedUser",
     "GetAuthenticatedUserMe",
+    "GetComplexScalar",
+    "GetSimpleScalar",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",

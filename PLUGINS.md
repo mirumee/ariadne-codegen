@@ -199,13 +199,6 @@ def generate_result_field(
 
 Hook executed on generation of single model field.
 
-### generate_scalars_module
-
-```py
-def generate_scalars_module(self, module: ast.Module) -> ast.Module:
-```
-
-Hook executed on generation of module with mappings for custom scalars. Later is saved as `scalars.py`.
 
 ### generate_client_code
 
@@ -252,13 +245,6 @@ Files hook is called for:
 - `exceptions.py`
 - all files from config's `files_to_include`
 
-### generate_scalars_code
-
-```py
-def generate_scalars_code(self, generated_code: str) -> str:
-```
-
-Hook executed on generation of scalars mappings code. Result is used as content of `scalars.py`.
 
 ### generate_init_code
 
@@ -297,28 +283,6 @@ def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
 
 Hook executed on creating `GraphQLSchema` object from path or url provided in settings. During parsing `assume_valid` is set to `True`. Then this hook is called, and only after that `graphql.assert_valid_schema` is used to validate schema.
 To ensure all plugins have current version of schema, result of this hook is propagated to all plugins, updating their `schema` field. 
-
-
-### generate_scalar_annotation
-
-```py
-def generate_scalar_annotation(
-    self, type_annotation: ast.Assign, scalar_name: str
-) -> ast.Assign:
-```
-
-Hook executed on generation of annotation which will be used to represent `scalar_name` scalar in generated package.
-
-
-### generate_scalar_imports
-
-```py
-def generate_scalar_imports(
-    self, imports: List[ast.ImportFrom], scalar_name: str
-) -> List[ast.ImportFrom]:
-```
-
-Hook executed on generation of imports necessary to create custom scalar annotation.
 
 
 ## Example

@@ -1,0 +1,10 @@
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+target_package_name = "generated_client"
+files_to_include = ["./custom_scalars.py"]
+
+[tool.ariadne-codegen.scalars.CUSTOMSCALAR]
+type = ".custom_scalars.CustomScalar"
+parse = ".custom_scalars.parse_custom_scalar"
+serialize = ".custom_scalars.serialize_custom_scalar"

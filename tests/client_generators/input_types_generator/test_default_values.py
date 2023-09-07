@@ -35,7 +35,6 @@ def test_generate_returns_module_with_parsed_inputs_scalar_field_with_default_va
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )
@@ -110,7 +109,6 @@ def test_generate_returns_module_with_parsed_inputs_list_field_with_default_valu
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )
@@ -198,7 +196,6 @@ def test_generate_returns_module_with_parsed_inputs_object_field_with_default_va
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )
@@ -275,7 +272,6 @@ def test_generate_returns_module_with_parsed_nested_object_as_default_value(
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
         enums_module="enums",
-        scalars_module_name="scalars",
         base_model_import=base_model_import,
         upload_import=upload_import,
     )

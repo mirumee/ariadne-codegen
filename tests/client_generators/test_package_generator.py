@@ -496,7 +496,6 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             f"{generator.input_types_module_name}.py",
             f"{generator.enums_module_name}.py",
             "custom_query.py",
-            f"{generator.scalars_module_name}.py",
             f"{generator.fragments_module_name}.py",
         ]
     )
@@ -554,7 +553,7 @@ def test_generate_creates_client_with_custom_scalars_imports(tmp_path):
     with package_path.joinpath(
         f"{generator.client_file_name}.py"
     ).open() as client_file:
-        assert "from .scalars import SCALARABC" in client_file.read()
+        assert "from .abc import ScalarABC" in client_file.read()
 
 
 def test_generate_triggers_generate_client_code_hook(mocked_plugin_manager, tmp_path):
@@ -634,18 +633,6 @@ def test_generate_triggers_copy_code_hook_for_every_file_to_include(
     ).generate()
 
     assert mocked_plugin_manager.copy_code.call_count == 4
-
-
-def test_generate_triggers_generate_scalars_code_hook(mocked_plugin_manager, tmp_path):
-    PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-        custom_scalars={"SCALARABC": ScalarData(type_="str", graphql_name="SCALARABC")},
-    ).generate()
-
-    assert mocked_plugin_manager.generate_scalars_code.called
 
 
 def test_generate_triggers_generate_init_code_hook(mocked_plugin_manager, tmp_path):

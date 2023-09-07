@@ -166,7 +166,6 @@ def test_generate_returns_module_with_generated_result_types_from_query(
         schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -222,7 +221,6 @@ def test_generate_returns_module_with_types_generated_from_mutation():
         schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -278,7 +276,6 @@ def test_generate_returns_module_with_types_generated_from_subscription():
         schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -317,7 +314,6 @@ def test_generate_returns_module_with_class_per_every_field():
         schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -369,7 +365,6 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
         schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={"TestFragment": fragment_def},
     )
 
@@ -567,7 +562,6 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
         schema=build_schema(SCHEMA_STR),
         operation_definition=operation_definition,
         enums_module_name="enums",
-        scalars_module_name="scalars",
         fragments_definitions={"InterfaceIFragment": fragment_def},
     )
 
@@ -652,7 +646,6 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
     )
 
     module = generator.generate()
@@ -715,7 +708,6 @@ def test_generate_returns_module_for_schema_with_custom_operation_type_name(
             OperationDefinitionNode, parse(operation_str).definitions[0]
         ),
         enums_module_name="enums",
-        scalars_module_name="scalars",
         convert_to_snake_case=False,
     )
 
