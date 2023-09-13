@@ -241,6 +241,15 @@ def test_main_uses_remote_schema_url_and_remote_schema_headers(
     result = CliRunner().invoke(main, catch_exceptions=False)
 
     assert result.exit_code == 0
+
+    downloaded_schema_file: Path = project_dir / "schema.graphql"
+    assert downloaded_schema_file.is_file()
+    expected_schema = CLIENTS_PATH.joinpath(
+        "remote_schema", "expected_schema.graphql"
+    ).read_bytes()
+    downloaded_schema = downloaded_schema_file.read_bytes()
+    assert downloaded_schema == expected_schema
+
     package_path = project_dir / package_name
     assert package_path.is_dir()
     assert_the_same_files_in_directories(package_path, expected_package_path)

@@ -1,7 +1,8 @@
 import sys
+from pathlib import Path
 
 import click
-from graphql import assert_valid_schema
+from graphql import assert_valid_schema, print_schema
 
 from .client_generators.package import PackageGenerator
 from .config import get_client_settings, get_config_dict, get_graphql_schema_settings
@@ -50,6 +51,10 @@ def client(config_dict):
             verify_ssl=settings.remote_schema_verify_ssl,
         )
         schema_source = settings.remote_schema_url
+
+        if settings.remote_schema_output_path:
+            schema_output_file = Path(settings.remote_schema_output_path)
+            schema_output_file.write_text(print_schema(schema), encoding="utf-8")
 
     plugin_manager = PluginManager(
         schema=schema,

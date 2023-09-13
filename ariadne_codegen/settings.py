@@ -24,6 +24,7 @@ class BaseSettings:
     schema_path: Optional[str] = None
     remote_schema_url: Optional[str] = None
     remote_schema_headers: dict = field(default_factory=dict)
+    remote_schema_output_path: Optional[str] = None
     remote_schema_verify_ssl: bool = True
     plugins: List[str] = field(default_factory=list)
 

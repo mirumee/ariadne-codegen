@@ -5,3 +5,4 @@ include_comments = false
 
 remote_schema_url = "http://test/graphql/"
 remote_schema_headers = { "header1" = "value1", "header2" = "value2" }
+remote_schema_output_path = "schema.graphql"
