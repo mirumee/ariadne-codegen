@@ -79,11 +79,12 @@ def parse_operation_field(
             cast(AnnotationSlice, annotation.slice)
         )
 
-    if not (is_nullable(annotation)) and directives:
+    if directives:
         nullable_directives = [INCLUDE_DIRECTIVE_NAME, SKIP_DIRECTIVE_NAME]
         directives_names = [d.name.value for d in directives]
         if any(n in nullable_directives for n in directives_names):
-            annotation = generate_nullable_annotation(annotation)
+            if not is_nullable(annotation):
+                annotation = generate_nullable_annotation(annotation)
             default_value = generate_constant(None)
     return annotation, default_value, field_types_names
 

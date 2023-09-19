@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## UNRELEASED
+
+- Fixed generating results for nullable fields with nullable directives.
+
+
 ## 0.9.0 (2023-09-11)
 
 - Fixed generating operation string for nested inline fragments.

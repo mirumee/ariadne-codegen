@@ -176,14 +176,26 @@ def test_generator_returns_module_with_handled_skip_and_include_directives(direc
             field2 {{
                 fielda
             }}
+            field3 @{directive}{{
+                fielda
+            }}
         }}
     }}
     """
-    expected_field_def = ast.AnnAssign(
+    expected_field_def_1 = ast.AnnAssign(
         target=ast.Name(id="field1"),
         annotation=ast.Subscript(
             value=ast.Name(id=OPTIONAL),
             slice=ast.Name(id='"CustomQueryQuery3Field1"'),
+        ),
+        value=ast.Constant(value=None),
+        simple=1,
+    )
+    expected_field_def_2 = ast.AnnAssign(
+        target=ast.Name(id="field3"),
+        annotation=ast.Subscript(
+            value=ast.Name(id=OPTIONAL),
+            slice=ast.Name(id='"CustomQueryQuery3Field3"'),
         ),
         value=ast.Constant(value=None),
         simple=1,
@@ -200,5 +212,5 @@ def test_generator_returns_module_with_handled_skip_and_include_directives(direc
 
     class_def = get_class_def(module, 1)
     assert class_def.name == "CustomQueryQuery3"
-    field_def = class_def.body[0]
-    assert compare_ast(field_def, expected_field_def)
+    assert compare_ast(class_def.body[0], expected_field_def_1)
+    assert compare_ast(class_def.body[2], expected_field_def_2)
