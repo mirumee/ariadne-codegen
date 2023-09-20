@@ -29,6 +29,7 @@ dependencies = [
   "black",
   "isort",
   "autoflake",
+  "websockets~=11.0.3",
 ]
 
 [project.optional-dependencies]
