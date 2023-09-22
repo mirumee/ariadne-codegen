@@ -48,6 +48,7 @@ type CustomType2 {
 type CustomType3 {
   field1: CustomType1!
   field2: CustomType1!
+  field3: CustomType1
 }
 
 enum CustomEnum {
