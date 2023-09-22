@@ -16,5 +16,5 @@ def mocked_plugin_manager(mocker):
     manager.generate_init_code.side_effect = no_effect_method
     manager.process_name.side_effect = no_effect_method
     manager.generate_fragments_module.side_effect = no_effect_method
-    manager.get_comment.side_effect = no_effect_method
+    manager.get_file_comment.side_effect = no_effect_method
     return manager

@@ -266,7 +266,9 @@ class PackageGenerator:
     def _add_comments_to_code(self, code: str, source: Optional[str] = None) -> str:
         comment = get_comment(strategy=self.comments_strategy, source=source)
         if self.plugin_manager:
-            comment = self.plugin_manager.get_comment(comment, code=code, source=source)
+            comment = self.plugin_manager.get_file_comment(
+                comment, code=code, source=source
+            )
         if comment:
             return comment + "\n\n" + code
 

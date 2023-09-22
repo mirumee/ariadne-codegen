@@ -442,7 +442,7 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(
     "strategy",
     [CommentsStrategy.NONE, CommentsStrategy.STABLE, CommentsStrategy.TIMESTAMP],
 )
-def test_generate_calls_get_comment_hook_for_every_included_file(
+def test_generate_calls_get_file_comment_hook_for_every_file(
     tmp_path, strategy, mocked_plugin_manager
 ):
     package_name = "test_graphql_client"
@@ -465,7 +465,7 @@ def test_generate_calls_get_comment_hook_for_every_included_file(
     generator.generate()
 
     assert len(list(tmp_path.joinpath(package_name).iterdir())) == len(
-        mocked_plugin_manager.get_comment.mock_calls
+        mocked_plugin_manager.get_file_comment.mock_calls
     )
 
 

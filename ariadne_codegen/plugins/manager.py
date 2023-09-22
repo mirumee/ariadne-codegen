@@ -201,7 +201,9 @@ class PluginManager:
 
         return processed_schema
 
-    def get_comment(self, comment: str, code: str, source: Optional[str] = None) -> str:
+    def get_file_comment(
+        self, comment: str, code: str, source: Optional[str] = None
+    ) -> str:
         return self._apply_plugins_on_object(
-            "get_comment", comment, code=code, source=source
+            "get_file_comment", comment, code=code, source=source
         )

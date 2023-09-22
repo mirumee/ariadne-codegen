@@ -151,5 +151,7 @@ class Plugin:
         return schema
 
     # pylint: disable=unused-argument
-    def get_comment(self, comment: str, code: str, source: Optional[str] = None) -> str:
+    def get_file_comment(
+        self, comment: str, code: str, source: Optional[str] = None
+    ) -> str:
         return comment
