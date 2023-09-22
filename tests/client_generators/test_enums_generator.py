@@ -31,6 +31,8 @@ def test_generate_returns_module_with_enum_class_definition():
     enum CustomEnum {
         VALUE1
         VALUE2
+        from
+        import
     }
     """
     expected_class_def = ast.ClassDef(
@@ -44,6 +46,12 @@ def test_generate_returns_module_with_enum_class_definition():
             ),
             ast.Assign(
                 targets=[ast.Name(id="VALUE2")], value=ast.Constant(value="VALUE2")
+            ),
+            ast.Assign(
+                targets=[ast.Name(id="from_")], value=ast.Constant(value="from")
+            ),
+            ast.Assign(
+                targets=[ast.Name(id="import_")], value=ast.Constant(value="import")
             ),
         ],
     )
