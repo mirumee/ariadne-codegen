@@ -438,6 +438,37 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(
         assert expected_queries_source_comment in content
 
 
+@pytest.mark.parametrize(
+    "strategy",
+    [CommentsStrategy.NONE, CommentsStrategy.STABLE, CommentsStrategy.TIMESTAMP],
+)
+def test_generate_calls_get_comment_hook_for_every_included_file(
+    tmp_path, strategy, mocked_plugin_manager
+):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        comments_strategy=strategy,
+        plugin_manager=mocked_plugin_manager,
+    )
+    query_str = """
+    query CustomQuery($val: CustomEnum!) {
+        query3(val: $val) {
+            id
+        }
+    }
+    """
+    generator.add_operation(parse(query_str).definitions[0])
+
+    generator.generate()
+
+    assert len(list(tmp_path.joinpath(package_name).iterdir())) == len(
+        mocked_plugin_manager.get_comment.mock_calls
+    )
+
+
 def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_path):
     package_name = "test_graphql_client"
     query_str = """
