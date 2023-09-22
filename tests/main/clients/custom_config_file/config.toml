@@ -2,4 +2,4 @@
 queries_path = "queries.graphql"
 schema_path = "schema.graphql"
 target_package_name = "custom_config_client"
-include_comments = false
+include_comments = "none"

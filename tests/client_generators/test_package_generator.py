@@ -14,6 +14,7 @@ from ariadne_codegen.client_generators.constants import (
 from ariadne_codegen.client_generators.package import PackageGenerator
 from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.exceptions import ParsingError
+from ariadne_codegen.settings import CommentsStrategy
 
 from ..utils import get_class_def
 
@@ -354,7 +355,7 @@ def test_generate_adds_comment_with_timestamp_to_generated_files(tmp_path):
         package_name,
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
-        include_comments=True,
+        comments_strategy=CommentsStrategy.TIMESTAMP,
     )
     query_str = """
     query CustomQuery($val: CustomEnum!) {
@@ -392,7 +393,7 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
         package_name,
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
-        include_comments=True,
+        comments_strategy=CommentsStrategy.TIMESTAMP,
         schema_source=schema_source,
         queries_source=queries_source,
     )

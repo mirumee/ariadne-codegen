@@ -1,6 +1,6 @@
 [tool.ariadne-codegen]
 schema_path = "schema.graphql"
 queries_path = "queries.graphql"
-include_comments = false
+include_comments = "none"
 target_package_name = "client_with_extended_models"
 files_to_include = ["common_mixins.py", "mixins_a.py", "mixins_b.py"]

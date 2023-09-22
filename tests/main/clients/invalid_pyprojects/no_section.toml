@@ -1,5 +1,5 @@
 [other-section]
 schema_path = "schema.graphql"
 queries_path = "queries.graphql"
-include_comments = false
+include_comments = "none"
 target_package_name = "example_client"

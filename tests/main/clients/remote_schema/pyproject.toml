@@ -1,7 +1,7 @@
 [tool.ariadne-codegen]
 queries_path = "queries.graphql"
 target_package_name = "remote_schema_client"
-include_comments = false
+include_comments = "none"
 
 remote_schema_url = "http://test/graphql/"
 remote_schema_headers = { "header1" = "value1", "header2" = "value2" }
