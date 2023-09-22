@@ -11,7 +11,11 @@ from ariadne_codegen.config import (
     get_section,
 )
 from ariadne_codegen.exceptions import ConfigFileNotFound, MissingConfiguration
-from ariadne_codegen.settings import ClientSettings, GraphQLSchemaSettings
+from ariadne_codegen.settings import (
+    ClientSettings,
+    CommentsStrategy,
+    GraphQLSchemaSettings,
+)
 
 
 @pytest.fixture
@@ -165,6 +169,33 @@ def test_get_client_settings_returns_client_settings_object_ignoring_extra_field
     assert isinstance(settings, ClientSettings)
     assert settings.schema_path == schema_path.as_posix()
     assert settings.queries_path == queries_path.as_posix()
+
+
+@pytest.mark.parametrize(
+    "include_comments, expected_result",
+    [(True, CommentsStrategy.TIMESTAMP), (False, CommentsStrategy.NONE)],
+)
+def test_get_client_settings_raises_deprecation_warning_for_boolean_include_comments(
+    tmp_path, include_comments, expected_result
+):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    config_dict = {
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "queries_path": queries_path.as_posix(),
+                "include_comments": include_comments,
+            }
+        }
+    }
+
+    with pytest.deprecated_call():
+        settings = get_client_settings(config_dict)
+
+    assert settings.include_comments == expected_result
 
 
 def test_get_section_returns_correct_dictionary_from_tool_key():
