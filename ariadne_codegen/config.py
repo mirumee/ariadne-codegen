@@ -7,7 +7,7 @@ import toml
 
 from .client_generators.scalars import ScalarData
 from .exceptions import ConfigFileNotFound, MissingConfiguration
-from .settings import ClientSettings, GraphQLSchemaSettings
+from .settings import ClientSettings, CommentsStrategy, GraphQLSchemaSettings
 
 simplefilter("default", DeprecationWarning)
 
@@ -52,6 +52,23 @@ def get_client_settings(config_dict: Dict) -> ClientSettings:
         ) from exc
 
     try:
+        if "include_comments" in section and isinstance(
+            section["include_comments"], bool
+        ):
+            section["include_comments"] = (
+                CommentsStrategy.TIMESTAMP.value
+                if section["include_comments"]
+                else CommentsStrategy.NONE.value
+            )
+            options = ", ".join(strategy.value for strategy in CommentsStrategy)
+            warn(
+                "Support for boolean 'include_comments' value has been deprecated "
+                "and will be dropped in future release. "
+                f"Instead use one of following options: {options}",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
         return ClientSettings(
             **{
                 key: value

@@ -73,7 +73,7 @@ Optional settings:
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `fragments_module_name` (defaults to `"fragments"`) - name of file with generated fragments models
-- `include_comments` (defaults to `true`) - a flag that specifies whether to include comments in generated files
+- `include_comments` (defaults to `"stable"`) - option which sets content of included comments, valid choices are: `"none"`, `"timestamp"`, `"stable"`
 - `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
