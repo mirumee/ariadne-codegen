@@ -315,7 +315,7 @@ def test_add_method_generates_correct_async_method_body(
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
-                keys=[ast.Constant(value="arg1")], values=[ast.Name(id="arg1")]
+                keys=[ast.Constant(value="arg1")], values=[ast.Name(id="arg_1")]
             ),
             simple=1,
         ),
@@ -469,7 +469,7 @@ def test_add_method_generates_correct_method_body(
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
-                keys=[ast.Constant(value="arg1")], values=[ast.Name(id="arg1")]
+                keys=[ast.Constant(value="arg1")], values=[ast.Name(id="arg_1")]
             ),
             simple=1,
         ),

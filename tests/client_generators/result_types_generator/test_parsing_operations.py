@@ -8,6 +8,7 @@ from ariadne_codegen.client_generators.constants import (
     ALIAS_KEYWORD,
     BASE_MODEL_CLASS_NAME,
     DISCRIMINATOR_KEYWORD,
+    FIELD_CLASS,
     LIST,
     LITERAL,
     OPTIONAL,
@@ -40,13 +41,23 @@ from .schema import SCHEMA_STR
                     keywords=[],
                     body=[
                         ast.AnnAssign(
-                            target=ast.Name(id="query2"),
+                            target=ast.Name(id="query_2"),
                             annotation=ast.Subscript(
                                 value=ast.Name(id=OPTIONAL),
                                 slice=ast.Subscript(
                                     value=ast.Name(id=LIST),
                                     slice=ast.Name(id='"CustomQueryQuery2"'),
                                 ),
+                            ),
+                            value=ast.Call(
+                                func=ast.Name(id=FIELD_CLASS),
+                                args=[],
+                                keywords=[
+                                    ast.keyword(
+                                        arg=ALIAS_KEYWORD,
+                                        value=ast.Constant(value="query2"),
+                                    )
+                                ],
                             ),
                             simple=1,
                         )
@@ -88,10 +99,20 @@ from .schema import SCHEMA_STR
                     keywords=[],
                     body=[
                         ast.AnnAssign(
-                            target=ast.Name(id="query1"),
+                            target=ast.Name(id="query_1"),
                             annotation=ast.Subscript(
                                 value=ast.Name(id=OPTIONAL),
                                 slice=ast.Name(id='"CustomQueryQuery1"'),
+                            ),
+                            value=ast.Call(
+                                func=ast.Name(id=FIELD_CLASS),
+                                args=[],
+                                keywords=[
+                                    ast.keyword(
+                                        arg=ALIAS_KEYWORD,
+                                        value=ast.Constant(value="query1"),
+                                    )
+                                ],
                             ),
                             simple=1,
                         )
@@ -104,21 +125,51 @@ from .schema import SCHEMA_STR
                     keywords=[],
                     body=[
                         ast.AnnAssign(
-                            target=ast.Name(id="field1"),
+                            target=ast.Name(id="field_1"),
                             annotation=ast.Name(id='"CustomQueryQuery1Field1"'),
-                            simple=1,
-                        ),
-                        ast.AnnAssign(
-                            target=ast.Name(id="field2"),
-                            annotation=ast.Subscript(
-                                value=ast.Name(id=OPTIONAL),
-                                slice=ast.Name(id='"CustomQueryQuery1Field2"'),
+                            value=ast.Call(
+                                func=ast.Name(id=FIELD_CLASS),
+                                args=[],
+                                keywords=[
+                                    ast.keyword(
+                                        arg=ALIAS_KEYWORD,
+                                        value=ast.Constant(value="field1"),
+                                    )
+                                ],
                             ),
                             simple=1,
                         ),
                         ast.AnnAssign(
-                            target=ast.Name(id="field3"),
+                            target=ast.Name(id="field_2"),
+                            annotation=ast.Subscript(
+                                value=ast.Name(id=OPTIONAL),
+                                slice=ast.Name(id='"CustomQueryQuery1Field2"'),
+                            ),
+                            value=ast.Call(
+                                func=ast.Name(id=FIELD_CLASS),
+                                args=[],
+                                keywords=[
+                                    ast.keyword(
+                                        arg=ALIAS_KEYWORD,
+                                        value=ast.Constant(value="field2"),
+                                    )
+                                ],
+                            ),
+                            simple=1,
+                        ),
+                        ast.AnnAssign(
+                            target=ast.Name(id="field_3"),
                             annotation=ast.Name(id="CustomEnum"),
+                            value=ast.Call(
+                                func=ast.Name(id=FIELD_CLASS),
+                                args=[],
+                                keywords=[
+                                    ast.keyword(
+                                        arg=ALIAS_KEYWORD,
+                                        value=ast.Constant(value="field3"),
+                                    )
+                                ],
+                            ),
                             simple=1,
                         ),
                     ],
@@ -197,8 +248,18 @@ def test_generate_returns_module_with_types_generated_from_mutation():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="mutation1"),
+                    target=ast.Name(id="mutation_1"),
                     annotation=ast.Name(id='"CustomMutationMutation1"'),
+                    value=ast.Call(
+                        func=ast.Name(id=FIELD_CLASS),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg=ALIAS_KEYWORD,
+                                value=ast.Constant(value="mutation1"),
+                            )
+                        ],
+                    ),
                     simple=1,
                 )
             ],
@@ -252,8 +313,18 @@ def test_generate_returns_module_with_types_generated_from_subscription():
             keywords=[],
             body=[
                 ast.AnnAssign(
-                    target=ast.Name(id="subscription1"),
+                    target=ast.Name(id="subscription_1"),
                     annotation=ast.Name(id='"CustomSubscriptionSubscription1"'),
+                    value=ast.Call(
+                        func=ast.Name(id=FIELD_CLASS),
+                        args=[],
+                        keywords=[
+                            ast.keyword(
+                                arg=ALIAS_KEYWORD,
+                                value=ast.Constant(value="subscription1"),
+                            )
+                        ],
+                    ),
                     simple=1,
                 )
             ],
@@ -351,10 +422,20 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
         keywords=[],
         body=[
             ast.AnnAssign(
-                target=ast.Name(id="field2"),
+                target=ast.Name(id="field_2"),
                 annotation=ast.Subscript(
                     value=ast.Name(id="Optional"),
                     slice=ast.Name(id='"CustomQueryQuery2Field2"'),
+                ),
+                value=ast.Call(
+                    func=ast.Name(id=FIELD_CLASS),
+                    args=[],
+                    keywords=[
+                        ast.keyword(
+                            arg=ALIAS_KEYWORD,
+                            value=ast.Constant(value="field2"),
+                        )
+                    ],
                 ),
                 simple=1,
             ),
@@ -598,18 +679,8 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
                     simple=1,
                 ),
                 ast.AnnAssign(
-                    target=ast.Name(id="camel_case_query"),
+                    target=ast.Name(id="camelCaseQuery"),
                     annotation=ast.Name(id='"CustomQueryCamelCaseQuery"'),
-                    value=ast.Call(
-                        func=ast.Name(id="Field"),
-                        args=[],
-                        keywords=[
-                            ast.keyword(
-                                arg=ALIAS_KEYWORD,
-                                value=ast.Constant(value="camelCaseQuery"),
-                            )
-                        ],
-                    ),
                     simple=1,
                 ),
             ],
@@ -646,6 +717,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        convert_to_snake_case=False,
     )
 
     module = generator.generate()

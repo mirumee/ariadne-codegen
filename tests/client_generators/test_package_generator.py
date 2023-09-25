@@ -165,13 +165,13 @@ def test_generate_creates_file_with_query_types(tmp_path):
     """
     expected_query_types = """
     class CustomQuery(BaseModel):
-        query1: Optional["CustomQueryQuery1"]
+        query_1: Optional["CustomQueryQuery1"] = Field(alias="query1")
 
 
     class CustomQueryQuery1(BaseModel):
-        field1: Optional[List[Optional[str]]]
-        field2: Optional["CustomQueryQuery1Field2"]
-        field3: CustomEnum
+        field_1: Optional[List[Optional[str]]] = Field(alias="field1")
+        field_2: Optional["CustomQueryQuery1Field2"] = Field(alias="field2")
+        field_3: CustomEnum = Field(alias="field3")
 
 
     class CustomQueryQuery1Field2(BaseModel):
@@ -215,10 +215,10 @@ def test_generate_creates_multiple_query_types_files(tmp_path):
     generator.generate()
 
     package_path = tmp_path / package_name
-    query1_file_path = package_path / "custom_query1.py"
+    query1_file_path = package_path / "custom_query_1.py"
     assert query1_file_path.exists()
     assert query1_file_path.is_file()
-    query2_file_path = package_path / "custom_query2.py"
+    query2_file_path = package_path / "custom_query_2.py"
     assert query2_file_path.exists()
     assert query2_file_path.is_file()
 
@@ -488,11 +488,11 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
     """
     expected_types = """
     class CustomQuery(BaseModel):
-        query1: Optional["CustomQueryQuery1"]
+        query_1: Optional["CustomQueryQuery1"] = Field(alias="query1")
 
 
     class CustomQueryQuery1(TestFragment):
-        field3: CustomEnum
+        field_3: CustomEnum = Field(alias="field3")
     """
     query_def, fragment_def = parse(query_str).definitions
     generator = PackageGenerator(

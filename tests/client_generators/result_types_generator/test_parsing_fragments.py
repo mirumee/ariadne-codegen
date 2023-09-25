@@ -55,6 +55,7 @@ def test_get_classes_returns_list_with_types_generated_from_fragment():
         schema=build_schema(SCHEMA_STR),
         operation_definition=fragment_definition,
         enums_module_name="enums",
+        convert_to_snake_case=False,
     )
 
     generated_class_defs = generator.get_classes()
@@ -112,6 +113,7 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
             "TestFragment": fragment_definition,
             "TestNestedFragment": nested_fragment_definition,
         },
+        convert_to_snake_case=False,
     )
 
     generated_class_defs = generator.get_classes()

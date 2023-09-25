@@ -206,6 +206,7 @@ def test_generator_returns_module_with_handled_skip_and_include_directives(direc
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        convert_to_snake_case=False,
     )
 
     module = generator.generate()

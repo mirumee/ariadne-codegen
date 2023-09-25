@@ -185,6 +185,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
             OperationDefinitionNode, parse(query_str).definitions[0]
         ),
         enums_module_name="enums",
+        convert_to_snake_case=False,
     )
 
     module = generator.generate()

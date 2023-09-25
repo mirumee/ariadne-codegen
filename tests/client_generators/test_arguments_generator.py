@@ -234,7 +234,7 @@ def test_generate_returns_arguments_and_dictionary_with_valid_names():
             ast.arg(arg="and_", annotation=ast.Name(id="str")),
             ast.arg(arg="in_", annotation=ast.Name(id="str")),
             ast.arg(arg="field_a", annotation=ast.Name(id="str")),
-            ast.arg(arg="_field_b", annotation=ast.Name(id="str")),
+            ast.arg(arg="field_b", annotation=ast.Name(id="str")),
         ],
         kwonlyargs=[],
         kw_defaults=[],
@@ -253,7 +253,7 @@ def test_generate_returns_arguments_and_dictionary_with_valid_names():
             ast.Name(id="and_"),
             ast.Name(id="in_"),
             ast.Name(id="field_a"),
-            ast.Name(id="_field_b"),
+            ast.Name(id="field_b"),
         ],
     )
 
@@ -417,5 +417,5 @@ def test_generate_triggers_process_name_hook_for_every_arg(mocked_plugin_manager
     assert mocked_plugin_manager.process_name.call_count == 2
     name1 = mocked_plugin_manager.process_name.mock_calls[0].args[0]
     name2 = mocked_plugin_manager.process_name.mock_calls[1].args[0]
-    assert name1 == "arg1"
-    assert name2 == "arg2"
+    assert name1 == "arg_1"
+    assert name2 == "arg_2"

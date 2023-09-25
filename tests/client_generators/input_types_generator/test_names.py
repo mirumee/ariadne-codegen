@@ -31,7 +31,7 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                 keywords=[],
                 body=[
                     ast.AnnAssign(
-                        target=ast.Name(id="input_field1"),
+                        target=ast.Name(id="input_field_1"),
                         annotation=ast.Name(id="str"),
                         value=ast.Call(
                             func=ast.Name(id=FIELD_CLASS),
@@ -46,13 +46,33 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                         simple=1,
                     ),
                     ast.AnnAssign(
-                        target=ast.Name(id="input_field2"),
+                        target=ast.Name(id="input_field_2"),
                         annotation=ast.Name(id="str"),
+                        value=ast.Call(
+                            func=ast.Name(id=FIELD_CLASS),
+                            args=[],
+                            keywords=[
+                                ast.keyword(
+                                    arg=ALIAS_KEYWORD,
+                                    value=ast.Constant(value="input_field2"),
+                                )
+                            ],
+                        ),
                         simple=1,
                     ),
                     ast.AnnAssign(
-                        target=ast.Name(id="inputfield3"),
+                        target=ast.Name(id="inputfield_3"),
                         annotation=ast.Name(id="str"),
+                        value=ast.Call(
+                            func=ast.Name(id=FIELD_CLASS),
+                            args=[],
+                            keywords=[
+                                ast.keyword(
+                                    arg=ALIAS_KEYWORD,
+                                    value=ast.Constant(value="inputfield3"),
+                                )
+                            ],
+                        ),
                         simple=1,
                     ),
                 ],
@@ -72,7 +92,7 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                 keywords=[],
                 body=[
                     ast.AnnAssign(
-                        target=ast.Name(id="input_field1"),
+                        target=ast.Name(id="input_field_1"),
                         annotation=ast.Name(id="str"),
                         value=ast.Call(
                             func=ast.Name(id=FIELD_CLASS),
@@ -90,7 +110,7 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                         simple=1,
                     ),
                     ast.AnnAssign(
-                        target=ast.Name(id="input_field2"),
+                        target=ast.Name(id="input_field_2"),
                         annotation=ast.Subscript(
                             value=ast.Name(id="List"), slice=ast.Name(id="int")
                         ),
@@ -183,7 +203,7 @@ def test_generate_returns_module_with_valid_field_names(
         "and_",
         "foo",
         "bar",
-        "baz_",
+        "baz",
         "underscore_named_field_",
         "schema_",
     }
