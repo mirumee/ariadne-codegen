@@ -3,7 +3,11 @@ import ast
 import pytest
 from graphql import build_ast_schema, parse
 
-from ariadne_codegen.client_generators.constants import BASE_MODEL_CLASS_NAME
+from ariadne_codegen.client_generators.constants import (
+    ALIAS_KEYWORD,
+    BASE_MODEL_CLASS_NAME,
+    FIELD_CLASS,
+)
 from ariadne_codegen.client_generators.input_types import InputTypesGenerator
 
 from ...utils import compare_ast, filter_class_defs
@@ -31,13 +35,33 @@ from ...utils import compare_ast, filter_class_defs
                     decorator_list=[],
                     body=[
                         ast.AnnAssign(
-                            target=ast.Name(id="field1"),
+                            target=ast.Name(id="field_1"),
                             annotation=ast.Name(id='"CustomInput2"'),
+                            value=ast.Call(
+                                func=ast.Name(id=FIELD_CLASS),
+                                args=[],
+                                keywords=[
+                                    ast.keyword(
+                                        arg=ALIAS_KEYWORD,
+                                        value=ast.Constant(value="field1"),
+                                    )
+                                ],
+                            ),
                             simple=1,
                         ),
                         ast.AnnAssign(
-                            target=ast.Name(id="field2"),
+                            target=ast.Name(id="field_2"),
                             annotation=ast.Name(id="int"),
+                            value=ast.Call(
+                                func=ast.Name(id=FIELD_CLASS),
+                                args=[],
+                                keywords=[
+                                    ast.keyword(
+                                        arg=ALIAS_KEYWORD,
+                                        value=ast.Constant(value="field2"),
+                                    )
+                                ],
+                            ),
                             simple=1,
                         ),
                     ],

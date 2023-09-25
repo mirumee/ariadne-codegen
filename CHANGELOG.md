@@ -3,7 +3,10 @@
 ## UNRELEASED
 
 - Fixed generating results for nullable fields with nullable directives.
-- Changed `include_comments` option to accept enum value, changed default to `"stable"`, deprecated boolean support. Added `get_file_comment` plugin hook. 
+- Changed `include_comments` option to accept enum value, changed default to `"stable"`, deprecated boolean support. Added `get_file_comment` plugin hook.
+- Changed `str_to_snake_case` utility to correctly handle capitalized words.
+- Digits in Python names are now preceded by an underscore (breaking change).
+
 
 ## 0.9.0 (2023-09-11)
 

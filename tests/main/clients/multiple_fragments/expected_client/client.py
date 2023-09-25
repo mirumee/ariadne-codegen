@@ -1,9 +1,9 @@
 from typing import Dict
 
 from .async_base_client import AsyncBaseClient
-from .example_query1 import ExampleQuery1
-from .example_query2 import ExampleQuery2
-from .example_query3 import ExampleQuery3
+from .example_query_1 import ExampleQuery1
+from .example_query_2 import ExampleQuery2
+from .example_query_3 import ExampleQuery3
 
 
 def gql(q: str) -> str:
@@ -11,7 +11,7 @@ def gql(q: str) -> str:
 
 
 class Client(AsyncBaseClient):
-    async def example_query1(self) -> ExampleQuery1:
+    async def example_query_1(self) -> ExampleQuery1:
         query = gql(
             """
             query exampleQuery1 {
@@ -38,7 +38,7 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return ExampleQuery1.model_validate(data)
 
-    async def example_query2(self) -> ExampleQuery2:
+    async def example_query_2(self) -> ExampleQuery2:
         query = gql(
             """
             query exampleQuery2 {
@@ -66,7 +66,7 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return ExampleQuery2.model_validate(data)
 
-    async def example_query3(self) -> ExampleQuery3:
+    async def example_query_3(self) -> ExampleQuery3:
         query = gql(
             """
             query exampleQuery3 {

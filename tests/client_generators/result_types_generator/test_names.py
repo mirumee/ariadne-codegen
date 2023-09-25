@@ -140,8 +140,8 @@ def test_generate_returns_module_with_valid_field_names():
     field_names = get_assignment_target_names(class_def)
     assert field_names == {
         "in_",
-        "field4",
-        "field5",
+        "field_4",
+        "field_5",
         "underscore_named_field_",
         "schema_",
     }
