@@ -9,6 +9,7 @@ from ariadne_codegen.utils import (
     format_multiline_strings,
     get_variable_indent_size,
     process_name,
+    str_to_snake_case,
 )
 
 
@@ -74,6 +75,50 @@ def test_ast_to_str_removes_unused_imports():
 
     assert generated_code == expected_generated_code
     assert not_used_imported_class not in generated_code
+
+
+@pytest.mark.parametrize(
+    "name, expected_result",
+    [
+        ("test", "test"),
+        ("Test", "test"),
+        ("TEST", "test"),
+        ("test_word", "test_word"),
+        ("TestWord", "test_word"),
+        ("testWord", "test_word"),
+        ("TESTWord", "test_word"),
+        ("testWORD", "test_word"),
+        ("testW", "test_w"),
+        ("TestW", "test_w"),
+        ("test_long_word", "test_long_word"),
+        ("TestLongWord", "test_long_word"),
+        ("testLongWord", "test_long_word"),
+        ("test_LongWord", "test_long_word"),
+        ("testLongWORD", "test_long_word"),
+        ("test123", "test_123"),
+        ("123test", "123_test"),
+        ("Test123", "test_123"),
+        ("123Test", "123_test"),
+        ("TEST123", "test_123"),
+        ("123TEST", "123_test"),
+        ("testWord123", "test_word_123"),
+        ("TestWord123", "test_word_123"),
+        ("testWORD123", "test_word_123"),
+        ("TESTWord123", "test_word_123"),
+        ("test123Word", "test_123_word"),
+        ("Test123Word", "test_123_word"),
+        ("test123WORD", "test_123_word"),
+        ("Test123WORD", "test_123_word"),
+        ("TEST123Word", "test_123_word"),
+        ("testWord123", "test_word_123"),
+        ("TestWord123", "test_word_123"),
+        ("testWORD123", "test_word_123"),
+        ("TestWORD123", "test_word_123"),
+        ("TESTWord123", "test_word_123"),
+    ],
+)
+def test_str_to_snake_case_returns_correct_string(name, expected_result):
+    assert str_to_snake_case(name) == expected_result
 
 
 @pytest.mark.parametrize(
