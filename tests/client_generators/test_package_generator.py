@@ -1,5 +1,4 @@
 import ast
-from datetime import datetime
 from textwrap import dedent
 
 import pytest
@@ -7,13 +6,14 @@ from freezegun import freeze_time
 from graphql import GraphQLSchema, build_ast_schema, parse
 
 from ariadne_codegen.client_generators.constants import (
-    COMMENT_DATETIME_FORMAT,
     SOURCE_COMMENT,
+    STABLE_COMMENT,
     TIMESTAMP_COMMENT,
 )
 from ariadne_codegen.client_generators.package import PackageGenerator
 from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.exceptions import ParsingError
+from ariadne_codegen.settings import CommentsStrategy
 
 from ..utils import get_class_def
 
@@ -347,14 +347,24 @@ def test_generate_creates_client_file_with_gql_lambda_definition(tmp_path):
         assert expected_gql_def in client_content
 
 
-@freeze_time("01.12.2022 12:00")
-def test_generate_adds_comment_with_timestamp_to_generated_files(tmp_path):
+@pytest.mark.parametrize(
+    "strategy, expected_comment",
+    [
+        (CommentsStrategy.STABLE, STABLE_COMMENT),
+        (
+            CommentsStrategy.TIMESTAMP,
+            TIMESTAMP_COMMENT.format("2022-01-01 12:00"),
+        ),
+    ],
+)
+@freeze_time("01.01.2022 12:00")
+def test_generate_adds_comment_to_generated_files(tmp_path, strategy, expected_comment):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
         package_name,
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
-        include_comments=True,
+        comments_strategy=strategy,
     )
     query_str = """
     query CustomQuery($val: CustomEnum!) {
@@ -374,9 +384,7 @@ def test_generate_adds_comment_with_timestamp_to_generated_files(tmp_path):
         f"{generator.input_types_module_name}.py",
         "custom_query.py",
     ]
-    expected_comment = TIMESTAMP_COMMENT.format(
-        datetime.now().strftime(COMMENT_DATETIME_FORMAT)
-    )
+
     for file_name in files_names:
         file_path = package_path / file_name
         with file_path.open() as file_:
@@ -384,7 +392,12 @@ def test_generate_adds_comment_with_timestamp_to_generated_files(tmp_path):
             assert expected_comment in content
 
 
-def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
+@pytest.mark.parametrize(
+    "strategy", [CommentsStrategy.STABLE, CommentsStrategy.TIMESTAMP]
+)
+def test_generate_adds_comment_with_correct_source_to_generated_files(
+    tmp_path, strategy
+):
     package_name = "test_graphql_client"
     schema_source = "schema_source.graphql"
     queries_source = "queries_source.graphql"
@@ -392,7 +405,7 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
         package_name,
         tmp_path.as_posix(),
         build_ast_schema(parse(SCHEMA_STR)),
-        include_comments=True,
+        comments_strategy=strategy,
         schema_source=schema_source,
         queries_source=queries_source,
     )
@@ -423,6 +436,37 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(tmp_path):
     with package_path.joinpath("custom_query.py").open() as query_types_file:
         content = query_types_file.read()
         assert expected_queries_source_comment in content
+
+
+@pytest.mark.parametrize(
+    "strategy",
+    [CommentsStrategy.NONE, CommentsStrategy.STABLE, CommentsStrategy.TIMESTAMP],
+)
+def test_generate_calls_get_file_comment_hook_for_every_file(
+    tmp_path, strategy, mocked_plugin_manager
+):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name,
+        tmp_path.as_posix(),
+        build_ast_schema(parse(SCHEMA_STR)),
+        comments_strategy=strategy,
+        plugin_manager=mocked_plugin_manager,
+    )
+    query_str = """
+    query CustomQuery($val: CustomEnum!) {
+        query3(val: $val) {
+            id
+        }
+    }
+    """
+    generator.add_operation(parse(query_str).definitions[0])
+
+    generator.generate()
+
+    assert len(list(tmp_path.joinpath(package_name).iterdir())) == len(
+        mocked_plugin_manager.get_file_comment.mock_calls
+    )
 
 
 def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_path):

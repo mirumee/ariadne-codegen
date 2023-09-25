@@ -1,7 +1,7 @@
 [tool.ariadne-codegen]
 schema_path = "schema.graphql"
 queries_path = "queries.graphql"
-include_comments = false
+include_comments = "none"
 target_package_name = "custom_base_client"
 
 base_client_name = "CustomAsyncBaseClient"

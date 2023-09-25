@@ -1,5 +1,4 @@
 import ast
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
@@ -8,17 +7,16 @@ from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNo
 from ..codegen import generate_import_from
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
+from ..settings import CommentsStrategy
 from ..utils import ast_to_str, process_name, str_to_pascal_case
 from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
+from .comments import get_comment
 from .constants import (
     BASE_MODEL_CLASS_NAME,
-    COMMENT_DATETIME_FORMAT,
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
     DEFAULT_BASE_CLIENT_PATH,
     GRAPHQL_CLIENT_EXCEPTIONS_NAMES,
-    SOURCE_COMMENT,
-    TIMESTAMP_COMMENT,
     UNSET_NAME,
     UNSET_TYPE_NAME,
     UPLOAD_CLASS_NAME,
@@ -44,7 +42,7 @@ class PackageGenerator:
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
         fragments_module_name: str = "fragments",
-        include_comments: bool = True,
+        comments_strategy: CommentsStrategy = CommentsStrategy.STABLE,
         queries_source: str = "",
         schema_source: str = "",
         convert_to_snake_case: bool = True,
@@ -93,7 +91,7 @@ class PackageGenerator:
         self.fragments_module_name = fragments_module_name
         self.client_file_name = client_file_name
 
-        self.include_comments = include_comments
+        self.comments_strategy = comments_strategy
         self.queries_source = queries_source
         self.schema_source = schema_source
         self.convert_to_snake_case = convert_to_snake_case
@@ -253,7 +251,7 @@ class PackageGenerator:
     def _generate_client(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
         client_module = self.client_generator.generate()
-        code = self._proccess_generated_code(
+        code = self._add_comments_to_code(
             ast_to_str(client_module, multiline_strings=True), self.queries_source
         )
         if self.plugin_manager:
@@ -265,22 +263,20 @@ class PackageGenerator:
             names=[self.client_generator.name], from_=self.client_file_name, level=1
         )
 
-    def _proccess_generated_code(self, code: str, source: str = "") -> str:
-        if self.include_comments:
-            comments = [
-                TIMESTAMP_COMMENT.format(
-                    datetime.now().strftime(COMMENT_DATETIME_FORMAT)
-                )
-            ]
-            if source:
-                comments.append(SOURCE_COMMENT.format(source))
-            return "".join(comments) + "\n" + code
+    def _add_comments_to_code(self, code: str, source: Optional[str] = None) -> str:
+        comment = get_comment(strategy=self.comments_strategy, source=source)
+        if self.plugin_manager:
+            comment = self.plugin_manager.get_file_comment(
+                comment, code=code, source=source
+            )
+        if comment:
+            return comment + "\n\n" + code
 
         return code
 
     def _generate_enums(self):
         module = self.enums_generator.generate()
-        code = self._proccess_generated_code(ast_to_str(module), self.schema_source)
+        code = self._add_comments_to_code(ast_to_str(module), self.schema_source)
         if self.plugin_manager:
             code = self.plugin_manager.generate_enums_code(code)
         enums_file_path = self.package_path / f"{self.enums_module_name}.py"
@@ -293,7 +289,7 @@ class PackageGenerator:
     def _generate_input_types(self):
         module = self.input_types_generator.generate()
         input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
-        code = self._proccess_generated_code(ast_to_str(module), self.schema_source)
+        code = self._add_comments_to_code(ast_to_str(module), self.schema_source)
         if self.plugin_manager:
             code = self.plugin_manager.generate_inputs_code(code)
         input_types_file_path.write_text(code)
@@ -307,9 +303,7 @@ class PackageGenerator:
     def _generate_result_types(self):
         for file_name, module in self.result_types_files.items():
             file_path = self.package_path / file_name
-            code = self._proccess_generated_code(
-                ast_to_str(module), self.queries_source
-            )
+            code = self._add_comments_to_code(ast_to_str(module), self.queries_source)
             if self.plugin_manager:
                 code = self.plugin_manager.generate_result_types_code(code)
             file_path.write_text(code)
@@ -333,7 +327,7 @@ class PackageGenerator:
         )
         module = generator.generate()
         file_path = self.package_path / f"{self.fragments_module_name}.py"
-        code = self._proccess_generated_code(ast_to_str(module), self.queries_source)
+        code = self._add_comments_to_code(ast_to_str(module), self.queries_source)
         file_path.write_text(code)
         self.generated_files.append(file_path.name)
         self.init_generator.add_import(
@@ -353,7 +347,7 @@ class PackageGenerator:
                 level=1,
             )
         for source_path in files_to_copy:
-            code = self._proccess_generated_code(source_path.read_text())
+            code = self._add_comments_to_code(source_path.read_text())
             if self.plugin_manager:
                 code = self.plugin_manager.copy_code(code)
             target_path = self.package_path / source_path.name
@@ -374,7 +368,7 @@ class PackageGenerator:
     def _generate_init(self):
         init_file_path = self.package_path / "__init__.py"
         init_module = self.init_generator.generate()
-        code = self._proccess_generated_code(ast_to_str(init_module, False))
+        code = self._add_comments_to_code(ast_to_str(init_module, False))
         if self.plugin_manager:
             code = self.plugin_manager.generate_init_code(code)
         init_file_path.write_text(code)

@@ -14,6 +14,12 @@ from .client_generators.scalars import ScalarData
 from .exceptions import InvalidConfiguration
 
 
+class CommentsStrategy(str, enum.Enum):
+    NONE = "none"
+    STABLE = "stable"
+    TIMESTAMP = "timestamp"
+
+
 class Strategy(str, enum.Enum):
     CLIENT = "client"
     GRAPHQL_SCHEMA = "graphqlschema"
@@ -51,7 +57,7 @@ class ClientSettings(BaseSettings):
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     fragments_module_name: str = "fragments"
-    include_comments: bool = True
+    include_comments: CommentsStrategy = field(default=CommentsStrategy.STABLE)
     convert_to_snake_case: bool = True
     async_client: bool = True
     files_to_include: List[str] = field(default_factory=list)
@@ -61,6 +67,15 @@ class ClientSettings(BaseSettings):
         if not self.queries_path:
             raise TypeError("__init__ missing 1 required argument: 'queries_path'")
         super().__post_init__()
+
+        try:
+            self.include_comments = CommentsStrategy(self.include_comments)
+        except ValueError as exc:
+            valid_options = ", ".join(strategy.value for strategy in CommentsStrategy)
+            raise InvalidConfiguration(
+                f"'{self.include_comments}' is not a valid choice. "
+                f"Valid options are: {valid_options}"
+            ) from exc
 
         self._set_default_base_client_data()
 
@@ -98,11 +113,6 @@ class ClientSettings(BaseSettings):
 
     @property
     def used_settings_message(self):
-        comments_msg = (
-            "Including comments."
-            if self.include_comments
-            else "Not including comments."
-        )
         snake_case_msg = (
             "Converting fields and arguments name to snake case."
             if self.convert_to_snake_case
@@ -138,7 +148,7 @@ class ClientSettings(BaseSettings):
             Generating enums into '{self.enums_module_name}.py'.
             Generating inputs into '{self.input_types_module_name}.py'.
             Generating fragments into '{self.fragments_module_name}.py'.
-            {comments_msg}
+            Comments type: {self.include_comments.value}
             {snake_case_msg}
             {async_client_msg}
             {files_to_include_msg}

@@ -78,7 +78,7 @@ def client(config_dict):
         fragments_module_name=settings.fragments_module_name,
         queries_source=settings.queries_path,
         schema_source=schema_source,
-        include_comments=settings.include_comments,
+        comments_strategy=settings.include_comments,
         fragments=fragments,
         convert_to_snake_case=settings.convert_to_snake_case,
         async_client=settings.async_client,

@@ -334,3 +334,15 @@ def test_process_schema_updates_plugins_schema_field():
     assert dumb_plugin1.schema is not org_schema
     assert dump_plugin2.schema is not org_schema
     assert schema_plugin.schema is not org_schema
+
+
+def test_get_file_comment_calls_plugins_get_file_comment(
+    plugin_manager_with_mocked_plugins,
+):
+    plugin_manager_with_mocked_plugins.get_file_comment(
+        "comment", code="class Xyz:\n    pass", source="queries.graphql"
+    )
+
+    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
+    assert plugin1.get_file_comment.called
+    assert plugin2.get_file_comment.called

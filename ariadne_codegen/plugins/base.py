@@ -149,3 +149,9 @@ class Plugin:
 
     def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
         return schema
+
+    # pylint: disable=unused-argument
+    def get_file_comment(
+        self, comment: str, code: str, source: Optional[str] = None
+    ) -> str:
+        return comment

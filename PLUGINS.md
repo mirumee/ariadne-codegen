@@ -285,6 +285,17 @@ Hook executed on creating `GraphQLSchema` object from path or url provided in se
 To ensure all plugins have current version of schema, result of this hook is propagated to all plugins, updating their `schema` field. 
 
 
+### get_file_comment
+
+```py
+def get_file_comment(
+    self, comment: str, code: str, source: Optional[str] = None
+) -> str:
+```
+
+Hook executed on generating comment included at the beginning of a generated code.
+
+
 ## Example
 
 This example plugin adds `__version__ = "..."` to generated `__init__.py` file.
