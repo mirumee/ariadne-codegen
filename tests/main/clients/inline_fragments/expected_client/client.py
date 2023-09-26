@@ -68,6 +68,7 @@ class Client(AsyncBaseClient):
             """
             query InterfaceC {
               queryI {
+                __typename
                 id
               }
             }

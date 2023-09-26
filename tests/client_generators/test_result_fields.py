@@ -36,7 +36,8 @@ from ariadne_codegen.client_generators.constants import (
     UNION,
 )
 from ariadne_codegen.client_generators.result_fields import (
-    FieldNames,
+    FieldContext,
+    RelatedClassData,
     annotate_nested_unions,
     is_nullable,
     is_union,
@@ -199,12 +200,13 @@ def test_parse_operation_field_returns_annotation_with_annotated_nested_unions()
 def test_parse_operation_field_type_returns_annotation_for_scalar(
     type_, expected_annotation
 ):
-    annotation, names = parse_operation_field_type(
-        schema=GraphQLSchema(), field=FieldNode(), type_=type_
+    context = FieldContext()
+    annotation = parse_operation_field_type(
+        schema=GraphQLSchema(), field=FieldNode(), type_=type_, context=context
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == []
+    assert not context.custom_scalars
 
 
 @pytest.mark.parametrize(
@@ -226,27 +228,29 @@ def test_parse_operation_field_type_returns_annotation_for_scalar(
 def test_parse_operation_field_type_returns_annotation_for_custom_scalar(
     type_, expected_annotation
 ):
-    annotation, names = parse_operation_field_type(
+    context = FieldContext()
+    annotation = parse_operation_field_type(
         schema=GraphQLSchema(),
         field=FieldNode(),
         type_=type_,
+        context=context,
         custom_scalars={
             "SCALARXYZ": ScalarData(type_="ScalarXYZ", graphql_name="SCALARXYZ")
         },
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == [FieldNames(class_name="ScalarXYZ", type_name="SCALARXYZ")]
+    assert context.custom_scalars == ["SCALARXYZ"]
 
 
 @pytest.mark.parametrize(
-    "type_, class_name, expected_annotation, expected_names",
+    "type_, class_name, expected_annotation, expected_related_classes",
     [
         (
             GraphQLNonNull(GraphQLObjectType("TestType", fields={})),
             "TestClassName",
             ast.Name(id='"TestClassName"'),
-            [FieldNames(class_name="TestClassName", type_name="TestType")],
+            [RelatedClassData(class_name="TestClassName", type_name="TestType")],
         ),
         (
             GraphQLObjectType("TestType", fields={}),
@@ -254,13 +258,35 @@ def test_parse_operation_field_type_returns_annotation_for_custom_scalar(
             ast.Subscript(
                 value=ast.Name(id=OPTIONAL), slice=ast.Name(id='"TestClassName"')
             ),
-            [FieldNames(class_name="TestClassName", type_name="TestType")],
+            [RelatedClassData(class_name="TestClassName", type_name="TestType")],
         ),
+    ],
+)
+def test_parse_operation_field_type_returns_annotation_for_object(
+    type_, class_name, expected_annotation, expected_related_classes
+):
+    context = FieldContext()
+    annotation = parse_operation_field_type(
+        schema=GraphQLSchema(),
+        field=FieldNode(),
+        type_=type_,
+        context=context,
+        class_name=class_name,
+    )
+
+    assert compare_ast(annotation, expected_annotation)
+    assert not context.abstract_type
+    assert context.related_classes == expected_related_classes
+
+
+@pytest.mark.parametrize(
+    "type_, class_name, expected_annotation, expected_related_classes",
+    [
         (
             GraphQLNonNull(GraphQLInterfaceType("TestInterface", fields={})),
             "TestClassName",
             ast.Name(id='"TestClassName"'),
-            [FieldNames(class_name="TestClassName", type_name="TestInterface")],
+            [RelatedClassData(class_name="TestClassName", type_name="TestInterface")],
         ),
         (
             GraphQLInterfaceType("TestInterface", fields={}),
@@ -268,19 +294,25 @@ def test_parse_operation_field_type_returns_annotation_for_custom_scalar(
             ast.Subscript(
                 value=ast.Name(id=OPTIONAL), slice=ast.Name(id='"TestClassName"')
             ),
-            [FieldNames(class_name="TestClassName", type_name="TestInterface")],
+            [RelatedClassData(class_name="TestClassName", type_name="TestInterface")],
         ),
     ],
 )
-def test_parse_operation_field_type_returns_annotation_for_objects_and_interfaces(
-    type_, class_name, expected_annotation, expected_names
+def test_parse_operation_field_type_returns_annotation_interface(
+    type_, class_name, expected_annotation, expected_related_classes
 ):
-    annotation, names = parse_operation_field_type(
-        schema=GraphQLSchema(), field=FieldNode(), type_=type_, class_name=class_name
+    context = FieldContext()
+    annotation = parse_operation_field_type(
+        schema=GraphQLSchema(),
+        field=FieldNode(),
+        type_=type_,
+        context=context,
+        class_name=class_name,
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == expected_names
+    assert context.abstract_type
+    assert context.related_classes == expected_related_classes
 
 
 def test_parse_operation_field_type_returns_union_for_interface_with_inline_fragments():
@@ -297,13 +329,9 @@ def test_parse_operation_field_type_returns_union_for_interface_with_inline_frag
             ),
         ),
     )
-    expected_names = [
-        FieldNames(class_name="TestClassNameTestInterface", type_name="TestInterface"),
-        FieldNames(class_name="TestClassNameTypeA", type_name="TypeA"),
-        FieldNames(class_name="TestClassNameTypeB", type_name="TypeB"),
-    ]
+    context = FieldContext()
 
-    annotation, names = parse_operation_field_type(
+    annotation = parse_operation_field_type(
         schema=GraphQLSchema(),
         field=FieldNode(
             selection_set=SelectionSetNode(
@@ -319,11 +347,18 @@ def test_parse_operation_field_type_returns_union_for_interface_with_inline_frag
             )
         ),
         type_=GraphQLInterfaceType("TestInterface", fields={}),
+        context=context,
         class_name="TestClassName",
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == expected_names
+    assert context.related_classes == [
+        RelatedClassData(
+            class_name="TestClassNameTestInterface", type_name="TestInterface"
+        ),
+        RelatedClassData(class_name="TestClassNameTypeA", type_name="TypeA"),
+        RelatedClassData(class_name="TestClassNameTypeB", type_name="TypeB"),
+    ]
 
 
 def test_parse_operation_field_type_returns_union_inline_fragments_in_fragment():
@@ -340,11 +375,6 @@ def test_parse_operation_field_type_returns_union_inline_fragments_in_fragment()
             ),
         ),
     )
-    expected_names = [
-        FieldNames(class_name="TestClassNameTestInterface", type_name="TestInterface"),
-        FieldNames(class_name="TestClassNameTypeA", type_name="TypeA"),
-        FieldNames(class_name="TestClassNameTypeB", type_name="TypeB"),
-    ]
     fragment_def = FragmentDefinitionNode(
         name=NameNode(value="TestFragment"),
         selection_set=SelectionSetNode(
@@ -359,8 +389,9 @@ def test_parse_operation_field_type_returns_union_inline_fragments_in_fragment()
             )
         ),
     )
+    context = FieldContext()
 
-    annotation, names = parse_operation_field_type(
+    annotation = parse_operation_field_type(
         schema=GraphQLSchema(),
         field=FieldNode(
             selection_set=SelectionSetNode(
@@ -368,40 +399,46 @@ def test_parse_operation_field_type_returns_union_inline_fragments_in_fragment()
             )
         ),
         type_=GraphQLInterfaceType("TestInterface", fields={}),
+        context=context,
         class_name="TestClassName",
         fragments_definitions={"TestFragment": fragment_def},
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == expected_names
+    assert context.related_classes == [
+        RelatedClassData(
+            class_name="TestClassNameTestInterface", type_name="TestInterface"
+        ),
+        RelatedClassData(class_name="TestClassNameTypeA", type_name="TypeA"),
+        RelatedClassData(class_name="TestClassNameTypeB", type_name="TypeB"),
+    ]
 
 
 @pytest.mark.parametrize(
-    "type_, expected_annotation, expected_names",
+    "type_, expected_annotation",
     [
         (
             GraphQLNonNull(
                 GraphQLEnumType("TestEnum", values=cast(GraphQLEnumValueMap, {}))
             ),
             ast.Name(id="TestEnum"),
-            [FieldNames(class_name="TestEnum", type_name="TestEnum")],
         ),
         (
             GraphQLEnumType("TestEnum", values=cast(GraphQLEnumValueMap, {})),
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="TestEnum")),
-            [FieldNames(class_name="TestEnum", type_name="TestEnum")],
         ),
     ],
 )
 def test_parse_operation_field_type_returns_annotation_for_enums(
-    type_, expected_annotation, expected_names
+    type_, expected_annotation
 ):
-    annotation, names = parse_operation_field_type(
-        schema=GraphQLSchema(), field=FieldNode(), type_=type_
+    context = FieldContext()
+    annotation = parse_operation_field_type(
+        schema=GraphQLSchema(), field=FieldNode(), type_=type_, context=context
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == expected_names
+    assert context.enums == ["TestEnum"]
 
 
 def test_parse_operation_field_type_returns_annotation_and_names_for_union():
@@ -423,20 +460,21 @@ def test_parse_operation_field_type_returns_annotation_and_names_for_union():
             ]
         ),
     )
-    expected_names = [
-        FieldNames(class_name="TestQueryFieldTestTypeA", type_name="TestTypeA"),
-        FieldNames(class_name="TestQueryFieldTestTypeB", type_name="TestTypeB"),
-    ]
+    context = FieldContext()
 
-    annotation, names = parse_operation_field_type(
+    annotation = parse_operation_field_type(
         schema=GraphQLSchema(),
         field=FieldNode(),
         type_=type_,
+        context=context,
         class_name="TestQueryField",
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == expected_names
+    assert context.related_classes == [
+        RelatedClassData(class_name="TestQueryFieldTestTypeA", type_name="TestTypeA"),
+        RelatedClassData(class_name="TestQueryFieldTestTypeB", type_name="TestTypeB"),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -485,16 +523,18 @@ def test_parse_operation_field_type_returns_annotation_and_names_for_union():
 def test_parse_operation_field_type_returns_annotation_for_list(
     type_, expected_annotation
 ):
-    annotation, names = parse_operation_field_type(
+    context = FieldContext()
+    annotation = parse_operation_field_type(
         schema=GraphQLSchema(),
         field=FieldNode(),
         type_=type_,
+        context=context,
         class_name="TestQueryField",
     )
 
     assert compare_ast(annotation, expected_annotation)
-    assert names == [
-        FieldNames(class_name="TestQueryField", type_name="TestType"),
+    assert context.related_classes == [
+        RelatedClassData(class_name="TestQueryField", type_name="TestType"),
     ]
 
 

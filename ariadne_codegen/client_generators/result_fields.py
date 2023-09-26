@@ -1,5 +1,5 @@
 import ast
-from collections import namedtuple
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, cast
 
 from graphql import (
@@ -49,7 +49,19 @@ from .constants import (
 from .scalars import ScalarData, generate_result_scalar_annotation
 from .types import Annotation, AnnotationSlice, CodegenResultFieldType
 
-FieldNames = namedtuple("FieldNames", ["class_name", "type_name"])
+
+@dataclass
+class RelatedClassData:
+    class_name: str
+    type_name: str
+
+
+@dataclass
+class FieldContext:
+    enums: List[str] = field(default_factory=list)
+    custom_scalars: List[str] = field(default_factory=list)
+    related_classes: List[RelatedClassData] = field(default_factory=list)
+    abstract_type: bool = False
 
 
 def parse_operation_field(
@@ -61,15 +73,18 @@ def parse_operation_field(
     typename_values: Optional[List[str]] = None,
     custom_scalars: Optional[Dict[str, ScalarData]] = None,
     fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
-) -> Tuple[Annotation, Optional[ast.expr], List[FieldNames]]:
-    if field.name and field.name.value == TYPENAME_FIELD_NAME and typename_values:
-        return generate_typename_annotation(typename_values), None, []
-
+) -> Tuple[Annotation, Optional[ast.expr], FieldContext]:
     default_value: Optional[ast.expr] = None
-    annotation, field_types_names = parse_operation_field_type(
+    context = FieldContext()
+
+    if field.name and field.name.value == TYPENAME_FIELD_NAME and typename_values:
+        return generate_typename_annotation(typename_values), default_value, context
+
+    annotation = parse_operation_field_type(
         schema=schema,
         field=field,
         type_=type_,
+        context=context,
         class_name=class_name,
         custom_scalars=custom_scalars,
         fragments_definitions=fragments_definitions,
@@ -86,7 +101,7 @@ def parse_operation_field(
             if not is_nullable(annotation):
                 annotation = generate_nullable_annotation(annotation)
             default_value = generate_constant(None)
-    return annotation, default_value, field_types_names
+    return annotation, default_value, context
 
 
 def generate_typename_annotation(typename_values: List[str]) -> ast.Subscript:
@@ -100,25 +115,25 @@ def parse_operation_field_type(
     schema: GraphQLSchema,
     field: FieldNode,
     type_: CodegenResultFieldType,
+    context: FieldContext,
     nullable: bool = True,
     class_name: str = "",
     add_type_name: bool = False,
     custom_scalars: Optional[Dict[str, ScalarData]] = None,
     fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
-) -> Tuple[Annotation, List[FieldNames]]:
+) -> Annotation:
     """Parse graphql type and return generated annotation."""
     if isinstance(type_, GraphQLScalarType):
         if type_.name in SIMPLE_TYPE_MAP:
-            return (generate_annotation_name(SIMPLE_TYPE_MAP[type_.name], nullable), [])
+            return generate_annotation_name(SIMPLE_TYPE_MAP[type_.name], nullable)
         if custom_scalars and type_.name in custom_scalars:
             annotation = generate_result_scalar_annotation(custom_scalars[type_.name])
             if nullable:
                 annotation = generate_nullable_annotation(annotation)
-            return (
-                annotation,
-                [FieldNames(custom_scalars[type_.name].type_name, type_.name)],
-            )
-        return (generate_annotation_name(ANY, nullable), [])
+            context.custom_scalars.append(type_.name)
+            return annotation
+
+        return generate_annotation_name(ANY, nullable)
 
     if isinstance(type_, GraphQLInterfaceType):
         inline_fragments = get_inline_fragments_from_selection_set(
@@ -127,11 +142,16 @@ def parse_operation_field_type(
         fragments_on_subtypes = get_fragments_on_subtype(
             schema, field.selection_set, fragments_definitions, type_.name
         )
+        context.abstract_type = True
         if inline_fragments or fragments_on_subtypes:
             types = [
                 generate_annotation_name('"' + class_name + type_.name + '"', False)
             ]
-            names = [FieldNames(class_name + type_.name, type_.name)]
+            context.related_classes.append(
+                RelatedClassData(
+                    class_name=class_name + type_.name, type_name=type_.name
+                )
+            )
             fragments_types_names = sorted(
                 {
                     f.type_condition.name.value
@@ -144,65 +164,68 @@ def parse_operation_field_type(
                         '"' + class_name + fragment_type_name + '"', False
                     )
                 )
-                names.append(
-                    FieldNames(class_name + fragment_type_name, fragment_type_name)
+                context.related_classes.append(
+                    RelatedClassData(
+                        class_name=class_name + fragment_type_name,
+                        type_name=fragment_type_name,
+                    )
                 )
-            return generate_union_annotation(types=types, nullable=nullable), names
+            return generate_union_annotation(types=types, nullable=nullable)
 
         name = class_name + type_.name if add_type_name else class_name
-        return (
-            generate_annotation_name('"' + name + '"', nullable),
-            [FieldNames(name, type_.name)],
+        context.related_classes.append(
+            RelatedClassData(class_name=name, type_name=type_.name)
         )
+        return generate_annotation_name('"' + name + '"', nullable)
 
     if isinstance(type_, GraphQLObjectType):
         name = class_name + type_.name if add_type_name else class_name
-        return (
-            generate_annotation_name('"' + name + '"', nullable),
-            [FieldNames(name, type_.name)],
+        context.related_classes.append(
+            RelatedClassData(class_name=name, type_name=type_.name)
         )
+        return generate_annotation_name('"' + name + '"', nullable)
 
     if isinstance(type_, GraphQLEnumType):
-        return (
-            generate_annotation_name(type_.name, nullable),
-            [FieldNames(type_.name, type_.name)],
-        )
+        context.enums.append(type_.name)
+        return generate_annotation_name(type_.name, nullable)
 
     if isinstance(type_, GraphQLUnionType):
-        annotations = []
-        names = []
-        for subtype in type_.types:
-            sub_annotation, sub_names = parse_operation_field_type(
+        context.abstract_type = True
+        sub_annotations = [
+            parse_operation_field_type(
                 schema=schema,
                 field=field,
                 type_=subtype,
+                context=context,
                 nullable=False,
                 class_name=class_name,
                 add_type_name=True,
                 custom_scalars=custom_scalars,
                 fragments_definitions=fragments_definitions,
             )
-            annotations.append(sub_annotation)
-            names.extend(sub_names)
+            for subtype in type_.types
+        ]
 
-        return generate_union_annotation(annotations, nullable), names
+        return generate_union_annotation(sub_annotations, nullable)
 
     if isinstance(type_, GraphQLList):
-        slice_, names = parse_operation_field_type(
+        slice_ = parse_operation_field_type(
             schema=schema,
             field=field,
             type_=cast(CodegenResultFieldType, type_.of_type),
+            context=context,
             class_name=class_name,
             custom_scalars=custom_scalars,
             fragments_definitions=fragments_definitions,
         )
-        return (generate_list_annotation(slice_=slice_, nullable=nullable), names)
+        return generate_list_annotation(slice_=slice_, nullable=nullable)
 
     if isinstance(type_, GraphQLNonNull):
         return parse_operation_field_type(
             schema=schema,
             field=field,
             type_=type_.of_type,
+            context=context,
             nullable=False,
             class_name=class_name,
             custom_scalars=custom_scalars,

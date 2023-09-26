@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import Field
 
 from .base_model import BaseModel
@@ -8,6 +10,9 @@ class InterfaceC(BaseModel):
 
 
 class InterfaceCQueryI(BaseModel):
+    typename__: Literal["Interface", "TypeA", "TypeB", "TypeC"] = Field(
+        alias="__typename"
+    )
     id: str
 
 

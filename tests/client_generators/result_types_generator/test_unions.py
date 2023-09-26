@@ -5,8 +5,11 @@ from graphql import OperationDefinitionNode, build_ast_schema, parse
 
 from ariadne_codegen.client_generators.constants import (
     ALIAS_KEYWORD,
+    BASE_MODEL_CLASS_NAME,
     DISCRIMINATOR_KEYWORD,
+    FIELD_CLASS,
     LITERAL,
+    OPTIONAL,
     TYPENAME_ALIAS,
     TYPENAME_FIELD_NAME,
 )
@@ -41,7 +44,7 @@ def test_generate_returns_module_with_handled_typename_field():
                 value=ast.Name(id=LITERAL), slice=ast.Name(id='"CustomType"')
             ),
             value=ast.Call(
-                func=ast.Name(id="Field"),
+                func=ast.Name(id=FIELD_CLASS),
                 args=[],
                 keywords=[
                     ast.keyword(
@@ -85,7 +88,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
     expected_classes_defs = [
         ast.ClassDef(
             name="CustomQuery",
-            bases=[ast.Name(id="BaseModel")],
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             keywords=[],
             body=[
                 ast.AnnAssign(
@@ -100,7 +103,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
                         ),
                     ),
                     value=ast.Call(
-                        func=ast.Name(id="Field"),
+                        func=ast.Name(id=FIELD_CLASS),
                         args=[],
                         keywords=[
                             ast.keyword(
@@ -116,7 +119,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
         ),
         ast.ClassDef(
             name="CustomQueryQuery4CustomType1",
-            bases=[ast.Name(id="BaseModel")],
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             keywords=[],
             body=[
                 ast.AnnAssign(
@@ -125,7 +128,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
                         value=ast.Name(id=LITERAL), slice=ast.Name(id='"CustomType1"')
                     ),
                     value=ast.Call(
-                        func=ast.Name(id="Field"),
+                        func=ast.Name(id=FIELD_CLASS),
                         args=[],
                         keywords=[
                             ast.keyword(
@@ -146,7 +149,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
         ),
         ast.ClassDef(
             name="CustomQueryQuery4CustomType2",
-            bases=[ast.Name(id="BaseModel")],
+            bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
             keywords=[],
             body=[
                 ast.AnnAssign(
@@ -155,7 +158,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
                         value=ast.Name(id=LITERAL), slice=ast.Name(id='"CustomType2"')
                     ),
                     value=ast.Call(
-                        func=ast.Name(id="Field"),
+                        func=ast.Name(id=FIELD_CLASS),
                         args=[],
                         keywords=[
                             ast.keyword(
@@ -169,7 +172,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
                 ast.AnnAssign(
                     target=ast.Name(id="fieldb"),
                     annotation=ast.Subscript(
-                        value=ast.Name(id="Optional"),
+                        value=ast.Name(id=OPTIONAL),
                         slice=ast.Name(id="int"),
                     ),
                     simple=1,
@@ -192,3 +195,56 @@ def test_generate_returns_module_with_classes_for_union_fields():
 
     class_defs = filter_class_defs(module)
     assert compare_ast(class_defs, expected_classes_defs)
+
+
+def test_generate_returns_module_with_class_generated_from_union_with_one_member():
+    query_str = """
+    query TestQuery {
+        singleMemberQuery {
+            ... on CustomType1 {
+                fielda
+            }
+        }
+    }
+    """
+    operation_definition = cast(
+        OperationDefinitionNode, parse(query_str).definitions[0]
+    )
+    expected_class_def = ast.ClassDef(
+        name="TestQuerySingleMemberQueryCustomType1",
+        bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+        keywords=[],
+        body=[
+            ast.AnnAssign(
+                target=ast.Name(id=TYPENAME_ALIAS),
+                annotation=ast.Subscript(
+                    value=ast.Name(id=LITERAL), slice=ast.Name(id='"CustomType1"')
+                ),
+                value=ast.Call(
+                    func=ast.Name(id=FIELD_CLASS),
+                    args=[],
+                    keywords=[
+                        ast.keyword(
+                            arg=ALIAS_KEYWORD,
+                            value=ast.Constant(value=TYPENAME_FIELD_NAME),
+                        )
+                    ],
+                ),
+                simple=1,
+            ),
+            ast.AnnAssign(
+                target=ast.Name(id="fielda"), annotation=ast.Name(id="int"), simple=1
+            ),
+        ],
+        decorator_list=[],
+    )
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=operation_definition,
+        enums_module_name="enums",
+    )
+
+    module = generator.generate()
+
+    class_defs = filter_class_defs(module)
+    assert compare_ast(class_defs[-1], expected_class_def)
