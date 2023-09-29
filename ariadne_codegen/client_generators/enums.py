@@ -1,4 +1,5 @@
 import ast
+from keyword import iskeyword
 from typing import List, Optional, cast
 
 from graphql import GraphQLEnumType, GraphQLSchema
@@ -48,12 +49,14 @@ class EnumsGenerator:
         ]
 
     def _parse_enum_definition(self, definition: GraphQLEnumType) -> ast.ClassDef:
-        fields = [
-            generate_assign([val_name], generate_constant(val_def.value), lineno)
-            for lineno, (val_name, val_def) in enumerate(
-                definition.values.items(), start=1
+        fields: List[ast.stmt] = []
+        for lineno, (val_name, val_def) in enumerate(
+            definition.values.items(), start=1
+        ):
+            name = val_name if not iskeyword(val_name) else val_name + "_"
+            fields.append(
+                generate_assign([name], generate_constant(val_def.value), lineno)
             )
-        ]
 
         class_def = generate_class_def(
             name=definition.name,
