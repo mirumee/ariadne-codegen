@@ -9,7 +9,6 @@ from graphql import (
     FragmentDefinitionNode,
     FragmentSpreadNode,
     GraphQLAbstractType,
-    GraphQLEnumType,
     GraphQLField,
     GraphQLNamedType,
     GraphQLNonNull,
@@ -66,7 +65,7 @@ from .constants import (
     TYPING_MODULE,
     UNION,
 )
-from .result_fields import FieldNames, is_union, parse_operation_field
+from .result_fields import FieldContext, is_union, parse_operation_field
 from .scalars import ScalarData, generate_scalar_imports
 from .types import CodegenResultFieldType
 
@@ -246,7 +245,7 @@ class ResultTypesGenerator:
             field_name = self._get_field_name(field)
             name = self._process_field_name(field_name, field=field)
             field_definition = self._get_field_from_schema(type_name, field.name.value)
-            annotation, default_value, field_types_names = parse_operation_field(
+            annotation, default_value, field_context = parse_operation_field(
                 schema=self.schema,
                 field=field,
                 type_=cast(CodegenResultFieldType, field_definition.type),
@@ -272,12 +271,12 @@ class ResultTypesGenerator:
             extra_classes.extend(
                 self._parse_field_selection_set_types(
                     selection_set=field.selection_set,
-                    field_types_names=field_types_names,
+                    field_context=field_context,
                     extra_bases=self._get_extra_bases_from_mixin_directives(field),
                 )
             )
-            self._save_used_enums(field_types_names)
-            self._save_used_scalars(field_types_names)
+            self._used_enums.extend(field_context.enums)
+            self._used_scalars.extend(field_context.custom_scalars)
 
         if not class_def.body:
             class_def.body.append(generate_pass())
@@ -466,31 +465,31 @@ class ResultTypesGenerator:
     def _parse_field_selection_set_types(
         self,
         selection_set: Optional[SelectionSetNode],
-        field_types_names: List[FieldNames],
+        field_context: FieldContext,
         extra_bases: Optional[List[str]] = None,
     ) -> List[ast.ClassDef]:
         if selection_set:
             generated_classes = []
-            add_typename = len(field_types_names) > 1
-            typename_values = self._get_typename_values(field_types_names)
-            for field_type_names in field_types_names:
+            typename_values = self._get_typename_values(field_context)
+            for related_class_data in field_context.related_classes:
                 generated_classes.extend(
                     self._parse_type_definition(
-                        class_name=field_type_names.class_name,
-                        type_name=field_type_names.type_name,
+                        class_name=related_class_data.class_name,
+                        type_name=related_class_data.type_name,
                         selection_set=selection_set,
-                        add_typename=add_typename,
+                        add_typename=field_context.abstract_type,
                         extra_bases=extra_bases,
-                        typename_values=typename_values[field_type_names.type_name],
+                        typename_values=typename_values[related_class_data.type_name],
                     )
                 )
             return generated_classes
         return []
 
-    def _get_typename_values(
-        self, field_types_names: List[FieldNames]
-    ) -> Dict[str, List[str]]:
-        types_names = [n.type_name for n in field_types_names]
+    def _get_typename_values(self, field_context: FieldContext) -> Dict[str, List[str]]:
+        types_names = [
+            related_class_data.type_name
+            for related_class_data in field_context.related_classes
+        ]
         result = {name: [name] for name in types_names}
 
         schema_types = [self.schema.type_map[n] for n in types_names]
@@ -505,18 +504,6 @@ class ResultTypesGenerator:
 
         result[abstract_type.name].extend(types_without_class)
         return result
-
-    def _save_used_enums(self, field_types_names: List[FieldNames]):
-        for field_type_name in field_types_names:
-            if isinstance(
-                self.schema.type_map.get(field_type_name.type_name), GraphQLEnumType
-            ):
-                self._used_enums.append(field_type_name.type_name)
-
-    def _save_used_scalars(self, field_types_names: List[FieldNames]):
-        for field_type_name in field_types_names:
-            if field_type_name.type_name in self.custom_scalars:
-                self._used_scalars.append(field_type_name.type_name)
 
     def _add_enums_scalars_fragments_imports(self):
         if self._used_enums:

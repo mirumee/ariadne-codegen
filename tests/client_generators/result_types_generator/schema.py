@@ -14,6 +14,7 @@ type Query {
   query4: UnionType!
   camelCaseQuery: CustomType!
   interfaceQuery: InterfaceI!
+  singleMemberQuery: SingleMemberUnion!
 }
 
 type Mutation {
@@ -57,6 +58,8 @@ enum CustomEnum {
 }
 
 union UnionType = CustomType1 | CustomType2
+
+union SingleMemberUnion = CustomType1
 
 scalar SCALARA
 

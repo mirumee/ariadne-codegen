@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Literal
 
 from pydantic import Field
 
@@ -20,6 +20,7 @@ class ListAnimalsFragment(BaseModel):
 
 
 class ListAnimalsFragmentListAnimals(BaseModel):
+    typename__: Literal["Animal", "Cat", "Dog"] = Field(alias="__typename")
     name: str
 
 
