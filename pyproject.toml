@@ -45,6 +45,7 @@ dev = [
   "requests-toolbelt",
 ]
 subscriptions = ["websockets~=11.0"]
+telemetry = ["opentelemetry-api"]
 
 [project.scripts]
 ariadne-codegen = "ariadne_codegen.main:main"
