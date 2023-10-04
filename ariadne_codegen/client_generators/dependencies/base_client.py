@@ -13,7 +13,7 @@ from .exceptions import (
 )
 
 try:
-    from opentelemetry.trace import (
+    from opentelemetry.trace import (  # type: ignore[attr-defined]
         Context,
         Span,
         Tracer,

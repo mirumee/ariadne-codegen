@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from typing import Any, Optional
+from unittest.mock import ANY
 
 import httpx
 import pytest
@@ -473,3 +474,108 @@ async def test_base_client_used_as_context_manager_closes_http_client(mocker):
         await base_client.execute("")
 
     assert fake_client.aclose.called
+
+
+@pytest.fixture
+def mocker_get_tracer(mocker):
+    return mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.get_tracer"
+    )
+
+
+@pytest.fixture
+def mocked_start_as_current_span(mocker_get_tracer):
+    return mocker_get_tracer.return_value.start_as_current_span
+
+
+@pytest.mark.asyncio
+async def test_async_base_client_with_given_tracker_str_uses_global_tracker(
+    mocker_get_tracer,
+):
+    AsyncBaseClient(url="http://base_url", tracer="tracker name")
+
+    assert mocker_get_tracer.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_execute_creates_root_span(httpx_mock, mocked_start_as_current_span):
+    httpx_mock.add_response()
+    client = AsyncBaseClient(url="http://base_url", tracer="tracker")
+
+    await client.execute("query GetHello { hello }")
+
+    mocked_start_as_current_span.assert_any_call("GraphQL Operation", context=ANY)
+    with mocked_start_as_current_span.return_value as span:
+        span.set_attribute.assert_any_call("component", "GraphQL Client")
+
+
+@pytest.mark.asyncio
+async def test_execute_creates_root_span_with_custom_name(
+    httpx_mock, mocked_start_as_current_span
+):
+    httpx_mock.add_response()
+    client = AsyncBaseClient(
+        url="http://base_url", tracer="tracker", root_span_name="root_span"
+    )
+
+    await client.execute("query GetHello { hello }")
+
+    mocked_start_as_current_span.assert_any_call("root_span", context=ANY)
+
+
+@pytest.mark.asyncio
+async def test_execute_creates_root_span_with_custom_context(
+    httpx_mock, mocked_start_as_current_span
+):
+    httpx_mock.add_response()
+    client = AsyncBaseClient(
+        url="http://base_url", tracer="tracker", root_context={"abc": 123}
+    )
+
+    await client.execute("query GetHello { hello }")
+
+    mocked_start_as_current_span.assert_any_call(
+        "GraphQL Operation", context={"abc": 123}
+    )
+
+
+@pytest.mark.asyncio
+async def test_execute_creates_span_for_json_http_request(
+    httpx_mock, mocked_start_as_current_span
+):
+    httpx_mock.add_response()
+    client = AsyncBaseClient(url="http://base_url", tracer="tracker")
+
+    await client.execute("query GetHello { hello }", variables={"a": 1, "b": {"bb": 2}})
+
+    mocked_start_as_current_span.assert_any_call("json request", context=ANY)
+    with mocked_start_as_current_span.return_value as span:
+        span.set_attribute.assert_any_call("component", "GraphQL Client")
+        span.set_attribute.assert_any_call("query", "query GetHello { hello }")
+        span.set_attribute.assert_any_call(
+            "variables", json.dumps({"a": 1, "b": {"bb": 2}})
+        )
+
+
+@pytest.mark.asyncio
+async def test_execute_creates_span_for_multipart_request(
+    httpx_mock, txt_file, mocked_start_as_current_span
+):
+    httpx_mock.add_response()
+    client = AsyncBaseClient(url="http://base_url", tracer="tracker")
+
+    await client.execute(
+        "query Abc($file: Upload!) { abc(file: $file) }",
+        {"file": txt_file, "a": 1.0, "b": {"bb": 2}},
+    )
+
+    mocked_start_as_current_span.assert_any_call("multipart request", context=ANY)
+    with mocked_start_as_current_span.return_value as span:
+        span.set_attribute.assert_any_call("component", "GraphQL Client")
+        span.set_attribute.assert_any_call(
+            "query", "query Abc($file: Upload!) { abc(file: $file) }"
+        )
+        span.set_attribute.assert_any_call(
+            "variables", json.dumps({"file": None, "a": 1.0, "b": {"bb": 2}})
+        )
+        span.set_attribute.assert_any_call("map", json.dumps({"0": ["variables.file"]}))
