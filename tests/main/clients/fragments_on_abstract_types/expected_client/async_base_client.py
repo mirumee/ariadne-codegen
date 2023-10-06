@@ -40,7 +40,9 @@ except ImportError:
     WebSocketClientProtocol = Any  # type: ignore
     Data = Any  # type: ignore
     Origin = Any  # type: ignore
-    Subprotocol = Any  # type: ignore
+
+    def Subprotocol(*args, **kwargs):  # type: ignore # pylint: disable=invalid-name
+        raise NotImplementedError("Subscriptions require 'websockets' package.")
 
 
 try:
@@ -91,7 +93,9 @@ class AsyncBaseClient:
         ws_connection_init_payload: Optional[Dict[str, Any]] = None,
         tracer: Optional[Union[str, Tracer]] = None,
         root_context: Optional[Context] = None,
-        root_span_name: Optional[str] = None,
+        root_span_name: str = "GraphQL Operation",
+        ws_root_context: Optional[Context] = None,
+        ws_root_span_name: str = "GraphQL Subscription",
     ) -> None:
         self.url = url
         self.headers = headers
@@ -108,7 +112,9 @@ class AsyncBaseClient:
             get_tracer(tracer) if isinstance(tracer, str) else tracer
         )
         self.root_context = root_context
-        self.root_span_name = root_span_name if root_span_name else "GraphQL Operation"
+        self.root_span_name = root_span_name
+        self.ws_root_context = ws_root_context
+        self.ws_root_span_name = ws_root_span_name
 
     async def __aenter__(self: Self) -> Self:
         return self
@@ -156,25 +162,15 @@ class AsyncBaseClient:
     async def execute_ws(
         self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> AsyncIterator[Dict[str, Any]]:
-        operation_id = str(uuid4())
-        async with ws_connect(
-            self.ws_url,
-            subprotocols=[Subprotocol(GRAPHQL_TRANSPORT_WS)],
-            origin=self.ws_origin,
-            extra_headers=self.ws_headers,
-        ) as websocket:
-            await self._send_connection_init(websocket)
-            await self._send_subscribe(
-                websocket,
-                operation_id=operation_id,
-                query=query,
-                variables=variables,
+        if self.tracer:
+            generator = self._execute_ws_with_telemetry(
+                query=query, variables=variables
             )
+        else:
+            generator = self._execute_ws(query=query, variables=variables)
 
-            async for message in websocket:
-                data = await self._handle_ws_message(message, websocket)
-                if data:
-                    yield data
+        async for message in generator:
+            yield message
 
     async def _execute(
         self, query: str, variables: Optional[Dict[str, Any]] = None
@@ -288,6 +284,29 @@ class AsyncBaseClient:
             ),
             headers={"Content-Type": "application/json"},
         )
+
+    async def _execute_ws(
+        self, query: str, variables: Optional[Dict[str, Any]] = None
+    ) -> AsyncIterator[Dict[str, Any]]:
+        operation_id = str(uuid4())
+        async with ws_connect(
+            self.ws_url,
+            subprotocols=[Subprotocol(GRAPHQL_TRANSPORT_WS)],
+            origin=self.ws_origin,
+            extra_headers=self.ws_headers,
+        ) as websocket:
+            await self._send_connection_init(websocket)
+            await self._send_subscribe(
+                websocket,
+                operation_id=operation_id,
+                query=query,
+                variables=variables,
+            )
+
+            async for message in websocket:
+                data = await self._handle_ws_message(message, websocket)
+                if data:
+                    yield data
 
     async def _send_connection_init(self, websocket: WebSocketClientProtocol) -> None:
         payload: Dict[str, Any] = {
@@ -409,3 +428,122 @@ class AsyncBaseClient:
             span.set_attribute("query", query)
             span.set_attribute("variables", serialized_variables)
             return await self._execute_json(query=query, variables=variables)
+
+    async def _execute_ws_with_telemetry(
+        self, query: str, variables: Optional[Dict[str, Any]] = None
+    ) -> AsyncIterator[Dict[str, Any]]:
+        with self.tracer.start_as_current_span(  # type: ignore
+            self.ws_root_span_name, context=self.ws_root_context
+        ) as root_span:
+            root_span.set_attribute("component", "GraphQL Client")
+            operation_id = str(uuid4())
+            async with ws_connect(
+                self.ws_url,
+                subprotocols=[Subprotocol(GRAPHQL_TRANSPORT_WS)],
+                origin=self.ws_origin,
+                extra_headers=self.ws_headers,
+            ) as websocket:
+                await self._send_connection_init_with_telemetry(
+                    root_span=root_span,
+                    websocket=websocket,
+                )
+                await self._send_subscribe_with_telemetry(
+                    root_span=root_span,
+                    websocket=websocket,
+                    operation_id=operation_id,
+                    query=query,
+                    variables=variables,
+                )
+
+                async for message in websocket:
+                    data = await self._handle_ws_message_with_telemetry(
+                        root_span=root_span, message=message, websocket=websocket
+                    )
+                    if data:
+                        yield data
+
+    async def _send_connection_init_with_telemetry(
+        self, root_span: Span, websocket: WebSocketClientProtocol
+    ) -> None:
+        with self.tracer.start_as_current_span(  # type: ignore
+            "connection init", context=set_span_in_context(root_span)
+        ) as span:
+            span.set_attribute("component", "GraphQL Client")
+            span.set_attribute(
+                "type", GraphQLTransportWSMessageType.CONNECTION_INIT.value
+            )
+            if self.ws_connection_init_payload:
+                span.set_attribute(
+                    "payload", json.dumps(self.ws_connection_init_payload)
+                )
+
+            await self._send_connection_init(websocket=websocket)
+
+    async def _send_subscribe_with_telemetry(
+        self,
+        root_span: Span,
+        websocket: WebSocketClientProtocol,
+        operation_id: str,
+        query: str,
+        variables: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        with self.tracer.start_as_current_span(  # type: ignore
+            "subscribe", context=set_span_in_context(root_span)
+        ) as span:
+            span.set_attribute("component", "GraphQL Client")
+            span.set_attribute("id", operation_id)
+            span.set_attribute("type", GraphQLTransportWSMessageType.SUBSCRIBE.value)
+            span.set_attribute("query", query)
+            if variables:
+                span.set_attribute(
+                    "variables",
+                    json.dumps(self._convert_dict_to_json_serializable(variables)),
+                )
+
+            await self._send_subscribe(
+                websocket=websocket,
+                operation_id=operation_id,
+                query=query,
+                variables=variables,
+            )
+
+    async def _handle_ws_message_with_telemetry(
+        self, root_span: Span, message: Data, websocket: WebSocketClientProtocol
+    ) -> Optional[Dict[str, Any]]:
+        with self.tracer.start_as_current_span(  # type: ignore
+            "received message", context=set_span_in_context(root_span)
+        ) as span:
+            span.set_attribute("component", "GraphQL Client")
+
+            try:
+                message_dict = json.loads(message)
+            except json.JSONDecodeError as exc:
+                raise GraphQLClientInvalidMessageFormat(message=message) from exc
+
+            type_ = message_dict.get("type")
+            payload = message_dict.get("payload", {})
+
+            span.set_attribute("type", type_)
+
+            if not type_ or type_ not in {
+                t.value for t in GraphQLTransportWSMessageType
+            }:
+                raise GraphQLClientInvalidMessageFormat(message=message)
+
+            if type_ == GraphQLTransportWSMessageType.NEXT:
+                if "data" not in payload:
+                    raise GraphQLClientInvalidMessageFormat(message=message)
+                return cast(Dict[str, Any], payload["data"])
+
+            if type_ == GraphQLTransportWSMessageType.COMPLETE:
+                await websocket.close()
+            elif type_ == GraphQLTransportWSMessageType.PING:
+                await websocket.send(
+                    json.dumps({"type": GraphQLTransportWSMessageType.PONG.value})
+                )
+            elif type_ == GraphQLTransportWSMessageType.ERROR:
+                raise GraphQLClientGraphQLMultiError.from_errors_dicts(
+                    errors_dicts=payload, data=message_dict
+                )
+
+            return None
