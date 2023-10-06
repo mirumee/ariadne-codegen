@@ -142,6 +142,20 @@ type = "Upload"
 ```
 
 
+### Opentelemetry
+
+Both default base clients support opt-in telemetry options. By default, it's disabled, but when the `opentelemetry-api` package is installed and the `tracer` argument is provided then the client will create spans with data about performed requests.
+
+Telemetry arguments handled by `BaseClient`:
+- `tracer`: `Optional[Union[str, Tracer]] = None` - tracer object or name which will be passed to the `get_tracer` method
+- `root_context`: `Optional[Context] = None` - optional context added to root span
+- `root_span_name`: `str = "GraphQL Operation"` - name of root span
+
+`AsyncBaseClient` supports all arguments which `BaseClient` does, but also exposes additional arguments regarding websockets:
+- `ws_root_context`: `Optional[Context] = None` - optional context added to root span for websocket connection
+- `ws_root_span_name`: `str = "GraphQL Subscription"` - name of root span for websocket connection
+
+
 ## Custom scalars
 
 By default, not built-in scalars are represented as `typing.Any` in generated client.
