@@ -74,6 +74,7 @@ def client(config_dict):
         client_file_name=settings.client_file_name,
         base_client_name=settings.base_client_name,
         base_client_file_path=settings.base_client_file_path,
+        enums_module_name=settings.enums_module_name,
         input_types_module_name=settings.input_types_module_name,
         fragments_module_name=settings.fragments_module_name,
         queries_source=settings.queries_path,

@@ -8,6 +8,7 @@
 - Digits in Python names are now preceded by an underscore (breaking change).
 - Fixed parsing of unions and interfaces to always add `__typename` to generated result models.
 - Added escaping of enum values which are Python keywords by appending `_` to them.
+- Fixed `enums_module_name` option.
 
 
 ## 0.9.0 (2023-09-11)
