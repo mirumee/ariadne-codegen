@@ -76,6 +76,7 @@ Optional settings:
 - `include_comments` (defaults to `"stable"`) - option which sets content of comments included at the top of every generated file. Valid choices are: `"none"` (no comments), `"timestamp"` (comment with generation timestamp), `"stable"` (comment contains a message that this is a generated file)
 - `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
+- `telemetry_client` (defaults to `false`) - default base clients doesn't support opentelemetry, change this option to `true` to use base client with opentelemetry
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 
@@ -144,14 +145,14 @@ type = "Upload"
 
 ### Opentelemetry
 
-Both default base clients support opt-in telemetry options. By default, it's disabled, but when the `opentelemetry-api` package is installed and the `tracer` argument is provided then the client will create spans with data about performed requests.
+When config option `telemetry_client` is set to `true` then default, included base clients support opt-in telemetry options. By default, it's disabled, but when the `opentelemetry-api` package is installed and the `tracer` argument is provided then the client will create spans with data about performed requests.
 
-Telemetry arguments handled by `BaseClient`:
+Telemetry arguments handled by `BaseClientWithTelemetry`:
 - `tracer`: `Optional[Union[str, Tracer]] = None` - tracer object or name which will be passed to the `get_tracer` method
 - `root_context`: `Optional[Context] = None` - optional context added to root span
 - `root_span_name`: `str = "GraphQL Operation"` - name of root span
 
-`AsyncBaseClient` supports all arguments which `BaseClient` does, but also exposes additional arguments regarding websockets:
+`AsyncBaseClientWithTelemetry` supports all arguments which `BaseClientWithTelemetry` does, but also exposes additional arguments regarding websockets:
 - `ws_root_context`: `Optional[Context] = None` - optional context added to root span for websocket connection
 - `ws_root_span_name`: `str = "GraphQL Subscription"` - name of root span for websocket connection
 

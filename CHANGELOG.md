@@ -9,7 +9,7 @@
 - Fixed parsing of unions and interfaces to always add `__typename` to generated result models.
 - Added escaping of enum values which are Python keywords by appending `_` to them.
 - Fixed `enums_module_name` option not being passed to generators.
-- Added opentelemetry support to default base clients.
+- Added additional base clients with opentelemetry support. Added `telemetry_client` config option.
 
 
 ## 0.9.0 (2023-09-11)

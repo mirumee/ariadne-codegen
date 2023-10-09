@@ -1,11 +1,14 @@
 import json
 from datetime import datetime
 from typing import Any, Optional
+from unittest.mock import ANY
 
 import httpx
 import pytest
 
-from ariadne_codegen.client_generators.dependencies.base_client import BaseClient
+from ariadne_codegen.client_generators.dependencies.base_client_with_telemetry import (
+    BaseClientWithTelemetry,
+)
 from ariadne_codegen.client_generators.dependencies.base_model import UNSET, BaseModel
 from ariadne_codegen.client_generators.dependencies.exceptions import (
     GraphQLClientGraphQLMultiError,
@@ -18,7 +21,7 @@ from ...utils import decode_multipart_request
 
 def test_execute_sends_post_to_correct_url_with_correct_payload(httpx_mock):
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url/endpoint")
+    client = BaseClientWithTelemetry(url="http://base_url/endpoint")
     query_str = """
     query Abc($v: String!) {
         abc(v: $v) {
@@ -43,7 +46,7 @@ def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
         nested: TestModel1
 
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     query_str = """
     query Abc($v1: TestModel1!, $v2: TestModel2) {
         abc(v1: $v1, v2: $v2){
@@ -69,7 +72,7 @@ def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
         a: int
 
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     query_str = """
     query Abc($v1: [[TestModel1!]!]!) {
         abc(v1: $v1){
@@ -96,7 +99,7 @@ def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
 
 def test_execute_sends_payload_without_unset_arguments(httpx_mock):
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     query_str = """
     query Abc($arg1: TestInputA, $arg2: String, $arg3: Float, $arg4: Int!) {
         abc(arg1: $arg1, arg2: $arg2, arg3: $arg3, arg4: $arg4){
@@ -128,7 +131,7 @@ def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
         input_b3: Optional[TestInputB] = None
 
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     query_str = """
     query Abc($arg: TestInputB) {
         abc(arg: $arg){
@@ -162,7 +165,7 @@ def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
 
 def test_execute_sends_payload_with_serialized_datetime_without_exception(httpx_mock):
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     query_str = "query Abc($arg: DATETIME) { abc }"
     arg_value = datetime(2023, 12, 31, 10, 15)
 
@@ -175,7 +178,7 @@ def test_execute_sends_payload_with_serialized_datetime_without_exception(httpx_
 
 def test_execute_sends_request_with_correct_content_type(httpx_mock):
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
 
     client.execute("query Abc { abc }", {})
 
@@ -185,7 +188,9 @@ def test_execute_sends_request_with_correct_content_type(httpx_mock):
 
 def test_execute_sends_request_with_extra_headers_and_correct_content_type(httpx_mock):
     httpx_mock.add_response()
-    client = BaseClient(url="http://base_url", headers={"h_key": "h_value"})
+    client = BaseClientWithTelemetry(
+        url="http://base_url", headers={"h_key": "h_value"}
+    )
 
     client.execute("query Abc { abc }", {})
 
@@ -197,7 +202,7 @@ def test_execute_sends_request_with_extra_headers_and_correct_content_type(httpx
 def test_execute_sends_file_with_multipart_form_data_content_type(httpx_mock, txt_file):
     httpx_mock.add_response()
 
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     client.execute("query Abc($file: Upload!) { abc(file: $file) }", {"file": txt_file})
 
     request = httpx_mock.get_request()
@@ -208,7 +213,7 @@ def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
     httpx_mock.add_response()
     query_str = "query Abc($file: Upload!) { abc(file: $file) }"
 
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     client.execute(query_str, {"file": txt_file})
 
     request = httpx_mock.get_request()
@@ -234,7 +239,7 @@ def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
     httpx_mock.add_response()
     query_str = "query Abc($file: Upload!) { abc(file: $file) }"
 
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     client.execute(query_str, {"file": in_memory_txt_file})
 
     request = httpx_mock.get_request()
@@ -260,7 +265,7 @@ def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
     httpx_mock.add_response()
     query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
 
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     client.execute(query_str, {"files": [txt_file, png_file]})
 
     request = httpx_mock.get_request()
@@ -297,7 +302,7 @@ def test_execute_sends_nested_file(httpx_mock, txt_file):
     httpx_mock.add_response()
     query_str = "query Abc($input: InputType!) { abc(input: $input) }"
 
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     client.execute(query_str, {"input": InputType(file_=txt_file)})
 
     request = httpx_mock.get_request()
@@ -326,7 +331,7 @@ def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
     httpx_mock.add_response()
     query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
 
-    client = BaseClient(url="http://base_url")
+    client = BaseClientWithTelemetry(url="http://base_url")
     client.execute(query_str, {"files": [txt_file, txt_file]})
 
     request = httpx_mock.get_request()
@@ -363,7 +368,7 @@ def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
 def test_get_data_raises_graphql_client_http_error(
     mocker, status_code, response_content
 ):
-    client = BaseClient(url="base_url", http_client=mocker.MagicMock())
+    client = BaseClientWithTelemetry(url="base_url", http_client=mocker.MagicMock())
     response = httpx.Response(
         status_code=status_code, content=json.dumps(response_content)
     )
@@ -378,7 +383,7 @@ def test_get_data_raises_graphql_client_http_error(
 def test_get_data_raises_graphql_client_invalid_response_error(
     mocker, response_content
 ):
-    client = BaseClient(url="base_url", http_client=mocker.MagicMock())
+    client = BaseClientWithTelemetry(url="base_url", http_client=mocker.MagicMock())
     response = httpx.Response(status_code=200, content=json.dumps(response_content))
 
     with pytest.raises(GraphQlClientInvalidResponseError) as exc:
@@ -417,7 +422,7 @@ def test_get_data_raises_graphql_client_invalid_response_error(
     ],
 )
 def test_get_data_raises_graphql_client_graphql_multi_error(mocker, response_content):
-    client = BaseClient(url="base_url", http_client=mocker.MagicMock())
+    client = BaseClientWithTelemetry(url="base_url", http_client=mocker.MagicMock())
 
     with pytest.raises(GraphQLClientGraphQLMultiError):
         client.get_data(
@@ -430,7 +435,7 @@ def test_get_data_raises_graphql_client_graphql_multi_error(mocker, response_con
     [{"errors": [], "data": {}}, {"errors": None, "data": {}}, {"data": {}}],
 )
 def test_get_data_doesnt_raise_exception(mocker, response_content):
-    client = BaseClient(url="base_url", http_client=mocker.MagicMock())
+    client = BaseClientWithTelemetry(url="base_url", http_client=mocker.MagicMock())
 
     data = client.get_data(
         httpx.Response(status_code=200, content=json.dumps(response_content))
@@ -441,7 +446,107 @@ def test_get_data_doesnt_raise_exception(mocker, response_content):
 
 def test_base_client_used_as_context_manager_closes_http_client(mocker):
     fake_client = mocker.MagicMock()
-    with BaseClient(url="base_url", http_client=fake_client) as base_client:
+    with BaseClientWithTelemetry(
+        url="base_url", http_client=fake_client
+    ) as base_client:
         base_client.execute("")
 
     assert fake_client.close.called
+
+
+@pytest.fixture
+def mocker_get_tracer(mocker):
+    return mocker.patch(
+        "ariadne_codegen.client_generators.dependencies."
+        "base_client_with_telemetry.get_tracer"
+    )
+
+
+@pytest.fixture
+def mocked_start_as_current_span(mocker_get_tracer):
+    return mocker_get_tracer.return_value.start_as_current_span
+
+
+def test_base_client_with_given_tracker_str_uses_global_tracker(mocker_get_tracer):
+    BaseClientWithTelemetry(url="http://base_url", tracer="tracker name")
+
+    assert mocker_get_tracer.call_count == 1
+
+
+def test_execute_creates_root_span(httpx_mock, mocked_start_as_current_span):
+    httpx_mock.add_response()
+    client = BaseClientWithTelemetry(url="http://base_url", tracer="tracker")
+
+    client.execute("query GetHello { hello }")
+
+    mocked_start_as_current_span.assert_any_call("GraphQL Operation", context=ANY)
+    with mocked_start_as_current_span.return_value as span:
+        span.set_attribute.assert_any_call("component", "GraphQL Client")
+
+
+def test_execute_creates_root_span_with_custom_name(
+    httpx_mock, mocked_start_as_current_span
+):
+    httpx_mock.add_response()
+    client = BaseClientWithTelemetry(
+        url="http://base_url", tracer="tracker", root_span_name="root_span"
+    )
+
+    client.execute("query GetHello { hello }")
+
+    mocked_start_as_current_span.assert_any_call("root_span", context=ANY)
+
+
+def test_execute_creates_root_span_with_custom_context(
+    httpx_mock, mocked_start_as_current_span
+):
+    httpx_mock.add_response()
+    client = BaseClientWithTelemetry(
+        url="http://base_url", tracer="tracker", root_context={"abc": 123}
+    )
+
+    client.execute("query GetHello { hello }")
+
+    mocked_start_as_current_span.assert_any_call(
+        "GraphQL Operation", context={"abc": 123}
+    )
+
+
+def test_execute_creates_span_for_json_http_request(
+    httpx_mock, mocked_start_as_current_span
+):
+    httpx_mock.add_response()
+    client = BaseClientWithTelemetry(url="http://base_url", tracer="tracker")
+
+    client.execute("query GetHello { hello }", variables={"a": 1, "b": {"bb": 2}})
+
+    mocked_start_as_current_span.assert_any_call("json request", context=ANY)
+    with mocked_start_as_current_span.return_value as span:
+        span.set_attribute.assert_any_call("component", "GraphQL Client")
+        span.set_attribute.assert_any_call("query", "query GetHello { hello }")
+        span.set_attribute.assert_any_call(
+            "variables", json.dumps({"a": 1, "b": {"bb": 2}})
+        )
+
+
+def test_execute_creates_span_for_multipart_request(
+    httpx_mock, txt_file, mocked_start_as_current_span
+):
+    httpx_mock.add_response()
+    client = BaseClientWithTelemetry(url="http://base_url", tracer="tracker")
+
+    client.execute(
+        "query Abc($file: Upload!) { abc(file: $file) }",
+        {"file": txt_file, "a": 1.0, "b": {"bb": 2}},
+    )
+
+    mocked_start_as_current_span.assert_any_call("multipart request", context=ANY)
+    with mocked_start_as_current_span.return_value as span:
+        span.set_attribute.assert_any_call("component", "GraphQL Client")
+        span.set_attribute.assert_any_call(
+            "query", "query Abc($file: Upload!) { abc(file: $file) }"
+        )
+        span.set_attribute.assert_any_call(
+            "variables", json.dumps({"file": None, "a": 1.0, "b": {"bb": 2}})
+        )
+        span.set_attribute.assert_any_call("map", json.dumps({"0": ["variables.file"]}))

@@ -7,8 +7,14 @@ from textwrap import dedent
 from typing import Dict, List
 
 from .client_generators.constants import (
+    DEFAULT_ASYNC_BASE_CLIENT_NAME,
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
+    DEFAULT_ASYNC_BASE_CLIENT_WITH_TELEMETRY_NAME,
+    DEFAULT_ASYNC_BASE_CLIENT_WITH_TELEMETRY_PATH,
+    DEFAULT_BASE_CLIENT_NAME,
     DEFAULT_BASE_CLIENT_PATH,
+    DEFAULT_BASE_CLIENT_WITH_TELEMETRY_NAME,
+    DEFAULT_BASE_CLIENT_WITH_TELEMETRY_PATH,
 )
 from .client_generators.scalars import ScalarData
 from .exceptions import InvalidConfiguration
@@ -60,6 +66,7 @@ class ClientSettings(BaseSettings):
     include_comments: CommentsStrategy = field(default=CommentsStrategy.STABLE)
     convert_to_snake_case: bool = True
     async_client: bool = True
+    telemetry_client: bool = False
     files_to_include: List[str] = field(default_factory=list)
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
 
@@ -103,13 +110,28 @@ class ClientSettings(BaseSettings):
             assert_path_is_valid_file(file_path)
 
     def _set_default_base_client_data(self):
+        default_clients_map = {
+            (True, True): (
+                DEFAULT_ASYNC_BASE_CLIENT_WITH_TELEMETRY_PATH,
+                DEFAULT_ASYNC_BASE_CLIENT_WITH_TELEMETRY_NAME,
+            ),
+            (True, False): (
+                DEFAULT_ASYNC_BASE_CLIENT_PATH,
+                DEFAULT_ASYNC_BASE_CLIENT_NAME,
+            ),
+            (False, True): (
+                DEFAULT_BASE_CLIENT_WITH_TELEMETRY_PATH,
+                DEFAULT_BASE_CLIENT_WITH_TELEMETRY_NAME,
+            ),
+            (False, False): (
+                DEFAULT_BASE_CLIENT_PATH,
+                DEFAULT_BASE_CLIENT_NAME,
+            ),
+        }
         if not self.base_client_name and not self.base_client_file_path:
-            if self.async_client:
-                self.base_client_file_path = DEFAULT_ASYNC_BASE_CLIENT_PATH.as_posix()
-                self.base_client_name = "AsyncBaseClient"
-            else:
-                self.base_client_file_path = DEFAULT_BASE_CLIENT_PATH.as_posix()
-                self.base_client_name = "BaseClient"
+            path, name = default_clients_map[(self.async_client, self.telemetry_client)]
+            self.base_client_name = name
+            self.base_client_file_path = path.as_posix()
 
     @property
     def schema_source(self) -> str:

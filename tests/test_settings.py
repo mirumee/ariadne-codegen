@@ -4,8 +4,12 @@ from textwrap import dedent
 
 import pytest
 
-import ariadne_codegen.client_generators.dependencies.async_base_client
-import ariadne_codegen.client_generators.dependencies.base_client
+from ariadne_codegen.client_generators.dependencies import (
+    async_base_client,
+    async_base_client_with_telemetry,
+    base_client,
+    base_client_with_telemetry,
+)
 from ariadne_codegen.config import ClientSettings, GraphQLSchemaSettings
 from ariadne_codegen.exceptions import InvalidConfiguration
 
@@ -76,22 +80,21 @@ def test_client_settings_with_invalid_base_client_name_raises_configuration_exce
 
 
 @pytest.mark.parametrize(
-    "async_client,expected_name,file_path",
+    "async_client, telemetry_client, expected_name, expected_path",
     [
         (
             True,
-            "AsyncBaseClient",
-            ariadne_codegen.client_generators.dependencies.async_base_client.__file__,
+            True,
+            "AsyncBaseClientWithTelemetry",
+            async_base_client_with_telemetry.__file__,
         ),
-        (
-            False,
-            "BaseClient",
-            ariadne_codegen.client_generators.dependencies.base_client.__file__,
-        ),
+        (True, False, "AsyncBaseClient", async_base_client.__file__),
+        (False, True, "BaseClientWithTelemetry", base_client_with_telemetry.__file__),
+        (False, False, "BaseClient", base_client.__file__),
     ],
 )
 def test_client_settings_sets_correct_default_values_for_base_client_name_and_path(
-    tmp_path, async_client, expected_name, file_path
+    tmp_path, async_client, telemetry_client, expected_name, expected_path
 ):
     schema_path = tmp_path / "schema.graphql"
     schema_path.touch()
@@ -99,11 +102,14 @@ def test_client_settings_sets_correct_default_values_for_base_client_name_and_pa
     queries_path.touch()
 
     settings = ClientSettings(
-        schema_path=schema_path, queries_path=queries_path, async_client=async_client
+        schema_path=schema_path,
+        queries_path=queries_path,
+        async_client=async_client,
+        telemetry_client=telemetry_client,
     )
 
     assert settings.base_client_name == expected_name
-    assert settings.base_client_file_path == Path(file_path).as_posix()
+    assert settings.base_client_file_path == Path(expected_path).as_posix()
 
 
 def test_client_settings_without_schema_path_with_remote_schema_url_is_valid(tmp_path):
