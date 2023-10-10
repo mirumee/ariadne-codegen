@@ -3,7 +3,7 @@ from textwrap import dedent
 
 import pytest
 from freezegun import freeze_time
-from graphql import GraphQLSchema, build_ast_schema, parse
+from graphql import GraphQLSchema, parse
 
 from ariadne_codegen.client_generators.arguments import ArgumentsGenerator
 from ariadne_codegen.client_generators.client import ClientGenerator
@@ -22,46 +22,13 @@ from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.exceptions import ParsingError
 from ariadne_codegen.settings import CommentsStrategy
 
-from ..utils import get_class_def
-
-SCHEMA_STR = """
-schema {
-    query: Query
-}
-
-type Query {
-    query1(id: ID!, param: SCALARABC): CustomType
-    query2: [CustomType!]
-    query3(val: CustomEnum!): [CustomType]
-}
-
-type CustomType {
-    id: ID!
-    field1: [String]
-    field2: CustomType2
-    field3: CustomEnum!
-}
-
-type CustomType2 {
-    fieldb: Int
-}
-
-enum CustomEnum {
-    VAL1
-    VAL2
-}
-
-input CustomInput {
-    value: Int!
-}
-
-scalar SCALARABC
-"""
+from ...utils import get_class_def
 
 
-def test_generate_creates_directory_and_files(tmp_path, async_base_client_import):
+def test_generate_creates_directory_and_files(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
-    schema = GraphQLSchema()
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -152,9 +119,8 @@ def test_generate_creates_files_with_correct_imports(
         assert "from .async_base_client import AsyncBaseClient" in client_content
 
 
-def test_generate_creates_files_with_types(tmp_path, async_base_client_import):
+def test_generate_creates_files_with_types(tmp_path, schema, async_base_client_import):
     package_name = "test_graphql_client"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -193,9 +159,10 @@ def test_generate_creates_files_with_types(tmp_path, async_base_client_import):
         assert dedent(expected_enums) in enums_content
 
 
-def test_generate_creates_file_with_query_types(tmp_path, async_base_client_import):
+def test_generate_creates_file_with_query_types(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -249,10 +216,9 @@ def test_generate_creates_file_with_query_types(tmp_path, async_base_client_impo
 
 
 def test_generate_creates_multiple_query_types_files(
-    tmp_path, async_base_client_import
+    tmp_path, schema, async_base_client_import
 ):
     package_name = "test_graphql_client"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -293,7 +259,7 @@ def test_generate_creates_multiple_query_types_files(
     assert query2_file_path.is_file()
 
 
-def test_generate_copies_base_client_file(tmp_path, async_base_client_import):
+def test_generate_copies_base_client_file(tmp_path, schema, async_base_client_import):
     base_client_file_content = """
     class TestBaseClient:
         pass
@@ -301,7 +267,6 @@ def test_generate_copies_base_client_file(tmp_path, async_base_client_import):
     package_name = "test_graphql_client"
     base_client_file_path = tmp_path / "test_base_client.py"
     base_client_file_path.write_text(dedent(base_client_file_content))
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -329,10 +294,9 @@ def test_generate_copies_base_client_file(tmp_path, async_base_client_import):
 
 
 def test_generate_creates_client_with_valid_method_names(
-    tmp_path, async_base_client_import
+    tmp_path, schema, async_base_client_import
 ):
     package_name = "test_graphql_client"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -372,9 +336,8 @@ def test_generate_creates_client_with_valid_method_names(
 
 
 def test_generate_with_conflicting_query_name_raises_parsing_error(
-    tmp_path, async_base_client_import
+    tmp_path, schema, async_base_client_import
 ):
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name="test_graphql_client",
         target_path=tmp_path.as_posix(),
@@ -404,10 +367,9 @@ def test_generate_with_conflicting_query_name_raises_parsing_error(
 
 
 def test_generate_with_enum_as_query_argument_generates_client_with_correct_method(
-    tmp_path, async_base_client_import
+    tmp_path, schema, async_base_client_import
 ):
     package_name = "test_graphql_client"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -444,10 +406,9 @@ def test_generate_with_enum_as_query_argument_generates_client_with_correct_meth
 
 
 def test_generate_creates_client_file_with_gql_lambda_definition(
-    tmp_path, async_base_client_import
+    tmp_path, schema, async_base_client_import
 ):
     package_name = "test_graphql_client"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -483,10 +444,9 @@ def test_generate_creates_client_file_with_gql_lambda_definition(
 )
 @freeze_time("01.01.2022 12:00")
 def test_generate_adds_comment_to_generated_files(
-    tmp_path, strategy, expected_comment, async_base_client_import
+    tmp_path, schema, strategy, expected_comment, async_base_client_import
 ):
     package_name = "test_graphql_client"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -531,12 +491,11 @@ def test_generate_adds_comment_to_generated_files(
     "strategy", [CommentsStrategy.STABLE, CommentsStrategy.TIMESTAMP]
 )
 def test_generate_adds_comment_with_correct_source_to_generated_files(
-    tmp_path, async_base_client_import, strategy
+    tmp_path, schema, async_base_client_import, strategy
 ):
     package_name = "test_graphql_client"
     schema_source = "schema_source.graphql"
     queries_source = "queries_source.graphql"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -587,10 +546,9 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(
     [CommentsStrategy.NONE, CommentsStrategy.STABLE, CommentsStrategy.TIMESTAMP],
 )
 def test_generate_calls_get_file_comment_hook_for_every_file(
-    tmp_path, async_base_client_import, strategy, mocked_plugin_manager
+    tmp_path, schema, async_base_client_import, strategy, mocked_plugin_manager
 ):
     package_name = "test_graphql_client"
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -623,7 +581,7 @@ def test_generate_calls_get_file_comment_hook_for_every_file(
 
 
 def test_generate_creates_result_types_from_operation_that_uses_fragment(
-    tmp_path, async_base_client_import
+    tmp_path, schema, async_base_client_import
 ):
     package_name = "test_graphql_client"
     query_str = """
@@ -650,7 +608,6 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(
         field_3: CustomEnum = Field(alias="field3")
     """
     query_def, fragment_def = parse(query_str).definitions
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -677,8 +634,9 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(
         assert dedent(expected_types) in result_types_content
 
 
-def test_generate_returns_list_of_generated_files(tmp_path, async_base_client_import):
-    schema = build_ast_schema(parse(SCHEMA_STR))
+def test_generate_returns_list_of_generated_files(
+    tmp_path, schema, async_base_client_import
+):
     fragments_definitions = {
         "TestFragment": parse("fragment TestFragment on CustomType { id }").definitions[
             0
@@ -727,7 +685,7 @@ def test_generate_returns_list_of_generated_files(tmp_path, async_base_client_im
     )
 
 
-def test_generate_copies_files_to_include(tmp_path, async_base_client_import):
+def test_generate_copies_files_to_include(tmp_path, schema, async_base_client_import):
     file1 = tmp_path / "file1.py"
     file1_content = "class TestBaseClass:\n    pass"
     file1.write_text(file1_content)
@@ -738,7 +696,6 @@ def test_generate_copies_files_to_include(tmp_path, async_base_client_import):
     file2_content = "class TestBaseClass2:\n    pass"
     file2.write_text(file2_content)
 
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name="test_graphql_client",
         target_path=tmp_path.as_posix(),
@@ -764,13 +721,12 @@ def test_generate_copies_files_to_include(tmp_path, async_base_client_import):
 
 
 def test_generate_creates_client_with_custom_scalars_imports(
-    tmp_path, async_base_client_import
+    tmp_path, schema, async_base_client_import
 ):
     package_name = "test_graphql_client"
     custom_scalars = {
         "SCALARABC": ScalarData(type_=".abc.ScalarABC", graphql_name="SCALARABC")
     }
-    schema = build_ast_schema(parse(SCHEMA_STR))
     generator = PackageGenerator(
         package_name=package_name,
         target_path=tmp_path.as_posix(),
@@ -806,203 +762,3 @@ def test_generate_creates_client_with_custom_scalars_imports(
         f"{generator.client_file_name}.py"
     ).open() as client_file:
         assert "from .abc import ScalarABC" in client_file.read()
-
-
-def test_generate_triggers_generate_client_code_hook(
-    mocked_plugin_manager, tmp_path, async_base_client_import
-):
-    schema = build_ast_schema(parse(SCHEMA_STR))
-
-    PackageGenerator(
-        package_name="test_graphql_client",
-        target_path=tmp_path.as_posix(),
-        schema=schema,
-        init_generator=InitFileGenerator(),
-        client_generator=ClientGenerator(
-            base_client_import=async_base_client_import,
-            arguments_generator=ArgumentsGenerator(schema=schema),
-        ),
-        enums_generator=EnumsGenerator(schema=schema),
-        input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.generate_client_code.called
-
-
-def test_generate_triggers_generate_enums_code_hook(
-    mocked_plugin_manager, tmp_path, async_base_client_import
-):
-    schema = build_ast_schema(parse(SCHEMA_STR))
-
-    PackageGenerator(
-        package_name="test_graphql_client",
-        target_path=tmp_path.as_posix(),
-        schema=schema,
-        init_generator=InitFileGenerator(),
-        client_generator=ClientGenerator(
-            base_client_import=async_base_client_import,
-            arguments_generator=ArgumentsGenerator(schema=schema),
-        ),
-        enums_generator=EnumsGenerator(schema=schema),
-        input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.generate_enums_code.called
-
-
-def test_generate_triggers_generate_inputs_code_hook(
-    mocked_plugin_manager, tmp_path, async_base_client_import
-):
-    schema = build_ast_schema(parse(SCHEMA_STR))
-
-    PackageGenerator(
-        package_name="test_graphql_client",
-        target_path=tmp_path.as_posix(),
-        schema=schema,
-        init_generator=InitFileGenerator(),
-        client_generator=ClientGenerator(
-            base_client_import=async_base_client_import,
-            arguments_generator=ArgumentsGenerator(schema=schema),
-        ),
-        enums_generator=EnumsGenerator(schema=schema),
-        input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.generate_inputs_code.called
-
-
-def test_generate_triggers_generate_result_types_code_hook_for_every_added_operation(
-    mocked_plugin_manager, tmp_path, async_base_client_import
-):
-    schema = build_ast_schema(parse(SCHEMA_STR))
-    generator = PackageGenerator(
-        package_name="test_graphql_client",
-        target_path=tmp_path.as_posix(),
-        schema=schema,
-        init_generator=InitFileGenerator(),
-        client_generator=ClientGenerator(
-            base_client_import=async_base_client_import,
-            arguments_generator=ArgumentsGenerator(schema=schema),
-        ),
-        enums_generator=EnumsGenerator(schema=schema),
-        input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
-        plugin_manager=mocked_plugin_manager,
-    )
-    generator.add_operation(parse("query A { query2 { id } }").definitions[0])
-    generator.add_operation(parse("query B { query2 { id } }").definitions[0])
-
-    generator.generate()
-
-    assert mocked_plugin_manager.generate_result_types_code.call_count == 2
-
-
-def test_generate_triggers_copy_code_hook_for_every_attached_dependency_file(
-    mocked_plugin_manager, tmp_path, async_base_client_import
-):
-    schema = build_ast_schema(parse(SCHEMA_STR))
-
-    PackageGenerator(
-        package_name="test_graphql_client",
-        target_path=tmp_path.as_posix(),
-        schema=schema,
-        init_generator=InitFileGenerator(),
-        client_generator=ClientGenerator(
-            base_client_import=async_base_client_import,
-            arguments_generator=ArgumentsGenerator(schema=schema),
-        ),
-        enums_generator=EnumsGenerator(schema=schema),
-        input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.copy_code.call_count == 3
-
-
-def test_generate_triggers_copy_code_hook_for_every_file_to_include(
-    mocked_plugin_manager, tmp_path, async_base_client_import
-):
-    test_file_path = tmp_path / "xyz.py"
-    test_file_path.touch()
-    schema = build_ast_schema(parse(SCHEMA_STR))
-
-    PackageGenerator(
-        package_name="test_graphql_client",
-        target_path=tmp_path.as_posix(),
-        schema=schema,
-        init_generator=InitFileGenerator(),
-        client_generator=ClientGenerator(
-            base_client_import=async_base_client_import,
-            arguments_generator=ArgumentsGenerator(schema=schema),
-        ),
-        enums_generator=EnumsGenerator(schema=schema),
-        input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
-        plugin_manager=mocked_plugin_manager,
-        files_to_include=[test_file_path.as_posix()],
-    ).generate()
-
-    assert mocked_plugin_manager.copy_code.call_count == 4
-
-
-def test_generate_triggers_generate_init_code_hook(
-    mocked_plugin_manager, tmp_path, async_base_client_import
-):
-    schema = build_ast_schema(parse(SCHEMA_STR))
-
-    PackageGenerator(
-        package_name="test_graphql_client",
-        target_path=tmp_path.as_posix(),
-        schema=schema,
-        init_generator=InitFileGenerator(),
-        client_generator=ClientGenerator(
-            base_client_import=async_base_client_import,
-            arguments_generator=ArgumentsGenerator(schema=schema),
-        ),
-        enums_generator=EnumsGenerator(schema=schema),
-        input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.generate_init_code.called
-
-
-def test_add_operation_triggers_process_name_hook(
-    mocked_plugin_manager, tmp_path, async_base_client_import
-):
-    query_str = """
-    query custom_query_name {
-        query2 {
-            id
-        }
-    }
-    """
-    schema = build_ast_schema(parse(SCHEMA_STR))
-
-    PackageGenerator(
-        package_name="test_graphql_client",
-        target_path=tmp_path.as_posix(),
-        schema=schema,
-        init_generator=InitFileGenerator(),
-        client_generator=ClientGenerator(
-            base_client_import=async_base_client_import,
-            arguments_generator=ArgumentsGenerator(schema=schema),
-        ),
-        enums_generator=EnumsGenerator(schema=schema),
-        input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
-        plugin_manager=mocked_plugin_manager,
-    ).add_operation(parse(query_str).definitions[0])
-
-    assert mocked_plugin_manager.process_name.called
-    assert "custom_query_name" in {
-        c.args[0] for c in mocked_plugin_manager.process_name.mock_calls
-    }
