@@ -5,7 +5,7 @@ from graphql import FragmentDefinitionNode, GraphQLSchema
 
 from ..codegen import generate_expr, generate_method_call, generate_module
 from ..plugins.manager import PluginManager
-from .constants import MODEL_REBUILD_METHOD
+from .constants import BASE_MODEL_IMPORT, MODEL_REBUILD_METHOD
 from .result_types import ResultTypesGenerator
 from .scalars import ScalarData
 
@@ -14,33 +14,31 @@ class FragmentsGenerator:
     def __init__(
         self,
         schema: GraphQLSchema,
-        enums_module_name: str,
         fragments_definitions: Dict[str, FragmentDefinitionNode],
-        exclude_names: Optional[Set[str]] = None,
-        base_model_import: Optional[ast.ImportFrom] = None,
+        enums_module_name: str = "enums",
+        base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.schema = schema
         self.enums_module_name = enums_module_name
-        self.exclude_names = exclude_names or set()
         self.fragments_definitions = fragments_definitions
         self.base_model_import = base_model_import
         self.convert_to_snake_case = convert_to_snake_case
         self.custom_scalars = custom_scalars
         self.plugin_manager = plugin_manager
 
-        self._fragments_names = (
-            set(self.fragments_definitions.keys()) - self.exclude_names
-        )
+        self._fragments_names = set(self.fragments_definitions.keys())
         self._generated_public_names: List[str] = []
 
-    def generate(self) -> ast.Module:
+    def generate(self, exclude_names: Optional[Set[str]] = None) -> ast.Module:
         class_defs_dict: Dict[str, List[ast.ClassDef]] = {}
         imports: List[ast.ImportFrom] = []
         dependencies_dict: Dict[str, Set[str]] = {}
 
+        names_to_exclude = exclude_names or set()
+        self._fragments_names = self._fragments_names - names_to_exclude
         for name in self._fragments_names:
             fragmanet_def = self.fragments_definitions[name]
             generator = ResultTypesGenerator(

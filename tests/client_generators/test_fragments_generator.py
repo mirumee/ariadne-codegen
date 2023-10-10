@@ -145,11 +145,10 @@ def test_generate_returns_module_without_models_for_excluded_fragments(
             "FragmentA": fragment_a,
             "FragmentB": fragment_b,
         },
-        exclude_names={"TestFragment", "FragmentB"},
         convert_to_snake_case=True,
     )
 
-    module = generator.generate()
+    module = generator.generate(exclude_names={"TestFragment", "FragmentB"})
 
     generated_class_defs = filter_class_defs(module)
     assert [c.name for c in generated_class_defs] == ["FragmentA"]

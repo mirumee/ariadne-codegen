@@ -14,6 +14,7 @@ from ariadne_codegen.client_generators.constants import (
     TIMESTAMP_COMMENT,
 )
 from ariadne_codegen.client_generators.enums import EnumsGenerator
+from ariadne_codegen.client_generators.fragments import FragmentsGenerator
 from ariadne_codegen.client_generators.init_file import InitFileGenerator
 from ariadne_codegen.client_generators.input_types import InputTypesGenerator
 from ariadne_codegen.client_generators.package import PackageGenerator
@@ -72,6 +73,7 @@ def test_generate_creates_directory_and_files(tmp_path, async_base_client_import
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
 
     generator.generate()
@@ -115,6 +117,7 @@ def test_generate_creates_files_with_correct_imports(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
 
     generator.generate()
@@ -163,6 +166,7 @@ def test_generate_creates_files_with_types(tmp_path, async_base_client_import):
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
     expected_input_types = """
     class CustomInput(BaseModel):
@@ -203,6 +207,7 @@ def test_generate_creates_file_with_query_types(tmp_path, async_base_client_impo
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
     query_str = """
     query CustomQuery($id: ID!, $param: String) {
@@ -259,6 +264,7 @@ def test_generate_creates_multiple_query_types_files(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
     query_str = """
     query CustomQuery1 {
@@ -307,6 +313,7 @@ def test_generate_copies_base_client_file(tmp_path, async_base_client_import):
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         base_client_name="TestBaseClient",
         base_client_file_path=base_client_file_path.as_posix(),
     )
@@ -337,6 +344,7 @@ def test_generate_creates_client_with_valid_method_names(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         async_client=False,
     )
     query_str = """
@@ -378,6 +386,7 @@ def test_generate_with_conflicting_query_name_raises_parsing_error(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         input_types_module_name="input_types",
         convert_to_snake_case=True,
     )
@@ -410,6 +419,7 @@ def test_generate_with_enum_as_query_argument_generates_client_with_correct_meth
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         async_client=True,
     )
     query_str = """
@@ -449,6 +459,7 @@ def test_generate_creates_client_file_with_gql_lambda_definition(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
 
     generator.generate()
@@ -487,6 +498,7 @@ def test_generate_adds_comment_to_generated_files(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         comments_strategy=strategy,
     )
     query_str = """
@@ -536,6 +548,7 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         comments_strategy=strategy,
         schema_source=schema_source,
         queries_source=queries_source,
@@ -589,6 +602,7 @@ def test_generate_calls_get_file_comment_hook_for_every_file(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         comments_strategy=strategy,
         plugin_manager=mocked_plugin_manager,
     )
@@ -648,6 +662,9 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(
+            schema=schema, fragments_definitions={"TestFragment": fragment_def}
+        ),
         fragments_definitions={"TestFragment": fragment_def},
     )
 
@@ -662,6 +679,11 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(
 
 def test_generate_returns_list_of_generated_files(tmp_path, async_base_client_import):
     schema = build_ast_schema(parse(SCHEMA_STR))
+    fragments_definitions = {
+        "TestFragment": parse("fragment TestFragment on CustomType { id }").definitions[
+            0
+        ]
+    }
     generator = PackageGenerator(
         package_name="test_graphql_client",
         target_path=tmp_path.as_posix(),
@@ -673,11 +695,10 @@ def test_generate_returns_list_of_generated_files(tmp_path, async_base_client_im
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
-        fragments_definitions={
-            "TestFragment": parse(
-                "fragment TestFragment on CustomType { id }"
-            ).definitions[0]
-        },
+        fragments_generator=FragmentsGenerator(
+            schema=schema, fragments_definitions=fragments_definitions
+        ),
+        fragments_definitions=fragments_definitions,
         custom_scalars={"SCALARABC": ScalarData(type_="str", graphql_name="SCALARABC")},
     )
     query_str = """
@@ -729,6 +750,7 @@ def test_generate_copies_files_to_include(tmp_path, async_base_client_import):
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         files_to_include=[file1.as_posix(), file2.as_posix()],
     )
     generated_files = generator.generate()
@@ -765,6 +787,7 @@ def test_generate_creates_client_with_custom_scalars_imports(
         input_types_generator=InputTypesGenerator(
             schema=schema, custom_scalars=custom_scalars
         ),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         custom_scalars=custom_scalars,
     )
     query_str = """
@@ -801,6 +824,7 @@ def test_generate_triggers_generate_client_code_hook(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         plugin_manager=mocked_plugin_manager,
     ).generate()
 
@@ -823,6 +847,7 @@ def test_generate_triggers_generate_enums_code_hook(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         plugin_manager=mocked_plugin_manager,
     ).generate()
 
@@ -845,6 +870,7 @@ def test_generate_triggers_generate_inputs_code_hook(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         plugin_manager=mocked_plugin_manager,
     ).generate()
 
@@ -866,6 +892,7 @@ def test_generate_triggers_generate_result_types_code_hook_for_every_added_opera
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         plugin_manager=mocked_plugin_manager,
     )
     generator.add_operation(parse("query A { query2 { id } }").definitions[0])
@@ -892,6 +919,7 @@ def test_generate_triggers_copy_code_hook_for_every_attached_dependency_file(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         plugin_manager=mocked_plugin_manager,
     ).generate()
 
@@ -916,6 +944,7 @@ def test_generate_triggers_copy_code_hook_for_every_file_to_include(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         plugin_manager=mocked_plugin_manager,
         files_to_include=[test_file_path.as_posix()],
     ).generate()
@@ -939,6 +968,7 @@ def test_generate_triggers_generate_init_code_hook(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         plugin_manager=mocked_plugin_manager,
     ).generate()
 
@@ -968,6 +998,7 @@ def test_add_operation_triggers_process_name_hook(
         ),
         enums_generator=EnumsGenerator(schema=schema),
         input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         plugin_manager=mocked_plugin_manager,
     ).add_operation(parse(query_str).definitions[0])
 

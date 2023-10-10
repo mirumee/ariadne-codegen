@@ -42,6 +42,7 @@ class PackageGenerator:
         client_generator: ClientGenerator,
         enums_generator: EnumsGenerator,
         input_types_generator: InputTypesGenerator,
+        fragments_generator: FragmentsGenerator,
         fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
         client_name: str = "Client",
         async_client: bool = True,
@@ -74,6 +75,7 @@ class PackageGenerator:
         self.client_generator = client_generator
         self.enums_generator = enums_generator
         self.input_types_generator = input_types_generator
+        self.fragments_generator = fragments_generator
 
         self.client_name = client_name
         self.async_client = async_client
@@ -264,23 +266,17 @@ class PackageGenerator:
         ):
             return
 
-        generator = FragmentsGenerator(
-            schema=self.schema,
-            enums_module_name=self.enums_module_name,
-            fragments_definitions=self.fragments_definitions,
-            exclude_names=self._unpacked_fragments,
-            base_model_import=self.base_model_import,
-            convert_to_snake_case=self.convert_to_snake_case,
-            custom_scalars=self.custom_scalars,
-            plugin_manager=self.plugin_manager,
+        module = self.fragments_generator.generate(
+            exclude_names=self._unpacked_fragments
         )
-        module = generator.generate()
         file_path = self.package_path / f"{self.fragments_module_name}.py"
         code = self._add_comments_to_code(ast_to_str(module), self.queries_source)
         file_path.write_text(code)
         self._generated_files.append(file_path.name)
         self.init_generator.add_import(
-            generator.get_generated_public_names(), self.fragments_module_name, 1
+            self.fragments_generator.get_generated_public_names(),
+            self.fragments_module_name,
+            1,
         )
 
     def _copy_files(self):
@@ -355,6 +351,16 @@ def get_package_generator(
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
     )
+    fragments_definitions = {f.name.value: f for f in fragments or []}
+    fragments_generator = FragmentsGenerator(
+        schema=schema,
+        fragments_definitions=fragments_definitions,
+        enums_module_name=settings.enums_module_name,
+        base_model_import=BASE_MODEL_IMPORT,
+        convert_to_snake_case=settings.convert_to_snake_case,
+        custom_scalars=settings.scalars,
+        plugin_manager=plugin_manager,
+    )
 
     return PackageGenerator(
         package_name=settings.target_package_name,
@@ -364,7 +370,8 @@ def get_package_generator(
         client_generator=client_generator,
         enums_generator=enums_generator,
         input_types_generator=input_types_generator,
-        fragments_definitions={f.name.value: f for f in fragments or []},
+        fragments_generator=fragments_generator,
+        fragments_definitions=fragments_definitions,
         client_name=settings.client_name,
         async_client=settings.async_client,
         base_client_name=settings.base_client_name,
