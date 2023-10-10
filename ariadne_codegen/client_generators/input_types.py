@@ -27,6 +27,7 @@ from .constants import (
     ANNOTATED,
     ANY,
     BASE_MODEL_CLASS_NAME,
+    BASE_MODEL_IMPORT,
     FIELD_CLASS,
     LIST,
     MODEL_REBUILD_METHOD,
@@ -35,6 +36,7 @@ from .constants import (
     PYDANTIC_MODULE,
     TYPING_MODULE,
     UNION,
+    UPLOAD_IMPORT,
 )
 from .input_fields import parse_input_field_default_value, parse_input_field_type
 from .scalars import ScalarData, generate_scalar_imports
@@ -44,9 +46,9 @@ class InputTypesGenerator:
     def __init__(
         self,
         schema: GraphQLSchema,
-        enums_module: str,
-        base_model_import: ast.ImportFrom,
-        upload_import: ast.ImportFrom,
+        enums_module: str = "enums",
+        base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
+        upload_import: ast.ImportFrom = UPLOAD_IMPORT,
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,

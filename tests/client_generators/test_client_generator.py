@@ -15,6 +15,8 @@ from ariadne_codegen.client_generators.constants import (
     OPTIONAL,
     TYPING_MODULE,
     UNION,
+    UNSET_IMPORT,
+    UPLOAD_IMPORT,
 )
 from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.exceptions import NotSupported
@@ -22,19 +24,12 @@ from ariadne_codegen.exceptions import NotSupported
 from ..utils import compare_ast, filter_imports, get_class_def, sorted_imports
 
 
-def test_generate_returns_module_with_correct_class_name(
-    async_base_client_import, unset_import, upload_import
-):
+def test_generate_returns_module_with_correct_class_name(async_base_client_import):
     name = "ClientXyz"
     generator = ClientGenerator(
-        name,
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
+        name=name,
     )
 
     module = generator.generate()
@@ -44,18 +39,10 @@ def test_generate_returns_module_with_correct_class_name(
     assert class_def.name == name
 
 
-def test_generate_returns_module_with_gql_lambda_definition(
-    async_base_client_import, unset_import, upload_import
-):
+def test_generate_returns_module_with_gql_lambda_definition(async_base_client_import):
     generator = ClientGenerator(
-        "ClientXYZ",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
     )
     expected_def = ast.FunctionDef(
         name="gql",
@@ -81,17 +68,11 @@ def test_generate_returns_module_with_gql_lambda_definition(
 
 
 def test_generate_triggers_generate_gql_function_hook(
-    mocked_plugin_manager, async_base_client_import, unset_import, upload_import
+    mocked_plugin_manager, async_base_client_import
 ):
     generator = ClientGenerator(
-        "ClientXYZ",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         plugin_manager=mocked_plugin_manager,
     )
 
@@ -101,36 +82,25 @@ def test_generate_triggers_generate_gql_function_hook(
 
 
 def test_generate_triggers_generate_client_class_hook(
-    mocked_plugin_manager, async_base_client_import, unset_import, upload_import
+    mocked_plugin_manager, async_base_client_import
 ):
     generator = ClientGenerator(
-        "ClientXYZ",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         plugin_manager=mocked_plugin_manager,
     )
+
     generator.generate()
 
     assert mocked_plugin_manager.generate_client_class.called
 
 
 def test_generate_triggers_generate_client_module_hook(
-    mocked_plugin_manager, async_base_client_import, unset_import, upload_import
+    mocked_plugin_manager, async_base_client_import
 ):
     generator = ClientGenerator(
-        "ClientXYZ",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         plugin_manager=mocked_plugin_manager,
     )
 
@@ -139,9 +109,7 @@ def test_generate_triggers_generate_client_module_hook(
     assert mocked_plugin_manager.generate_client_module.called
 
 
-def test_generate_returns_module_with_correct_imports(
-    async_base_client_import, unset_import, upload_import
-):
+def test_generate_returns_module_with_correct_imports(async_base_client_import):
     schema_str = """
     schema { query: Query }
     type Query { xyz(arg1: TestScalar!, arg2: TestEnum!, arg3: TestInput): TestType }
@@ -174,24 +142,20 @@ def test_generate_returns_module_with_correct_imports(
         )
     }
     generator = ClientGenerator(
-        "Client",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
+        base_client_import=async_base_client_import,
         arguments_generator=ArgumentsGenerator(
             schema=build_schema(schema_str), custom_scalars=scalars
         ),
-        base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
         custom_scalars=scalars,
     )
     expected_imports = [
         async_base_client_import,
-        unset_import,
-        upload_import,
+        UNSET_IMPORT,
+        UPLOAD_IMPORT,
         ast.ImportFrom(module="enums", names=[ast.alias(name="TestEnum")], level=1),
-        ast.ImportFrom(module="inputs", names=[ast.alias(name="TestInput")], level=1),
+        ast.ImportFrom(
+            module="input_types", names=[ast.alias(name="TestInput")], level=1
+        ),
         ast.ImportFrom(
             module=".custom_scalars", names=[ast.alias(name="TestScalarType")], level=0
         ),
@@ -230,19 +194,12 @@ def test_generate_returns_module_with_correct_imports(
     )
 
 
-def test_add_method_adds_async_method_definition(
-    async_base_client_import, unset_import, upload_import
-):
+def test_add_method_adds_async_method_definition(async_base_client_import):
     generator = ClientGenerator(
-        "ClientXYZ",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
         base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
     )
+
     method_name = "list_xyz"
     return_type = "ListXyz"
     return_type_module_name = method_name
@@ -267,9 +224,7 @@ def test_add_method_adds_async_method_definition(
     assert method_def.returns.id == return_type
 
 
-def test_add_method_generates_correct_async_method_body(
-    async_base_client_import, unset_import, upload_import
-):
+def test_add_method_generates_correct_async_method_body(async_base_client_import):
     schema_str = """
     schema { query: Query }
     type Query { xyz(arg1: Int!): TestType }
@@ -287,14 +242,8 @@ def test_add_method_generates_correct_async_method_body(
     }
     """
     generator = ClientGenerator(
-        "Client",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
     )
     method_name = "list_xyz"
     return_type = "ListXyz"
@@ -368,9 +317,7 @@ def test_add_method_generates_correct_async_method_body(
     assert compare_ast(method_def.body, expected_method_body)
 
 
-def test_add_method_adds_method_definition(
-    unset_import, upload_import, base_client_import
-):
+def test_add_method_adds_method_definition(base_client_import):
     schema_str = """
     schema { query: Query }
     type Query { xyz(arg1: Int!): TestType }
@@ -388,14 +335,8 @@ def test_add_method_adds_method_definition(
     }
     """
     generator = ClientGenerator(
-        "Client",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
     )
     method_name = "list_xyz"
     return_type = "ListXyz"
@@ -421,9 +362,7 @@ def test_add_method_adds_method_definition(
     assert method_def.returns.id == return_type
 
 
-def test_add_method_generates_correct_method_body(
-    unset_import, upload_import, base_client_import
-):
+def test_add_method_generates_correct_method_body(base_client_import):
     schema_str = """
     schema { query: Query }
     type Query { xyz(arg1: Int!): TestType }
@@ -441,14 +380,8 @@ def test_add_method_generates_correct_method_body(
     }
     """
     generator = ClientGenerator(
-        "Client",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
     )
     method_name = "list_xyz"
     return_type = "ListXyz"
@@ -521,7 +454,7 @@ def test_add_method_generates_correct_method_body(
 
 
 def test_add_method_generates_async_generator_for_subscription_definition(
-    async_base_client_import, unset_import, upload_import
+    async_base_client_import,
 ):
     schema_str = """
     schema { subscription: Subscription }
@@ -529,14 +462,8 @@ def test_add_method_generates_async_generator_for_subscription_definition(
     """
     subscription_str = "subscription GetCounter { counter }"
     generator = ClientGenerator(
-        "ClientXYZ",
-        base_client="AsyncBaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         base_client_import=async_base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
     )
     expected_method_def = ast.AsyncFunctionDef(
         name="get_counter",
@@ -617,19 +544,11 @@ def test_add_method_generates_async_generator_for_subscription_definition(
     assert compare_ast(class_def.body[0], expected_method_def)
 
 
-def test_add_method_raises_not_supported_for_not_async_subscription(
-    unset_import, upload_import, base_client_import
-):
+def test_add_method_raises_not_supported_for_not_async_subscription(base_client_import):
     subscription_str = "subscription GetCounter { counter }"
-    generator = ClientGenerator(
-        "Client",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(GraphQLSchema()),
+    generator = generator = ClientGenerator(
         base_client_import=base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
     )
 
     with pytest.raises(NotSupported):
@@ -646,7 +565,7 @@ def test_add_method_raises_not_supported_for_not_async_subscription(
 
 
 def test_add_method_triggers_generate_client_method_hook(
-    mocked_plugin_manager, unset_import, upload_import, base_client_import
+    mocked_plugin_manager, base_client_import
 ):
     schema_str = """
     schema { query: Query }
@@ -664,15 +583,9 @@ def test_add_method_triggers_generate_client_method_hook(
         }
     }
     """
-    generator = ClientGenerator(
-        "Client",
-        base_client="BaseClient",
-        enums_module_name="enums",
-        input_types_module_name="inputs",
-        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+    generator = generator = ClientGenerator(
         base_client_import=base_client_import,
-        unset_import=unset_import,
-        upload_import=upload_import,
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
         plugin_manager=mocked_plugin_manager,
     )
     method_name = "list_xyz"

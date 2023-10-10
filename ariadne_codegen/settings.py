@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from .client_generators.constants import (
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
@@ -27,8 +27,8 @@ class Strategy(str, enum.Enum):
 
 @dataclass
 class BaseSettings:
-    schema_path: Optional[str] = None
-    remote_schema_url: Optional[str] = None
+    schema_path: str = ""
+    remote_schema_url: str = ""
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
     plugins: List[str] = field(default_factory=list)
@@ -52,8 +52,8 @@ class ClientSettings(BaseSettings):
     target_package_path: str = field(default_factory=lambda: Path.cwd().as_posix())
     client_name: str = "Client"
     client_file_name: str = "client"
-    base_client_name: Optional[str] = None
-    base_client_file_path: Optional[str] = None
+    base_client_name: str = ""
+    base_client_file_path: str = ""
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     fragments_module_name: str = "fragments"
@@ -112,7 +112,11 @@ class ClientSettings(BaseSettings):
                 self.base_client_name = "BaseClient"
 
     @property
-    def used_settings_message(self):
+    def schema_source(self) -> str:
+        return self.schema_path if self.schema_path else self.remote_schema_url
+
+    @property
+    def used_settings_message(self) -> str:
         snake_case_msg = (
             "Converting fields and arguments name to snake case."
             if self.convert_to_snake_case

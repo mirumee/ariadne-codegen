@@ -38,6 +38,8 @@ from .constants import (
     OPTIONAL,
     TYPING_MODULE,
     UNION,
+    UNSET_IMPORT,
+    UPLOAD_IMPORT,
 )
 from .scalars import ScalarData, generate_scalar_imports
 
@@ -45,14 +47,14 @@ from .scalars import ScalarData, generate_scalar_imports
 class ClientGenerator:
     def __init__(
         self,
-        name: str,
-        base_client: str,
-        enums_module_name: str,
-        input_types_module_name: str,
-        arguments_generator: ArgumentsGenerator,
         base_client_import: ast.ImportFrom,
-        unset_import: ast.ImportFrom,
-        upload_import: ast.ImportFrom,
+        arguments_generator: ArgumentsGenerator,
+        name: str = "Client",
+        base_client: str = "AsyncBaseClient",
+        enums_module_name: str = "enums",
+        input_types_module_name: str = "input_types",
+        unset_import: ast.ImportFrom = UNSET_IMPORT,
+        upload_import: ast.ImportFrom = UPLOAD_IMPORT,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:

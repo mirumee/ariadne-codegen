@@ -114,7 +114,7 @@ def test_client_settings_without_schema_path_with_remote_schema_url_is_valid(tmp
         remote_schema_url="http://testserver/graphq/", queries_path=queries_path
     )
 
-    assert settings.schema_path is None
+    assert not settings.schema_path
 
 
 def test_client_settings_without_schema_path_or_remote_schema_url_raises_exception(
@@ -211,13 +211,13 @@ def test_graphq_schema_settings_without_remote_schema_url_with_schema_path_is_va
 
     settings = GraphQLSchemaSettings(schema_path=schema_path.as_posix())
 
-    assert settings.remote_schema_url is None
+    assert not settings.remote_schema_url
 
 
 def test_graphq_schema_settings_without_schema_path_with_remote_schema_url_is_valid():
     settings = GraphQLSchemaSettings(remote_schema_url="http://testserver/graphq/")
 
-    assert settings.schema_path is None
+    assert not settings.schema_path
 
 
 def test_graphq_schema_settings_without_schema_path_or_remote_schema_url_is_not_valid():
