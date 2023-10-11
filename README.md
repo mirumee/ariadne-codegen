@@ -147,7 +147,7 @@ type = "Upload"
 
 When config option `opentelemetry_client` is set to `true` then default, included base client is replaced with one that implements the opt-in Open Telemetry support. By default this support does nothing but when the `opentelemetry-api` package is installed and the `tracer` argument is provided then the client will create spans with data about performed requests.
 
-Telemetry arguments handled by `BaseClientOpenTelemetry`:
+Tracing arguments handled by `BaseClientOpenTelemetry`:
 - `tracer`: `Optional[Union[str, Tracer]] = None` - tracer object or name which will be passed to the `get_tracer` method
 - `root_context`: `Optional[Context] = None` - optional context added to root span
 - `root_span_name`: `str = "GraphQL Operation"` - name of root span
