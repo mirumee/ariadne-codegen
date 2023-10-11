@@ -32,10 +32,10 @@ except ImportError:
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
 
-Self = TypeVar("Self", bound="BaseClientWithTelemetry")
+Self = TypeVar("Self", bound="BaseClientOpenTelemetry")
 
 
-class BaseClientWithTelemetry:
+class BaseClientOpenTelemetry:
     def __init__(
         self,
         url: str = "",

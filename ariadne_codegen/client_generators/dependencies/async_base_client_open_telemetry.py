@@ -65,7 +65,7 @@ except ImportError:
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
 
-Self = TypeVar("Self", bound="AsyncBaseClientWithTelemetry")
+Self = TypeVar("Self", bound="AsyncBaseClientOpenTelemetry")
 
 GRAPHQL_TRANSPORT_WS = "graphql-transport-ws"
 
@@ -81,7 +81,7 @@ class GraphQLTransportWSMessageType(str, enum.Enum):
     COMPLETE = "complete"
 
 
-class AsyncBaseClientWithTelemetry:
+class AsyncBaseClientOpenTelemetry:
     def __init__(
         self,
         url: str = "",

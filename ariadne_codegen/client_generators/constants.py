@@ -74,18 +74,18 @@ DEFAULT_ASYNC_BASE_CLIENT_PATH = (
 )
 DEFAULT_ASYNC_BASE_CLIENT_NAME = "AsyncBaseClient"
 
-DEFAULT_ASYNC_BASE_CLIENT_WITH_TELEMETRY_PATH = (
-    Path(__file__).parent / "dependencies" / "async_base_client_with_telemetry.py"
+DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH = (
+    Path(__file__).parent / "dependencies" / "async_base_client_open_telemetry.py"
 )
-DEFAULT_ASYNC_BASE_CLIENT_WITH_TELEMETRY_NAME = "AsyncBaseClientWithTelemetry"
+DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME = "AsyncBaseClientOpenTelemetry"
 
 DEFAULT_BASE_CLIENT_PATH = Path(__file__).parent / "dependencies" / "base_client.py"
 DEFAULT_BASE_CLIENT_NAME = "BaseClient"
 
-DEFAULT_BASE_CLIENT_WITH_TELEMETRY_PATH = (
-    Path(__file__).parent / "dependencies" / "base_client_with_telemetry.py"
+DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH = (
+    Path(__file__).parent / "dependencies" / "base_client_open_telemetry.py"
 )
-DEFAULT_BASE_CLIENT_WITH_TELEMETRY_NAME = "BaseClientWithTelemetry"
+DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME = "BaseClientOpenTelemetry"
 
 
 GRAPHQL_CLIENT_EXCEPTIONS_NAMES = [

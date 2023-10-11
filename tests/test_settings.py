@@ -6,9 +6,9 @@ import pytest
 
 from ariadne_codegen.client_generators.dependencies import (
     async_base_client,
-    async_base_client_with_telemetry,
+    async_base_client_open_telemetry,
     base_client,
-    base_client_with_telemetry,
+    base_client_open_telemetry,
 )
 from ariadne_codegen.config import ClientSettings, GraphQLSchemaSettings
 from ariadne_codegen.exceptions import InvalidConfiguration
@@ -80,21 +80,21 @@ def test_client_settings_with_invalid_base_client_name_raises_configuration_exce
 
 
 @pytest.mark.parametrize(
-    "async_client, telemetry_client, expected_name, expected_path",
+    "async_client, opentelemetry_client, expected_name, expected_path",
     [
         (
             True,
             True,
-            "AsyncBaseClientWithTelemetry",
-            async_base_client_with_telemetry.__file__,
+            "AsyncBaseClientOpenTelemetry",
+            async_base_client_open_telemetry.__file__,
         ),
         (True, False, "AsyncBaseClient", async_base_client.__file__),
-        (False, True, "BaseClientWithTelemetry", base_client_with_telemetry.__file__),
+        (False, True, "BaseClientOpenTelemetry", base_client_open_telemetry.__file__),
         (False, False, "BaseClient", base_client.__file__),
     ],
 )
 def test_client_settings_sets_correct_default_values_for_base_client_name_and_path(
-    tmp_path, async_client, telemetry_client, expected_name, expected_path
+    tmp_path, async_client, opentelemetry_client, expected_name, expected_path
 ):
     schema_path = tmp_path / "schema.graphql"
     schema_path.touch()
@@ -105,7 +105,7 @@ def test_client_settings_sets_correct_default_values_for_base_client_name_and_pa
         schema_path=schema_path,
         queries_path=queries_path,
         async_client=async_client,
-        telemetry_client=telemetry_client,
+        opentelemetry_client=opentelemetry_client,
     )
 
     assert settings.base_client_name == expected_name

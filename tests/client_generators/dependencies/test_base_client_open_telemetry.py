@@ -6,8 +6,8 @@ from unittest.mock import ANY
 import httpx
 import pytest
 
-from ariadne_codegen.client_generators.dependencies.async_base_client_with_telemetry import (  # pylint: disable=line-too-long
-    AsyncBaseClientWithTelemetry,
+from ariadne_codegen.client_generators.dependencies.base_client_open_telemetry import (
+    BaseClientOpenTelemetry,
 )
 from ariadne_codegen.client_generators.dependencies.base_model import UNSET, BaseModel
 from ariadne_codegen.client_generators.dependencies.exceptions import (
@@ -19,11 +19,9 @@ from ariadne_codegen.client_generators.dependencies.exceptions import (
 from ...utils import decode_multipart_request
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_post_to_correct_url_with_correct_payload(httpx_mock):
+def test_execute_sends_post_to_correct_url_with_correct_payload(httpx_mock):
     httpx_mock.add_response()
-
-    client = AsyncBaseClientWithTelemetry(url="http://base_url/endpoint")
+    client = BaseClientOpenTelemetry(url="http://base_url/endpoint")
     query_str = """
     query Abc($v: String!) {
         abc(v: $v) {
@@ -32,7 +30,7 @@ async def test_execute_sends_post_to_correct_url_with_correct_payload(httpx_mock
     }
     """
 
-    await client.execute(query_str, {"v": "Xyz"})
+    client.execute(query_str, {"v": "Xyz"})
 
     request = httpx_mock.get_request()
     assert request.url == "http://base_url/endpoint"
@@ -40,8 +38,7 @@ async def test_execute_sends_post_to_correct_url_with_correct_payload(httpx_mock
     assert content == {"query": query_str, "variables": {"v": "Xyz"}}
 
 
-@pytest.mark.asyncio
-async def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
+def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
     class TestModel1(BaseModel):
         a: int
 
@@ -49,7 +46,7 @@ async def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
         nested: TestModel1
 
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
+    client = BaseClientOpenTelemetry(url="http://base_url")
     query_str = """
     query Abc($v1: TestModel1!, $v2: TestModel2) {
         abc(v1: $v1, v2: $v2){
@@ -58,7 +55,7 @@ async def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
     }
     """
 
-    await client.execute(
+    client.execute(
         query_str, {"v1": TestModel1(a=5), "v2": TestModel2(nested=TestModel1(a=10))}
     )
 
@@ -70,13 +67,12 @@ async def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
     }
 
 
-@pytest.mark.asyncio
-async def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
+def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
     class TestModel1(BaseModel):
         a: int
 
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
+    client = BaseClientOpenTelemetry(url="http://base_url")
     query_str = """
     query Abc($v1: [[TestModel1!]!]!) {
         abc(v1: $v1){
@@ -85,7 +81,7 @@ async def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
     }
     """
 
-    await client.execute(
+    client.execute(
         query_str,
         {
             "v1": [[TestModel1(a=1), TestModel1(a=2)]],
@@ -101,10 +97,9 @@ async def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
     assert not any(isinstance(x, BaseModel) for x in content["variables"]["v1"][0])
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_payload_without_unset_arguments(httpx_mock):
+def test_execute_sends_payload_without_unset_arguments(httpx_mock):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
+    client = BaseClientOpenTelemetry(url="http://base_url")
     query_str = """
     query Abc($arg1: TestInputA, $arg2: String, $arg3: Float, $arg4: Int!) {
         abc(arg1: $arg1, arg2: $arg2, arg3: $arg3, arg4: $arg4){
@@ -113,9 +108,7 @@ async def test_execute_sends_payload_without_unset_arguments(httpx_mock):
     }
     """
 
-    await client.execute(
-        query_str, {"arg1": UNSET, "arg2": UNSET, "arg3": None, "arg4": 2}
-    )
+    client.execute(query_str, {"arg1": UNSET, "arg2": UNSET, "arg3": None, "arg4": 2})
 
     request = httpx_mock.get_request()
     content = json.loads(request.content)
@@ -125,8 +118,7 @@ async def test_execute_sends_payload_without_unset_arguments(httpx_mock):
     }
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
+def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
     class TestInputB(BaseModel):
         required_b: str
         optional_b: Optional[str] = None
@@ -139,7 +131,7 @@ async def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
         input_b3: Optional[TestInputB] = None
 
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
+    client = BaseClientOpenTelemetry(url="http://base_url")
     query_str = """
     query Abc($arg: TestInputB) {
         abc(arg: $arg){
@@ -148,7 +140,7 @@ async def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
     }
     """
 
-    await client.execute(
+    client.execute(
         query_str,
         {
             "arg": TestInputA(
@@ -171,71 +163,58 @@ async def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
     }
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_payload_with_serialized_datetime_without_exception(
-    httpx_mock,
-):
+def test_execute_sends_payload_with_serialized_datetime_without_exception(httpx_mock):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
+    client = BaseClientOpenTelemetry(url="http://base_url")
     query_str = "query Abc($arg: DATETIME) { abc }"
     arg_value = datetime(2023, 12, 31, 10, 15)
 
-    await client.execute(query_str, {"arg": arg_value})
+    client.execute(query_str, {"arg": arg_value})
 
     request = httpx_mock.get_request()
     content = json.loads(request.content)
     assert content["variables"]["arg"] == arg_value.isoformat()
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_request_with_correct_content_type(httpx_mock):
+def test_execute_sends_request_with_correct_content_type(httpx_mock):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
+    client = BaseClientOpenTelemetry(url="http://base_url")
 
-    await client.execute("query Abc { abc }", {})
+    client.execute("query Abc { abc }", {})
 
     request = httpx_mock.get_request()
     assert request.headers["Content-Type"] == "application/json"
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_request_with_extra_headers_and_correct_content_type(
-    httpx_mock,
-):
+def test_execute_sends_request_with_extra_headers_and_correct_content_type(httpx_mock):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(
+    client = BaseClientOpenTelemetry(
         url="http://base_url", headers={"h_key": "h_value"}
     )
 
-    await client.execute("query Abc { abc }", {})
+    client.execute("query Abc { abc }", {})
 
     request = httpx_mock.get_request()
     assert request.headers["h_key"] == "h_value"
     assert request.headers["Content-Type"] == "application/json"
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_file_with_multipart_form_data_content_type(
-    httpx_mock, txt_file
-):
+def test_execute_sends_file_with_multipart_form_data_content_type(httpx_mock, txt_file):
     httpx_mock.add_response()
 
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
-    await client.execute(
-        "query Abc($file: Upload!) { abc(file: $file) }", {"file": txt_file}
-    )
+    client = BaseClientOpenTelemetry(url="http://base_url")
+    client.execute("query Abc($file: Upload!) { abc(file: $file) }", {"file": txt_file})
 
     request = httpx_mock.get_request()
     assert "multipart/form-data" in request.headers["Content-Type"]
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
+def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
     httpx_mock.add_response()
     query_str = "query Abc($file: Upload!) { abc(file: $file) }"
 
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
-    await client.execute(query_str, {"file": txt_file})
+    client = BaseClientOpenTelemetry(url="http://base_url")
+    client.execute(query_str, {"file": txt_file})
 
     request = httpx_mock.get_request()
     request.read()
@@ -256,13 +235,12 @@ async def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
     assert sent_parts["0"].content == b"abcdefgh"
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
+def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
     httpx_mock.add_response()
     query_str = "query Abc($file: Upload!) { abc(file: $file) }"
 
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
-    await client.execute(query_str, {"file": in_memory_txt_file})
+    client = BaseClientOpenTelemetry(url="http://base_url")
+    client.execute(query_str, {"file": in_memory_txt_file})
 
     request = httpx_mock.get_request()
     request.read()
@@ -283,13 +261,12 @@ async def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
     assert sent_parts["0"].content == b"123456"
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
+def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
     httpx_mock.add_response()
     query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
 
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
-    await client.execute(query_str, {"files": [txt_file, png_file]})
+    client = BaseClientOpenTelemetry(url="http://base_url")
+    client.execute(query_str, {"files": [txt_file, png_file]})
 
     request = httpx_mock.get_request()
     request.read()
@@ -318,16 +295,15 @@ async def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
     assert sent_parts["1"].content == b"image_content"
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_nested_file(httpx_mock, txt_file):
+def test_execute_sends_nested_file(httpx_mock, txt_file):
     class InputType(BaseModel):
         file_: Any
 
     httpx_mock.add_response()
     query_str = "query Abc($input: InputType!) { abc(input: $input) }"
 
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
-    await client.execute(query_str, {"input": InputType(file_=txt_file)})
+    client = BaseClientOpenTelemetry(url="http://base_url")
+    client.execute(query_str, {"input": InputType(file_=txt_file)})
 
     request = httpx_mock.get_request()
     request.read()
@@ -351,13 +327,12 @@ async def test_execute_sends_nested_file(httpx_mock, txt_file):
     assert sent_parts["0"].content == b"abcdefgh"
 
 
-@pytest.mark.asyncio
-async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
+def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
     httpx_mock.add_response()
     query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
 
-    client = AsyncBaseClientWithTelemetry(url="http://base_url")
-    await client.execute(query_str, {"files": [txt_file, txt_file]})
+    client = BaseClientOpenTelemetry(url="http://base_url")
+    client.execute(query_str, {"files": [txt_file, txt_file]})
 
     request = httpx_mock.get_request()
     request.read()
@@ -393,9 +368,7 @@ async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
 def test_get_data_raises_graphql_client_http_error(
     mocker, status_code, response_content
 ):
-    client = AsyncBaseClientWithTelemetry(
-        url="base_url", http_client=mocker.MagicMock()
-    )
+    client = BaseClientOpenTelemetry(url="base_url", http_client=mocker.MagicMock())
     response = httpx.Response(
         status_code=status_code, content=json.dumps(response_content)
     )
@@ -410,9 +383,7 @@ def test_get_data_raises_graphql_client_http_error(
 def test_get_data_raises_graphql_client_invalid_response_error(
     mocker, response_content
 ):
-    client = AsyncBaseClientWithTelemetry(
-        url="base_url", http_client=mocker.MagicMock()
-    )
+    client = BaseClientOpenTelemetry(url="base_url", http_client=mocker.MagicMock())
     response = httpx.Response(status_code=200, content=json.dumps(response_content))
 
     with pytest.raises(GraphQlClientInvalidResponseError) as exc:
@@ -451,9 +422,7 @@ def test_get_data_raises_graphql_client_invalid_response_error(
     ],
 )
 def test_get_data_raises_graphql_client_graphql_multi_error(mocker, response_content):
-    client = AsyncBaseClientWithTelemetry(
-        url="base_url", http_client=mocker.MagicMock()
-    )
+    client = BaseClientOpenTelemetry(url="base_url", http_client=mocker.MagicMock())
 
     with pytest.raises(GraphQLClientGraphQLMultiError):
         client.get_data(
@@ -466,9 +435,7 @@ def test_get_data_raises_graphql_client_graphql_multi_error(mocker, response_con
     [{"errors": [], "data": {}}, {"errors": None, "data": {}}, {"data": {}}],
 )
 def test_get_data_doesnt_raise_exception(mocker, response_content):
-    client = AsyncBaseClientWithTelemetry(
-        url="base_url", http_client=mocker.MagicMock()
-    )
+    client = BaseClientOpenTelemetry(url="base_url", http_client=mocker.MagicMock())
 
     data = client.get_data(
         httpx.Response(status_code=200, content=json.dumps(response_content))
@@ -477,22 +444,21 @@ def test_get_data_doesnt_raise_exception(mocker, response_content):
     assert data == response_content["data"]
 
 
-@pytest.mark.asyncio
-async def test_base_client_used_as_context_manager_closes_http_client(mocker):
-    fake_client = mocker.AsyncMock()
-    async with AsyncBaseClientWithTelemetry(
+def test_base_client_used_as_context_manager_closes_http_client(mocker):
+    fake_client = mocker.MagicMock()
+    with BaseClientOpenTelemetry(
         url="base_url", http_client=fake_client
     ) as base_client:
-        await base_client.execute("")
+        base_client.execute("")
 
-    assert fake_client.aclose.called
+    assert fake_client.close.called
 
 
 @pytest.fixture
 def mocker_get_tracer(mocker):
     return mocker.patch(
         "ariadne_codegen.client_generators.dependencies."
-        "async_base_client_with_telemetry.get_tracer"
+        "base_client_open_telemetry.get_tracer"
     )
 
 
@@ -501,65 +467,58 @@ def mocked_start_as_current_span(mocker_get_tracer):
     return mocker_get_tracer.return_value.start_as_current_span
 
 
-@pytest.mark.asyncio
-async def test_async_base_client_with_given_tracker_str_uses_global_tracker(
-    mocker_get_tracer,
-):
-    AsyncBaseClientWithTelemetry(url="http://base_url", tracer="tracker name")
+def test_base_client_with_given_tracker_str_uses_global_tracker(mocker_get_tracer):
+    BaseClientOpenTelemetry(url="http://base_url", tracer="tracker name")
 
     assert mocker_get_tracer.call_count == 1
 
 
-@pytest.mark.asyncio
-async def test_execute_creates_root_span(httpx_mock, mocked_start_as_current_span):
+def test_execute_creates_root_span(httpx_mock, mocked_start_as_current_span):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url", tracer="tracker")
+    client = BaseClientOpenTelemetry(url="http://base_url", tracer="tracker")
 
-    await client.execute("query GetHello { hello }")
+    client.execute("query GetHello { hello }")
 
     mocked_start_as_current_span.assert_any_call("GraphQL Operation", context=ANY)
     with mocked_start_as_current_span.return_value as span:
         span.set_attribute.assert_any_call("component", "GraphQL Client")
 
 
-@pytest.mark.asyncio
-async def test_execute_creates_root_span_with_custom_name(
+def test_execute_creates_root_span_with_custom_name(
     httpx_mock, mocked_start_as_current_span
 ):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(
+    client = BaseClientOpenTelemetry(
         url="http://base_url", tracer="tracker", root_span_name="root_span"
     )
 
-    await client.execute("query GetHello { hello }")
+    client.execute("query GetHello { hello }")
 
     mocked_start_as_current_span.assert_any_call("root_span", context=ANY)
 
 
-@pytest.mark.asyncio
-async def test_execute_creates_root_span_with_custom_context(
+def test_execute_creates_root_span_with_custom_context(
     httpx_mock, mocked_start_as_current_span
 ):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(
+    client = BaseClientOpenTelemetry(
         url="http://base_url", tracer="tracker", root_context={"abc": 123}
     )
 
-    await client.execute("query GetHello { hello }")
+    client.execute("query GetHello { hello }")
 
     mocked_start_as_current_span.assert_any_call(
         "GraphQL Operation", context={"abc": 123}
     )
 
 
-@pytest.mark.asyncio
-async def test_execute_creates_span_for_json_http_request(
+def test_execute_creates_span_for_json_http_request(
     httpx_mock, mocked_start_as_current_span
 ):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url", tracer="tracker")
+    client = BaseClientOpenTelemetry(url="http://base_url", tracer="tracker")
 
-    await client.execute("query GetHello { hello }", variables={"a": 1, "b": {"bb": 2}})
+    client.execute("query GetHello { hello }", variables={"a": 1, "b": {"bb": 2}})
 
     mocked_start_as_current_span.assert_any_call("json request", context=ANY)
     with mocked_start_as_current_span.return_value as span:
@@ -570,14 +529,13 @@ async def test_execute_creates_span_for_json_http_request(
         )
 
 
-@pytest.mark.asyncio
-async def test_execute_creates_span_for_multipart_request(
+def test_execute_creates_span_for_multipart_request(
     httpx_mock, txt_file, mocked_start_as_current_span
 ):
     httpx_mock.add_response()
-    client = AsyncBaseClientWithTelemetry(url="http://base_url", tracer="tracker")
+    client = BaseClientOpenTelemetry(url="http://base_url", tracer="tracker")
 
-    await client.execute(
+    client.execute(
         "query Abc($file: Upload!) { abc(file: $file) }",
         {"file": txt_file, "a": 1.0, "b": {"bb": 2}},
     )

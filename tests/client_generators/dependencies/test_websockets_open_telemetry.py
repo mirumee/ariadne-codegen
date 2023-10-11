@@ -3,8 +3,8 @@ from unittest.mock import ANY
 
 import pytest
 
-from ariadne_codegen.client_generators.dependencies.async_base_client_with_telemetry import (  # pylint: disable=line-too-long
-    AsyncBaseClientWithTelemetry,
+from ariadne_codegen.client_generators.dependencies.async_base_client_open_telemetry import (  # pylint: disable=line-too-long
+    AsyncBaseClientOpenTelemetry,
 )
 from ariadne_codegen.client_generators.dependencies.exceptions import (
     GraphQLClientGraphQLMultiError,
@@ -16,7 +16,7 @@ from ariadne_codegen.client_generators.dependencies.exceptions import (
 def mocked_ws_connect(mocker):
     return mocker.patch(
         "ariadne_codegen.client_generators.dependencies."
-        "async_base_client_with_telemetry.ws_connect"
+        "async_base_client_open_telemetry.ws_connect"
     )
 
 
@@ -33,7 +33,7 @@ def mocked_websocket(mocked_ws_connect):
 async def test_execute_ws_creates_websocket_connection_with_correct_url(
     mocked_ws_connect,
 ):
-    async for _ in AsyncBaseClientWithTelemetry(ws_url="ws://test_url").execute_ws(""):
+    async for _ in AsyncBaseClientOpenTelemetry(ws_url="ws://test_url").execute_ws(""):
         pass
 
     assert mocked_ws_connect.called
@@ -44,7 +44,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_url(
 async def test_execute_ws_creates_websocket_connection_with_correct_subprotocol(
     mocked_ws_connect,
 ):
-    async for _ in AsyncBaseClientWithTelemetry().execute_ws(""):
+    async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
         pass
 
     assert mocked_ws_connect.called
@@ -57,7 +57,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_subprotocol(
 async def test_execute_ws_creates_websocket_connection_with_correct_origin(
     mocked_ws_connect,
 ):
-    async for _ in AsyncBaseClientWithTelemetry(ws_origin="test_origin").execute_ws(""):
+    async for _ in AsyncBaseClientOpenTelemetry(ws_origin="test_origin").execute_ws(""):
         pass
 
     assert mocked_ws_connect.called
@@ -68,7 +68,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_origin(
 async def test_execute_ws_creates_websocket_connection_with_correct_headers(
     mocked_ws_connect,
 ):
-    async for _ in AsyncBaseClientWithTelemetry(
+    async for _ in AsyncBaseClientOpenTelemetry(
         ws_headers={"test_key": "test_value"}
     ).execute_ws(""):
         pass
@@ -81,7 +81,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_headers(
 
 @pytest.mark.asyncio
 async def test_execute_ws_sends_correct_init_connection_data(mocked_websocket):
-    async for _ in AsyncBaseClientWithTelemetry(
+    async for _ in AsyncBaseClientOpenTelemetry(
         ws_connection_init_payload={"test_key": "test_value"}
     ).execute_ws(""):
         pass
@@ -97,7 +97,7 @@ async def test_execute_ws_sends_correct_subscribe_data(mocked_websocket):
     query_str = "query testQuery($arg: String!) { test(arg: $arg) }"
     variables = {"arg": "test_value"}
 
-    async for _ in AsyncBaseClientWithTelemetry().execute_ws(
+    async for _ in AsyncBaseClientOpenTelemetry().execute_ws(
         query=query_str, variables=variables
     ):
         pass
@@ -115,7 +115,7 @@ async def test_execute_ws_yields_data_for_next_message(mocked_websocket):
     )
 
     received_data = []
-    async for data in AsyncBaseClientWithTelemetry().execute_ws(""):
+    async for data in AsyncBaseClientOpenTelemetry().execute_ws(""):
         received_data.append(data)
 
     assert received_data == ["test_data"]
@@ -132,7 +132,7 @@ async def test_execute_ws_yields_handles_multiple_next_messages(mocked_websocket
     )
 
     received_data = []
-    async for data in AsyncBaseClientWithTelemetry().execute_ws(""):
+    async for data in AsyncBaseClientOpenTelemetry().execute_ws(""):
         received_data.append(data)
 
     assert received_data == ["A", "B", "C"]
@@ -142,7 +142,7 @@ async def test_execute_ws_yields_handles_multiple_next_messages(mocked_websocket
 async def test_execute_ws_closes_websocket_for_complete_message(mocked_websocket):
     mocked_websocket.__aiter__.return_value.append(json.dumps({"type": "complete"}))
 
-    async for _ in AsyncBaseClientWithTelemetry().execute_ws(""):
+    async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
         pass
 
     assert mocked_websocket.close.called
@@ -152,7 +152,7 @@ async def test_execute_ws_closes_websocket_for_complete_message(mocked_websocket
 async def test_execute_ws_sends_pong_for_ping_message(mocked_websocket):
     mocked_websocket.__aiter__.return_value.append(json.dumps({"type": "ping"}))
 
-    async for _ in AsyncBaseClientWithTelemetry().execute_ws(""):
+    async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
         pass
 
     pong_call = mocked_websocket.send.mock_calls[-1]
@@ -167,7 +167,7 @@ async def test_execute_ws_raises_invalid_message_format_for_not_json_message(
     mocked_websocket.__aiter__.return_value.append("not_valid_json")
 
     with pytest.raises(GraphQLClientInvalidMessageFormat):
-        async for _ in AsyncBaseClientWithTelemetry().execute_ws(""):
+        async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
             pass
 
 
@@ -178,7 +178,7 @@ async def test_execute_ws_raises_invalid_message_format_for_message_without_type
     mocked_websocket.__aiter__.return_value.append(json.dumps({"payload": {}}))
 
     with pytest.raises(GraphQLClientInvalidMessageFormat):
-        async for _ in AsyncBaseClientWithTelemetry().execute_ws(""):
+        async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
             pass
 
 
@@ -189,7 +189,7 @@ async def test_execute_ws_raises_invalid_message_format_for_message_with_invalid
     mocked_websocket.__aiter__.return_value.append(json.dumps({"type": "invalid_type"}))
 
     with pytest.raises(GraphQLClientInvalidMessageFormat):
-        async for _ in AsyncBaseClientWithTelemetry().execute_ws(""):
+        async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
             pass
 
 
@@ -202,7 +202,7 @@ async def test_execute_ws_raises_invalid_message_format_for_next_payload_without
     )
 
     with pytest.raises(GraphQLClientInvalidMessageFormat):
-        async for _ in AsyncBaseClientWithTelemetry().execute_ws(""):
+        async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
             pass
 
 
@@ -215,7 +215,7 @@ async def test_execute_ws_raises_graphql_multi_error_for_message_with_error_type
     )
 
     with pytest.raises(GraphQLClientGraphQLMultiError):
-        async for _ in AsyncBaseClientWithTelemetry().execute_ws(""):
+        async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
             pass
 
 
@@ -223,7 +223,7 @@ async def test_execute_ws_raises_graphql_multi_error_for_message_with_error_type
 def mocked_start_as_current_span(mocker):
     mocker_get_tracer = mocker.patch(
         "ariadne_codegen.client_generators.dependencies."
-        "async_base_client_with_telemetry.get_tracer"
+        "async_base_client_open_telemetry.get_tracer"
     )
     return mocker_get_tracer.return_value.start_as_current_span
 
@@ -232,7 +232,7 @@ def mocked_start_as_current_span(mocker):
 async def test_execute_ws_creates_root_span(
     mocked_start_as_current_span, mocked_websocket  # pylint: disable=unused-argument
 ):
-    client = AsyncBaseClientWithTelemetry(ws_url="ws://test_url", tracer="tracker")
+    client = AsyncBaseClientOpenTelemetry(ws_url="ws://test_url", tracer="tracker")
 
     async for _ in client.execute_ws(""):
         pass
@@ -246,7 +246,7 @@ async def test_execute_ws_creates_root_span(
 async def test_execute_ws_creates_root_span_with_custom_name(
     mocked_start_as_current_span, mocked_websocket  # pylint: disable=unused-argument
 ):
-    client = AsyncBaseClientWithTelemetry(
+    client = AsyncBaseClientOpenTelemetry(
         ws_url="ws://test_url", tracer="tracker", ws_root_span_name="ws root span"
     )
 
@@ -262,7 +262,7 @@ async def test_execute_ws_creates_root_span_with_custom_name(
 async def test_execute_ws_creates_root_span_with_custom_context(
     mocked_start_as_current_span, mocked_websocket  # pylint: disable=unused-argument
 ):
-    client = AsyncBaseClientWithTelemetry(
+    client = AsyncBaseClientOpenTelemetry(
         ws_url="ws://test_url", tracer="tracker", ws_root_context={"value": "test"}
     )
 
@@ -280,7 +280,7 @@ async def test_execute_ws_creates_root_span_with_custom_context(
 async def test_execute_ws_creates_span_for_init_message(
     mocked_start_as_current_span, mocked_websocket  # pylint: disable=unused-argument):
 ):
-    client = AsyncBaseClientWithTelemetry(ws_url="ws://test_url", tracer="tracker")
+    client = AsyncBaseClientOpenTelemetry(ws_url="ws://test_url", tracer="tracker")
 
     async for _ in client.execute_ws(""):
         pass
@@ -294,7 +294,7 @@ async def test_execute_ws_creates_span_for_init_message(
 async def test_execute_ws_creates_span_for_subscribe_message(
     mocked_start_as_current_span, mocked_websocket  # pylint: disable=unused-argument):
 ):
-    client = AsyncBaseClientWithTelemetry(ws_url="ws://test_url", tracer="tracker")
+    client = AsyncBaseClientOpenTelemetry(ws_url="ws://test_url", tracer="tracker")
 
     async for _ in client.execute_ws(
         "subscription Abc(a: String, b: InputB) { value }",
@@ -320,7 +320,7 @@ async def test_execute_ws_creates_span_for_received_message(
     received_message, mocked_websocket, mocked_start_as_current_span
 ):
     mocked_websocket.__aiter__.return_value.append(json.dumps(received_message))
-    client = AsyncBaseClientWithTelemetry(ws_url="ws://test_url", tracer="tracker")
+    client = AsyncBaseClientOpenTelemetry(ws_url="ws://test_url", tracer="tracker")
 
     async for _ in client.execute_ws(""):
         pass
@@ -337,7 +337,7 @@ async def test_execute_ws_creates_span_for_received_error_message(
     mocked_websocket.__aiter__.return_value.append(
         json.dumps({"type": "error", "payload": [{"message": "error_message"}]})
     )
-    client = AsyncBaseClientWithTelemetry(ws_url="ws://test_url", tracer="tracker")
+    client = AsyncBaseClientOpenTelemetry(ws_url="ws://test_url", tracer="tracker")
 
     with pytest.raises(GraphQLClientGraphQLMultiError):
         async for _ in client.execute_ws(""):
