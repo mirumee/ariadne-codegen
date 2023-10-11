@@ -76,6 +76,7 @@ Optional settings:
 - `include_comments` (defaults to `"stable"`) - option which sets content of comments included at the top of every generated file. Valid choices are: `"none"` (no comments), `"timestamp"` (comment with generation timestamp), `"stable"` (comment contains a message that this is a generated file)
 - `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
+- `opentelemetry_client` (defaults to `false`) - default base clients don't support any performance tracing. Change this option to `true` to use the base client with Open Telemetry support.
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 
@@ -140,6 +141,20 @@ By default we use this class to represent graphql scalar `Upload`. For schema wi
 [tool.ariadne-codegen.scalars.OTHERSCALAR]
 type = "Upload"
 ```
+
+
+### Open Telemetry
+
+When config option `opentelemetry_client` is set to `true` then default, included base client is replaced with one that implements the opt-in Open Telemetry support. By default this support does nothing but when the `opentelemetry-api` package is installed and the `tracer` argument is provided then the client will create spans with data about performed requests.
+
+Tracing arguments handled by `BaseClientOpenTelemetry`:
+- `tracer`: `Optional[Union[str, Tracer]] = None` - tracer object or name which will be passed to the `get_tracer` method
+- `root_context`: `Optional[Context] = None` - optional context added to root span
+- `root_span_name`: `str = "GraphQL Operation"` - name of root span
+
+`AsyncBaseClientOpenTelemetry` supports all arguments which `BaseClientOpenTelemetry` does, but also exposes additional arguments regarding websockets:
+- `ws_root_context`: `Optional[Context] = None` - optional context added to root span for websocket connection
+- `ws_root_span_name`: `str = "GraphQL Subscription"` - name of root span for websocket connection
 
 
 ## Custom scalars

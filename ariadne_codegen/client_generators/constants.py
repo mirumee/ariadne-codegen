@@ -68,10 +68,25 @@ MIXIN_IMPORT_NAME = "import"
 SKIP_DIRECTIVE_NAME = "skip"
 INCLUDE_DIRECTIVE_NAME = "include"
 
+
 DEFAULT_ASYNC_BASE_CLIENT_PATH = (
     Path(__file__).parent / "dependencies" / "async_base_client.py"
 )
+DEFAULT_ASYNC_BASE_CLIENT_NAME = "AsyncBaseClient"
+
+DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH = (
+    Path(__file__).parent / "dependencies" / "async_base_client_open_telemetry.py"
+)
+DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME = "AsyncBaseClientOpenTelemetry"
+
 DEFAULT_BASE_CLIENT_PATH = Path(__file__).parent / "dependencies" / "base_client.py"
+DEFAULT_BASE_CLIENT_NAME = "BaseClient"
+
+DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH = (
+    Path(__file__).parent / "dependencies" / "base_client_open_telemetry.py"
+)
+DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME = "BaseClientOpenTelemetry"
+
 
 GRAPHQL_CLIENT_EXCEPTIONS_NAMES = [
     "GraphQLClientError",

@@ -16,7 +16,9 @@ from .constants import (
     BASE_MODEL_CLASS_NAME,
     BASE_MODEL_FILE_PATH,
     BASE_MODEL_IMPORT,
+    DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
+    DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_BASE_CLIENT_PATH,
     EXCEPTIONS_FILE_PATH,
     GRAPHQL_CLIENT_EXCEPTIONS_NAMES,
@@ -172,6 +174,8 @@ class PackageGenerator:
         if self.base_client_file_path in (
             DEFAULT_ASYNC_BASE_CLIENT_PATH,
             DEFAULT_BASE_CLIENT_PATH,
+            DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
+            DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
         ):
             self.files_to_include.append(EXCEPTIONS_FILE_PATH)
             self.init_generator.add_import(

@@ -29,7 +29,9 @@ except ImportError:
     WebSocketClientProtocol = Any  # type: ignore
     Data = Any  # type: ignore
     Origin = Any  # type: ignore
-    Subprotocol = Any  # type: ignore
+
+    def Subprotocol(*args, **kwargs):  # type: ignore # pylint: disable=invalid-name
+        raise NotImplementedError("Subscriptions require 'websockets' package.")
 
 
 Self = TypeVar("Self", bound="AsyncBaseClient")
@@ -64,6 +66,7 @@ class AsyncBaseClient:
         self.http_client = (
             http_client if http_client else httpx.AsyncClient(headers=headers)
         )
+
         self.ws_url = ws_url
         self.ws_headers = ws_headers or {}
         self.ws_origin = Origin(ws_origin) if ws_origin else None
@@ -84,16 +87,16 @@ class AsyncBaseClient:
         self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> httpx.Response:
         processed_variables, files, files_map = self._process_variables(variables)
-        payload: Dict[str, Any] = {"query": query, "variables": processed_variables}
 
         if files and files_map:
             return await self._execute_multipart(
-                payload=payload,
+                query=query,
+                variables=processed_variables,
                 files=files,
                 files_map=files_map,
             )
 
-        return await self._execute_json(payload=payload)
+        return await self._execute_json(query=query, variables=processed_variables)
 
     def get_data(self, response: httpx.Response) -> Dict[str, Any]:
         if not response.is_success:
@@ -213,21 +216,31 @@ class AsyncBaseClient:
 
     async def _execute_multipart(
         self,
-        payload: Dict[str, Any],
+        query: str,
+        variables: Dict[str, Any],
         files: Dict[str, Tuple[str, IO[bytes], str]],
         files_map: Dict[str, List[str]],
     ) -> httpx.Response:
         data = {
-            "operations": json.dumps(payload, default=to_jsonable_python),
+            "operations": json.dumps(
+                {"query": query, "variables": variables}, default=to_jsonable_python
+            ),
             "map": json.dumps(files_map, default=to_jsonable_python),
         }
 
         return await self.http_client.post(url=self.url, data=data, files=files)
 
-    async def _execute_json(self, payload: Dict[str, Any]) -> httpx.Response:
-        content = json.dumps(payload, default=to_jsonable_python)
+    async def _execute_json(
+        self,
+        query: str,
+        variables: Dict[str, Any],
+    ) -> httpx.Response:
         return await self.http_client.post(
-            url=self.url, content=content, headers={"Content-Type": "application/json"}
+            url=self.url,
+            content=json.dumps(
+                {"query": query, "variables": variables}, default=to_jsonable_python
+            ),
+            headers={"Content-Type": "application/json"},
         )
 
     async def _send_connection_init(self, websocket: WebSocketClientProtocol) -> None:

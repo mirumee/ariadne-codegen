@@ -1,5 +1,5 @@
 import json
-from typing import IO, Any, Dict, List, Optional, Tuple, TypeVar, cast
+from typing import IO, Any, Dict, List, Optional, Tuple, TypeVar, Union, cast
 
 import httpx
 from pydantic import BaseModel
@@ -12,20 +12,49 @@ from .exceptions import (
     GraphQlClientInvalidResponseError,
 )
 
-Self = TypeVar("Self", bound="BaseClient")
+try:
+    from opentelemetry.trace import (  # type: ignore[attr-defined]
+        Context,
+        Span,
+        Tracer,
+        get_tracer,
+        set_span_in_context,
+    )
+except ImportError:
+    Context = Any  # type: ignore
+    Span = Any  # type: ignore
+    Tracer = Any  # type: ignore
+
+    def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
+        raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
+
+    def set_span_in_context(*args, **kwargs):  # type: ignore
+        raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
 
-class BaseClient:
+Self = TypeVar("Self", bound="BaseClientOpenTelemetry")
+
+
+class BaseClientOpenTelemetry:
     def __init__(
         self,
         url: str = "",
         headers: Optional[Dict[str, str]] = None,
         http_client: Optional[httpx.Client] = None,
+        tracer: Optional[Union[str, Tracer]] = None,
+        root_context: Optional[Context] = None,
+        root_span_name: Optional[str] = None,
     ) -> None:
         self.url = url
         self.headers = headers
 
         self.http_client = http_client if http_client else httpx.Client(headers=headers)
+
+        self.tracer: Optional[Tracer] = (
+            get_tracer(tracer) if isinstance(tracer, str) else tracer
+        )
+        self.root_context = root_context
+        self.root_span_name = root_span_name if root_span_name else "GraphQL Operation"
 
     def __enter__(self: Self) -> Self:
         return self
@@ -41,17 +70,9 @@ class BaseClient:
     def execute(
         self, query: str, variables: Optional[Dict[str, Any]] = None
     ) -> httpx.Response:
-        processed_variables, files, files_map = self._process_variables(variables)
-
-        if files and files_map:
-            return self._execute_multipart(
-                query=query,
-                variables=processed_variables,
-                files=files,
-                files_map=files_map,
-            )
-
-        return self._execute_json(query=query, variables=processed_variables)
+        if self.tracer:
+            return self._execute_with_telemetry(query=query, variables=variables)
+        return self._execute(query=query, variables=variables)
 
     def get_data(self, response: httpx.Response) -> dict[str, Any]:
         if not response.is_success:
@@ -76,6 +97,21 @@ class BaseClient:
             )
 
         return cast(dict[str, Any], data)
+
+    def _execute(
+        self, query: str, variables: Optional[Dict[str, Any]] = None
+    ) -> httpx.Response:
+        processed_variables, files, files_map = self._process_variables(variables)
+
+        if files and files_map:
+            return self._execute_multipart(
+                query=query,
+                variables=processed_variables,
+                files=files,
+                files_map=files_map,
+            )
+
+        return self._execute_json(query=query, variables=processed_variables)
 
     def _process_variables(
         self, variables: Optional[Dict[str, Any]]
@@ -170,3 +206,65 @@ class BaseClient:
             ),
             headers={"Content-Type": "application/json"},
         )
+
+    def _execute_with_telemetry(
+        self, query: str, variables: Optional[Dict[str, Any]] = None
+    ) -> httpx.Response:
+        with self.tracer.start_as_current_span(  # type: ignore
+            self.root_span_name, context=self.root_context
+        ) as root_span:
+            root_span.set_attribute("component", "GraphQL Client")
+
+            processed_variables, files, files_map = self._process_variables(variables)
+
+            if files and files_map:
+                return self._execute_multipart_with_telemetry(
+                    root_span=root_span,
+                    query=query,
+                    variables=processed_variables,
+                    files=files,
+                    files_map=files_map,
+                )
+
+            return self._execute_json_with_telemetry(
+                root_span=root_span, query=query, variables=processed_variables
+            )
+
+    def _execute_multipart_with_telemetry(
+        self,
+        root_span: Span,
+        query: str,
+        variables: Dict[str, Any],
+        files: Dict[str, Tuple[str, IO[bytes], str]],
+        files_map: Dict[str, List[str]],
+    ) -> httpx.Response:
+        with self.tracer.start_as_current_span(  # type: ignore
+            "multipart request", context=set_span_in_context(root_span)
+        ) as span:
+            span.set_attribute("component", "GraphQL Client")
+
+            serialized_variables = json.dumps(variables, default=to_jsonable_python)
+            serialized_map = json.dumps(files_map, default=to_jsonable_python)
+
+            span.set_attribute("query", query)
+            span.set_attribute("variables", serialized_variables)
+            span.set_attribute("map", serialized_map)
+
+            return self._execute_multipart(
+                query=query, variables=variables, files=files, files_map=files_map
+            )
+
+    def _execute_json_with_telemetry(
+        self, root_span: Span, query: str, variables: Dict[str, Any]
+    ) -> httpx.Response:
+        with self.tracer.start_as_current_span(  # type: ignore
+            "json request", context=set_span_in_context(root_span)
+        ) as span:
+            span.set_attribute("component", "GraphQL Client")
+
+            serialized_variables = json.dumps(variables, default=to_jsonable_python)
+
+            span.set_attribute("query", query)
+            span.set_attribute("variables", serialized_variables)
+
+            return self._execute_json(query=query, variables=variables)
