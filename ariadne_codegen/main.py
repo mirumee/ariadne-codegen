@@ -3,7 +3,7 @@ import sys
 import click
 from graphql import assert_valid_schema
 
-from .client_generators.package import PackageGenerator
+from .client_generators.package import get_package_generator
 from .config import get_client_settings, get_config_dict, get_graphql_schema_settings
 from .graphql_schema_generators.schema import generate_graphql_schema_file
 from .plugins.explorer import get_plugins_types
@@ -42,14 +42,12 @@ def client(config_dict):
 
     if settings.schema_path:
         schema = get_graphql_schema_from_path(settings.schema_path)
-        schema_source = settings.schema_path
     else:
         schema = get_graphql_schema_from_url(
             url=settings.remote_schema_url,
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
         )
-        schema_source = settings.remote_schema_url
 
     plugin_manager = PluginManager(
         schema=schema,
@@ -66,24 +64,10 @@ def client(config_dict):
 
     sys.stdout.write(settings.used_settings_message)
 
-    package_generator = PackageGenerator(
-        package_name=settings.target_package_name,
-        target_path=settings.target_package_path,
+    package_generator = get_package_generator(
         schema=schema,
-        client_name=settings.client_name,
-        client_file_name=settings.client_file_name,
-        base_client_name=settings.base_client_name,
-        base_client_file_path=settings.base_client_file_path,
-        input_types_module_name=settings.input_types_module_name,
-        fragments_module_name=settings.fragments_module_name,
-        queries_source=settings.queries_path,
-        schema_source=schema_source,
-        comments_strategy=settings.include_comments,
         fragments=fragments,
-        convert_to_snake_case=settings.convert_to_snake_case,
-        async_client=settings.async_client,
-        files_to_include=settings.files_to_include,
-        custom_scalars=settings.scalars,
+        settings=settings,
         plugin_manager=plugin_manager,
     )
     for query in queries:

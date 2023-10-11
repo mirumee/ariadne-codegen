@@ -69,7 +69,7 @@ Optional settings:
 - `client_name` (defaults to `"Client"`) - name of generated client class
 - `client_file_name` (defaults to `"client"`) - name of file with generated client class
 - `base_client_name` (defaults to `"AsyncBaseClient"`) - name of base client class
-- `base_client_file_path` (defaults to `.../graphql_sdk_gen/generators/async_base_client.py`) - path to file where `base_client_name` is defined
+- `base_client_file_path` (defaults to `.../ariadne_codegen/client_generators/dependencies/async_base_client.py`) - path to file where `base_client_name` is defined
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `fragments_module_name` (defaults to `"fragments"`) - name of file with generated fragments models

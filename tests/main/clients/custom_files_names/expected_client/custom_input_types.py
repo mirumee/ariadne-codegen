@@ -1,5 +1,5 @@
 from .base_model import BaseModel
-from .enums import enumA
+from .custom_enums import enumA
 
 
 class inputA(BaseModel):

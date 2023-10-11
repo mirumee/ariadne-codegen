@@ -84,14 +84,9 @@ from ...utils import compare_ast, filter_class_defs
     ],
 )
 def test_generate_returns_module_with_parsed_input_types(
-    schema_str, expected_class_defs, base_model_import, upload_import
+    schema_str, expected_class_defs
 ):
-    generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)),
-        enums_module="enums",
-        base_model_import=base_model_import,
-        upload_import=upload_import,
-    )
+    generator = InputTypesGenerator(schema=build_ast_schema(parse(schema_str)))
 
     module = generator.generate()
 
@@ -99,9 +94,7 @@ def test_generate_returns_module_with_parsed_input_types(
     assert compare_ast(class_defs, expected_class_defs)
 
 
-def test_generate_returns_module_with_classes_in_the_same_order_as_declared(
-    base_model_import, upload_import
-):
+def test_generate_returns_module_with_classes_in_the_same_order_as_declared():
     schema_str = """
     input BeforeInput {
         field: Boolean!
@@ -130,12 +123,7 @@ def test_generate_returns_module_with_classes_in_the_same_order_as_declared(
         "NestedInput",
         "AfterInput",
     ]
-    generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)),
-        enums_module="enums",
-        base_model_import=base_model_import,
-        upload_import=upload_import,
-    )
+    generator = InputTypesGenerator(schema=build_ast_schema(parse(schema_str)))
 
     module = generator.generate()
 

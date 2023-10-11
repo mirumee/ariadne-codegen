@@ -3,58 +3,45 @@ from textwrap import dedent
 
 import pytest
 from freezegun import freeze_time
-from graphql import GraphQLSchema, build_ast_schema, parse
+from graphql import GraphQLSchema, parse
 
+from ariadne_codegen.client_generators.arguments import ArgumentsGenerator
+from ariadne_codegen.client_generators.client import ClientGenerator
 from ariadne_codegen.client_generators.constants import (
+    EXCEPTIONS_FILE_PATH,
     SOURCE_COMMENT,
     STABLE_COMMENT,
     TIMESTAMP_COMMENT,
 )
+from ariadne_codegen.client_generators.enums import EnumsGenerator
+from ariadne_codegen.client_generators.fragments import FragmentsGenerator
+from ariadne_codegen.client_generators.init_file import InitFileGenerator
+from ariadne_codegen.client_generators.input_types import InputTypesGenerator
 from ariadne_codegen.client_generators.package import PackageGenerator
 from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.exceptions import ParsingError
 from ariadne_codegen.settings import CommentsStrategy
 
-from ..utils import get_class_def
-
-SCHEMA_STR = """
-schema {
-    query: Query
-}
-
-type Query {
-    query1(id: ID!, param: SCALARABC): CustomType
-    query2: [CustomType!]
-    query3(val: CustomEnum!): [CustomType]
-}
-
-type CustomType {
-    id: ID!
-    field1: [String]
-    field2: CustomType2
-    field3: CustomEnum!
-}
-
-type CustomType2 {
-    fieldb: Int
-}
-
-enum CustomEnum {
-    VAL1
-    VAL2
-}
-
-input CustomInput {
-    value: Int!
-}
-
-scalar SCALARABC
-"""
+from ...utils import get_class_def
 
 
-def test_generate_creates_directory_and_files(tmp_path):
+def test_generate_creates_directory_and_files(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
-    generator = PackageGenerator(package_name, tmp_path.as_posix(), GraphQLSchema())
+    generator = PackageGenerator(
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
+    )
 
     generator.generate()
 
@@ -81,9 +68,24 @@ def test_generate_creates_directory_and_files(tmp_path):
     assert base_model_path.is_file()
 
 
-def test_generate_creates_files_with_correct_imports(tmp_path):
+def test_generate_creates_files_with_correct_imports(
+    tmp_path, async_base_client_import
+):
     package_name = "test_graphql_client"
-    generator = PackageGenerator(package_name, tmp_path.as_posix(), GraphQLSchema())
+    schema = GraphQLSchema()
+    generator = PackageGenerator(
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
+    )
 
     generator.generate()
 
@@ -117,10 +119,20 @@ def test_generate_creates_files_with_correct_imports(tmp_path):
         assert "from .async_base_client import AsyncBaseClient" in client_content
 
 
-def test_generate_creates_files_with_types(tmp_path):
+def test_generate_creates_files_with_types(tmp_path, schema, async_base_client_import):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
     expected_input_types = """
     class CustomInput(BaseModel):
@@ -147,10 +159,22 @@ def test_generate_creates_files_with_types(tmp_path):
         assert dedent(expected_enums) in enums_content
 
 
-def test_generate_creates_file_with_query_types(tmp_path):
+def test_generate_creates_file_with_query_types(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
     query_str = """
     query CustomQuery($id: ID!, $param: String) {
@@ -191,10 +215,22 @@ def test_generate_creates_file_with_query_types(tmp_path):
         )
 
 
-def test_generate_creates_multiple_query_types_files(tmp_path):
+def test_generate_creates_multiple_query_types_files(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
     query_str = """
     query CustomQuery1 {
@@ -223,7 +259,7 @@ def test_generate_creates_multiple_query_types_files(tmp_path):
     assert query2_file_path.is_file()
 
 
-def test_generate_copies_base_client_file(tmp_path):
+def test_generate_copies_base_client_file(tmp_path, schema, async_base_client_import):
     base_client_file_content = """
     class TestBaseClient:
         pass
@@ -232,9 +268,17 @@ def test_generate_copies_base_client_file(tmp_path):
     base_client_file_path = tmp_path / "test_base_client.py"
     base_client_file_path.write_text(dedent(base_client_file_content))
     generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         base_client_name="TestBaseClient",
         base_client_file_path=base_client_file_path.as_posix(),
     )
@@ -249,12 +293,22 @@ def test_generate_copies_base_client_file(tmp_path):
         assert dedent(base_client_file_content) in dedent(copied_content)
 
 
-def test_generate_creates_client_with_valid_method_names(tmp_path):
+def test_generate_creates_client_with_valid_method_names(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         async_client=False,
     )
     query_str = """
@@ -281,12 +335,23 @@ def test_generate_creates_client_with_valid_method_names(tmp_path):
         assert function.name == "from_"
 
 
-def test_generate_with_conflicting_query_name_raises_parsing_error(tmp_path):
+def test_generate_with_conflicting_query_name_raises_parsing_error(
+    tmp_path, schema, async_base_client_import
+):
     generator = PackageGenerator(
-        "test_graphql_client",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
+        package_name="test_graphql_client",
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         input_types_module_name="input_types",
+        convert_to_snake_case=True,
     )
     query_str = """
     query InputTypes {
@@ -302,13 +367,21 @@ def test_generate_with_conflicting_query_name_raises_parsing_error(tmp_path):
 
 
 def test_generate_with_enum_as_query_argument_generates_client_with_correct_method(
-    tmp_path,
+    tmp_path, schema, async_base_client_import
 ):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         async_client=True,
     )
     query_str = """
@@ -332,10 +405,22 @@ def test_generate_with_enum_as_query_argument_generates_client_with_correct_meth
         assert expected_enum_import in client_content
 
 
-def test_generate_creates_client_file_with_gql_lambda_definition(tmp_path):
+def test_generate_creates_client_file_with_gql_lambda_definition(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name, tmp_path.as_posix(), build_ast_schema(parse(SCHEMA_STR))
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
     )
 
     generator.generate()
@@ -358,12 +443,22 @@ def test_generate_creates_client_file_with_gql_lambda_definition(tmp_path):
     ],
 )
 @freeze_time("01.01.2022 12:00")
-def test_generate_adds_comment_to_generated_files(tmp_path, strategy, expected_comment):
+def test_generate_adds_comment_to_generated_files(
+    tmp_path, schema, strategy, expected_comment, async_base_client_import
+):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         comments_strategy=strategy,
     )
     query_str = """
@@ -396,15 +491,23 @@ def test_generate_adds_comment_to_generated_files(tmp_path, strategy, expected_c
     "strategy", [CommentsStrategy.STABLE, CommentsStrategy.TIMESTAMP]
 )
 def test_generate_adds_comment_with_correct_source_to_generated_files(
-    tmp_path, strategy
+    tmp_path, schema, async_base_client_import, strategy
 ):
     package_name = "test_graphql_client"
     schema_source = "schema_source.graphql"
     queries_source = "queries_source.graphql"
     generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         comments_strategy=strategy,
         schema_source=schema_source,
         queries_source=queries_source,
@@ -443,13 +546,21 @@ def test_generate_adds_comment_with_correct_source_to_generated_files(
     [CommentsStrategy.NONE, CommentsStrategy.STABLE, CommentsStrategy.TIMESTAMP],
 )
 def test_generate_calls_get_file_comment_hook_for_every_file(
-    tmp_path, strategy, mocked_plugin_manager
+    tmp_path, schema, async_base_client_import, strategy, mocked_plugin_manager
 ):
     package_name = "test_graphql_client"
     generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         comments_strategy=strategy,
         plugin_manager=mocked_plugin_manager,
     )
@@ -469,7 +580,9 @@ def test_generate_calls_get_file_comment_hook_for_every_file(
     )
 
 
-def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_path):
+def test_generate_creates_result_types_from_operation_that_uses_fragment(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
     query_str = """
     query CustomQuery($id: ID!) {
@@ -496,10 +609,20 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
     """
     query_def, fragment_def = parse(query_str).definitions
     generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        fragments=[fragment_def],
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(
+            schema=schema, fragments_definitions={"TestFragment": fragment_def}
+        ),
+        fragments_definitions={"TestFragment": fragment_def},
     )
 
     generator.add_operation(query_def)
@@ -511,12 +634,29 @@ def test_generate_creates_result_types_from_operation_that_uses_fragment(tmp_pat
         assert dedent(expected_types) in result_types_content
 
 
-def test_generate_returns_list_of_generated_files(tmp_path):
+def test_generate_returns_list_of_generated_files(
+    tmp_path, schema, async_base_client_import
+):
+    fragments_definitions = {
+        "TestFragment": parse("fragment TestFragment on CustomType { id }").definitions[
+            0
+        ]
+    }
     generator = PackageGenerator(
-        "test_graphql_client",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        fragments=[parse("fragment TestFragment on CustomType { id }").definitions[0]],
+        package_name="test_graphql_client",
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(
+            schema=schema, fragments_definitions=fragments_definitions
+        ),
+        fragments_definitions=fragments_definitions,
         custom_scalars={"SCALARABC": ScalarData(type_="str", graphql_name="SCALARABC")},
     )
     query_str = """
@@ -536,7 +676,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
             generator.base_client_file_path.name,
             "base_model.py",
             f"{generator.client_file_name}.py",
-            generator.exceptions_file_path.name,
+            EXCEPTIONS_FILE_PATH.name,
             f"{generator.input_types_module_name}.py",
             f"{generator.enums_module_name}.py",
             "custom_query.py",
@@ -545,7 +685,7 @@ def test_generate_returns_list_of_generated_files(tmp_path):
     )
 
 
-def test_generate_copies_files_to_include(tmp_path):
+def test_generate_copies_files_to_include(tmp_path, schema, async_base_client_import):
     file1 = tmp_path / "file1.py"
     file1_content = "class TestBaseClass:\n    pass"
     file1.write_text(file1_content)
@@ -559,7 +699,15 @@ def test_generate_copies_files_to_include(tmp_path):
     generator = PackageGenerator(
         package_name="test_graphql_client",
         target_path=tmp_path.as_posix(),
-        schema=build_ast_schema(parse(SCHEMA_STR)),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
         files_to_include=[file1.as_posix(), file2.as_posix()],
     )
     generated_files = generator.generate()
@@ -572,15 +720,31 @@ def test_generate_copies_files_to_include(tmp_path):
         assert file2_content in copied_file2.read()
 
 
-def test_generate_creates_client_with_custom_scalars_imports(tmp_path):
+def test_generate_creates_client_with_custom_scalars_imports(
+    tmp_path, schema, async_base_client_import
+):
     package_name = "test_graphql_client"
+    custom_scalars = {
+        "SCALARABC": ScalarData(type_=".abc.ScalarABC", graphql_name="SCALARABC")
+    }
     generator = PackageGenerator(
-        package_name,
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        custom_scalars={
-            "SCALARABC": ScalarData(type_=".abc.ScalarABC", graphql_name="SCALARABC")
-        },
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(
+                schema=schema, custom_scalars=custom_scalars
+            ),
+            custom_scalars=custom_scalars,
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(
+            schema=schema, custom_scalars=custom_scalars
+        ),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
+        custom_scalars=custom_scalars,
     )
     query_str = """
     query CustomQuery($id: ID!, $param: SCALARABC) {
@@ -598,114 +762,3 @@ def test_generate_creates_client_with_custom_scalars_imports(tmp_path):
         f"{generator.client_file_name}.py"
     ).open() as client_file:
         assert "from .abc import ScalarABC" in client_file.read()
-
-
-def test_generate_triggers_generate_client_code_hook(mocked_plugin_manager, tmp_path):
-    PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.generate_client_code.called
-
-
-def test_generate_triggers_generate_enums_code_hook(mocked_plugin_manager, tmp_path):
-    PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.generate_enums_code.called
-
-
-def test_generate_triggers_generate_inputs_code_hook(mocked_plugin_manager, tmp_path):
-    PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.generate_inputs_code.called
-
-
-def test_generate_triggers_generate_result_types_code_hook_for_every_added_operation(
-    mocked_plugin_manager, tmp_path
-):
-    generator = PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-    )
-    generator.add_operation(parse("query A { query2 { id } }").definitions[0])
-    generator.add_operation(parse("query B { query2 { id } }").definitions[0])
-
-    generator.generate()
-
-    assert mocked_plugin_manager.generate_result_types_code.call_count == 2
-
-
-def test_generate_triggers_copy_code_hook_for_every_attached_dependency_file(
-    mocked_plugin_manager, tmp_path
-):
-    PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.copy_code.call_count == 3
-
-
-def test_generate_triggers_copy_code_hook_for_every_file_to_include(
-    mocked_plugin_manager, tmp_path
-):
-    test_file_path = tmp_path / "xyz.py"
-    test_file_path.touch()
-    PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-        files_to_include=[test_file_path.as_posix()],
-    ).generate()
-
-    assert mocked_plugin_manager.copy_code.call_count == 4
-
-
-def test_generate_triggers_generate_init_code_hook(mocked_plugin_manager, tmp_path):
-    PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-    ).generate()
-
-    assert mocked_plugin_manager.generate_init_code.called
-
-
-def test_add_operation_triggers_process_name_hook(mocked_plugin_manager, tmp_path):
-    query_str = """
-    query custom_query_name {
-        query2 {
-            id
-        }
-    }
-    """
-    PackageGenerator(
-        "package_name",
-        tmp_path.as_posix(),
-        build_ast_schema(parse(SCHEMA_STR)),
-        plugin_manager=mocked_plugin_manager,
-    ).add_operation(parse(query_str).definitions[0])
-
-    assert mocked_plugin_manager.process_name.called
-    assert "custom_query_name" in {
-        c.args[0] for c in mocked_plugin_manager.process_name.mock_calls
-    }

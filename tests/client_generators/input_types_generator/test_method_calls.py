@@ -8,9 +8,7 @@ from ariadne_codegen.client_generators.input_types import InputTypesGenerator
 from ...utils import compare_ast, filter_ast_objects
 
 
-def test_generate_returns_modules_with_model_rebuild_calls(
-    base_model_import, upload_import
-):
+def test_generate_returns_modules_with_model_rebuild_calls():
     schema_str = """
     input CustomInput {
         field: Int!
@@ -53,12 +51,7 @@ def test_generate_returns_modules_with_model_rebuild_calls(
             )
         ),
     ]
-    generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)),
-        enums_module="enums",
-        base_model_import=base_model_import,
-        upload_import=upload_import,
-    )
+    generator = InputTypesGenerator(schema=build_ast_schema(parse(schema_str)))
 
     module = generator.generate()
 

@@ -1,8 +1,8 @@
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
 from .custom_client import Client
+from .custom_enums import enumA
 from .custom_input_types import inputA
-from .enums import enumA
 from .exceptions import (
     GraphQLClientError,
     GraphQLClientGraphQLError,

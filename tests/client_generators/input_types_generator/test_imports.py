@@ -8,7 +8,7 @@ from ariadne_codegen.client_generators.scalars import ScalarData
 from ...utils import compare_ast, filter_imports, sorted_imports
 
 
-def test_generate_returns_module_with_enum_imports(base_model_import, upload_import):
+def test_generate_returns_module_with_enum_imports():
     schema_str = """
     input TestInput {
         field: TestEnum!
@@ -19,12 +19,7 @@ def test_generate_returns_module_with_enum_imports(base_model_import, upload_imp
         VAL2
     }
     """
-    generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)),
-        enums_module="enums",
-        base_model_import=base_model_import,
-        upload_import=upload_import,
-    )
+    generator = InputTypesGenerator(schema=build_ast_schema(parse(schema_str)))
     expected_import = ast.ImportFrom(
         module="enums", names=[ast.alias("TestEnum")], level=1
     )
@@ -35,9 +30,7 @@ def test_generate_returns_module_with_enum_imports(base_model_import, upload_imp
     assert compare_ast(import_, expected_import)
 
 
-def test_generate_returns_module_with_used_custom_scalars_imports(
-    base_model_import, upload_import
-):
+def test_generate_returns_module_with_used_custom_scalars_imports():
     schema_str = """
     input TestInput {
         field: SCALARA!
@@ -47,9 +40,6 @@ def test_generate_returns_module_with_used_custom_scalars_imports(
     """
     generator = InputTypesGenerator(
         schema=build_ast_schema(parse(schema_str)),
-        enums_module="enums",
-        base_model_import=base_model_import,
-        upload_import=upload_import,
         custom_scalars={
             "SCALARA": ScalarData(
                 type_=".custom_scalars.ScalarA",
@@ -71,7 +61,7 @@ def test_generate_returns_module_with_used_custom_scalars_imports(
     assert compare_ast(sorted_imports(imports), sorted_imports(expected_imports))
 
 
-def test_generate_returns_module_with_upload_import(base_model_import, upload_import):
+def test_generate_returns_module_with_upload_import():
     schema_str = """
     input TestInput {
         field: Upload!
@@ -79,12 +69,7 @@ def test_generate_returns_module_with_upload_import(base_model_import, upload_im
 
     scalar Upload
     """
-    generator = InputTypesGenerator(
-        schema=build_ast_schema(parse(schema_str)),
-        enums_module="enums",
-        base_model_import=base_model_import,
-        upload_import=upload_import,
-    )
+    generator = InputTypesGenerator(schema=build_ast_schema(parse(schema_str)))
     expected_import = ast.ImportFrom(
         module="base_model", names=[ast.alias("Upload")], level=1
     )
