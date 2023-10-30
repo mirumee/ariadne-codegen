@@ -215,6 +215,47 @@ async def test_execute_sends_request_with_extra_headers_and_correct_content_type
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("tracer", ["tracer name", None])
+async def test_execute_passes_kwargs_to_json_post(mocker, tracer):
+    http_client = mocker.AsyncMock()
+
+    await AsyncBaseClientOpenTelemetry(
+        url="http://base_url", http_client=http_client, tracer=tracer
+    ).execute("query Abc { abc }", {}, timeout=333, follow_redirects=False)
+
+    assert http_client.post.call_args.kwargs["timeout"] == 333
+    assert http_client.post.call_args.kwargs["follow_redirects"] is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tracer", ["tracer name", None])
+async def test_execute_sends_json_request_with_headers_from_passed_kwargs(
+    httpx_mock, tracer
+):
+    httpx_mock.add_response()
+    client = AsyncBaseClientOpenTelemetry(
+        url="http://base_url",
+        headers={
+            "Client-Header-A": "client_value_A",
+            "Client-Header-B": "client_value_b",
+        },
+        tracer=tracer,
+    )
+
+    await client.execute(
+        "query Abc { abc }",
+        {},
+        headers={"Other-Header": "other", "Client-Header-A": "execute_value"},
+    )
+
+    request = httpx_mock.get_request()
+    assert request.headers["Content-Type"] == "application/json"
+    assert request.headers["Other-Header"] == "other"
+    assert request.headers["Client-Header-A"] == "execute_value"
+    assert request.headers["Client-Header-b"] == "client_value_b"
+
+
+@pytest.mark.asyncio
 async def test_execute_sends_file_with_multipart_form_data_content_type(
     httpx_mock, txt_file
 ):
@@ -379,6 +420,54 @@ async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
     assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tracer", ["tracer name", None])
+async def test_execute_passes_kwargs_to_multipart_post(mocker, tracer, txt_file):
+    http_client = mocker.AsyncMock()
+
+    await AsyncBaseClientOpenTelemetry(
+        url="http://base_url", http_client=http_client, tracer=tracer
+    ).execute(
+        "query Abc($file: Upload!) { abc(file: $file) }",
+        {"file": txt_file},
+        timeout=333,
+        follow_redirects=False,
+    )
+
+    assert http_client.post.call_args.kwargs["timeout"] == 333
+    assert http_client.post.call_args.kwargs["follow_redirects"] is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tracer", ["tracer name", None])
+async def test_execute_sends_multipart_request_with_headers_from_passed_kwargs(
+    httpx_mock, tracer, txt_file
+):
+    httpx_mock.add_response()
+    client = AsyncBaseClientOpenTelemetry(
+        url="http://base_url",
+        headers={
+            "Client-Header-A": "client_value_A",
+            "Client-Header-B": "client_value_b",
+        },
+        tracer=tracer,
+    )
+
+    await client.execute(
+        "query Abc($file: Upload!) { abc(file: $file) }",
+        {"file": txt_file},
+        headers={
+            "Other-Header": "other",
+            "Client-Header-A": "execute_value",
+        },
+    )
+
+    request = httpx_mock.get_request()
+    assert request.headers["Other-Header"] == "other"
+    assert request.headers["Client-Header-A"] == "execute_value"
+    assert request.headers["Client-Header-B"] == "client_value_b"
 
 
 @pytest.mark.parametrize(

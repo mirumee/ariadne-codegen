@@ -39,7 +39,7 @@ class BaseClient:
         self.http_client.close()
 
     def execute(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> httpx.Response:
         processed_variables, files, files_map = self._process_variables(variables)
 
@@ -49,9 +49,10 @@ class BaseClient:
                 variables=processed_variables,
                 files=files,
                 files_map=files_map,
+                **kwargs,
             )
 
-        return self._execute_json(query=query, variables=processed_variables)
+        return self._execute_json(query=query, variables=processed_variables, **kwargs)
 
     def get_data(self, response: httpx.Response) -> dict[str, Any]:
         if not response.is_success:
@@ -152,6 +153,7 @@ class BaseClient:
         variables: Dict[str, Any],
         files: Dict[str, Tuple[str, IO[bytes], str]],
         files_map: Dict[str, List[str]],
+        **kwargs: Any,
     ) -> httpx.Response:
         data = {
             "operations": json.dumps(
@@ -160,13 +162,21 @@ class BaseClient:
             "map": json.dumps(files_map, default=to_jsonable_python),
         }
 
-        return self.http_client.post(url=self.url, data=data, files=files)
+        return self.http_client.post(url=self.url, data=data, files=files, **kwargs)
 
-    def _execute_json(self, query: str, variables: Dict[str, Any]) -> httpx.Response:
+    def _execute_json(
+        self, query: str, variables: Dict[str, Any], **kwargs: Any
+    ) -> httpx.Response:
+        headers: Dict[str, str] = {"Content-Type": "application/json"}
+        headers.update(kwargs.get("headers", {}))
+
+        merged_kwargs: Dict[str, Any] = kwargs.copy()
+        merged_kwargs.update({"headers": headers})
+
         return self.http_client.post(
             url=self.url,
             content=json.dumps(
                 {"query": query, "variables": variables}, default=to_jsonable_python
             ),
-            headers={"Content-Type": "application/json"},
+            **merged_kwargs,
         )

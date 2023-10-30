@@ -128,12 +128,14 @@ class AsyncBaseClientOpenTelemetry:
         await self.http_client.aclose()
 
     async def execute(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> httpx.Response:
         if self.tracer:
-            return await self._execute_with_telemetry(query=query, variables=variables)
+            return await self._execute_with_telemetry(
+                query=query, variables=variables, **kwargs
+            )
 
-        return await self._execute(query=query, variables=variables)
+        return await self._execute(query=query, variables=variables, **kwargs)
 
     def get_data(self, response: httpx.Response) -> Dict[str, Any]:
         if not response.is_success:
@@ -173,7 +175,7 @@ class AsyncBaseClientOpenTelemetry:
             yield message
 
     async def _execute(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> httpx.Response:
         processed_variables, files, files_map = self._process_variables(variables)
 
@@ -183,9 +185,12 @@ class AsyncBaseClientOpenTelemetry:
                 variables=processed_variables,
                 files=files,
                 files_map=files_map,
+                **kwargs,
             )
 
-        return await self._execute_json(query=query, variables=processed_variables)
+        return await self._execute_json(
+            query=query, variables=processed_variables, **kwargs
+        )
 
     def _process_variables(
         self, variables: Optional[Dict[str, Any]]
@@ -262,6 +267,7 @@ class AsyncBaseClientOpenTelemetry:
         variables: Dict[str, Any],
         files: Dict[str, Tuple[str, IO[bytes], str]],
         files_map: Dict[str, List[str]],
+        **kwargs: Any,
     ) -> httpx.Response:
         data = {
             "operations": json.dumps(
@@ -270,19 +276,25 @@ class AsyncBaseClientOpenTelemetry:
             "map": json.dumps(files_map, default=to_jsonable_python),
         }
 
-        return await self.http_client.post(url=self.url, data=data, files=files)
+        return await self.http_client.post(
+            url=self.url, data=data, files=files, **kwargs
+        )
 
     async def _execute_json(
-        self,
-        query: str,
-        variables: Dict[str, Any],
+        self, query: str, variables: Dict[str, Any], **kwargs: Any
     ) -> httpx.Response:
+        headers: Dict[str, str] = {"Content-Type": "application/json"}
+        headers.update(kwargs.get("headers", {}))
+
+        merged_kwargs: Dict[str, Any] = kwargs.copy()
+        merged_kwargs.update({"headers": headers})
+
         return await self.http_client.post(
             url=self.url,
             content=json.dumps(
                 {"query": query, "variables": variables}, default=to_jsonable_python
             ),
-            headers={"Content-Type": "application/json"},
+            **merged_kwargs,
         )
 
     async def _execute_ws(
@@ -367,7 +379,7 @@ class AsyncBaseClientOpenTelemetry:
         return None
 
     async def _execute_with_telemetry(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> httpx.Response:
         with self.tracer.start_as_current_span(  # type: ignore
             self.root_span_name, context=self.root_context
@@ -383,10 +395,14 @@ class AsyncBaseClientOpenTelemetry:
                     variables=processed_variables,
                     files=files,
                     files_map=files_map,
+                    **kwargs,
                 )
 
             return await self._execute_json_with_telemetry(
-                root_span=root_span, query=query, variables=processed_variables
+                root_span=root_span,
+                query=query,
+                variables=processed_variables,
+                **kwargs,
             )
 
     async def _execute_multipart_with_telemetry(
@@ -396,6 +412,7 @@ class AsyncBaseClientOpenTelemetry:
         variables: Dict[str, Any],
         files: Dict[str, Tuple[str, IO[bytes], str]],
         files_map: Dict[str, List[str]],
+        **kwargs: Any,
     ) -> httpx.Response:
         with self.tracer.start_as_current_span(  # type: ignore
             "multipart request", context=set_span_in_context(root_span)
@@ -409,14 +426,15 @@ class AsyncBaseClientOpenTelemetry:
             span.set_attribute("variables", serialized_variables)
             span.set_attribute("map", serialized_map)
             return await self._execute_multipart(
-                query=query, variables=variables, files=files, files_map=files_map
+                query=query,
+                variables=variables,
+                files=files,
+                files_map=files_map,
+                **kwargs,
             )
 
     async def _execute_json_with_telemetry(
-        self,
-        root_span: Span,
-        query: str,
-        variables: Dict[str, Any],
+        self, root_span: Span, query: str, variables: Dict[str, Any], **kwargs: Any
     ) -> httpx.Response:
         with self.tracer.start_as_current_span(  # type: ignore
             "json request", context=set_span_in_context(root_span)
@@ -427,7 +445,7 @@ class AsyncBaseClientOpenTelemetry:
 
             span.set_attribute("query", query)
             span.set_attribute("variables", serialized_variables)
-            return await self._execute_json(query=query, variables=variables)
+            return await self._execute_json(query=query, variables=variables, **kwargs)
 
     async def _execute_ws_with_telemetry(
         self, query: str, variables: Optional[Dict[str, Any]] = None
