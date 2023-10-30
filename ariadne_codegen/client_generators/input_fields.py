@@ -157,8 +157,7 @@ def parse_input_const_value_node(
                 func=generate_name(FIELD_CLASS),
                 keywords=[
                     generate_keyword(
-                        arg="default_factory",
-                        value=generate_lambda(body=list_),
+                        value=generate_lambda(body=list_), arg="default_factory"
                     )
                 ],
             )
@@ -182,7 +181,6 @@ def parse_input_const_value_node(
                 func=generate_name(FIELD_CLASS),
                 keywords=[
                     generate_keyword(
-                        arg="default_factory",
                         value=generate_lambda(
                             body=generate_call(
                                 func=generate_attribute(
@@ -197,6 +195,7 @@ def parse_input_const_value_node(
                                 args=[dict_],
                             )
                         ),
+                        arg="default_factory",
                     )
                 ],
             )

@@ -290,9 +290,11 @@ class ClientGenerator:
         return generate_call(
             func=generate_attribute(generate_name("self"), "execute"),
             keywords=[
-                generate_keyword("query", generate_name(self._operation_str_variable)),
                 generate_keyword(
-                    "variables", generate_name(self._variables_dict_variable)
+                    value=generate_name(self._operation_str_variable), arg="query"
+                ),
+                generate_keyword(
+                    value=generate_name(self._variables_dict_variable), arg="variables"
                 ),
             ],
         )
@@ -325,12 +327,11 @@ class ClientGenerator:
                 func=generate_attribute(value=generate_name("self"), attr="execute_ws"),
                 keywords=[
                     generate_keyword(
-                        arg="query",
-                        value=generate_name(self._operation_str_variable),
+                        value=generate_name(self._operation_str_variable), arg="query"
                     ),
                     generate_keyword(
-                        arg="variables",
                         value=generate_name(self._variables_dict_variable),
+                        arg="variables",
                     ),
                 ],
             ),

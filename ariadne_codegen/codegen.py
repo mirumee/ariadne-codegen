@@ -64,7 +64,9 @@ def generate_arg(
 
 
 def generate_arguments(
-    args: Optional[List[ast.arg]] = None, defaults: Optional[List[ast.expr]] = None
+    args: Optional[List[ast.arg]] = None,
+    defaults: Optional[List[ast.expr]] = None,
+    kwarg: Optional[ast.arg] = None,
 ) -> ast.arguments:
     """Generate arguments."""
     return ast.arguments(
@@ -72,6 +74,7 @@ def generate_arguments(
         args=args if args else [],
         kwonlyargs=[],
         kw_defaults=[],
+        kwarg=kwarg,
         defaults=defaults or [],
     )
 
@@ -182,7 +185,7 @@ def generate_attribute(value: ast.expr, attr: str) -> ast.Attribute:
     return ast.Attribute(value=value, attr=attr)
 
 
-def generate_keyword(arg: str, value: ast.expr) -> ast.keyword:
+def generate_keyword(value: ast.expr, arg: Optional[str] = None) -> ast.keyword:
     """Generate keyword object."""
     return ast.keyword(arg=arg, value=value)
 
@@ -273,7 +276,7 @@ def generate_pydantic_field(keywords: Dict[str, ast.expr]) -> ast.Call:
     return generate_call(
         func=generate_name(FIELD_CLASS),
         keywords=[
-            generate_keyword(arg=arg, value=value) for arg, value in keywords.items()
+            generate_keyword(value=value, arg=arg) for arg, value in keywords.items()
         ],
     )
 

@@ -172,10 +172,7 @@ class InputTypesGenerator:
                 field_with_alias.keywords.extend(field_implementation.value.keywords)
             else:
                 field_with_alias.keywords.append(
-                    generate_keyword(
-                        arg="default",
-                        value=field_implementation.value,
-                    )
+                    generate_keyword(value=field_implementation.value, arg="default")
                 )
         return field_with_alias
 
