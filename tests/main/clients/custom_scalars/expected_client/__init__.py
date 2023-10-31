@@ -8,15 +8,15 @@ from .exceptions import (
     GraphQLClientHttpError,
     GraphQlClientInvalidResponseError,
 )
-from .get_test import GetTest, GetTestTestQuery
+from .get_a import GetA, GetATestQuery
 from .input_types import TestInput
 
 __all__ = [
     "AsyncBaseClient",
     "BaseModel",
     "Client",
-    "GetTest",
-    "GetTestTestQuery",
+    "GetA",
+    "GetATestQuery",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",

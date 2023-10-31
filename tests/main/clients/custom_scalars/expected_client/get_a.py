@@ -7,16 +7,16 @@ from .base_model import BaseModel
 from .custom_scalars import Code, parse_code
 
 
-class GetTest(BaseModel):
-    test_query: "GetTestTestQuery" = Field(alias="testQuery")
+class GetA(BaseModel):
+    test_query: "GetATestQuery" = Field(alias="testQuery")
 
 
-class GetTestTestQuery(BaseModel):
+class GetATestQuery(BaseModel):
     date: datetime
     code: Annotated[Code, BeforeValidator(parse_code)]
     id: int
     other: Any
 
 
-GetTest.model_rebuild()
-GetTestTestQuery.model_rebuild()
+GetA.model_rebuild()
+GetATestQuery.model_rebuild()
