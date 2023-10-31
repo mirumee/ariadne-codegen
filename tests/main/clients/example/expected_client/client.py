@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Dict, Optional, Union
+from typing import Any, AsyncIterator, Dict, Optional, Union
 
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType, Upload
@@ -15,7 +15,9 @@ def gql(q: str) -> str:
 
 
 class Client(AsyncBaseClient):
-    async def create_user(self, user_data: UserCreateInput) -> CreateUser:
+    async def create_user(
+        self, user_data: UserCreateInput, **kwargs: Any
+    ) -> CreateUser:
         query = gql(
             """
             mutation CreateUser($userData: UserCreateInput!) {
@@ -26,11 +28,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"userData": user_data}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return CreateUser.model_validate(data)
 
-    async def list_all_users(self) -> ListAllUsers:
+    async def list_all_users(self, **kwargs: Any) -> ListAllUsers:
         query = gql(
             """
             query ListAllUsers {
@@ -47,12 +49,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ListAllUsers.model_validate(data)
 
     async def list_users_by_country(
-        self, country: Union[Optional[str], UnsetType] = UNSET
+        self, country: Union[Optional[str], UnsetType] = UNSET, **kwargs: Any
     ) -> ListUsersByCountry:
         query = gql(
             """
@@ -76,11 +78,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"country": country}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ListUsersByCountry.model_validate(data)
 
-    async def get_users_counter(self) -> AsyncIterator[GetUsersCounter]:
+    async def get_users_counter(self, **kwargs: Any) -> AsyncIterator[GetUsersCounter]:
         query = gql(
             """
             subscription GetUsersCounter {
@@ -89,10 +91,10 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        async for data in self.execute_ws(query=query, variables=variables):
+        async for data in self.execute_ws(query=query, variables=variables, **kwargs):
             yield GetUsersCounter.model_validate(data)
 
-    async def upload_file(self, file: Upload) -> UploadFile:
+    async def upload_file(self, file: Upload, **kwargs: Any) -> UploadFile:
         query = gql(
             """
             mutation uploadFile($file: Upload!) {
@@ -101,6 +103,6 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"file": file}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return UploadFile.model_validate(data)

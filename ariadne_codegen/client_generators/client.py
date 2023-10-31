@@ -33,6 +33,7 @@ from .constants import (
     ANY,
     ASYNC_ITERATOR,
     DICT,
+    KWARGS_NAMES,
     LIST,
     MODEL_VALIDATE_METHOD,
     OPTIONAL,
@@ -296,6 +297,7 @@ class ClientGenerator:
                 generate_keyword(
                     value=generate_name(self._variables_dict_variable), arg="variables"
                 ),
+                generate_keyword(value=generate_name(KWARGS_NAMES)),
             ],
         )
 
@@ -333,6 +335,7 @@ class ClientGenerator:
                         value=generate_name(self._variables_dict_variable),
                         arg="variables",
                     ),
+                    generate_keyword(value=generate_name(KWARGS_NAMES)),
                 ],
             ),
             body=[self._generate_yield_parsed_obj(return_type)],

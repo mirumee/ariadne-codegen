@@ -13,7 +13,13 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def get_test(
-        self, date: datetime, code: Code, id: int, input: TestInput, other: Any
+        self,
+        date: datetime,
+        code: Code,
+        id: int,
+        input: TestInput,
+        other: Any,
+        **kwargs: Any
     ) -> GetTest:
         query = gql(
             """
@@ -34,6 +40,6 @@ class Client(AsyncBaseClient):
             "input": input,
             "other": other,
         }
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return GetTest.model_validate(data)

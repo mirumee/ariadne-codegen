@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict
 
 from .async_base_client import AsyncBaseClient
 from .query_with_fragment_on_sub_interface import QueryWithFragmentOnSubInterface
@@ -14,7 +14,7 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def query_with_fragment_on_sub_interface(
-        self,
+        self, **kwargs: Any
     ) -> QueryWithFragmentOnSubInterface:
         query = gql(
             """
@@ -32,12 +32,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return QueryWithFragmentOnSubInterface.model_validate(data)
 
     async def query_with_fragment_on_sub_interface_with_inline_fragment(
-        self,
+        self, **kwargs: Any
     ) -> QueryWithFragmentOnSubInterfaceWithInlineFragment:
         query = gql(
             """
@@ -58,12 +58,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return QueryWithFragmentOnSubInterfaceWithInlineFragment.model_validate(data)
 
     async def query_with_fragment_on_union_member(
-        self,
+        self, **kwargs: Any
     ) -> QueryWithFragmentOnUnionMember:
         query = gql(
             """
@@ -81,6 +81,6 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return QueryWithFragmentOnUnionMember.model_validate(data)

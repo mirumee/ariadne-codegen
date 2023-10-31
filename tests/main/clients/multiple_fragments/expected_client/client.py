@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict
 
 from .async_base_client import AsyncBaseClient
 from .example_query_1 import ExampleQuery1
@@ -11,7 +11,7 @@ def gql(q: str) -> str:
 
 
 class Client(AsyncBaseClient):
-    async def example_query_1(self) -> ExampleQuery1:
+    async def example_query_1(self, **kwargs: Any) -> ExampleQuery1:
         query = gql(
             """
             query exampleQuery1 {
@@ -34,11 +34,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ExampleQuery1.model_validate(data)
 
-    async def example_query_2(self) -> ExampleQuery2:
+    async def example_query_2(self, **kwargs: Any) -> ExampleQuery2:
         query = gql(
             """
             query exampleQuery2 {
@@ -62,11 +62,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ExampleQuery2.model_validate(data)
 
-    async def example_query_3(self) -> ExampleQuery3:
+    async def example_query_3(self, **kwargs: Any) -> ExampleQuery3:
         query = gql(
             """
             query exampleQuery3 {
@@ -86,6 +86,6 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ExampleQuery3.model_validate(data)
