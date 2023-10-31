@@ -162,14 +162,14 @@ class AsyncBaseClientOpenTelemetry:
         return cast(Dict[str, Any], data)
 
     async def execute_ws(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> AsyncIterator[Dict[str, Any]]:
         if self.tracer:
             generator = self._execute_ws_with_telemetry(
-                query=query, variables=variables
+                query=query, variables=variables, **kwargs
             )
         else:
-            generator = self._execute_ws(query=query, variables=variables)
+            generator = self._execute_ws(query=query, variables=variables, **kwargs)
 
         async for message in generator:
             yield message
@@ -287,7 +287,7 @@ class AsyncBaseClientOpenTelemetry:
         headers.update(kwargs.get("headers", {}))
 
         merged_kwargs: Dict[str, Any] = kwargs.copy()
-        merged_kwargs.update({"headers": headers})
+        merged_kwargs["headers"] = headers
 
         return await self.http_client.post(
             url=self.url,
@@ -298,14 +298,20 @@ class AsyncBaseClientOpenTelemetry:
         )
 
     async def _execute_ws(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> AsyncIterator[Dict[str, Any]]:
+        headers = self.ws_headers.copy()
+        headers.update(kwargs.get("extra_headers", {}))
+
+        merged_kwargs: Dict[str, Any] = {"origin": self.ws_origin}
+        merged_kwargs.update(kwargs)
+        merged_kwargs["extra_headers"] = headers
+
         operation_id = str(uuid4())
         async with ws_connect(
             self.ws_url,
             subprotocols=[Subprotocol(GRAPHQL_TRANSPORT_WS)],
-            origin=self.ws_origin,
-            extra_headers=self.ws_headers,
+            **merged_kwargs,
         ) as websocket:
             await self._send_connection_init(websocket)
             await self._send_subscribe(
@@ -448,18 +454,25 @@ class AsyncBaseClientOpenTelemetry:
             return await self._execute_json(query=query, variables=variables, **kwargs)
 
     async def _execute_ws_with_telemetry(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> AsyncIterator[Dict[str, Any]]:
         with self.tracer.start_as_current_span(  # type: ignore
             self.ws_root_span_name, context=self.ws_root_context
         ) as root_span:
             root_span.set_attribute("component", "GraphQL Client")
+
+            headers = self.ws_headers.copy()
+            headers.update(kwargs.get("extra_headers", {}))
+
+            merged_kwargs: Dict[str, Any] = {"origin": self.ws_origin}
+            merged_kwargs.update(kwargs)
+            merged_kwargs["extra_headers"] = headers
+
             operation_id = str(uuid4())
             async with ws_connect(
                 self.ws_url,
                 subprotocols=[Subprotocol(GRAPHQL_TRANSPORT_WS)],
-                origin=self.ws_origin,
-                extra_headers=self.ws_headers,
+                **merged_kwargs,
             ) as websocket:
                 await self._send_connection_init_with_telemetry(
                     root_span=root_span,

@@ -126,14 +126,20 @@ class AsyncBaseClient:
         return cast(Dict[str, Any], data)
 
     async def execute_ws(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
     ) -> AsyncIterator[Dict[str, Any]]:
+        headers = self.ws_headers.copy()
+        headers.update(kwargs.get("extra_headers", {}))
+
+        merged_kwargs: Dict[str, Any] = {"origin": self.ws_origin}
+        merged_kwargs.update(kwargs)
+        merged_kwargs["extra_headers"] = headers
+
         operation_id = str(uuid4())
         async with ws_connect(
             self.ws_url,
             subprotocols=[Subprotocol(GRAPHQL_TRANSPORT_WS)],
-            origin=self.ws_origin,
-            extra_headers=self.ws_headers,
+            **merged_kwargs,
         ) as websocket:
             await self._send_connection_init(websocket)
             await self._send_subscribe(
@@ -243,7 +249,7 @@ class AsyncBaseClient:
         headers.update(kwargs.get("headers", {}))
 
         merged_kwargs: Dict[str, Any] = kwargs.copy()
-        merged_kwargs.update({"headers": headers})
+        merged_kwargs["headers"] = headers
 
         return await self.http_client.post(
             url=self.url,

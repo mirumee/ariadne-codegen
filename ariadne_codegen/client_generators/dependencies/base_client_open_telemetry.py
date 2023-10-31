@@ -209,7 +209,7 @@ class BaseClientOpenTelemetry:
         headers.update(kwargs.get("headers", {}))
 
         merged_kwargs: Dict[str, Any] = kwargs.copy()
-        merged_kwargs.update({"headers": headers})
+        merged_kwargs["headers"] = headers
 
         return self.http_client.post(
             url=self.url,
