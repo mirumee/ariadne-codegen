@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict
 
 from .custom_base_client import CustomAsyncBaseClient
 from .get_query_a import GetQueryA
@@ -10,7 +10,7 @@ def gql(q: str) -> str:
 
 
 class Client(CustomAsyncBaseClient):
-    async def get_query_a(self, data_a: inputA) -> GetQueryA:
+    async def get_query_a(self, data_a: inputA, **kwargs: Any) -> GetQueryA:
         query = gql(
             """
             query getQueryA($dataA: inputA!) {
@@ -21,6 +21,6 @@ class Client(CustomAsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"dataA": data_a}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return GetQueryA.model_validate(data)

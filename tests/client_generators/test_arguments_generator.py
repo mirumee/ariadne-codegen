@@ -5,6 +5,7 @@ from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
 from ariadne_codegen.client_generators.arguments import ArgumentsGenerator
 from ariadne_codegen.client_generators.constants import (
     ANY,
+    KWARGS_NAMES,
     OPTIONAL,
     UNION,
     UNSET_NAME,
@@ -90,6 +91,7 @@ def test_generate_returns_arguments_with_correct_optional_annotation():
                 ),
             ),
         ],
+        kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[ast.Name(id="UNSET")],
@@ -145,6 +147,7 @@ def test_generate_returns_arguments_with_default_value_for_optional_args():
                 ),
             ),
         ],
+        kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[ast.Name(id=UNSET_NAME), ast.Name(id=UNSET_NAME)],
@@ -155,18 +158,21 @@ def test_generate_returns_arguments_with_default_value_for_optional_args():
     assert compare_ast(arguments, expected_arguments)
 
 
-def test_generate_returns_arguments_with_only_self_argument_without_annotation():
+def test_generate_returns_arguments_with_only_self_and_kwargs_arguments():
     generator = ArgumentsGenerator(schema=GraphQLSchema())
-    query = "query q {r}"
-    variable_definitions = _get_variable_definitions_from_query_str(query)
+    variable_definitions = _get_variable_definitions_from_query_str("query q {r}")
+    expected_arguments = ast.arguments(
+        posonlyargs=[],
+        args=[ast.arg(arg="self")],
+        kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[],
+    )
 
     arguments, _ = generator.generate(variable_definitions)
 
-    assert isinstance(arguments, ast.arguments)
-    assert len(arguments.args) == 1
-    self_arg = arguments.args[0]
-    assert self_arg.arg == "self"
-    assert not self_arg.annotation
+    assert compare_ast(arguments, expected_arguments)
 
 
 def test_generate_saves_used_non_scalar_types():
@@ -203,6 +209,7 @@ def test_generate_returns_arguments_and_dictionary_with_snake_case_names():
             ast.arg(arg="camel_case", annotation=ast.Name(id="str")),
             ast.arg(arg="snake_case", annotation=ast.Name(id="str")),
         ],
+        kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[],
@@ -236,6 +243,7 @@ def test_generate_returns_arguments_and_dictionary_with_valid_names():
             ast.arg(arg="field_a", annotation=ast.Name(id="str")),
             ast.arg(arg="field_b", annotation=ast.Name(id="str")),
         ],
+        kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[],
@@ -276,6 +284,7 @@ def test_generate_returns_arguments_with_not_mapped_custom_scalar():
             ast.arg(arg="self"),
             ast.arg(arg="arg", annotation=ast.Name(id=ANY)),
         ],
+        kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[],
@@ -313,6 +322,7 @@ def test_generate_returns_arguments_with_custom_scalar_and_used_serialize_method
             ast.arg(arg="self"),
             ast.arg(arg="arg", annotation=ast.Name(id="ScalarABC")),
         ],
+        kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[],
@@ -351,6 +361,7 @@ def test_generate_returns_arguments_with_upload_scalar():
             ast.arg(arg="self"),
             ast.arg(arg="arg", annotation=ast.Name(id=UPLOAD_CLASS_NAME)),
         ],
+        kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
         kwonlyargs=[],
         kw_defaults=[],
         defaults=[],

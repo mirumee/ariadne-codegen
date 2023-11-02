@@ -104,35 +104,35 @@ def generate_schema(schema: GraphQLSchema, type_map_name: str) -> ast.Call:
         func=generate_name("GraphQLSchema"),
         keywords=[
             generate_keyword(
-                arg="query",
                 value=get_optional_named_type(schema.query_type, type_map_name),
+                arg="query",
             ),
             generate_keyword(
-                arg="mutation",
                 value=get_optional_named_type(schema.mutation_type, type_map_name),
+                arg="mutation",
             ),
             generate_keyword(
-                arg="subscription",
                 value=get_optional_named_type(schema.subscription_type, type_map_name),
+                arg="subscription",
             ),
             generate_keyword(
-                arg="types",
                 value=generate_call(
                     func=generate_attribute(
                         value=generate_name(type_map_name), attr="values"
                     ),
                 ),
+                arg="types",
             ),
             generate_keyword(
-                arg="directives",
                 value=generate_list(
                     elements=[
                         generate_directive(d, type_map_name) for d in schema.directives
                     ]
                 ),
+                arg="directives",
             ),
             generate_keyword(
-                arg="description", value=generate_constant(schema.description)
+                value=generate_constant(schema.description), arg="description"
             ),
         ],
     )

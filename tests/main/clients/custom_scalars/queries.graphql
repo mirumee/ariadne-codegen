@@ -1,4 +1,4 @@
-query getTest(
+query getA(
   $date: DATETIME!
   $code: CODE!
   $id: CUSTOMID!

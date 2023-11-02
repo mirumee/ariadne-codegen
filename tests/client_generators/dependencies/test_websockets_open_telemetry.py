@@ -80,6 +80,42 @@ async def test_execute_ws_creates_websocket_connection_with_correct_headers(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("tracer", ["tracer name", None])
+async def test_execute_ws_creates_websocket_connection_with_passed_extra_headers(
+    mocked_ws_connect, tracer
+):
+    async for _ in AsyncBaseClientOpenTelemetry(
+        ws_headers={"Client-A": "client_value_a", "Client-B": "client_value_b"},
+        tracer=tracer,
+    ).execute_ws(
+        "", extra_headers={"Client-A": "execute_value_a", "Execute-Other": "other"}
+    ):
+        pass
+
+    assert mocked_ws_connect.called
+    assert mocked_ws_connect.call_args.kwargs["extra_headers"] == {
+        "Client-A": "execute_value_a",
+        "Client-B": "client_value_b",
+        "Execute-Other": "other",
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tracer", ["tracer name", None])
+async def test_execute_ws_creates_websocket_connection_with_passed_kwargs(
+    mocked_ws_connect, tracer
+):
+    async for _ in AsyncBaseClientOpenTelemetry(tracer=tracer).execute_ws(
+        "", open_timeout=15, close_timeout=30
+    ):
+        pass
+
+    assert mocked_ws_connect.called
+    assert mocked_ws_connect.call_args.kwargs["open_timeout"] == 15
+    assert mocked_ws_connect.call_args.kwargs["close_timeout"] == 30
+
+
+@pytest.mark.asyncio
 async def test_execute_ws_sends_correct_init_connection_data(mocked_websocket):
     async for _ in AsyncBaseClientOpenTelemetry(
         ws_connection_init_payload={"test_key": "test_value"}

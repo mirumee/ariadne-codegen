@@ -48,7 +48,7 @@ def test_generate_await_returns_await_object():
 
 
 def test_generate_keyword_returns_keyword_object():
-    result = generate_keyword(arg="test_variable", value=ast.Name(id="test value"))
+    result = generate_keyword(value=ast.Name(id="test value"), arg="test_variable")
 
     assert isinstance(result, ast.keyword)
     assert result.arg == "test_variable"

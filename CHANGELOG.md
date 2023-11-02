@@ -10,6 +10,7 @@
 - Added escaping of enum values which are Python keywords by appending `_` to them.
 - Fixed `enums_module_name` option not being passed to generators.
 - Added additional base clients supporting the Open Telemetry tracing. Added `opentelemetry_client` config option.
+- Changed generated client's methods to pass `**kwargs` to base client's `execute` and `execute_ws` methods (breaking change for custom base clients).
 
 
 ## 0.9.0 (2023-09-11)

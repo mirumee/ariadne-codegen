@@ -10,6 +10,7 @@ from ariadne_codegen.client_generators.constants import (
     ANY,
     ASYNC_ITERATOR,
     DICT,
+    KWARGS_NAMES,
     LIST,
     MODEL_VALIDATE_METHOD,
     OPTIONAL,
@@ -277,6 +278,7 @@ def test_add_method_generates_correct_async_method_body(async_base_client_import
                     keywords=[
                         ast.keyword(arg="query", value=ast.Name(id="query")),
                         ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                        ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                     ],
                 )
             ),
@@ -414,6 +416,7 @@ def test_add_method_generates_correct_method_body(base_client_import):
                 keywords=[
                     ast.keyword(arg="query", value=ast.Name(id="query")),
                     ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                    ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                 ],
             ),
         ),
@@ -470,6 +473,7 @@ def test_add_method_generates_async_generator_for_subscription_definition(
         args=ast.arguments(
             posonlyargs=[],
             args=[ast.arg(arg="self")],
+            kwarg=ast.arg(arg=KWARGS_NAMES, annotation=ast.Name(id=ANY)),
             kwonlyargs=[],
             kw_defaults=[],
             defaults=[],
@@ -502,6 +506,7 @@ def test_add_method_generates_async_generator_for_subscription_definition(
                     keywords=[
                         ast.keyword(arg="query", value=ast.Name(id="query")),
                         ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                        ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                     ],
                 ),
                 body=[

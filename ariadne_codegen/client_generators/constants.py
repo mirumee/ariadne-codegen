@@ -68,6 +68,7 @@ MIXIN_IMPORT_NAME = "import"
 SKIP_DIRECTIVE_NAME = "skip"
 INCLUDE_DIRECTIVE_NAME = "include"
 
+KWARGS_NAMES = "kwargs"
 
 DEFAULT_ASYNC_BASE_CLIENT_PATH = (
     Path(__file__).parent / "dependencies" / "async_base_client.py"

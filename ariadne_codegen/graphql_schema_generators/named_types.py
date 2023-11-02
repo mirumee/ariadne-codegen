@@ -37,12 +37,12 @@ def generate_scalar_type(type_: GraphQLScalarType, *_) -> ast.Call:
     return generate_call(
         func=generate_name("GraphQLScalarType"),
         keywords=[
-            generate_keyword(arg="name", value=generate_constant(type_.name)),
+            generate_keyword(value=generate_constant(type_.name), arg="name"),
             generate_keyword(
-                arg="description", value=generate_constant(type_.description)
+                value=generate_constant(type_.description), arg="description"
             ),
             generate_keyword(
-                arg="specified_by_url", value=generate_constant(type_.specified_by_url)
+                value=generate_constant(type_.specified_by_url), arg="specified_by_url"
             ),
         ],
     )
@@ -52,20 +52,20 @@ def generate_object_type(type_: GraphQLObjectType, type_map_name: str) -> ast.Ca
     return generate_call(
         func=generate_name("GraphQLObjectType"),
         keywords=[
-            generate_keyword(arg="name", value=generate_constant(type_.name)),
+            generate_keyword(value=generate_constant(type_.name), arg="name"),
             generate_keyword(
-                arg="description", value=generate_constant(type_.description)
+                value=generate_constant(type_.description), arg="description"
             ),
             generate_keyword(
-                arg="interfaces",
                 value=get_list_of_named_types(
                     [i.name for i in type_.interfaces],
                     type_map_name,
                     GraphQLInterfaceType.__name__,
                 ),
+                arg="interfaces",
             ),
             generate_keyword(
-                arg="fields", value=generate_field_map(type_.fields, type_map_name)
+                value=generate_field_map(type_.fields, type_map_name), arg="fields"
             ),
         ],
     )
@@ -77,20 +77,20 @@ def generate_interface_type(
     return generate_call(
         func=generate_name("GraphQLInterfaceType"),
         keywords=[
-            generate_keyword(arg="name", value=generate_constant(type_.name)),
+            generate_keyword(value=generate_constant(type_.name), arg="name"),
             generate_keyword(
-                arg="description", value=generate_constant(type_.description)
+                value=generate_constant(type_.description), arg="description"
             ),
             generate_keyword(
-                arg="interfaces",
                 value=get_list_of_named_types(
                     [i.name for i in type_.interfaces],
                     type_map_name,
                     GraphQLInterfaceType.__name__,
                 ),
+                arg="interfaces",
             ),
             generate_keyword(
-                arg="fields", value=generate_field_map(type_.fields, type_map_name)
+                value=generate_field_map(type_.fields, type_map_name), arg="fields"
             ),
         ],
     )
@@ -100,17 +100,17 @@ def generate_union_type(type_: GraphQLUnionType, type_map_name: str) -> ast.Call
     return generate_call(
         func=generate_name("GraphQLUnionType"),
         keywords=[
-            generate_keyword(arg="name", value=generate_constant(type_.name)),
+            generate_keyword(value=generate_constant(type_.name), arg="name"),
             generate_keyword(
-                arg="description", value=generate_constant(type_.description)
+                value=generate_constant(type_.description), arg="description"
             ),
             generate_keyword(
-                arg="types",
                 value=get_list_of_named_types(
                     [t.name for t in type_.types],
                     type_map_name,
                     GraphQLObjectType.__name__,
                 ),
+                arg="types",
             ),
         ],
     )
@@ -120,11 +120,11 @@ def generate_enum_type(type_: GraphQLEnumType, *_) -> ast.Call:
     return generate_call(
         func=generate_name("GraphQLEnumType"),
         keywords=[
-            generate_keyword(arg="name", value=generate_constant(type_.name)),
+            generate_keyword(value=generate_constant(type_.name), arg="name"),
             generate_keyword(
-                arg="description", value=generate_constant(type_.description)
+                value=generate_constant(type_.description), arg="description"
             ),
-            generate_keyword(arg="values", value=generate_enum_values(type_.values)),
+            generate_keyword(value=generate_enum_values(type_.values), arg="values"),
         ],
     )
 
@@ -135,13 +135,13 @@ def generate_input_object_type(
     return generate_call(
         func=generate_name("GraphQLInputObjectType"),
         keywords=[
-            generate_keyword(arg="name", value=generate_constant(type_.name)),
+            generate_keyword(value=generate_constant(type_.name), arg="name"),
             generate_keyword(
-                arg="description", value=generate_constant(type_.description)
+                value=generate_constant(type_.description), arg="description"
             ),
             generate_keyword(
-                arg="fields",
                 value=generate_input_field_map(type_.fields, type_map_name),
+                arg="fields",
             ),
         ],
     )

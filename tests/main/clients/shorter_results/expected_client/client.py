@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Dict, List, Optional, Union
+from typing import Any, AsyncIterator, Dict, List, Optional, Union
 
 from .async_base_client import AsyncBaseClient
 from .custom_scalars import ComplexScalar, SimpleScalar
@@ -33,7 +33,7 @@ def gql(q: str) -> str:
 
 
 class Client(AsyncBaseClient):
-    async def get_authenticated_user(self) -> GetAuthenticatedUserMe:
+    async def get_authenticated_user(self, **kwargs: Any) -> GetAuthenticatedUserMe:
         query = gql(
             """
             query GetAuthenticatedUser {
@@ -45,11 +45,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return GetAuthenticatedUser.model_validate(data).me
 
-    async def list_strings_1(self) -> Optional[List[Optional[str]]]:
+    async def list_strings_1(self, **kwargs: Any) -> Optional[List[Optional[str]]]:
         query = gql(
             """
             query ListStrings_1 {
@@ -58,11 +58,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ListStrings1.model_validate(data).optional_list_optional_string
 
-    async def list_strings_2(self) -> Optional[List[str]]:
+    async def list_strings_2(self, **kwargs: Any) -> Optional[List[str]]:
         query = gql(
             """
             query ListStrings_2 {
@@ -71,11 +71,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ListStrings2.model_validate(data).optional_list_string
 
-    async def list_strings_3(self) -> List[Optional[str]]:
+    async def list_strings_3(self, **kwargs: Any) -> List[Optional[str]]:
         query = gql(
             """
             query ListStrings_3 {
@@ -84,11 +84,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ListStrings3.model_validate(data).list_optional_string
 
-    async def list_strings_4(self) -> List[str]:
+    async def list_strings_4(self, **kwargs: Any) -> List[str]:
         query = gql(
             """
             query ListStrings_4 {
@@ -97,11 +97,13 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ListStrings4.model_validate(data).list_string
 
-    async def list_type_a(self) -> List[Optional[ListTypeAListOptionalTypeA]]:
+    async def list_type_a(
+        self, **kwargs: Any
+    ) -> List[Optional[ListTypeAListOptionalTypeA]]:
         query = gql(
             """
             query ListTypeA {
@@ -112,12 +114,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ListTypeA.model_validate(data).list_optional_type_a
 
     async def get_animal_by_name(
-        self, name: str
+        self, name: str, **kwargs: Any
     ) -> Union[
         GetAnimalByNameAnimalByNameAnimal,
         GetAnimalByNameAnimalByNameCat,
@@ -140,12 +142,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"name": name}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return GetAnimalByName.model_validate(data).animal_by_name
 
     async def list_animals(
-        self,
+        self, **kwargs: Any
     ) -> List[
         Union[
             ListAnimalsListAnimalsAnimal,
@@ -170,11 +172,13 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return ListAnimals.model_validate(data).list_animals
 
-    async def get_animal_fragment_with_extra(self) -> GetAnimalFragmentWithExtra:
+    async def get_animal_fragment_with_extra(
+        self, **kwargs: Any
+    ) -> GetAnimalFragmentWithExtra:
         query = gql(
             """
             query GetAnimalFragmentWithExtra {
@@ -190,11 +194,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.model_validate(data)
 
-    async def get_simple_scalar(self) -> SimpleScalar:
+    async def get_simple_scalar(self, **kwargs: Any) -> SimpleScalar:
         query = gql(
             """
             query GetSimpleScalar {
@@ -203,11 +207,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return GetSimpleScalar.model_validate(data).just_simple_scalar
 
-    async def get_complex_scalar(self) -> ComplexScalar:
+    async def get_complex_scalar(self, **kwargs: Any) -> ComplexScalar:
         query = gql(
             """
             query GetComplexScalar {
@@ -216,11 +220,13 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return GetComplexScalar.model_validate(data).just_complex_scalar
 
-    async def subscribe_strings(self) -> AsyncIterator[Optional[List[str]]]:
+    async def subscribe_strings(
+        self, **kwargs: Any
+    ) -> AsyncIterator[Optional[List[str]]]:
         query = gql(
             """
             subscription SubscribeStrings {
@@ -229,10 +235,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        async for data in self.execute_ws(query=query, variables=variables):
+        async for data in self.execute_ws(query=query, variables=variables, **kwargs):
             yield SubscribeStrings.model_validate(data).optional_list_string
 
-    async def unwrap_fragment(self) -> FragmentWithSingleFieldQueryUnwrapFragment:
+    async def unwrap_fragment(
+        self, **kwargs: Any
+    ) -> FragmentWithSingleFieldQueryUnwrapFragment:
         query = gql(
             """
             query UnwrapFragment {
@@ -247,6 +255,6 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables)
+        response = await self.execute(query=query, variables=variables, **kwargs)
         data = self.get_data(response)
         return UnwrapFragment.model_validate(data).query_unwrap_fragment

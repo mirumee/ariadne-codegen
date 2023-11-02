@@ -392,7 +392,9 @@ def test_generate_with_enum_as_query_argument_generates_client_with_correct_meth
     }
     """
 
-    expected_method_def = "def custom_query(self, val: CustomEnum) -> CustomQuery:"
+    expected_method_def = (
+        "def custom_query(self, val: CustomEnum, **kwargs: Any) -> CustomQuery:"
+    )
     expected_enum_import = f"from .{generator.enums_module_name} import CustomEnum"
 
     generator.add_operation(parse(query_str).definitions[0])

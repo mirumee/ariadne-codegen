@@ -23,17 +23,17 @@ def generate_directive(directive: GraphQLDirective, type_map_name: str) -> ast.C
     return generate_call(
         func=generate_name("GraphQLDirective"),
         keywords=[
-            generate_keyword(arg="name", value=generate_constant(directive.name)),
+            generate_keyword(value=generate_constant(directive.name), arg="name"),
             generate_keyword(
-                arg="description", value=generate_constant(directive.description)
+                value=generate_constant(directive.description), arg="description"
             ),
             generate_keyword(
-                arg="is_repeatable", value=generate_constant(directive.is_repeatable)
+                value=generate_constant(directive.is_repeatable), arg="is_repeatable"
             ),
             generate_keyword(
-                arg="locations", value=generate_directive_locations(directive.locations)
+                value=generate_directive_locations(directive.locations), arg="locations"
             ),
-            generate_keyword(arg="args", value=args),
+            generate_keyword(value=args, arg="args"),
         ],
     )
 

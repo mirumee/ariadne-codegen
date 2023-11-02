@@ -27,7 +27,14 @@ from ..codegen import (
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..utils import process_name
-from .constants import ANY, INPUT_SCALARS_MAP, OPTIONAL, UNSET_NAME, UNSET_TYPE_NAME
+from .constants import (
+    ANY,
+    INPUT_SCALARS_MAP,
+    KWARGS_NAMES,
+    OPTIONAL,
+    UNSET_NAME,
+    UNSET_TYPE_NAME,
+)
 from .scalars import ScalarData
 
 
@@ -83,6 +90,7 @@ class ArgumentsGenerator:
         arguments = generate_arguments(
             args=required_args + optional_args,
             defaults=[generate_name(UNSET_NAME) for _ in optional_args],
+            kwarg=generate_arg(KWARGS_NAMES, annotation=generate_name(ANY)),
         )
 
         if self.plugin_manager:

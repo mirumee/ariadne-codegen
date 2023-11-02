@@ -55,14 +55,14 @@ def generate_field(field: GraphQLField, type_map_name: str) -> ast.Call:
         args=[generate_field_type(field.type, type_map_name)],
         keywords=[
             generate_keyword(
-                arg="args", value=generate_args(field.args, type_map_name)
+                value=generate_args(field.args, type_map_name), arg="args"
             ),
             generate_keyword(
-                arg="description", value=generate_constant(field.description)
+                value=generate_constant(field.description), arg="description"
             ),
             generate_keyword(
-                arg="deprecation_reason",
                 value=generate_constant(field.deprecation_reason),
+                arg="deprecation_reason",
             ),
         ],
     )
@@ -117,14 +117,15 @@ def generate_arg(arg: GraphQLArgument, type_map_name: str) -> ast.Call:
         args=[generate_field_type(arg.type, type_map_name)],
         keywords=[
             generate_keyword(
-                arg="default_value", value=generate_constant(arg.default_value)
+                value=generate_constant(arg.default_value), arg="default_value"
             ),
             generate_keyword(
-                arg="description", value=generate_constant(arg.description)
+                value=generate_constant(arg.description),
+                arg="description",
             ),
             generate_keyword(
-                arg="deprecation_reason",
                 value=generate_constant(arg.deprecation_reason),
+                arg="deprecation_reason",
             ),
         ],
     )
@@ -142,13 +143,13 @@ def generate_enum_value(value: GraphQLEnumValue) -> ast.Call:
     return generate_call(
         func=generate_name("GraphQLEnumValue"),
         keywords=[
-            generate_keyword(arg="value", value=generate_constant(value.value)),
+            generate_keyword(value=generate_constant(value.value), arg="value"),
             generate_keyword(
-                arg="description", value=generate_constant(value.description)
+                value=generate_constant(value.description), arg="description"
             ),
             generate_keyword(
-                arg="deprecation_reason",
                 value=generate_constant(value.deprecation_reason),
+                arg="deprecation_reason",
             ),
         ],
     )
@@ -178,14 +179,14 @@ def generate_input_field(
         args=[generate_field_type(input_field.type, type_map_name)],
         keywords=[
             generate_keyword(
-                arg="default_value", value=generate_constant(input_field.default_value)
+                value=generate_constant(input_field.default_value), arg="default_value"
             ),
             generate_keyword(
-                arg="description", value=generate_constant(input_field.description)
+                value=generate_constant(input_field.description), arg="description"
             ),
             generate_keyword(
-                arg="deprecation_reason",
                 value=generate_constant(input_field.deprecation_reason),
+                arg="deprecation_reason",
             ),
         ],
     )
