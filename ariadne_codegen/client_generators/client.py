@@ -168,7 +168,9 @@ class ClientGenerator:
 
         method_def.lineno = len(self._class_def.body) + 1
         if self.plugin_manager:
-            method_def = self.plugin_manager.generate_client_method(method_def)
+            method_def = self.plugin_manager.generate_client_method(
+                method_def, operation_definition=definition
+            )
 
         self._class_def.body.append(method_def)
         self._add_import(

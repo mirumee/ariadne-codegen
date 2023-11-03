@@ -10,6 +10,7 @@ from graphql import (
     GraphQLInputObjectType,
     GraphQLSchema,
     Node,
+    OperationDefinitionNode,
     SelectionSetNode,
     VariableDefinitionNode,
 )
@@ -48,8 +49,11 @@ class Plugin:
     def generate_client_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
         return import_
 
+    # pylint: disable=unused-argument
     def generate_client_method(
-        self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
+        self,
+        method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
+        operation_definition: OperationDefinitionNode,
     ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
         return method_def
 

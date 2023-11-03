@@ -112,7 +112,9 @@ def test_generate_client_import_calls_plugins_generate_client_import(
 def test_generate_client_method_calls_plugins_generate_client_method(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_client_method(ast.AsyncFunctionDef())
+    plugin_manager_with_mocked_plugins.generate_client_method(
+        ast.AsyncFunctionDef(), operation_definition=OperationDefinitionNode()
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_client_method.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_client_method.called
