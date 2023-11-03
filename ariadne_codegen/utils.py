@@ -21,13 +21,14 @@ def ast_to_str(
     ast_obj: ast.AST,
     remove_unused_imports: bool = True,
     multiline_strings: bool = False,
+    multiline_strings_offset: int = 4,
 ) -> str:
     """Convert ast object into string."""
     code = ast.unparse(ast_obj)
     if remove_unused_imports:
         code = fix_code(code, remove_all_unused_imports=True)
     if multiline_strings:
-        code = format_multiline_strings(code)
+        code = format_multiline_strings(code, offset=multiline_strings_offset)
     return format_str(isort.code(code), mode=Mode())
 
 
@@ -48,7 +49,9 @@ def str_to_pascal_case(name: str) -> str:
     return "".join(n[:1].upper() + n[1:] for n in name.split("_"))
 
 
-def convert_to_multiline_string(source: str, variable_indent_size=8) -> str:
+def convert_to_multiline_string(
+    source: str, variable_indent_size: int = 8, offset: int = 4
+) -> str:
     """
     Converts multiple strings into 1 multilne string.
     eg. 'abc\\n''def\\n''ghi\\n' is coverted into
@@ -63,7 +66,7 @@ def convert_to_multiline_string(source: str, variable_indent_size=8) -> str:
         joined_source += '"""'
     else:
         joined_source += '\n"""'
-    return '"""\n' + indent(joined_source, (variable_indent_size + 4) * " ")
+    return '"""\n' + indent(joined_source, (variable_indent_size + offset) * " ")
 
 
 def get_variable_indent_size(source: str) -> int:
@@ -74,7 +77,7 @@ def get_variable_indent_size(source: str) -> int:
     return 0
 
 
-def format_multiline_strings(source: str) -> str:
+def format_multiline_strings(source: str, offset: int = 4) -> str:
     """Fromats multiline string declarations."""
     formatted_source = source
     for match in re.finditer(r".*?=.*?('.*?'\s*){2,}", source):
@@ -83,7 +86,9 @@ def format_multiline_strings(source: str) -> str:
         orginal_str_match = re.search("'.*'", line)
         if orginal_str_match:
             orginal_str = orginal_str_match.group()
-            formatted = convert_to_multiline_string(orginal_str, variable_indent_size)
+            formatted = convert_to_multiline_string(
+                orginal_str, variable_indent_size=variable_indent_size, offset=offset
+            )
             formatted_source = formatted_source.replace(orginal_str, formatted)
     return formatted_source
 
