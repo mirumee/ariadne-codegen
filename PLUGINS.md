@@ -91,7 +91,9 @@ Hook executed on addition of import to client module. Later this import will be 
 
 ```py
 def generate_client_method(
-        self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
+    self,
+    method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
+    operation_definition: OperationDefinitionNode,
 ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
 ```
 

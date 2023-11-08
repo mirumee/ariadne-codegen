@@ -164,6 +164,17 @@ def test_main_shows_version():
             "fragments_on_abstract_types_client",
             CLIENTS_PATH / "fragments_on_abstract_types" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "operations" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "operations" / "queries.graphql",
+                    CLIENTS_PATH / "operations" / "schema.graphql",
+                ),
+            ),
+            "client_with_operations",
+            CLIENTS_PATH / "operations" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )

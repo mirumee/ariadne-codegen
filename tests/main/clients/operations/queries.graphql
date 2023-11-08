@@ -1,0 +1,48 @@
+query cQuery {
+  constQuery
+}
+
+mutation cMutation {
+  constMutation
+}
+
+subscription cSubscription {
+  constSubscription
+}
+
+query getA {
+  a {
+    value
+    valueB {
+      value
+    }
+  }
+}
+
+fragment fragmentB on TypeB {
+  value
+}
+
+query getAWithFragment {
+  a {
+    value
+    valueB {
+      ...fragmentB
+    }
+  }
+}
+
+fragment fragmentY on TypeY {
+  valueY
+}
+
+query getXYZ {
+  xyz {
+    ... on TypeX {
+      valueX
+    }
+    ... on TypeY {
+      ...fragmentY
+    }
+  }
+}

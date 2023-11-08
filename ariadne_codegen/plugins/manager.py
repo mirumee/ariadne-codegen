@@ -10,6 +10,7 @@ from graphql import (
     GraphQLInputObjectType,
     GraphQLSchema,
     Node,
+    OperationDefinitionNode,
     SelectionSetNode,
     VariableDefinitionNode,
 )
@@ -68,9 +69,15 @@ class PluginManager:
         return self._apply_plugins_on_object("generate_client_import", import_)
 
     def generate_client_method(
-        self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
+        self,
+        method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
+        operation_definition: OperationDefinitionNode,
     ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
-        return self._apply_plugins_on_object("generate_client_method", method_def)
+        return self._apply_plugins_on_object(
+            "generate_client_method",
+            method_def,
+            operation_definition=operation_definition,
+        )
 
     def generate_arguments(
         self,
