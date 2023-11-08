@@ -92,7 +92,7 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
 
 - [`ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin`](ariadne_codegen/contrib/shorter_results.py) - This plugin processes generated client methods for operations where only single top field is requested, so they return this field's value directly instead of operation's result type. For example get_user method generated for query `GetUser() { user(...) { ... }}` will return value of user field directly instead of `GetUserResult`.
 
-- [`ariadne_codegen.contrib.operations.OperationsPlugin`](ariadne_codegen/contrib/operations.py) - This plugin generates an `operations.py` module with definitions for all query strings. It also modifies the generated client to use these definitions instead of creating separate ones. Generated module name is configurable through `operations_module_name` (defaults to `operations`) in `[tool.ariadne-codegen.operations]` section, e.g.
+- [`ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin`](ariadne_codegen/contrib/extract_operations.py) - This plugin generates an `operations.py` module with definitions for all query strings. It also modifies the generated client to use these definitions instead of creating separate ones. Generated module name is configurable through `operations_module_name` (defaults to `operations`) in `[tool.ariadne-codegen.operations]` section, e.g.
 
 ```toml
 [tool.ariadne-codegen]

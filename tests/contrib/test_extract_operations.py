@@ -5,7 +5,7 @@ from textwrap import dedent
 import pytest
 from graphql import parse, print_ast
 
-from ariadne_codegen.contrib.operations import OperationsPlugin
+from ariadne_codegen.contrib.extract_operations import ExtractOperationsPlugin
 
 from ..utils import compare_ast
 
@@ -56,7 +56,8 @@ def test_plugin_gets_module_name_from_config_dict(config_dict, config_update, na
     dict_["tool"]["ariadne-codegen"].update(config_update)
 
     assert (
-        OperationsPlugin(schema=None, config_dict=dict_).operations_module_name == name
+        ExtractOperationsPlugin(schema=None, config_dict=dict_).operations_module_name
+        == name
     )
 
 
@@ -64,7 +65,7 @@ def test_generate_init_module_returns_module_with_added_import(
     config_dict, empty_init_module
 ):
     node = parse("query testXyz { xyz }").definitions[0]
-    plugin = OperationsPlugin(schema=None, config_dict=config_dict)
+    plugin = ExtractOperationsPlugin(schema=None, config_dict=config_dict)
     plugin.generate_operation_str(print_ast(node), operation_definition=node)
 
     init_module = plugin.generate_init_module(empty_init_module)
@@ -88,7 +89,7 @@ def test_generate_init_module_returns_module_with_added_import(
 
 def test_generate_init_module_creates_operations_file(config_dict, empty_init_module):
     node = parse("query testXyz { xyz }").definitions[0]
-    plugin = OperationsPlugin(schema=None, config_dict=config_dict)
+    plugin = ExtractOperationsPlugin(schema=None, config_dict=config_dict)
     plugin.generate_operation_str(print_ast(node), operation_definition=node)
 
     plugin.generate_init_module(empty_init_module)
@@ -114,7 +115,7 @@ def test_generate_client_method_returns_async_method_with_used_gql_variable(
     config_dict,
 ):
     node = parse("query testXyz { xyz }").definitions[0]
-    plugin = OperationsPlugin(schema=None, config_dict=config_dict)
+    plugin = ExtractOperationsPlugin(schema=None, config_dict=config_dict)
     plugin.generate_operation_str(print_ast(node), operation_definition=node)
 
     variables_assign = ast.AnnAssign(
@@ -250,7 +251,7 @@ def test_generate_client_method_returns_method_with_used_gql_variable(
 ):
     config_dict["tool"]["ariadne-codegen"]["async_client"] = False
     node = parse("query testXyz { xyz }").definitions[0]
-    plugin = OperationsPlugin(schema=None, config_dict=config_dict)
+    plugin = ExtractOperationsPlugin(schema=None, config_dict=config_dict)
     plugin.generate_operation_str(print_ast(node), operation_definition=node)
 
     variables_assign = ast.AnnAssign(
@@ -380,7 +381,7 @@ def test_generate_client_method_returns_async_generator_with_used_gql_variable(
 ):
     config_dict["tool"]["ariadne-codegen"]["async_client"] = False
     node = parse("subscription testXyz { xyz }").definitions[0]
-    plugin = OperationsPlugin(schema=None, config_dict=config_dict)
+    plugin = ExtractOperationsPlugin(schema=None, config_dict=config_dict)
     plugin.generate_operation_str(print_ast(node), operation_definition=node)
 
     variables_assign = ast.AnnAssign(
@@ -494,7 +495,7 @@ def test_generate_client_method_returns_async_generator_with_used_gql_variable(
 
 def test_generate_client_module_adds_import_to_generated_module(config_dict):
     node = parse("query testXyz { xyz }").definitions[0]
-    plugin = OperationsPlugin(schema=None, config_dict=config_dict)
+    plugin = ExtractOperationsPlugin(schema=None, config_dict=config_dict)
     plugin.generate_operation_str(print_ast(node), operation_definition=node)
 
     module = plugin.generate_client_module(ast.Module(body=[], type_ignores=[]))

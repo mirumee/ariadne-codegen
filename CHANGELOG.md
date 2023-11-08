@@ -12,7 +12,7 @@
 - Added additional base clients supporting the Open Telemetry tracing. Added `opentelemetry_client` config option.
 - Changed generated client's methods to pass `**kwargs` to base client's `execute` and `execute_ws` methods (breaking change for custom base clients).
 - Added `operation_definition` argument to `generate_client_method` plugin hook.
-- Added `OperationsPlugin`.
+- Added `ExtractOperationsPlugin`.
 
 
 ## 0.9.0 (2023-09-11)

@@ -24,7 +24,7 @@ from ariadne_codegen.plugins.base import Plugin
 from ariadne_codegen.utils import ast_to_str
 
 
-class OperationsPlugin(Plugin):
+class ExtractOperationsPlugin(Plugin):
     def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
         super().__init__(schema=schema, config_dict=config_dict)
         self.settings = get_client_settings(config_dict=self.config_dict)
