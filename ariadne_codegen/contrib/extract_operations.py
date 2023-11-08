@@ -31,7 +31,7 @@ class ExtractOperationsPlugin(Plugin):
         self.operations_module_name = (
             self.config_dict.get("tool", {})
             .get("ariadne-codegen", {})
-            .get("operations", {})
+            .get("extract-operations", {})
             .get("operations_module_name", "operations")
         )
 

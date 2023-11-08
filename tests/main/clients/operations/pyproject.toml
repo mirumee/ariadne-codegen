@@ -5,5 +5,5 @@ target_package_name = "client_with_operations"
 include_comments = "none"
 plugins = ["ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin"]
 
-[tool.ariadne-codegen.operations]
+[tool.ariadne-codegen.extract-operations]
 operations_module_name = "custom_operations"

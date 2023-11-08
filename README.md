@@ -97,9 +97,9 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
 ```toml
 [tool.ariadne-codegen]
 ...
-plugins = ["ariadne_codegen.contrib.operations.OperationsPlugin"]
+plugins = ["ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin"]
 
-[tool.ariadne-codegen.operations]
+[tool.ariadne-codegen.extract_operations]
 operations_module_name = "custom_operations_module_name"
 ```
 

@@ -46,7 +46,7 @@ def empty_init_module():
     [
         ({}, "operations"),
         (
-            {"operations": {"operations_module_name": "custom_module_name"}},
+            {"extract-operations": {"operations_module_name": "custom_module_name"}},
             "custom_module_name",
         ),
     ],
