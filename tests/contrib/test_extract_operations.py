@@ -75,11 +75,11 @@ def test_generate_init_module_returns_module_with_added_import(
         ast.Module(
             body=[
                 ast.ImportFrom(
-                    module="operations", names=[ast.alias(name="testXyz_GQL")], level=1
+                    module="operations", names=[ast.alias(name="TEST_XYZ_GQL")], level=1
                 ),
                 ast.Assign(
                     targets=[ast.Name(id="__all__")],
-                    value=ast.List(elts=[ast.Constant(value="testXyz_GQL")]),
+                    value=ast.List(elts=[ast.Constant(value="TEST_XYZ_GQL")]),
                 ),
             ],
             type_ignores=[],
@@ -100,8 +100,8 @@ def test_generate_init_module_creates_operations_file(config_dict, empty_init_mo
         .joinpath("operations.py")
     )
     expected_content = '''
-    __all__ = ["testXyz_GQL"]
-    testXyz_GQL = """
+    __all__ = ["TEST_XYZ_GQL"]
+    TEST_XYZ_GQL = """
     query testXyz {
       xyz
     }
@@ -227,7 +227,7 @@ def test_generate_client_method_returns_async_method_with_used_gql_variable(
                             keywords=[
                                 ast.keyword(
                                     arg="query",
-                                    value=ast.Name(id="testXyz_GQL"),
+                                    value=ast.Name(id="TEST_XYZ_GQL"),
                                 ),
                                 ast.keyword(
                                     arg="variables",
@@ -358,7 +358,7 @@ def test_generate_client_method_returns_method_with_used_gql_variable(
                         keywords=[
                             ast.keyword(
                                 arg="query",
-                                value=ast.Name(id="testXyz_GQL"),
+                                value=ast.Name(id="TEST_XYZ_GQL"),
                             ),
                             ast.keyword(
                                 arg="variables",
@@ -474,7 +474,7 @@ def test_generate_client_method_returns_async_generator_with_used_gql_variable(
                         ),
                         args=[],
                         keywords=[
-                            ast.keyword(arg="query", value=ast.Name(id="testXyz_GQL")),
+                            ast.keyword(arg="query", value=ast.Name(id="TEST_XYZ_GQL")),
                             ast.keyword(
                                 arg="variables", value=ast.Name(id="variables")
                             ),
@@ -505,7 +505,7 @@ def test_generate_client_module_adds_import_to_generated_module(config_dict):
         ast.Module(
             body=[
                 ast.ImportFrom(
-                    module="operations", names=[ast.alias(name="testXyz_GQL")], level=1
+                    module="operations", names=[ast.alias(name="TEST_XYZ_GQL")], level=1
                 )
             ],
             type_ignores=[],

@@ -5,12 +5,12 @@ from .c_query import CQuery
 from .c_subscription import CSubscription
 from .client import Client
 from .custom_operations import (
-    cMutation_GQL,
-    cQuery_GQL,
-    cSubscription_GQL,
-    getA_GQL,
-    getAWithFragment_GQL,
-    getXYZ_GQL,
+    C_MUTATION_GQL,
+    C_QUERY_GQL,
+    C_SUBSCRIPTION_GQL,
+    GET_A_GQL,
+    GET_A_WITH_FRAGMENT_GQL,
+    GET_XYZ_GQL,
 )
 from .exceptions import (
     GraphQLClientError,
@@ -34,9 +34,15 @@ __all__ = [
     "CMutation",
     "CQuery",
     "CSubscription",
+    "C_MUTATION_GQL",
+    "C_QUERY_GQL",
+    "C_SUBSCRIPTION_GQL",
     "Client",
     "FragmentB",
     "FragmentY",
+    "GET_A_GQL",
+    "GET_A_WITH_FRAGMENT_GQL",
+    "GET_XYZ_GQL",
     "GetA",
     "GetAA",
     "GetAAValueB",
@@ -53,10 +59,4 @@ __all__ = [
     "GraphQLClientHttpError",
     "GraphQlClientInvalidResponseError",
     "Upload",
-    "cMutation_GQL",
-    "cQuery_GQL",
-    "cSubscription_GQL",
-    "getAWithFragment_GQL",
-    "getA_GQL",
-    "getXYZ_GQL",
 ]

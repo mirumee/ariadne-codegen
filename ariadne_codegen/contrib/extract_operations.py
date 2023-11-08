@@ -21,7 +21,7 @@ from ariadne_codegen.codegen import (
 )
 from ariadne_codegen.config import get_client_settings
 from ariadne_codegen.plugins.base import Plugin
-from ariadne_codegen.utils import ast_to_str
+from ariadne_codegen.utils import ast_to_str, str_to_snake_case
 
 
 class ExtractOperationsPlugin(Plugin):
@@ -106,7 +106,8 @@ class ExtractOperationsPlugin(Plugin):
         return ast.fix_missing_locations(module)
 
     def _get_gql_variable_name(self, operation_name: str) -> str:
-        return operation_name + "_GQL"
+        snake_case_name = str_to_snake_case(operation_name)
+        return snake_case_name.upper() + "_GQL"
 
     def _generate_operations_module(self):
         operations_path = (
