@@ -1,7 +1,9 @@
 import ast
 from pathlib import Path
-from typing import Dict, Union, cast
+from typing import Dict, List, Union, cast
 
+import isort
+from black import Mode, format_str
 from graphql import (
     ExecutableDefinitionNode,
     GraphQLSchema,
@@ -21,7 +23,7 @@ from ariadne_codegen.codegen import (
 )
 from ariadne_codegen.config import get_client_settings
 from ariadne_codegen.plugins.base import Plugin
-from ariadne_codegen.utils import ast_to_str, str_to_snake_case
+from ariadne_codegen.utils import format_multiline_strings, str_to_snake_case
 
 
 class ExtractOperationsPlugin(Plugin):
@@ -110,35 +112,48 @@ class ExtractOperationsPlugin(Plugin):
         return snake_case_name.upper() + "_GQL"
 
     def _generate_operations_module(self):
+        module = self._get_operations_module()
+        code = self._module_to_str(module)
         operations_path = (
             Path(self.settings.target_package_path)
             .joinpath(self.settings.target_package_name)
             .joinpath(f"{self.operations_module_name}.py")
         )
-        module = generate_module(
-            body=[
-                generate_assign(
-                    targets=["__all__"],
-                    value=generate_list(
-                        [
-                            generate_constant(name)
-                            for name in sorted(self._operations_variables.values())
-                        ]
-                    ),
-                ),
-            ]
-            + [
-                generate_assign(
-                    targets=[self._operations_variables[name]],
-                    value=[generate_constant(l + "\n") for l in gql.splitlines()],
-                )
-                for name, gql in self._operations_gqls.items()
-            ]
+        operations_path.write_text(code, encoding="utf-8")
+
+    def _get_operations_module(self) -> ast.Module:
+        all_assign = generate_assign(
+            targets=["__all__"],
+            value=generate_list(
+                [
+                    generate_constant(name)
+                    for name in sorted(self._operations_variables.values())
+                ]
+            ),
         )
-        code = ast_to_str(module, multiline_strings=True, multiline_strings_offset=0)
+        variables_assigns = [
+            generate_assign(
+                targets=[self._operations_variables[name]],
+                value=[generate_constant(l + "\n") for l in gql.splitlines()],
+            )
+            for name, gql in self._operations_gqls.items()
+        ]
+        return generate_module(
+            body=cast(List[ast.stmt], [all_assign] + variables_assigns)
+        )
+
+    def _module_to_str(self, module: ast.Module) -> str:
+        code = ast.unparse(module)
+        code_with_break_lines = "\n\n".join(code.splitlines())
+        code_with_formatted_strings = format_multiline_strings(
+            code_with_break_lines, offset=0
+        )
+        formatted_code = format_str(
+            isort.code(code_with_formatted_strings), mode=Mode()
+        )
         comment = get_comment(
             strategy=self.settings.include_comments, source=self.settings.queries_path
         )
         if comment:
-            code = comment + "\n\n" + code
-        operations_path.write_text(code, encoding="utf-8")
+            return comment + "\n\n" + formatted_code
+        return formatted_code

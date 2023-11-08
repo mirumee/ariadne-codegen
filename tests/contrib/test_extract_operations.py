@@ -101,6 +101,7 @@ def test_generate_init_module_creates_operations_file(config_dict, empty_init_mo
     )
     expected_content = '''
     __all__ = ["TEST_XYZ_GQL"]
+
     TEST_XYZ_GQL = """
     query testXyz {
       xyz

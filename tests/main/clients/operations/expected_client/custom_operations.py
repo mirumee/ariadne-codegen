@@ -6,21 +6,25 @@ __all__ = [
     "GET_A_WITH_FRAGMENT_GQL",
     "GET_XYZ_GQL",
 ]
+
 C_QUERY_GQL = """
 query cQuery {
   constQuery
 }
 """
+
 C_MUTATION_GQL = """
 mutation cMutation {
   constMutation
 }
 """
+
 C_SUBSCRIPTION_GQL = """
 subscription cSubscription {
   constSubscription
 }
 """
+
 GET_A_GQL = """
 query getA {
   a {
@@ -31,6 +35,7 @@ query getA {
   }
 }
 """
+
 GET_A_WITH_FRAGMENT_GQL = """
 query getAWithFragment {
   a {
@@ -45,6 +50,7 @@ fragment fragmentB on TypeB {
   value
 }
 """
+
 GET_XYZ_GQL = """
 query getXYZ {
   xyz {
