@@ -1,0 +1,9 @@
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+target_package_name = "client_with_operations"
+include_comments = "none"
+plugins = ["ariadne_codegen.contrib.operations.OperationsPlugin"]
+
+[tool.ariadne-codegen.operations]
+operations_module_name = "custom_operations"

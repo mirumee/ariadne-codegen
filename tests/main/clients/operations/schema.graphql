@@ -1,0 +1,36 @@
+type Query {
+    constQuery: String!
+    a: TypeA!
+    xyz: TypeXYZ!
+}
+
+type Mutation {
+    constMutation: Int!
+}
+
+type Subscription {
+    constSubscription: Float!
+}
+
+type TypeA {
+    value: String!
+    valueB: TypeB!
+}
+
+type TypeB {
+    value: String!
+}
+
+type TypeX {
+    valueX: String!
+}
+
+type TypeY {
+    valueY: Int!
+}
+
+type TypeZ {
+    valueZ: Float!
+}
+
+union TypeXYZ = TypeX | TypeY | TypeZ
