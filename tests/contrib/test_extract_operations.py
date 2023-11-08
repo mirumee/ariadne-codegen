@@ -100,12 +100,12 @@ def test_generate_init_module_creates_operations_file(config_dict, empty_init_mo
         .joinpath("operations.py")
     )
     expected_content = '''
+    __all__ = ["testXyz_GQL"]
     testXyz_GQL = """
     query testXyz {
       xyz
     }
     """
-    __all__ = ["testXyz_GQL"]
     '''
     with operations_file_path.open(encoding="utf-8") as file_:
         assert file_.read() == dedent(expected_content).lstrip()

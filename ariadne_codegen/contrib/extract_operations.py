@@ -117,13 +117,6 @@ class ExtractOperationsPlugin(Plugin):
         module = generate_module(
             body=[
                 generate_assign(
-                    targets=[self._operations_variables[name]],
-                    value=[generate_constant(l + "\n") for l in gql.splitlines()],
-                )
-                for name, gql in self._operations_gqls.items()
-            ]
-            + [
-                generate_assign(
                     targets=["__all__"],
                     value=generate_list(
                         [
@@ -132,6 +125,13 @@ class ExtractOperationsPlugin(Plugin):
                         ]
                     ),
                 ),
+            ]
+            + [
+                generate_assign(
+                    targets=[self._operations_variables[name]],
+                    value=[generate_constant(l + "\n") for l in gql.splitlines()],
+                )
+                for name, gql in self._operations_gqls.items()
             ]
         )
         code = ast_to_str(module, multiline_strings=True, multiline_strings_offset=0)

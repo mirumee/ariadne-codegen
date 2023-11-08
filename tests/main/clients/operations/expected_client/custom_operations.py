@@ -1,3 +1,11 @@
+__all__ = [
+    "cMutation_GQL",
+    "cQuery_GQL",
+    "cSubscription_GQL",
+    "getAWithFragment_GQL",
+    "getA_GQL",
+    "getXYZ_GQL",
+]
 cQuery_GQL = """
 query cQuery {
   constQuery
@@ -54,11 +62,3 @@ fragment fragmentY on TypeY {
   valueY
 }
 """
-__all__ = [
-    "cMutation_GQL",
-    "cQuery_GQL",
-    "cSubscription_GQL",
-    "getAWithFragment_GQL",
-    "getA_GQL",
-    "getXYZ_GQL",
-]
