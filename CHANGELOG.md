@@ -13,6 +13,7 @@
 - Changed generated client's methods to pass `**kwargs` to base client's `execute` and `execute_ws` methods (breaking change for custom base clients).
 - Added `operation_definition` argument to `generate_client_method` plugin hook.
 - Added `ExtractOperationsPlugin` that extracts operation strings from client methods to separate module.
+- Added Python 3.12 to tested versions.
 
 
 ## 0.9.0 (2023-09-11)
