@@ -373,7 +373,7 @@ def test_introspect_remote_schema_uses_provided_headers(mocker):
     introspect_remote_schema("http://testserver/graphql/", headers={"test": "value"})
 
     assert mocked_post.called
-    assert mocked_post.called_with(headers={"test": "value"})
+    assert mocked_post.call_args.kwargs["headers"] == {"test": "value"}
 
 
 @pytest.mark.parametrize("verify_ssl", [True, False])
@@ -388,7 +388,7 @@ def test_introspect_remote_schema_uses_provided_verify_ssl_flag(verify_ssl, mock
     introspect_remote_schema("http://testserver/graphql/", verify_ssl=verify_ssl)
 
     assert mocked_post.called
-    assert mocked_post.called_with(verify=verify_ssl)
+    assert mocked_post.call_args.kwargs["verify"] == verify_ssl
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_single_file(

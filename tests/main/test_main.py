@@ -255,9 +255,11 @@ def test_main_uses_remote_schema_url_and_remote_schema_headers(
     package_path = project_dir / package_name
     assert package_path.is_dir()
     assert_the_same_files_in_directories(package_path, expected_package_path)
-    assert mocked_post.called_with(
-        url="http://test/graphql/", headers={"header1": "value1", "header2": "value2"}
-    )
+    assert "http://test/graphql/" in mocked_post.call_args.args
+    assert mocked_post.call_args.kwargs["headers"] == {
+        "header1": "value1",
+        "header2": "value2",
+    }
 
 
 def test_main_can_read_config_from_provided_file(tmp_path):
