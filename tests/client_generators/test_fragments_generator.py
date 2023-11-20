@@ -4,13 +4,10 @@ from typing import cast
 import pytest
 from graphql import FragmentDefinitionNode, GraphQLSchema, build_schema, parse
 
-from ariadne_codegen.client_generators.constants import (
-    ALIAS_KEYWORD,
-    MODEL_REBUILD_METHOD,
-)
+from ariadne_codegen.client_generators.constants import ALIAS_KEYWORD
 from ariadne_codegen.client_generators.fragments import FragmentsGenerator
 
-from ..utils import compare_ast, filter_ast_objects, filter_class_defs
+from ..utils import compare_ast, filter_class_defs
 
 
 @pytest.fixture
@@ -152,45 +149,6 @@ def test_generate_returns_module_without_models_for_excluded_fragments(
 
     generated_class_defs = filter_class_defs(module)
     assert [c.name for c in generated_class_defs] == ["FragmentA"]
-
-
-def test_generate_returns_module_with_update_refs_calls(
-    schema, fragment_a, test_fragment
-):
-    expected_update_refs_calls = [
-        ast.Expr(
-            value=ast.Call(
-                func=ast.Attribute(
-                    value=ast.Name(id="FragmentA"), attr=MODEL_REBUILD_METHOD
-                ),
-                args=[],
-                keywords=[],
-            )
-        ),
-        ast.Expr(
-            value=ast.Call(
-                func=ast.Attribute(
-                    value=ast.Name(id="TestFragment"), attr=MODEL_REBUILD_METHOD
-                ),
-                args=[],
-                keywords=[],
-            )
-        ),
-    ]
-    generator = FragmentsGenerator(
-        schema=schema,
-        enums_module_name="enums",
-        fragments_definitions={
-            "TestFragment": test_fragment,
-            "FragmentA": fragment_a,
-        },
-        convert_to_snake_case=True,
-    )
-
-    module = generator.generate()
-
-    generated_update_refs_calls = filter_ast_objects(module, ast.Expr)
-    assert compare_ast(generated_update_refs_calls, expected_update_refs_calls)
 
 
 def test_generate_triggers_generate_fragments_module_hook(mocked_plugin_manager):
