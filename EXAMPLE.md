@@ -394,10 +394,6 @@ class CreateUser(BaseModel):
 
 class CreateUserUserCreate(BaseModel):
     id: str
-
-
-CreateUser.model_rebuild()
-CreateUserUserCreate.model_rebuild()
 ```
 
 ```py
@@ -424,11 +420,6 @@ class ListAllUsersUsers(BaseModel):
 
 class ListAllUsersUsersLocation(BaseModel):
     country: Optional[str]
-
-
-ListAllUsers.model_rebuild()
-ListAllUsersUsers.model_rebuild()
-ListAllUsersUsersLocation.model_rebuild()
 ```
 
 ```py
@@ -449,10 +440,6 @@ class ListUsersByCountry(BaseModel):
 
 class ListUsersByCountryUsers(BasicUser, UserPersonalData):
     favourite_color: Optional[Color] = Field(alias="favouriteColor")
-
-
-ListUsersByCountry.model_rebuild()
-ListUsersByCountryUsers.model_rebuild()
 ```
 
 ```py
@@ -465,9 +452,6 @@ from .base_model import BaseModel
 
 class GetUsersCounter(BaseModel):
     users_counter: int = Field(alias="usersCounter")
-
-
-GetUsersCounter.model_rebuild()
 ```
 
 ```py
@@ -480,9 +464,6 @@ from .base_model import BaseModel
 
 class UploadFile(BaseModel):
     file_upload: bool = Field(alias="fileUpload")
-
-
-UploadFile.model_rebuild()
 ```
 
 ### Fragments file

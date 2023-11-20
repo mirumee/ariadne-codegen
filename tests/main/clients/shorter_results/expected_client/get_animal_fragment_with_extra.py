@@ -7,6 +7,3 @@ from .shorter_results_fragments import ListAnimalsFragment
 
 class GetAnimalFragmentWithExtra(ListAnimalsFragment):
     list_string: List[str] = Field(alias="listString")
-
-
-GetAnimalFragmentWithExtra.model_rebuild()

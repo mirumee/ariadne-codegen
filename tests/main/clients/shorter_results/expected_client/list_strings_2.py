@@ -7,6 +7,3 @@ from .base_model import BaseModel
 
 class ListStrings2(BaseModel):
     optional_list_string: Optional[List[str]] = Field(alias="optionalListString")
-
-
-ListStrings2.model_rebuild()
