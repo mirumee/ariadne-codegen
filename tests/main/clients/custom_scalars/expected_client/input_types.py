@@ -12,6 +12,3 @@ class TestInput(BaseModel):
     b: Annotated[Code, PlainSerializer(serialize_code)]
     c: int
     d: Any
-
-
-TestInput.model_rebuild()
