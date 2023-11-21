@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## UNRELEASED
+
+- Removed `model_rebuild` calls for generated input, fragment and result models. 
+
+
 ## 0.10.0 (2023-11-15)
 
 - Fixed generating results for nullable fields with nullable directives.
