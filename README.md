@@ -103,6 +103,8 @@ plugins = ["ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin"]
 operations_module_name = "custom_operations_module_name"
 ```
 
+- [`ariadne_codegen.contrib.extract_operations.NoReimportsPlugin`](ariadne_codegen/contrib/no_reimports.py) - This plugin removes content of generated `__init__.py`.
+
 
 ## Using generated client
 
