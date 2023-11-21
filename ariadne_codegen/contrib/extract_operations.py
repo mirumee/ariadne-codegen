@@ -41,24 +41,25 @@ class ExtractOperationsPlugin(Plugin):
         self._operations_variables: Dict[str, str] = {}
 
     def generate_init_module(self, module: ast.Module) -> ast.Module:
-        variables_names = list(self._operations_variables.values())
-        module.body.insert(
-            0,
-            generate_import_from(
-                names=variables_names,
-                from_=self.operations_module_name,
-                level=1,
-            ),
-        )
-        all_assign = cast(ast.Assign, module.body[-1])
-        already_imported_names = [
-            cast(ast.Constant, const).value
-            for const in cast(ast.List, all_assign.value).elts
-        ]
-        cast(ast.List, all_assign.value).elts = [
-            generate_constant(name)
-            for name in sorted(already_imported_names + variables_names)
-        ]
+        if module.body:
+            variables_names = list(self._operations_variables.values())
+            module.body.insert(
+                0,
+                generate_import_from(
+                    names=variables_names,
+                    from_=self.operations_module_name,
+                    level=1,
+                ),
+            )
+            all_assign = cast(ast.Assign, module.body[-1])
+            already_imported_names = [
+                cast(ast.Constant, const).value
+                for const in cast(ast.List, all_assign.value).elts
+            ]
+            cast(ast.List, all_assign.value).elts = [
+                generate_constant(name)
+                for name in sorted(already_imported_names + variables_names)
+            ]
 
         self._generate_operations_module()
         return ast.fix_missing_locations(module)
