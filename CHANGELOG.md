@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - Removed `model_rebuild` calls for generated input, fragment and result models. 
+- Added `NoReimportsPlugin` that removes content of `__init__.py`.
 
 
 ## 0.10.0 (2023-11-15)
