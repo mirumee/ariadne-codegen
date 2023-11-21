@@ -27,9 +27,3 @@ class QueryWithFragmentOnUnionQueryUTypeB(BaseModel):
 
 class QueryWithFragmentOnUnionQueryUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
-
-
-QueryWithFragmentOnUnion.model_rebuild()
-QueryWithFragmentOnUnionQueryUTypeA.model_rebuild()
-QueryWithFragmentOnUnionQueryUTypeB.model_rebuild()
-QueryWithFragmentOnUnionQueryUTypeC.model_rebuild()

@@ -11,7 +11,3 @@ class GetQueryA(BaseModel):
 
 class GetQueryAQueryA(BaseModel, MixinA, CommonMixin):
     field_a: int = Field(alias="fieldA")
-
-
-GetQueryA.model_rebuild()
-GetQueryAQueryA.model_rebuild()

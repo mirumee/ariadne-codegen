@@ -22,9 +22,3 @@ class ListAnimalsFragment(BaseModel):
 class ListAnimalsFragmentListAnimals(BaseModel):
     typename__: Literal["Animal", "Cat", "Dog"] = Field(alias="__typename")
     name: str
-
-
-FragmentWithSingleField.model_rebuild()
-FragmentWithSingleFieldQueryUnwrapFragment.model_rebuild()
-ListAnimalsFragment.model_rebuild()
-ListAnimalsFragmentListAnimals.model_rebuild()

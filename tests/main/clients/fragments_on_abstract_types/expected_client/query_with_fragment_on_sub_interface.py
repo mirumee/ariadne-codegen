@@ -19,8 +19,3 @@ class QueryWithFragmentOnSubInterfaceQueryInterfaceBaseInterface(BaseModel):
 
 class QueryWithFragmentOnSubInterfaceQueryInterfaceInterfaceA(FragmentA):
     typename__: Literal["InterfaceA"] = Field(alias="__typename")
-
-
-QueryWithFragmentOnSubInterface.model_rebuild()
-QueryWithFragmentOnSubInterfaceQueryInterfaceBaseInterface.model_rebuild()
-QueryWithFragmentOnSubInterfaceQueryInterfaceInterfaceA.model_rebuild()

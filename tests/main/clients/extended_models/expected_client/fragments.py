@@ -20,9 +20,3 @@ class GetQueryAFragment(BaseModel):
 
 class GetQueryAFragmentQueryA(BaseModel, MixinA, CommonMixin):
     field_a: int = Field(alias="fieldA")
-
-
-FragmentA.model_rebuild()
-FragmentB.model_rebuild()
-GetQueryAFragment.model_rebuild()
-GetQueryAFragmentQueryA.model_rebuild()

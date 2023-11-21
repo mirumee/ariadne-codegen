@@ -9,7 +9,3 @@ class FragmentB(BaseModel):
 
 class FragmentY(BaseModel):
     value_y: int = Field(alias="valueY")
-
-
-FragmentB.model_rebuild()
-FragmentY.model_rebuild()

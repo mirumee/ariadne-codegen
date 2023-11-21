@@ -3,9 +3,9 @@ from typing import Dict, List, Optional, Set, cast
 
 from graphql import FragmentDefinitionNode, GraphQLSchema
 
-from ..codegen import generate_expr, generate_method_call, generate_module
+from ..codegen import generate_module
 from ..plugins.manager import PluginManager
-from .constants import BASE_MODEL_IMPORT, MODEL_REBUILD_METHOD
+from .constants import BASE_MODEL_IMPORT
 from .result_types import ResultTypesGenerator
 from .scalars import ScalarData
 
@@ -59,15 +59,8 @@ class FragmentsGenerator:
         sorted_class_defs = self._get_sorted_class_defs(
             class_defs_dict=class_defs_dict, dependencies_dict=dependencies_dict
         )
-        model_rebuild_calls = [
-            generate_expr(generate_method_call(c.name, MODEL_REBUILD_METHOD))
-            for c in sorted_class_defs
-        ]
-
         module = generate_module(
-            body=cast(List[ast.stmt], imports)
-            + cast(List[ast.stmt], sorted_class_defs)
-            + cast(List[ast.stmt], model_rebuild_calls)
+            body=cast(List[ast.stmt], imports) + cast(List[ast.stmt], sorted_class_defs)
         )
         if self.plugin_manager:
             module = self.plugin_manager.generate_fragments_module(

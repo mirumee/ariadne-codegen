@@ -16,7 +16,3 @@ class GetATestQuery(BaseModel):
     code: Annotated[Code, BeforeValidator(parse_code)]
     id: int
     other: Any
-
-
-GetA.model_rebuild()
-GetATestQuery.model_rebuild()

@@ -32,9 +32,3 @@ class QueryWithFragmentOnSubInterfaceWithInlineFragmentQueryInterfaceTypeA(BaseM
     id: str
     value_a: str = Field(alias="valueA")
     another: str
-
-
-QueryWithFragmentOnSubInterfaceWithInlineFragment.model_rebuild()
-QueryWithFragmentOnSubInterfaceWithInlineFragmentQueryInterfaceBaseInterface.model_rebuild()
-QueryWithFragmentOnSubInterfaceWithInlineFragmentQueryInterfaceInterfaceA.model_rebuild()
-QueryWithFragmentOnSubInterfaceWithInlineFragmentQueryInterfaceTypeA.model_rebuild()
