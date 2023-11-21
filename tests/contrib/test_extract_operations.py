@@ -87,6 +87,14 @@ def test_generate_init_module_returns_module_with_added_import(
     )
 
 
+def test_generate_init_module_doesnt_add_import_if_module_has_no_body(config_dict):
+    plugin = ExtractOperationsPlugin(schema=None, config_dict=config_dict)
+
+    modified_module = plugin.generate_init_module(ast.Module(body=[], type_ignores=[]))
+
+    assert not modified_module.body
+
+
 def test_generate_init_module_creates_operations_file(config_dict, empty_init_module):
     node = parse("query testXyz { xyz }").definitions[0]
     plugin = ExtractOperationsPlugin(schema=None, config_dict=config_dict)
