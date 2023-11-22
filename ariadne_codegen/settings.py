@@ -65,6 +65,7 @@ class ClientSettings(BaseSettings):
     fragments_module_name: str = "fragments"
     include_comments: CommentsStrategy = field(default=CommentsStrategy.STABLE)
     convert_to_snake_case: bool = True
+    include_all_inputs: bool = True
     async_client: bool = True
     opentelemetry_client: bool = False
     files_to_include: List[str] = field(default_factory=list)

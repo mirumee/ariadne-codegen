@@ -58,6 +58,7 @@ class PackageGenerator:
         queries_source: str = "",
         schema_source: str = "",
         convert_to_snake_case: bool = True,
+        include_all_inputs: bool = True,
         base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         upload_import: ast.ImportFrom = UPLOAD_IMPORT,
@@ -94,6 +95,7 @@ class PackageGenerator:
         self.schema_source = schema_source
 
         self.convert_to_snake_case = convert_to_snake_case
+        self.include_all_inputs = include_all_inputs
 
         self.base_model_file_path = Path(base_model_file_path)
         self.base_model_import = base_model_import
@@ -242,7 +244,12 @@ class PackageGenerator:
         )
 
     def _generate_input_types(self):
-        module = self.input_types_generator.generate()
+        if self.include_all_inputs:
+            module = self.input_types_generator.generate()
+        else:
+            used_inputs = self.client_generator.arguments_generator.get_used_inputs()
+            module = self.input_types_generator.generate(types_to_include=used_inputs)
+
         input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
         code = self._add_comments_to_code(ast_to_str(module), self.schema_source)
         if self.plugin_manager:
@@ -388,6 +395,7 @@ def get_package_generator(
         queries_source=settings.queries_path,
         schema_source=settings.schema_source,
         convert_to_snake_case=settings.convert_to_snake_case,
+        include_all_inputs=settings.include_all_inputs,
         base_model_file_path=BASE_MODEL_FILE_PATH.as_posix(),
         base_model_import=BASE_MODEL_IMPORT,
         upload_import=UPLOAD_IMPORT,
