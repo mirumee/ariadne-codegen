@@ -4,6 +4,7 @@
 
 - Removed `model_rebuild` calls for generated input, fragment and result models. 
 - Added `NoReimportsPlugin` that makes the `__init__.py` of generated client package empty.
+- Added `include_all_inputs` config flag to generate only inputs used in supplied operations.
 
 
 ## 0.10.0 (2023-11-15)
