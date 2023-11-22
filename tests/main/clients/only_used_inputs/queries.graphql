@@ -1,0 +1,11 @@
+query getA($argA: InputA!) {
+  a(argA: $argA)
+}
+
+query getA2($argA: InputA!) {
+  a(argA: $argA)
+}
+
+query getB($argAA: InputAB!) {
+  b(argAA: $argAA)
+}

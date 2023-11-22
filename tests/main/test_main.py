@@ -175,6 +175,17 @@ def test_main_shows_version():
             "client_with_operations",
             CLIENTS_PATH / "operations" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "only_used_inputs" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "only_used_inputs" / "queries.graphql",
+                    CLIENTS_PATH / "only_used_inputs" / "schema.graphql",
+                ),
+            ),
+            "client_only_used_inputs",
+            CLIENTS_PATH / "only_used_inputs" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )

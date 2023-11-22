@@ -1,0 +1,35 @@
+type Query {
+  a(argA: InputA!): String!
+  b(argAA: InputAB!): String!
+  c(argX: InputX!): String!
+}
+
+input InputA {
+  valueAA: InputAA!
+  valueAB: InputAB
+}
+
+input InputAA {
+  valueAAA: InputAAA!
+}
+
+input InputAAA {
+  val: String!
+}
+
+input InputAB {
+  val: String!
+  valueA: InputA
+}
+
+input InputX {
+  valueY: InputY
+}
+
+input InputY {
+  valueZ: InputZ
+}
+
+input InputZ {
+  val: String
+}

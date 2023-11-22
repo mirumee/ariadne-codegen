@@ -70,8 +70,9 @@ class InputTypesGenerator:
         self._class_defs: List[ast.ClassDef] = [
             self._parse_input_definition(d) for d in self._filter_input_types()
         ]
+        self._generated_public_names: List[str] = []
 
-    def generate(self) -> ast.Module:
+    def generate(self, types_to_include: Optional[List[str]] = None) -> ast.Module:
         if self._used_enums:
             self._imports.append(
                 generate_import_from(self._used_enums, self.enums_module, 1)
@@ -81,16 +82,19 @@ class InputTypesGenerator:
             scalar_data = self.custom_scalars[scalar_name]
             self._imports.extend(generate_scalar_imports(scalar_data))
 
+        class_defs = self._filter_class_defs(types_to_include=types_to_include)
+        self._generated_public_names = [class_def.name for class_def in class_defs]
         module_body = cast(List[ast.stmt], self._imports) + cast(
-            List[ast.stmt], self._class_defs
+            List[ast.stmt], class_defs
         )
         module = generate_module(body=module_body)
+
         if self.plugin_manager:
             module = self.plugin_manager.generate_inputs_module(module)
         return module
 
     def get_generated_public_names(self) -> List[str]:
-        return [c.name for c in self._class_defs]
+        return self._generated_public_names
 
     def _filter_input_types(self) -> List[GraphQLInputObjectType]:
         return [
@@ -99,6 +103,35 @@ class InputTypesGenerator:
             if isinstance(definition, GraphQLInputObjectType)
             and not name.startswith("__")
         ]
+
+    def _filter_class_defs(
+        self, types_to_include: Optional[List[str]] = None
+    ) -> List[ast.ClassDef]:
+        if types_to_include is None:
+            return self._class_defs
+
+        types_names = set()
+        for name in types_to_include:
+            types_names.update(self._get_dependencies_of_type(name))
+
+        return [
+            class_def for class_def in self._class_defs if class_def.name in types_names
+        ]
+
+    def _get_dependencies_of_type(self, type_name: str) -> List[str]:
+        visited = set()
+        result = []
+
+        def dfs(node):
+            if node not in visited:
+                visited.add(node)
+                result.append(node)
+
+                for neighbor in self._dependencies[node]:
+                    dfs(neighbor)
+
+        dfs(type_name)
+        return result
 
     def _parse_input_definition(
         self, definition: GraphQLInputObjectType
@@ -137,7 +170,7 @@ class InputTypesGenerator:
                     field_implementation, input_field=field, field_name=org_name
                 )
             class_def.body.append(field_implementation)
-            self._save_used_enums_and_scalars(field_type=field_type)
+            self._save_dependencies(root_type=definition.name, field_type=field_type)
 
         if self.plugin_manager:
             class_def = self.plugin_manager.generate_input_class(
@@ -167,10 +200,12 @@ class InputTypesGenerator:
                 )
         return field_with_alias
 
-    def _save_used_enums_and_scalars(self, field_type: str = "") -> None:
+    def _save_dependencies(self, root_type: str, field_type: str = "") -> None:
         if not field_type:
             return
-        if isinstance(self.schema.type_map[field_type], GraphQLEnumType):
+        if isinstance(self.schema.type_map[field_type], GraphQLInputObjectType):
+            self._dependencies[root_type].append(field_type)
+        elif isinstance(self.schema.type_map[field_type], GraphQLEnumType):
             self._used_enums.append(field_type)
         elif isinstance(self.schema.type_map[field_type], GraphQLScalarType):
             self._used_scalars.append(field_type)
