@@ -1,0 +1,39 @@
+query getA($argA: InputA!) {
+  a(argA: $argA)
+}
+
+query getA2($argA: InputA!) {
+  a(argA: $argA)
+}
+
+query getB($argAA: InputAB!) {
+  b(argAA: $argAA)
+}
+
+query getD($enumD: EnumD!) {
+  d(enumD: $enumD)
+}
+
+query getE($argE: InputE!) {
+  e(argE: $argE)
+}
+
+query getF {
+  f {
+    val
+  }
+}
+
+query getG {
+  g {
+    ...FragmentG
+  }
+}
+
+fragment FragmentG on TypeG {
+  val
+}
+
+fragment FragmentGG on TypeGG {
+  val
+}

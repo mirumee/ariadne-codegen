@@ -3,4 +3,5 @@ schema_path = "schema.graphql"
 queries_path = "queries.graphql"
 include_comments = "none"
 include_all_inputs = false
-target_package_name = "client_only_used_inputs"
+include_all_enums = false
+target_package_name = "client_only_used_inputs_and_enums"
