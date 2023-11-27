@@ -177,14 +177,14 @@ def test_main_shows_version():
         ),
         (
             (
-                CLIENTS_PATH / "only_used_inputs" / "pyproject.toml",
+                CLIENTS_PATH / "only_used_inputs_and_enums" / "pyproject.toml",
                 (
-                    CLIENTS_PATH / "only_used_inputs" / "queries.graphql",
-                    CLIENTS_PATH / "only_used_inputs" / "schema.graphql",
+                    CLIENTS_PATH / "only_used_inputs_and_enums" / "queries.graphql",
+                    CLIENTS_PATH / "only_used_inputs_and_enums" / "schema.graphql",
                 ),
             ),
-            "client_only_used_inputs",
-            CLIENTS_PATH / "only_used_inputs" / "expected_client",
+            "client_only_used_inputs_and_enums",
+            CLIENTS_PATH / "only_used_inputs_and_enums" / "expected_client",
         ),
     ],
     indirect=["project_dir"],

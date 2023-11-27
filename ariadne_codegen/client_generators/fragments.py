@@ -31,6 +31,7 @@ class FragmentsGenerator:
 
         self._fragments_names = set(self.fragments_definitions.keys())
         self._generated_public_names: List[str] = []
+        self._used_enums: List[str] = []
 
     def generate(self, exclude_names: Optional[Set[str]] = None) -> ast.Module:
         class_defs_dict: Dict[str, List[ast.ClassDef]] = {}
@@ -55,6 +56,7 @@ class FragmentsGenerator:
             class_defs_dict[name] = generator.get_classes()
             dependencies_dict[name] = generator.get_fragments_used_as_mixins()
             self._generated_public_names.extend(generator.get_generated_public_names())
+            self._used_enums.extend(generator.get_used_enums())
 
         sorted_class_defs = self._get_sorted_class_defs(
             class_defs_dict=class_defs_dict, dependencies_dict=dependencies_dict
@@ -70,6 +72,9 @@ class FragmentsGenerator:
 
     def get_generated_public_names(self) -> List[str]:
         return self._generated_public_names
+
+    def get_used_enums(self) -> List[str]:
+        return self._used_enums
 
     def _get_sorted_class_defs(
         self,

@@ -22,6 +22,7 @@ class EnumsGenerator:
         self.schema = schema
         self.plugin_manager = plugin_manager
 
+        self._generated_public_names: List[str] = []
         self._imports: List[ast.ImportFrom] = [
             generate_import_from([ENUM_CLASS], ENUM_MODULE)
         ]
@@ -29,17 +30,21 @@ class EnumsGenerator:
             self._parse_enum_definition(d) for d in self._filter_enum_types()
         ]
 
-    def generate(self) -> ast.Module:
+    def generate(self, types_to_include: Optional[List[str]] = None) -> ast.Module:
+        class_defs = self._filter_class_defs(types_to_include)
+        self._generated_public_names = [class_def.name for class_def in class_defs]
+
         module = generate_module(
-            body=cast(List[ast.stmt], self._imports)
-            + cast(List[ast.stmt], self._class_defs)
+            body=cast(List[ast.stmt], self._imports) + cast(List[ast.stmt], class_defs)
         )
+
         if self.plugin_manager:
             module = self.plugin_manager.generate_enums_module(module)
+
         return module
 
     def get_generated_public_names(self) -> List[str]:
-        return [c.name for c in self._class_defs]
+        return self._generated_public_names
 
     def _filter_enum_types(self) -> List[GraphQLEnumType]:
         return [
@@ -66,3 +71,15 @@ class EnumsGenerator:
         if self.plugin_manager:
             class_def = self.plugin_manager.generate_enum(class_def, definition)
         return class_def
+
+    def _filter_class_defs(
+        self, types_to_include: Optional[List[str]] = None
+    ) -> List[ast.ClassDef]:
+        if types_to_include is None:
+            return self._class_defs
+
+        return [
+            class_def
+            for class_def in self._class_defs
+            if class_def.name in types_to_include
+        ]

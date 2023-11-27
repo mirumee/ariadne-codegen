@@ -1,5 +1,6 @@
 import ast
 
+import pytest
 from graphql import GraphQLEnumType, GraphQLSchema, build_ast_schema, parse
 
 from ariadne_codegen.client_generators.constants import ENUM_CLASS, ENUM_MODULE
@@ -175,3 +176,37 @@ def test_generate_triggers_generate_enum_hook_for_every_definition(
     assert call0_enum_type.name == "TestEnumAB"
     assert isinstance(call1_enum_type, GraphQLEnumType)
     assert call1_enum_type.name == "TestEnumCD"
+
+
+@pytest.mark.parametrize(
+    "types_to_include, public_names",
+    [
+        (None, ["EnumA", "EnumB", "EnumC"]),
+        (["EnumA", "EnumC"], ["EnumA", "EnumC"]),
+        (["EnumA", "EnumA", "EnumA"], ["EnumA"]),
+    ],
+)
+def test_generate_returns_module_with_filtered_classes(types_to_include, public_names):
+    schema_str = """
+    enum EnumA {
+      A1
+      A2
+    }
+
+    enum EnumB {
+      B1
+      B2
+    }
+
+    enum EnumC {
+      C1
+      C2
+    }
+    """
+
+    generator = EnumsGenerator(schema=build_ast_schema(parse(schema_str)))
+    module = generator.generate(types_to_include=types_to_include)
+
+    class_names = [c.name for c in filter_class_defs(module)]
+    assert sorted(generator.get_generated_public_names()) == sorted(public_names)
+    assert sorted(class_names) == sorted(public_names)

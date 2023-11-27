@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import Field
 
 from .base_model import BaseModel
+from .enums import EnumE
 
 
 class InputA(BaseModel):
@@ -21,3 +22,7 @@ class InputAAA(BaseModel):
 class InputAB(BaseModel):
     val: str
     value_a: Optional["InputA"] = Field(alias="valueA", default=None)
+
+
+class InputE(BaseModel):
+    val: EnumE

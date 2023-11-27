@@ -1,0 +1,121 @@
+type Query {
+  a(argA: InputA!): String!
+  b(argAA: InputAB!): String!
+  c(argX: InputX!): String!
+
+  d(enumD: EnumD!): String!
+  dd(enumDD: EnumDD!): String!
+
+  e(argE: InputE!): String!
+  ee(argEE: InputEE!): String!
+
+  f: TypeF!
+  ff: TypeFF!
+
+  g: TypeG!
+  gg: TypeGG!
+  ggg: TypeGGG!
+}
+
+input InputA {
+  valueAA: InputAA!
+  valueAB: InputAB
+}
+
+input InputAA {
+  valueAAA: InputAAA!
+}
+
+input InputAAA {
+  val: String!
+}
+
+input InputAB {
+  val: String!
+  valueA: InputA
+}
+
+input InputX {
+  valueY: InputY
+}
+
+input InputY {
+  valueZ: InputZ
+}
+
+input InputZ {
+  val: String
+}
+
+enum EnumD {
+  D1
+  D2
+}
+
+enum EnumDD {
+  DD1
+  DD2
+}
+
+enum EnumE {
+  E1
+  E2
+}
+
+enum EnumEE {
+  EE1
+  EE2
+}
+
+input InputE {
+  val: EnumE!
+}
+
+input InputEE {
+  val: EnumEE!
+}
+
+enum EnumF {
+  F1
+  F2
+}
+
+enum EnumFF {
+  FF1
+  FF2
+}
+
+type TypeF {
+  val: EnumF!
+}
+
+type TypeFF {
+  val: EnumFF!
+}
+
+enum EnumG {
+  G1
+  G2
+}
+
+enum EnumGG {
+  GG1
+  GG2
+}
+
+enum EnumGGG {
+  GGG1
+  GGG2
+}
+
+type TypeG {
+  val: EnumG!
+}
+
+type TypeGG {
+  val: EnumGG!
+}
+
+type TypeGGG {
+  val: EnumGGG!
+}
