@@ -196,6 +196,9 @@ class ResultTypesGenerator:
     def get_fragments_used_as_mixins(self) -> Set[str]:
         return self._fragments_used_as_mixins
 
+    def get_used_enums(self) -> List[str]:
+        return self._used_enums
+
     def _parse_type_definition(
         self,
         class_name: str,

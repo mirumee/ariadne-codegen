@@ -59,6 +59,7 @@ class PackageGenerator:
         schema_source: str = "",
         convert_to_snake_case: bool = True,
         include_all_inputs: bool = True,
+        include_all_enums: bool = True,
         base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         upload_import: ast.ImportFrom = UPLOAD_IMPORT,
@@ -96,6 +97,7 @@ class PackageGenerator:
 
         self.convert_to_snake_case = convert_to_snake_case
         self.include_all_inputs = include_all_inputs
+        self.include_all_enums = include_all_enums
 
         self.base_model_file_path = Path(base_model_file_path)
         self.base_model_import = base_model_import
@@ -111,6 +113,7 @@ class PackageGenerator:
         self._result_types_files: Dict[str, ast.Module] = {}
         self._generated_files: List[str] = []
         self._unpacked_fragments: Set[str] = set()
+        self._used_enums: List[str] = []
 
     def generate(self) -> List[str]:
         """Generate package with graphql client."""
@@ -118,12 +121,12 @@ class PackageGenerator:
         self._validate_unique_file_names()
         if not self.package_path.exists():
             self.package_path.mkdir()
-        self._generate_enums()
         self._generate_input_types()
         self._generate_result_types()
         self._generate_fragments()
         self._copy_files()
         self._generate_client()
+        self._generate_enums()
         self._generate_init()
 
         return sorted(self._generated_files)
@@ -157,6 +160,7 @@ class PackageGenerator:
         self._unpacked_fragments = self._unpacked_fragments.union(
             query_types_generator.get_unpacked_fragments()
         )
+        self._used_enums.extend(query_types_generator.get_used_enums())
         self._result_types_files[file_name] = query_types_generator.generate()
         operation_str = query_types_generator.get_operation_as_str()
         self.init_generator.add_import(
@@ -215,7 +219,9 @@ class PackageGenerator:
             code = self.plugin_manager.generate_client_code(code)
         client_file_path.write_text(code)
         self._generated_files.append(client_file_path.name)
-
+        self._used_enums.extend(
+            self.client_generator.arguments_generator.get_used_enums()
+        )
         self.init_generator.add_import(
             names=[self.client_generator.name], from_=self.client_file_name, level=1
         )
@@ -232,7 +238,11 @@ class PackageGenerator:
         return code
 
     def _generate_enums(self):
-        module = self.enums_generator.generate()
+        if self.include_all_enums:
+            module = self.enums_generator.generate()
+        else:
+            module = self.enums_generator.generate(types_to_include=self._used_enums)
+
         code = self._add_comments_to_code(ast_to_str(module), self.schema_source)
         if self.plugin_manager:
             code = self.plugin_manager.generate_enums_code(code)
@@ -256,6 +266,7 @@ class PackageGenerator:
             code = self.plugin_manager.generate_inputs_code(code)
         input_types_file_path.write_text(code)
         self._generated_files.append(input_types_file_path.name)
+        self._used_enums.extend(self.input_types_generator.get_used_enums())
         self.init_generator.add_import(
             self.input_types_generator.get_generated_public_names(),
             self.input_types_module_name,
@@ -284,6 +295,7 @@ class PackageGenerator:
         code = self._add_comments_to_code(ast_to_str(module), self.queries_source)
         file_path.write_text(code)
         self._generated_files.append(file_path.name)
+        self._used_enums.extend(self.fragments_generator.get_used_enums())
         self.init_generator.add_import(
             self.fragments_generator.get_generated_public_names(),
             self.fragments_module_name,
@@ -396,6 +408,7 @@ def get_package_generator(
         schema_source=settings.schema_source,
         convert_to_snake_case=settings.convert_to_snake_case,
         include_all_inputs=settings.include_all_inputs,
+        include_all_enums=settings.include_all_enums,
         base_model_file_path=BASE_MODEL_FILE_PATH.as_posix(),
         base_model_import=BASE_MODEL_IMPORT,
         upload_import=UPLOAD_IMPORT,

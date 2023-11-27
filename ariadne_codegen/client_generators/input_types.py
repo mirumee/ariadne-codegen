@@ -65,7 +65,7 @@ class InputTypesGenerator:
             upload_import,
         ]
         self._dependencies: Dict[str, List[str]] = defaultdict(list)
-        self._used_enums: List[str] = []
+        self._used_enums: Dict[str, List[str]] = defaultdict(list)
         self._used_scalars: List[str] = []
         self._class_defs: List[ast.ClassDef] = [
             self._parse_input_definition(d) for d in self._filter_input_types()
@@ -73,17 +73,18 @@ class InputTypesGenerator:
         self._generated_public_names: List[str] = []
 
     def generate(self, types_to_include: Optional[List[str]] = None) -> ast.Module:
+        class_defs = self._filter_class_defs(types_to_include=types_to_include)
+        self._generated_public_names = [class_def.name for class_def in class_defs]
+
         if self._used_enums:
             self._imports.append(
-                generate_import_from(self._used_enums, self.enums_module, 1)
+                generate_import_from(self.get_used_enums(), self.enums_module, 1)
             )
 
         for scalar_name in self._used_scalars:
             scalar_data = self.custom_scalars[scalar_name]
             self._imports.extend(generate_scalar_imports(scalar_data))
 
-        class_defs = self._filter_class_defs(types_to_include=types_to_include)
-        self._generated_public_names = [class_def.name for class_def in class_defs]
         module_body = cast(List[ast.stmt], self._imports) + cast(
             List[ast.stmt], class_defs
         )
@@ -95,6 +96,12 @@ class InputTypesGenerator:
 
     def get_generated_public_names(self) -> List[str]:
         return self._generated_public_names
+
+    def get_used_enums(self) -> List[str]:
+        enums = []
+        for input_name in self._generated_public_names:
+            enums.extend(self._used_enums[input_name])
+        return enums
 
     def _filter_input_types(self) -> List[GraphQLInputObjectType]:
         return [
@@ -206,6 +213,6 @@ class InputTypesGenerator:
         if isinstance(self.schema.type_map[field_type], GraphQLInputObjectType):
             self._dependencies[root_type].append(field_type)
         elif isinstance(self.schema.type_map[field_type], GraphQLEnumType):
-            self._used_enums.append(field_type)
+            self._used_enums[root_type].append(field_type)
         elif isinstance(self.schema.type_map[field_type], GraphQLScalarType):
             self._used_scalars.append(field_type)
