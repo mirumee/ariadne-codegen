@@ -126,13 +126,19 @@ async def test_execute_ws_sends_correct_subscribe_data(mocked_websocket):
     query_str = "query testQuery($arg: String!) { test(arg: $arg) }"
     variables = {"arg": "test_value"}
 
-    async for _ in AsyncBaseClient().execute_ws(query=query_str, variables=variables):
+    async for _ in AsyncBaseClient().execute_ws(
+        query=query_str, operation_name="testQuery", variables=variables
+    ):
         pass
 
     _, subscribe_call = mocked_websocket.send.mock_calls
     sent_data = json.loads(subscribe_call.args[0])
     assert sent_data["type"] == "subscribe"
-    assert sent_data["payload"] == {"query": query_str, "variables": variables}
+    assert sent_data["payload"] == {
+        "query": query_str,
+        "operationName": "testQuery",
+        "variables": variables,
+    }
 
 
 @pytest.mark.asyncio

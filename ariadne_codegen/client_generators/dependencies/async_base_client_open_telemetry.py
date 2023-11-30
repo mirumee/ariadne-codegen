@@ -171,14 +171,26 @@ class AsyncBaseClientOpenTelemetry:
         return cast(Dict[str, Any], data)
 
     async def execute_ws(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> AsyncIterator[Dict[str, Any]]:
         if self.tracer:
             generator = self._execute_ws_with_telemetry(
-                query=query, variables=variables, **kwargs
+                query=query,
+                operation_name=operation_name,
+                variables=variables,
+                **kwargs,
             )
         else:
-            generator = self._execute_ws(query=query, variables=variables, **kwargs)
+            generator = self._execute_ws(
+                query=query,
+                operation_name=operation_name,
+                variables=variables,
+                **kwargs,
+            )
 
         async for message in generator:
             yield message
@@ -330,7 +342,11 @@ class AsyncBaseClientOpenTelemetry:
         )
 
     async def _execute_ws(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> AsyncIterator[Dict[str, Any]]:
         headers = self.ws_headers.copy()
         headers.update(kwargs.get("extra_headers", {}))
@@ -350,6 +366,7 @@ class AsyncBaseClientOpenTelemetry:
                 websocket,
                 operation_id=operation_id,
                 query=query,
+                operation_name=operation_name,
                 variables=variables,
             )
 
@@ -371,12 +388,13 @@ class AsyncBaseClientOpenTelemetry:
         websocket: WebSocketClientProtocol,
         operation_id: str,
         query: str,
+        operation_name: Optional[str] = None,
         variables: Optional[Dict[str, Any]] = None,
     ) -> None:
         payload: Dict[str, Any] = {
             "id": operation_id,
             "type": GraphQLTransportWSMessageType.SUBSCRIBE.value,
-            "payload": {"query": query},
+            "payload": {"query": query, "operationName": operation_name},
         }
         if variables:
             payload["payload"]["variables"] = self._convert_dict_to_json_serializable(
@@ -506,7 +524,11 @@ class AsyncBaseClientOpenTelemetry:
             )
 
     async def _execute_ws_with_telemetry(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> AsyncIterator[Dict[str, Any]]:
         with self.tracer.start_as_current_span(  # type: ignore
             self.ws_root_span_name, context=self.ws_root_context
@@ -535,6 +557,7 @@ class AsyncBaseClientOpenTelemetry:
                     websocket=websocket,
                     operation_id=operation_id,
                     query=query,
+                    operation_name=operation_name,
                     variables=variables,
                 )
 
@@ -568,6 +591,7 @@ class AsyncBaseClientOpenTelemetry:
         websocket: WebSocketClientProtocol,
         operation_id: str,
         query: str,
+        operation_name: Optional[str] = None,
         variables: Optional[Dict[str, Any]] = None,
     ) -> None:
         with self.tracer.start_as_current_span(  # type: ignore
@@ -577,6 +601,7 @@ class AsyncBaseClientOpenTelemetry:
             span.set_attribute("id", operation_id)
             span.set_attribute("type", GraphQLTransportWSMessageType.SUBSCRIBE.value)
             span.set_attribute("query", query)
+            span.set_attribute("operationName", operation_name or "")
             if variables:
                 span.set_attribute(
                     "variables",
@@ -587,6 +612,7 @@ class AsyncBaseClientOpenTelemetry:
                 websocket=websocket,
                 operation_id=operation_id,
                 query=query,
+                operation_name=operation_name,
                 variables=variables,
             )
 
