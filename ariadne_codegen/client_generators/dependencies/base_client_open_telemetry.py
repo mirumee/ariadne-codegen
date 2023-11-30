@@ -68,13 +68,22 @@ class BaseClientOpenTelemetry:
         self.http_client.close()
 
     def execute(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> httpx.Response:
         if self.tracer:
             return self._execute_with_telemetry(
-                query=query, variables=variables, **kwargs
+                query=query,
+                operation_name=operation_name,
+                variables=variables,
+                **kwargs,
             )
-        return self._execute(query=query, variables=variables, **kwargs)
+        return self._execute(
+            query=query, operation_name=operation_name, variables=variables, **kwargs
+        )
 
     def get_data(self, response: httpx.Response) -> dict[str, Any]:
         if not response.is_success:
@@ -101,20 +110,30 @@ class BaseClientOpenTelemetry:
         return cast(dict[str, Any], data)
 
     def _execute(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> httpx.Response:
         processed_variables, files, files_map = self._process_variables(variables)
 
         if files and files_map:
             return self._execute_multipart(
                 query=query,
+                operation_name=operation_name,
                 variables=processed_variables,
                 files=files,
                 files_map=files_map,
                 **kwargs,
             )
 
-        return self._execute_json(query=query, variables=processed_variables, **kwargs)
+        return self._execute_json(
+            query=query,
+            operation_name=operation_name,
+            variables=processed_variables,
+            **kwargs,
+        )
 
     def _process_variables(
         self, variables: Optional[Dict[str, Any]]
@@ -188,6 +207,7 @@ class BaseClientOpenTelemetry:
     def _execute_multipart(
         self,
         query: str,
+        operation_name: Optional[str],
         variables: Dict[str, Any],
         files: Dict[str, Tuple[str, IO[bytes], str]],
         files_map: Dict[str, List[str]],
@@ -195,7 +215,12 @@ class BaseClientOpenTelemetry:
     ) -> httpx.Response:
         data = {
             "operations": json.dumps(
-                {"query": query, "variables": variables}, default=to_jsonable_python
+                {
+                    "query": query,
+                    "operationName": operation_name,
+                    "variables": variables,
+                },
+                default=to_jsonable_python,
             ),
             "map": json.dumps(files_map, default=to_jsonable_python),
         }
@@ -203,7 +228,11 @@ class BaseClientOpenTelemetry:
         return self.http_client.post(url=self.url, data=data, files=files, **kwargs)
 
     def _execute_json(
-        self, query: str, variables: Dict[str, Any], **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str],
+        variables: Dict[str, Any],
+        **kwargs: Any,
     ) -> httpx.Response:
         headers: Dict[str, str] = {"Content-Type": "application/json"}
         headers.update(kwargs.get("headers", {}))
@@ -214,13 +243,22 @@ class BaseClientOpenTelemetry:
         return self.http_client.post(
             url=self.url,
             content=json.dumps(
-                {"query": query, "variables": variables}, default=to_jsonable_python
+                {
+                    "query": query,
+                    "operationName": operation_name,
+                    "variables": variables,
+                },
+                default=to_jsonable_python,
             ),
             **merged_kwargs,
         )
 
     def _execute_with_telemetry(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> httpx.Response:
         with self.tracer.start_as_current_span(  # type: ignore
             self.root_span_name, context=self.root_context
@@ -233,6 +271,7 @@ class BaseClientOpenTelemetry:
                 return self._execute_multipart_with_telemetry(
                     root_span=root_span,
                     query=query,
+                    operation_name=operation_name,
                     variables=processed_variables,
                     files=files,
                     files_map=files_map,
@@ -242,6 +281,7 @@ class BaseClientOpenTelemetry:
             return self._execute_json_with_telemetry(
                 root_span=root_span,
                 query=query,
+                operation_name=operation_name,
                 variables=processed_variables,
                 **kwargs,
             )
@@ -250,6 +290,7 @@ class BaseClientOpenTelemetry:
         self,
         root_span: Span,
         query: str,
+        operation_name: Optional[str],
         variables: Dict[str, Any],
         files: Dict[str, Tuple[str, IO[bytes], str]],
         files_map: Dict[str, List[str]],
@@ -264,11 +305,13 @@ class BaseClientOpenTelemetry:
             serialized_map = json.dumps(files_map, default=to_jsonable_python)
 
             span.set_attribute("query", query)
+            span.set_attribute("operationName", operation_name or "")
             span.set_attribute("variables", serialized_variables)
             span.set_attribute("map", serialized_map)
 
             return self._execute_multipart(
                 query=query,
+                operation_name=operation_name,
                 variables=variables,
                 files=files,
                 files_map=files_map,
@@ -276,7 +319,12 @@ class BaseClientOpenTelemetry:
             )
 
     def _execute_json_with_telemetry(
-        self, root_span: Span, query: str, variables: Dict[str, Any], **kwargs: Any
+        self,
+        root_span: Span,
+        query: str,
+        operation_name: Optional[str],
+        variables: Dict[str, Any],
+        **kwargs: Any,
     ) -> httpx.Response:
         with self.tracer.start_as_current_span(  # type: ignore
             "json request", context=set_span_in_context(root_span)
@@ -286,6 +334,12 @@ class BaseClientOpenTelemetry:
             serialized_variables = json.dumps(variables, default=to_jsonable_python)
 
             span.set_attribute("query", query)
+            span.set_attribute("operationName", operation_name or "")
             span.set_attribute("variables", serialized_variables)
 
-            return self._execute_json(query=query, variables=variables, **kwargs)
+            return self._execute_json(
+                query=query,
+                operation_name=operation_name,
+                variables=variables,
+                **kwargs,
+            )

@@ -30,12 +30,16 @@ def test_execute_sends_post_to_correct_url_with_correct_payload(httpx_mock):
     }
     """
 
-    client.execute(query_str, {"v": "Xyz"})
+    client.execute(query_str, "Abc", {"v": "Xyz"})
 
     request = httpx_mock.get_request()
     assert request.url == "http://base_url/endpoint"
     content = json.loads(request.content)
-    assert content == {"query": query_str, "variables": {"v": "Xyz"}}
+    assert content == {
+        "query": query_str,
+        "operationName": "Abc",
+        "variables": {"v": "Xyz"},
+    }
 
 
 def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
@@ -56,13 +60,16 @@ def test_execute_parses_pydantic_variables_before_sending(httpx_mock):
     """
 
     client.execute(
-        query_str, {"v1": TestModel1(a=5), "v2": TestModel2(nested=TestModel1(a=10))}
+        query_str,
+        "Abc",
+        {"v1": TestModel1(a=5), "v2": TestModel2(nested=TestModel1(a=10))},
     )
 
     request = httpx_mock.get_request()
     content = json.loads(request.content)
     assert content == {
         "query": query_str,
+        "operationName": "Abc",
         "variables": {"v1": {"a": 5}, "v2": {"nested": {"a": 10}}},
     }
 
@@ -83,6 +90,7 @@ def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
 
     client.execute(
         query_str,
+        "Abc",
         {
             "v1": [[TestModel1(a=1), TestModel1(a=2)]],
         },
@@ -92,6 +100,7 @@ def test_execute_correctly_parses_top_level_list_variables(httpx_mock):
     content = json.loads(request.content)
     assert content == {
         "query": query_str,
+        "operationName": "Abc",
         "variables": {"v1": [[{"a": 1}, {"a": 2}]]},
     }
     assert not any(isinstance(x, BaseModel) for x in content["variables"]["v1"][0])
@@ -108,12 +117,15 @@ def test_execute_sends_payload_without_unset_arguments(httpx_mock):
     }
     """
 
-    client.execute(query_str, {"arg1": UNSET, "arg2": UNSET, "arg3": None, "arg4": 2})
+    client.execute(
+        query_str, "Abc", {"arg1": UNSET, "arg2": UNSET, "arg3": None, "arg4": 2}
+    )
 
     request = httpx_mock.get_request()
     content = json.loads(request.content)
     assert content == {
         "query": query_str,
+        "operationName": "Abc",
         "variables": {"arg3": None, "arg4": 2},
     }
 
@@ -142,6 +154,7 @@ def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
 
     client.execute(
         query_str,
+        "Abc",
         {
             "arg": TestInputA(
                 required_a="a", input_b1=TestInputB(required_b="b"), input_b3=None
@@ -153,6 +166,7 @@ def test_execute_sends_payload_without_unset_input_fields(httpx_mock):
     content = json.loads(request.content)
     assert content == {
         "query": query_str,
+        "operationName": "Abc",
         "variables": {
             "arg": {
                 "required_a": "a",
@@ -169,7 +183,7 @@ def test_execute_sends_payload_with_serialized_datetime_without_exception(httpx_
     query_str = "query Abc($arg: DATETIME) { abc }"
     arg_value = datetime(2023, 12, 31, 10, 15)
 
-    client.execute(query_str, {"arg": arg_value})
+    client.execute(query_str, "Abc", {"arg": arg_value})
 
     request = httpx_mock.get_request()
     content = json.loads(request.content)
@@ -180,7 +194,7 @@ def test_execute_sends_request_with_correct_content_type(httpx_mock):
     httpx_mock.add_response()
     client = BaseClientOpenTelemetry(url="http://base_url")
 
-    client.execute("query Abc { abc }", {})
+    client.execute("query Abc { abc }")
 
     request = httpx_mock.get_request()
     assert request.headers["Content-Type"] == "application/json"
@@ -192,7 +206,7 @@ def test_execute_sends_request_with_extra_headers_and_correct_content_type(httpx
         url="http://base_url", headers={"h_key": "h_value"}
     )
 
-    client.execute("query Abc { abc }", {})
+    client.execute("query Abc { abc }")
 
     request = httpx_mock.get_request()
     assert request.headers["h_key"] == "h_value"
@@ -205,7 +219,7 @@ def test_execute_passes_kwargs_to_json_post(mocker, tracer):
 
     BaseClientOpenTelemetry(
         url="http://base_url", http_client=http_client, tracer=tracer
-    ).execute("query Abc { abc }", {}, timeout=333, follow_redirects=False)
+    ).execute("query Abc { abc }", timeout=333, follow_redirects=False)
 
     assert http_client.post.call_args.kwargs["timeout"] == 333
     assert http_client.post.call_args.kwargs["follow_redirects"] is False
@@ -225,6 +239,7 @@ def test_execute_sends_json_request_with_headers_from_passed_kwargs(httpx_mock, 
 
     client.execute(
         "query Abc { abc }",
+        "Abc",
         {},
         headers={"Other-Header": "other", "Client-Header-A": "execute_value"},
     )
@@ -240,7 +255,9 @@ def test_execute_sends_file_with_multipart_form_data_content_type(httpx_mock, tx
     httpx_mock.add_response()
 
     client = BaseClientOpenTelemetry(url="http://base_url")
-    client.execute("query Abc($file: Upload!) { abc(file: $file) }", {"file": txt_file})
+    client.execute(
+        "query Abc($file: Upload!) { abc(file: $file) }", "Abc", {"file": txt_file}
+    )
 
     request = httpx_mock.get_request()
     assert "multipart/form-data" in request.headers["Content-Type"]
@@ -251,7 +268,7 @@ def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
     query_str = "query Abc($file: Upload!) { abc(file: $file) }"
 
     client = BaseClientOpenTelemetry(url="http://base_url")
-    client.execute(query_str, {"file": txt_file})
+    client.execute(query_str, "Abc", {"file": txt_file})
 
     request = httpx_mock.get_request()
     request.read()
@@ -260,7 +277,11 @@ def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
 
     assert sent_parts["operations"]
     decoded_operations = json.loads(sent_parts["operations"].content)
-    assert decoded_operations == {"query": query_str, "variables": {"file": None}}
+    assert decoded_operations == {
+        "query": query_str,
+        "operationName": "Abc",
+        "variables": {"file": None},
+    }
 
     assert sent_parts["map"]
     decoded_map = json.loads(sent_parts["map"].content)
@@ -277,7 +298,7 @@ def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
     query_str = "query Abc($file: Upload!) { abc(file: $file) }"
 
     client = BaseClientOpenTelemetry(url="http://base_url")
-    client.execute(query_str, {"file": in_memory_txt_file})
+    client.execute(query_str, "Abc", {"file": in_memory_txt_file})
 
     request = httpx_mock.get_request()
     request.read()
@@ -286,7 +307,11 @@ def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
 
     assert sent_parts["operations"]
     decoded_operations = json.loads(sent_parts["operations"].content)
-    assert decoded_operations == {"query": query_str, "variables": {"file": None}}
+    assert decoded_operations == {
+        "query": query_str,
+        "operationName": "Abc",
+        "variables": {"file": None},
+    }
 
     assert sent_parts["map"]
     decoded_map = json.loads(sent_parts["map"].content)
@@ -303,7 +328,7 @@ def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
     query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
 
     client = BaseClientOpenTelemetry(url="http://base_url")
-    client.execute(query_str, {"files": [txt_file, png_file]})
+    client.execute(query_str, "Abc", {"files": [txt_file, png_file]})
 
     request = httpx_mock.get_request()
     request.read()
@@ -314,6 +339,7 @@ def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
     decoded_operations = json.loads(sent_parts["operations"].content)
     assert decoded_operations == {
         "query": query_str,
+        "operationName": "Abc",
         "variables": {"files": [None, None]},
     }
 
@@ -340,7 +366,7 @@ def test_execute_sends_nested_file(httpx_mock, txt_file):
     query_str = "query Abc($input: InputType!) { abc(input: $input) }"
 
     client = BaseClientOpenTelemetry(url="http://base_url")
-    client.execute(query_str, {"input": InputType(file_=txt_file)})
+    client.execute(query_str, "Abc", {"input": InputType(file_=txt_file)})
 
     request = httpx_mock.get_request()
     request.read()
@@ -351,6 +377,7 @@ def test_execute_sends_nested_file(httpx_mock, txt_file):
     decoded_operations = json.loads(sent_parts["operations"].content)
     assert decoded_operations == {
         "query": query_str,
+        "operationName": "Abc",
         "variables": {"input": {"file_": None}},
     }
 
@@ -369,7 +396,7 @@ def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
     query_str = "query Abc($files: [Upload!]!) { abc(files: $files) }"
 
     client = BaseClientOpenTelemetry(url="http://base_url")
-    client.execute(query_str, {"files": [txt_file, txt_file]})
+    client.execute(query_str, "Abc", {"files": [txt_file, txt_file]})
 
     request = httpx_mock.get_request()
     request.read()
@@ -380,6 +407,7 @@ def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
     decoded_operations = json.loads(sent_parts["operations"].content)
     assert decoded_operations == {
         "query": query_str,
+        "operationName": "Abc",
         "variables": {"files": [None, None]},
     }
 
@@ -401,6 +429,7 @@ def test_execute_passes_kwargs_to_multipart_post(mocker, tracer, txt_file):
         url="http://base_url", http_client=http_client, tracer=tracer
     ).execute(
         "query Abc($file: Upload!) { abc(file: $file) }",
+        "Abc",
         {"file": txt_file},
         timeout=333,
         follow_redirects=False,
@@ -426,6 +455,7 @@ def test_execute_sends_multipart_request_with_headers_from_passed_kwargs(
 
     client.execute(
         "query Abc($file: Upload!) { abc(file: $file) }",
+        "Abc",
         {"file": txt_file},
         headers={
             "Other-Header": "other",
@@ -601,12 +631,17 @@ def test_execute_creates_span_for_json_http_request(
     httpx_mock.add_response()
     client = BaseClientOpenTelemetry(url="http://base_url", tracer="tracker")
 
-    client.execute("query GetHello { hello }", variables={"a": 1, "b": {"bb": 2}})
+    client.execute(
+        "query GetHello { hello }",
+        operation_name="GetHello",
+        variables={"a": 1, "b": {"bb": 2}},
+    )
 
     mocked_start_as_current_span.assert_any_call("json request", context=ANY)
     with mocked_start_as_current_span.return_value as span:
         span.set_attribute.assert_any_call("component", "GraphQL Client")
         span.set_attribute.assert_any_call("query", "query GetHello { hello }")
+        span.set_attribute.assert_any_call("operationName", "GetHello")
         span.set_attribute.assert_any_call(
             "variables", json.dumps({"a": 1, "b": {"bb": 2}})
         )
@@ -620,6 +655,7 @@ def test_execute_creates_span_for_multipart_request(
 
     client.execute(
         "query Abc($file: Upload!) { abc(file: $file) }",
+        "Abc",
         {"file": txt_file, "a": 1.0, "b": {"bb": 2}},
     )
 
@@ -629,6 +665,7 @@ def test_execute_creates_span_for_multipart_request(
         span.set_attribute.assert_any_call(
             "query", "query Abc($file: Upload!) { abc(file: $file) }"
         )
+        span.set_attribute.assert_any_call("operationName", "Abc")
         span.set_attribute.assert_any_call(
             "variables", json.dumps({"file": None, "a": 1.0, "b": {"bb": 2}})
         )
