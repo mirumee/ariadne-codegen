@@ -21,6 +21,8 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"dataA": data_a}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getQueryA", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetQueryA.model_validate(data)

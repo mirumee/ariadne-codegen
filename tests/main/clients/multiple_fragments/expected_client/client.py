@@ -34,7 +34,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="exampleQuery1", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ExampleQuery1.model_validate(data)
 
@@ -62,7 +64,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="exampleQuery2", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ExampleQuery2.model_validate(data)
 
@@ -86,6 +90,8 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="exampleQuery3", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ExampleQuery3.model_validate(data)

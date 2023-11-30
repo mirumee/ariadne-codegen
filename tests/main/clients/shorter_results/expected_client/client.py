@@ -45,7 +45,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="GetAuthenticatedUser",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return GetAuthenticatedUser.model_validate(data).me
 
@@ -58,7 +63,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListStrings_1", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListStrings1.model_validate(data).optional_list_optional_string
 
@@ -71,7 +78,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListStrings_2", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListStrings2.model_validate(data).optional_list_string
 
@@ -84,7 +93,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListStrings_3", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListStrings3.model_validate(data).list_optional_string
 
@@ -97,7 +108,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListStrings_4", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListStrings4.model_validate(data).list_string
 
@@ -114,7 +127,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListTypeA", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListTypeA.model_validate(data).list_optional_type_a
 
@@ -142,7 +157,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"name": name}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="GetAnimalByName", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetAnimalByName.model_validate(data).animal_by_name
 
@@ -172,7 +189,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListAnimals", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListAnimals.model_validate(data).list_animals
 
@@ -194,7 +213,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="GetAnimalFragmentWithExtra",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.model_validate(data)
 
@@ -207,7 +231,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="GetSimpleScalar", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetSimpleScalar.model_validate(data).just_simple_scalar
 
@@ -220,7 +246,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="GetComplexScalar",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return GetComplexScalar.model_validate(data).just_complex_scalar
 
@@ -255,6 +286,8 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="UnwrapFragment", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return UnwrapFragment.model_validate(data).query_unwrap_fragment

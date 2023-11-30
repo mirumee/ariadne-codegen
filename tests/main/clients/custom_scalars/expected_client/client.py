@@ -40,6 +40,8 @@ class Client(AsyncBaseClient):
             "input": input,
             "other": other,
         }
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getA", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetA.model_validate(data)

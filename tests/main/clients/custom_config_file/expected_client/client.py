@@ -18,6 +18,8 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="test", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return Test.model_validate(data)

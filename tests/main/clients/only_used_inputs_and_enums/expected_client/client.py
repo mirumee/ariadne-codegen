@@ -26,7 +26,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"argA": arg_a}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getA", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetA.model_validate(data)
 
@@ -39,7 +41,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"argA": arg_a}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getA2", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetA2.model_validate(data)
 
@@ -52,7 +56,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"argAA": arg_aa}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getB", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetB.model_validate(data)
 
@@ -65,7 +71,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"enumD": enum_d}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getD", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetD.model_validate(data)
 
@@ -78,7 +86,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"argE": arg_e}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getE", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetE.model_validate(data)
 
@@ -93,7 +103,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getF", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetF.model_validate(data)
 
@@ -112,6 +124,8 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getG", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetG.model_validate(data)

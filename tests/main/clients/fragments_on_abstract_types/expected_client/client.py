@@ -32,7 +32,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="queryWithFragmentOnSubInterface",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return QueryWithFragmentOnSubInterface.model_validate(data)
 
@@ -58,7 +63,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="queryWithFragmentOnSubInterfaceWithInlineFragment",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return QueryWithFragmentOnSubInterfaceWithInlineFragment.model_validate(data)
 
@@ -81,6 +91,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="queryWithFragmentOnUnionMember",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return QueryWithFragmentOnUnionMember.model_validate(data)

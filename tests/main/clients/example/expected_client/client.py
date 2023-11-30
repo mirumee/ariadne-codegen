@@ -28,7 +28,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"userData": user_data}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="CreateUser", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return CreateUser.model_validate(data)
 
@@ -49,7 +51,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListAllUsers", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListAllUsers.model_validate(data)
 
@@ -78,7 +82,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"country": country}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="ListUsersByCountry",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return ListUsersByCountry.model_validate(data)
 
@@ -103,6 +112,8 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"file": file}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="uploadFile", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return UploadFile.model_validate(data)

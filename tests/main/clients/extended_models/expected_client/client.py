@@ -23,7 +23,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getQueryA", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetQueryA.model_validate(data)
 
@@ -38,7 +40,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="getQueryB", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return GetQueryB.model_validate(data)
 
@@ -57,7 +61,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="getQueryAWithFragment",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return GetQueryAWithFragment.model_validate(data)
 
@@ -83,6 +92,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="fragmentsWithMixins",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return FragmentsWithMixins.model_validate(data)

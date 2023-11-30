@@ -40,7 +40,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="InterfaceA", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return InterfaceA.model_validate(data)
 
@@ -59,7 +61,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="InterfaceB", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return InterfaceB.model_validate(data)
 
@@ -75,7 +79,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="InterfaceC", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return InterfaceC.model_validate(data)
 
@@ -97,7 +103,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListInterface", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListInterface.model_validate(data)
 
@@ -113,7 +121,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="InterfaceWithTypename",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return InterfaceWithTypename.model_validate(data)
 
@@ -136,7 +149,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="UnionA", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return UnionA.model_validate(data)
 
@@ -155,7 +170,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="UnionB", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return UnionB.model_validate(data)
 
@@ -178,7 +195,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListUnion", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListUnion.model_validate(data)
 
@@ -206,7 +225,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="queryWithFragmentOnInterface",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return QueryWithFragmentOnInterface.model_validate(data)
 
@@ -235,7 +259,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="queryWithFragmentOnUnion",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return QueryWithFragmentOnUnion.model_validate(data)
 
@@ -262,7 +291,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="queryWithFragmentOnQueryWithInterface",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return QueryWithFragmentOnQueryWithInterface.model_validate(data)
 
@@ -290,6 +324,11 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="queryWithFragmentOnQueryWithUnion",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return QueryWithFragmentOnQueryWithUnion.model_validate(data)
