@@ -100,7 +100,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        async for data in self.execute_ws(query=query, variables=variables, **kwargs):
+        async for data in self.execute_ws(
+            query=query, operation_name="GetUsersCounter", variables=variables, **kwargs
+        ):
             yield GetUsersCounter.model_validate(data)
 
     async def upload_file(self, file: Upload, **kwargs: Any) -> UploadFile:

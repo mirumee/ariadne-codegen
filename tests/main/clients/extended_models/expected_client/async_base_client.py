@@ -134,7 +134,11 @@ class AsyncBaseClient:
         return cast(Dict[str, Any], data)
 
     async def execute_ws(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> AsyncIterator[Dict[str, Any]]:
         headers = self.ws_headers.copy()
         headers.update(kwargs.get("extra_headers", {}))
@@ -154,6 +158,7 @@ class AsyncBaseClient:
                 websocket,
                 operation_id=operation_id,
                 query=query,
+                operation_name=operation_name,
                 variables=variables,
             )
 
@@ -295,12 +300,13 @@ class AsyncBaseClient:
         websocket: WebSocketClientProtocol,
         operation_id: str,
         query: str,
+        operation_name: Optional[str] = None,
         variables: Optional[Dict[str, Any]] = None,
     ) -> None:
         payload: Dict[str, Any] = {
             "id": operation_id,
             "type": GraphQLTransportWSMessageType.SUBSCRIBE.value,
-            "payload": {"query": query},
+            "payload": {"query": query, "operationName": operation_name},
         }
         if variables:
             payload["payload"]["variables"] = self._convert_dict_to_json_serializable(

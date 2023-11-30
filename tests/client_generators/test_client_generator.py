@@ -511,6 +511,9 @@ def test_add_method_generates_async_generator_for_subscription_definition(
                     args=[],
                     keywords=[
                         ast.keyword(arg="query", value=ast.Name(id="query")),
+                        ast.keyword(
+                            arg="operation_name", value=ast.Constant(value="GetCounter")
+                        ),
                         ast.keyword(arg="variables", value=ast.Name(id="variables")),
                         ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                     ],

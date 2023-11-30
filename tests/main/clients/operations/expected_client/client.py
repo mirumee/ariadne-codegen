@@ -44,7 +44,10 @@ class Client(AsyncBaseClient):
     async def c_subscription(self, **kwargs: Any) -> AsyncIterator[CSubscription]:
         variables: Dict[str, object] = {}
         async for data in self.execute_ws(
-            query=C_SUBSCRIPTION_GQL, variables=variables, **kwargs
+            query=C_SUBSCRIPTION_GQL,
+            operation_name="cSubscription",
+            variables=variables,
+            **kwargs
         ):
             yield CSubscription.model_validate(data)
 

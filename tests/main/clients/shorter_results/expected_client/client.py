@@ -266,7 +266,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        async for data in self.execute_ws(query=query, variables=variables, **kwargs):
+        async for data in self.execute_ws(
+            query=query,
+            operation_name="SubscribeStrings",
+            variables=variables,
+            **kwargs
+        ):
             yield SubscribeStrings.model_validate(data).optional_list_string
 
     async def unwrap_fragment(

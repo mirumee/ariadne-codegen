@@ -145,6 +145,7 @@ class ClientGenerator:
                 ast.FunctionDef, ast.AsyncFunctionDef
             ] = self._generate_subscription_method_def(
                 name=name,
+                operation_name=operation_name,
                 return_type=return_type,
                 arguments=arguments,
                 arguments_dict=arguments_dict,
@@ -191,6 +192,7 @@ class ClientGenerator:
     def _generate_subscription_method_def(
         self,
         name: str,
+        operation_name: str,
         return_type: str,
         arguments: ast.arguments,
         arguments_dict: ast.Dict,
@@ -205,7 +207,7 @@ class ClientGenerator:
             body=[
                 self._generate_operation_str_assign(operation_str, 1),
                 self._generate_variables_assign(arguments_dict, 2),
-                self._generate_async_generator_loop(return_type, 3),
+                self._generate_async_generator_loop(operation_name, return_type, 3),
             ],
         )
 
@@ -337,7 +339,7 @@ class ClientGenerator:
         )
 
     def _generate_async_generator_loop(
-        self, return_type: str, lineno: int = 1
+        self, operation_name: str, return_type: str, lineno: int = 1
     ) -> ast.AsyncFor:
         return generate_async_for(
             target=generate_name(self._data_variable),
@@ -346,6 +348,9 @@ class ClientGenerator:
                 keywords=[
                     generate_keyword(
                         value=generate_name(self._operation_str_variable), arg="query"
+                    ),
+                    generate_keyword(
+                        value=generate_constant(operation_name), arg="operation_name"
                     ),
                     generate_keyword(
                         value=generate_name(self._variables_dict_variable),
