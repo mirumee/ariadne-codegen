@@ -6,6 +6,7 @@
 - Added `NoReimportsPlugin` that makes the `__init__.py` of generated client package empty.
 - Added `include_all_inputs` config flag to generate only inputs used in supplied operations.
 - Added `include_all_enums` config flag to generate only enums used in supplied operations.
+- Changed generated client's methods to add `operationName` to sent payload.
 
 
 ## 0.10.0 (2023-11-15)
