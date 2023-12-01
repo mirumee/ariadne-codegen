@@ -39,20 +39,30 @@ class BaseClient:
         self.http_client.close()
 
     def execute(
-        self, query: str, variables: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> httpx.Response:
         processed_variables, files, files_map = self._process_variables(variables)
 
         if files and files_map:
             return self._execute_multipart(
                 query=query,
+                operation_name=operation_name,
                 variables=processed_variables,
                 files=files,
                 files_map=files_map,
                 **kwargs,
             )
 
-        return self._execute_json(query=query, variables=processed_variables, **kwargs)
+        return self._execute_json(
+            query=query,
+            operation_name=operation_name,
+            variables=processed_variables,
+            **kwargs,
+        )
 
     def get_data(self, response: httpx.Response) -> dict[str, Any]:
         if not response.is_success:
@@ -150,6 +160,7 @@ class BaseClient:
     def _execute_multipart(
         self,
         query: str,
+        operation_name: Optional[str],
         variables: Dict[str, Any],
         files: Dict[str, Tuple[str, IO[bytes], str]],
         files_map: Dict[str, List[str]],
@@ -157,7 +168,12 @@ class BaseClient:
     ) -> httpx.Response:
         data = {
             "operations": json.dumps(
-                {"query": query, "variables": variables}, default=to_jsonable_python
+                {
+                    "query": query,
+                    "operationName": operation_name,
+                    "variables": variables,
+                },
+                default=to_jsonable_python,
             ),
             "map": json.dumps(files_map, default=to_jsonable_python),
         }
@@ -165,7 +181,11 @@ class BaseClient:
         return self.http_client.post(url=self.url, data=data, files=files, **kwargs)
 
     def _execute_json(
-        self, query: str, variables: Dict[str, Any], **kwargs: Any
+        self,
+        query: str,
+        operation_name: Optional[str],
+        variables: Dict[str, Any],
+        **kwargs: Any,
     ) -> httpx.Response:
         headers: Dict[str, str] = {"Content-Type": "application/json"}
         headers.update(kwargs.get("headers", {}))
@@ -176,7 +196,12 @@ class BaseClient:
         return self.http_client.post(
             url=self.url,
             content=json.dumps(
-                {"query": query, "variables": variables}, default=to_jsonable_python
+                {
+                    "query": query,
+                    "operationName": operation_name,
+                    "variables": variables,
+                },
+                default=to_jsonable_python,
             ),
             **merged_kwargs,
         )

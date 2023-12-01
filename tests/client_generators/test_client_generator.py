@@ -277,6 +277,9 @@ def test_add_method_generates_correct_async_method_body(async_base_client_import
                     args=[],
                     keywords=[
                         ast.keyword(arg="query", value=ast.Name(id="query")),
+                        ast.keyword(
+                            arg="operation_name", value=ast.Constant(value="ListXyz")
+                        ),
                         ast.keyword(arg="variables", value=ast.Name(id="variables")),
                         ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                     ],
@@ -415,6 +418,9 @@ def test_add_method_generates_correct_method_body(base_client_import):
                 args=[],
                 keywords=[
                     ast.keyword(arg="query", value=ast.Name(id="query")),
+                    ast.keyword(
+                        arg="operation_name", value=ast.Constant(value="ListXyz")
+                    ),
                     ast.keyword(arg="variables", value=ast.Name(id="variables")),
                     ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                 ],
@@ -505,6 +511,9 @@ def test_add_method_generates_async_generator_for_subscription_definition(
                     args=[],
                     keywords=[
                         ast.keyword(arg="query", value=ast.Name(id="query")),
+                        ast.keyword(
+                            arg="operation_name", value=ast.Constant(value="GetCounter")
+                        ),
                         ast.keyword(arg="variables", value=ast.Name(id="variables")),
                         ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                     ],

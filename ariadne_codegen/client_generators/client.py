@@ -135,6 +135,7 @@ class ClientGenerator:
         arguments, arguments_dict = self.arguments_generator.generate(
             definition.variable_definitions
         )
+        operation_name = definition.name.value if definition.name else ""
         if definition.operation == OperationType.SUBSCRIPTION:
             if not async_:
                 raise NotSupported(
@@ -144,6 +145,7 @@ class ClientGenerator:
                 ast.FunctionDef, ast.AsyncFunctionDef
             ] = self._generate_subscription_method_def(
                 name=name,
+                operation_name=operation_name,
                 return_type=return_type,
                 arguments=arguments,
                 arguments_dict=arguments_dict,
@@ -156,6 +158,7 @@ class ClientGenerator:
                 arguments=arguments,
                 arguments_dict=arguments_dict,
                 operation_str=operation_str,
+                operation_name=operation_name,
             )
         else:
             method_def = self._generate_method(
@@ -164,6 +167,7 @@ class ClientGenerator:
                 arguments=arguments,
                 arguments_dict=arguments_dict,
                 operation_str=operation_str,
+                operation_name=operation_name,
             )
 
         method_def.lineno = len(self._class_def.body) + 1
@@ -188,6 +192,7 @@ class ClientGenerator:
     def _generate_subscription_method_def(
         self,
         name: str,
+        operation_name: str,
         return_type: str,
         arguments: ast.arguments,
         arguments_dict: ast.Dict,
@@ -202,7 +207,7 @@ class ClientGenerator:
             body=[
                 self._generate_operation_str_assign(operation_str, 1),
                 self._generate_variables_assign(arguments_dict, 2),
-                self._generate_async_generator_loop(return_type, 3),
+                self._generate_async_generator_loop(operation_name, return_type, 3),
             ],
         )
 
@@ -213,6 +218,7 @@ class ClientGenerator:
         arguments: ast.arguments,
         arguments_dict: ast.Dict,
         operation_str: str,
+        operation_name: str,
     ) -> ast.AsyncFunctionDef:
         return generate_async_method_definition(
             name=name,
@@ -221,7 +227,7 @@ class ClientGenerator:
             body=[
                 self._generate_operation_str_assign(operation_str, 1),
                 self._generate_variables_assign(arguments_dict, 2),
-                self._generate_async_response_assign(3),
+                self._generate_async_response_assign(operation_name, 3),
                 self._generate_data_retrieval(),
                 self._generate_return_parsed_obj(return_type),
             ],
@@ -234,6 +240,7 @@ class ClientGenerator:
         arguments: ast.arguments,
         arguments_dict: ast.Dict,
         operation_str: str,
+        operation_name: str,
     ) -> ast.FunctionDef:
         return generate_method_definition(
             name=name,
@@ -242,7 +249,7 @@ class ClientGenerator:
             body=[
                 self._generate_operation_str_assign(operation_str, 1),
                 self._generate_variables_assign(arguments_dict, 2),
-                self._generate_response_assign(3),
+                self._generate_response_assign(operation_name, 3),
                 self._generate_data_retrieval(),
                 self._generate_return_parsed_obj(return_type),
             ],
@@ -275,26 +282,35 @@ class ClientGenerator:
             lineno=lineno,
         )
 
-    def _generate_async_response_assign(self, lineno: int = 1) -> ast.Assign:
+    def _generate_async_response_assign(
+        self, operation_name: str, lineno: int = 1
+    ) -> ast.Assign:
         return generate_assign(
             targets=[self._response_variable],
-            value=generate_await(self._generate_execute_call()),
+            value=generate_await(
+                self._generate_execute_call(operation_name=operation_name)
+            ),
             lineno=lineno,
         )
 
-    def _generate_response_assign(self, lineno: int = 1) -> ast.Assign:
+    def _generate_response_assign(
+        self, operation_name: str, lineno: int = 1
+    ) -> ast.Assign:
         return generate_assign(
             targets=[self._response_variable],
-            value=self._generate_execute_call(),
+            value=self._generate_execute_call(operation_name=operation_name),
             lineno=lineno,
         )
 
-    def _generate_execute_call(self) -> ast.Call:
+    def _generate_execute_call(self, operation_name: str) -> ast.Call:
         return generate_call(
             func=generate_attribute(generate_name("self"), "execute"),
             keywords=[
                 generate_keyword(
                     value=generate_name(self._operation_str_variable), arg="query"
+                ),
+                generate_keyword(
+                    value=generate_constant(operation_name), arg="operation_name"
                 ),
                 generate_keyword(
                     value=generate_name(self._variables_dict_variable), arg="variables"
@@ -323,7 +339,7 @@ class ClientGenerator:
         )
 
     def _generate_async_generator_loop(
-        self, return_type: str, lineno: int = 1
+        self, operation_name: str, return_type: str, lineno: int = 1
     ) -> ast.AsyncFor:
         return generate_async_for(
             target=generate_name(self._data_variable),
@@ -332,6 +348,9 @@ class ClientGenerator:
                 keywords=[
                     generate_keyword(
                         value=generate_name(self._operation_str_variable), arg="query"
+                    ),
+                    generate_keyword(
+                        value=generate_constant(operation_name), arg="operation_name"
                     ),
                     generate_keyword(
                         value=generate_name(self._variables_dict_variable),

@@ -210,7 +210,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"userData": user_data}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="CreateUser", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return CreateUser.model_validate(data)
 
@@ -231,7 +233,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="ListAllUsers", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return ListAllUsers.model_validate(data)
 
@@ -260,7 +264,12 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"country": country}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query,
+            operation_name="ListUsersByCountry",
+            variables=variables,
+            **kwargs
+        )
         data = self.get_data(response)
         return ListUsersByCountry.model_validate(data)
 
@@ -273,7 +282,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {}
-        async for data in self.execute_ws(query=query, variables=variables, **kwargs):
+        async for data in self.execute_ws(
+            query=query, operation_name="GetUsersCounter", variables=variables, **kwargs
+        ):
             yield GetUsersCounter.model_validate(data)
 
     async def upload_file(self, file: Upload, **kwargs: Any) -> UploadFile:
@@ -285,7 +296,9 @@ class Client(AsyncBaseClient):
             """
         )
         variables: Dict[str, object] = {"file": file}
-        response = await self.execute(query=query, variables=variables, **kwargs)
+        response = await self.execute(
+            query=query, operation_name="uploadFile", variables=variables, **kwargs
+        )
         data = self.get_data(response)
         return UploadFile.model_validate(data)
 ```

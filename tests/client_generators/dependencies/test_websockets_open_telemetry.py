@@ -134,14 +134,18 @@ async def test_execute_ws_sends_correct_subscribe_data(mocked_websocket):
     variables = {"arg": "test_value"}
 
     async for _ in AsyncBaseClientOpenTelemetry().execute_ws(
-        query=query_str, variables=variables
+        query=query_str, operation_name="testQuery", variables=variables
     ):
         pass
 
     _, subscribe_call = mocked_websocket.send.mock_calls
     sent_data = json.loads(subscribe_call.args[0])
     assert sent_data["type"] == "subscribe"
-    assert sent_data["payload"] == {"query": query_str, "variables": variables}
+    assert sent_data["payload"] == {
+        "query": query_str,
+        "operationName": "testQuery",
+        "variables": variables,
+    }
 
 
 @pytest.mark.asyncio
@@ -334,13 +338,21 @@ async def test_execute_ws_creates_span_for_subscribe_message(
 
     async for _ in client.execute_ws(
         "subscription Abc(a: String, b: InputB) { value }",
+        operation_name="Abc",
         variables={"a": "AAA", "b": {"valueB": 21}},
     ):
         pass
 
     mocked_start_as_current_span.assert_any_call("connection init", context=ANY)
     with mocked_start_as_current_span.return_value as span:
-        span.set_attribute.assert_any_call("type", "connection_init")
+        span.set_attribute.assert_any_call("type", "subscribe")
+        span.set_attribute.assert_any_call(
+            "query", "subscription Abc(a: String, b: InputB) { value }"
+        )
+        span.set_attribute.assert_any_call("operationName", "Abc")
+        span.set_attribute.assert_any_call(
+            "variables", json.dumps({"a": "AAA", "b": {"valueB": 21}})
+        )
 
 
 @pytest.mark.parametrize(
