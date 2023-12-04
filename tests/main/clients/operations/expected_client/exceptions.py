@@ -54,7 +54,11 @@ class GraphQLClientGraphQLError(GraphQLClientError):
 
 
 class GraphQLClientGraphQLMultiError(GraphQLClientError):
-    def __init__(self, errors: List[GraphQLClientGraphQLError], data: Dict[str, Any]):
+    def __init__(
+        self,
+        errors: List[GraphQLClientGraphQLError],
+        data: Optional[Dict[str, Any]] = None,
+    ):
         self.errors = errors
         self.data = data
 
@@ -63,7 +67,7 @@ class GraphQLClientGraphQLMultiError(GraphQLClientError):
 
     @classmethod
     def from_errors_dicts(
-        cls, errors_dicts: List[Dict[str, Any]], data: Dict[str, Any]
+        cls, errors_dicts: List[Dict[str, Any]], data: Optional[Dict[str, Any]] = None
     ) -> "GraphQLClientGraphQLMultiError":
         return cls(
             errors=[GraphQLClientGraphQLError.from_dict(e) for e in errors_dicts],

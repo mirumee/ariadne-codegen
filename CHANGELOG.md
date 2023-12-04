@@ -9,6 +9,7 @@
 - Added `operationName` to payload sent by generated client's methods.
 - Fixed base clients to pass `mypy --strict` without installed optional dependencies.
 - Renamed `GraphQlClientInvalidResponseError` to `GraphQLClientInvalidResponseError` (breaking change).
+- Changed base clients to raise `GraphQLClientGraphQLMultiError` for payloads with `errors` key but no `data` (breaking change).
 
 
 ## 0.10.0 (2023-11-15)
