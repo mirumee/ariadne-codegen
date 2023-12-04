@@ -91,7 +91,7 @@ DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME = "BaseClientOpenTelemetry"
 GRAPHQL_CLIENT_EXCEPTIONS_NAMES = [
     "GraphQLClientError",
     "GraphQLClientHttpError",
-    "GraphQlClientInvalidResponseError",
+    "GraphQLClientInvalidResponseError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
 ]

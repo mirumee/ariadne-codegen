@@ -6,7 +6,7 @@ from .exceptions import (
     GraphQLClientGraphQLError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
-    GraphQlClientInvalidResponseError,
+    GraphQLClientInvalidResponseError,
 )
 from .fragments import FragmentA, FragmentB
 from .query_with_fragment_on_sub_interface import (
@@ -36,7 +36,7 @@ __all__ = [
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
-    "GraphQlClientInvalidResponseError",
+    "GraphQLClientInvalidResponseError",
     "QueryWithFragmentOnSubInterface",
     "QueryWithFragmentOnSubInterfaceQueryInterfaceBaseInterface",
     "QueryWithFragmentOnSubInterfaceQueryInterfaceInterfaceA",

@@ -8,7 +8,7 @@ from .exceptions import (
     GraphQLClientGraphQLError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
-    GraphQlClientInvalidResponseError,
+    GraphQLClientInvalidResponseError,
 )
 from .get_query_a import GetQueryA, GetQueryAQueryA
 
@@ -22,7 +22,7 @@ __all__ = [
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
-    "GraphQlClientInvalidResponseError",
+    "GraphQLClientInvalidResponseError",
     "Upload",
     "enumA",
     "inputA",

@@ -7,7 +7,7 @@ from .exceptions import (
     GraphQLClientGraphQLError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
-    GraphQlClientInvalidResponseError,
+    GraphQLClientInvalidResponseError,
 )
 from .fragments import FragmentG, FragmentGG
 from .get_a import GetA
@@ -43,7 +43,7 @@ __all__ = [
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
-    "GraphQlClientInvalidResponseError",
+    "GraphQLClientInvalidResponseError",
     "InputA",
     "InputAA",
     "InputAAA",

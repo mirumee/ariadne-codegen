@@ -106,7 +106,7 @@ def test_generate_creates_files_with_correct_imports(
                 "GraphQLClientGraphQLError",
                 "GraphQLClientGraphQLMultiError",
                 "GraphQLClientHttpError",
-                "GraphQlClientInvalidResponseError",
+                "GraphQLClientInvalidResponseError",
                 "Upload",
             ]
         """

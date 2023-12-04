@@ -13,7 +13,7 @@ from ariadne_codegen.client_generators.dependencies.base_model import UNSET, Bas
 from ariadne_codegen.client_generators.dependencies.exceptions import (
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
-    GraphQlClientInvalidResponseError,
+    GraphQLClientInvalidResponseError,
 )
 
 from ...utils import decode_multipart_request
@@ -499,7 +499,7 @@ def test_get_data_raises_graphql_client_invalid_response_error(
     client = BaseClientOpenTelemetry(url="base_url", http_client=mocker.MagicMock())
     response = httpx.Response(status_code=200, content=json.dumps(response_content))
 
-    with pytest.raises(GraphQlClientInvalidResponseError) as exc:
+    with pytest.raises(GraphQLClientInvalidResponseError) as exc:
         client.get_data(response)
         assert exc.response == response
 
