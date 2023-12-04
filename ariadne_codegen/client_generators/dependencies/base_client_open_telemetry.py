@@ -13,17 +13,19 @@ from .exceptions import (
 )
 
 try:
-    from opentelemetry.trace import (  # type: ignore[attr-defined]
+    from opentelemetry.context import (  # type: ignore[import-not-found,unused-ignore]
         Context,
+    )
+    from opentelemetry.trace import (  # type: ignore[import-not-found,unused-ignore]
         Span,
         Tracer,
         get_tracer,
         set_span_in_context,
     )
 except ImportError:
-    Context = Any  # type: ignore
-    Span = Any  # type: ignore
-    Tracer = Any  # type: ignore
+    Context = Any  # type: ignore[misc,assignment,unused-ignore]
+    Span = Any  # type: ignore[misc,assignment,unused-ignore]
+    Tracer = Any  # type: ignore[misc,assignment,unused-ignore]
 
     def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")

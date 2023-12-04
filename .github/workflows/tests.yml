@@ -21,10 +21,18 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Install basic dependencies
       run: |
         python -m pip install --upgrade pip
         pip install wheel
+        pip install -e .[dev]
+    - name: Mypy strict without optional dependencies
+      run: |
+        mypy --strict tests/main/clients/*/expected_client
+        mypy --strict tests/main/graphql_schemas/*/expected_schema.py
+        mypy --strict ariadne_codegen/client_generators/dependencies
+    - name: Install optional dependencies
+      run: |
         pip install -e .[subscriptions,opentelemetry,dev]
     - name: Pytest
       run: |
@@ -33,9 +41,10 @@ jobs:
       run: |
         pylint ariadne_codegen tests
         mypy ariadne_codegen --ignore-missing-imports
-        # these test outputs represent things that may be committed into other projects that may
-        # have strict mypy settings, and so they should be maximally annotated.
-        mypy --strict tests/main/clients/*/expected_client
-        mypy --strict tests/main/graphql_schemas/*/expected_schema.py
         black --check .
         isort . --check-only
+    - name: Mypy strict with all dependencies
+      run: |
+        mypy --strict tests/main/clients/*/expected_client
+        mypy --strict tests/main/graphql_schemas/*/expected_schema.py
+        mypy --strict ariadne_codegen/client_generators/dependencies

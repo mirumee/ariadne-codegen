@@ -7,6 +7,7 @@
 - Added `include_all_inputs` config flag to generate only inputs used in supplied operations.
 - Added `include_all_enums` config flag to generate only enums used in supplied operations.
 - Added `operationName` to payload sent by generated client's methods.
+- Fixed base clients to pass `mypy --strict` without installed optional dependencies.
 
 
 ## 0.10.0 (2023-11-15)
