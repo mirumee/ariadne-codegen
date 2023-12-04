@@ -127,10 +127,12 @@ class AsyncBaseClient:
         except ValueError as exc:
             raise GraphQLClientInvalidResponseError(response=response) from exc
 
-        if (not isinstance(response_json, dict)) or ("data" not in response_json):
+        if (not isinstance(response_json, dict)) or (
+            "data" not in response_json and "errors" not in response_json
+        ):
             raise GraphQLClientInvalidResponseError(response=response)
 
-        data = response_json["data"]
+        data = response_json.get("data")
         errors = response_json.get("errors")
 
         if errors:

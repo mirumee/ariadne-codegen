@@ -87,7 +87,7 @@ class BaseClientOpenTelemetry:
             query=query, operation_name=operation_name, variables=variables, **kwargs
         )
 
-    def get_data(self, response: httpx.Response) -> dict[str, Any]:
+    def get_data(self, response: httpx.Response) -> Dict[str, Any]:
         if not response.is_success:
             raise GraphQLClientHttpError(
                 status_code=response.status_code, response=response
@@ -98,10 +98,12 @@ class BaseClientOpenTelemetry:
         except ValueError as exc:
             raise GraphQLClientInvalidResponseError(response=response) from exc
 
-        if (not isinstance(response_json, dict)) or ("data" not in response_json):
+        if (not isinstance(response_json, dict)) or (
+            "data" not in response_json and "errors" not in response_json
+        ):
             raise GraphQLClientInvalidResponseError(response=response)
 
-        data = response_json["data"]
+        data = response_json.get("data")
         errors = response_json.get("errors")
 
         if errors:
@@ -109,7 +111,7 @@ class BaseClientOpenTelemetry:
                 errors_dicts=errors, data=data
             )
 
-        return cast(dict[str, Any], data)
+        return cast(Dict[str, Any], data)
 
     def _execute(
         self,

@@ -519,6 +519,11 @@ def test_get_data_raises_graphql_client_invalid_response_error(
                 },
             ],
         },
+        {
+            "errors": [
+                {"message": "Error message"},
+            ],
+        },
     ],
 )
 def test_get_data_raises_graphql_client_graphql_multi_error(mocker, response_content):
