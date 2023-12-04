@@ -23,7 +23,7 @@ from .exceptions import (
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQLClientInvalidMessageFormat,
-    GraphQlClientInvalidResponseError,
+    GraphQLClientInvalidResponseError,
 )
 
 try:
@@ -164,10 +164,10 @@ class AsyncBaseClientOpenTelemetry:
         try:
             response_json = response.json()
         except ValueError as exc:
-            raise GraphQlClientInvalidResponseError(response=response) from exc
+            raise GraphQLClientInvalidResponseError(response=response) from exc
 
         if (not isinstance(response_json, dict)) or ("data" not in response_json):
-            raise GraphQlClientInvalidResponseError(response=response)
+            raise GraphQLClientInvalidResponseError(response=response)
 
         data = response_json["data"]
         errors = response_json.get("errors")

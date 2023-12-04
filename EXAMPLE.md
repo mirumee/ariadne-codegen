@@ -520,7 +520,7 @@ from .exceptions import (
     GraphQLClientGraphQLError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
-    GraphQlClientInvalidResponseError,
+    GraphQLClientInvalidResponseError,
 )
 from .fragments import BasicUser, UserPersonalData
 from .get_users_counter import GetUsersCounter
@@ -547,7 +547,7 @@ __all__ = [
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
-    "GraphQlClientInvalidResponseError",
+    "GraphQLClientInvalidResponseError",
     "ListAllUsers",
     "ListAllUsersUsers",
     "ListAllUsersUsersLocation",
