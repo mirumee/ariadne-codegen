@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.11.0 (2023-12-05)
 
 - Removed `model_rebuild` calls for generated input, fragment and result models. 
 - Added `NoReimportsPlugin` that makes the `__init__.py` of generated client package empty.
