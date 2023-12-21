@@ -364,7 +364,12 @@ def get_package_generator(
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
     )
-    enums_generator = EnumsGenerator(schema=schema, plugin_manager=plugin_manager)
+    enums_generator = EnumsGenerator(
+        schema=schema, 
+        plugin_manager=plugin_manager, 
+        convert_to_snake_case=settings.convert_to_snake_case,
+        convert_to_upper_snake_case=settings.convert_enums_names_to_upper_snake_case
+    )
     input_types_generator = InputTypesGenerator(
         schema=schema,
         enums_module=settings.enums_module_name,

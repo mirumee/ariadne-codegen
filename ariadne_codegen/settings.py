@@ -65,6 +65,7 @@ class ClientSettings(BaseSettings):
     fragments_module_name: str = "fragments"
     include_comments: CommentsStrategy = field(default=CommentsStrategy.STABLE)
     convert_to_snake_case: bool = True
+    convert_enums_names_to_upper_snake_case: bool = False
     include_all_inputs: bool = True
     include_all_enums: bool = True
     async_client: bool = True
@@ -148,6 +149,11 @@ class ClientSettings(BaseSettings):
             if self.convert_to_snake_case
             else "Not converting fields and arguments name to snake case."
         )
+        enum_upper_snake_case_msg = (
+            "Converting enum names to upper snake case."
+            if self.convert_enums_names_to_upper_snake_case
+            else "Not converting enum names to upper snake case."
+        )
         async_client_msg = (
             "Generating async client."
             if self.async_client
@@ -180,6 +186,7 @@ class ClientSettings(BaseSettings):
             Generating fragments into '{self.fragments_module_name}.py'.
             Comments type: {self.include_comments.value}
             {snake_case_msg}
+            {enum_upper_snake_case_msg}
             {async_client_msg}
             {files_to_include_msg}
             {plugins_msg}
