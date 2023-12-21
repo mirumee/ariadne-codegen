@@ -115,6 +115,9 @@ def test_ast_to_str_removes_unused_imports():
         ("testWORD123", "test_word_123"),
         ("TestWORD123", "test_word_123"),
         ("TESTWord123", "test_word_123"),
+        ("ASC_NULLS_FIRST", "asc_nulls_first"),
+        ("DESC", "desc"),
+        ("DESC_NULLS_LAST", "desc_nulls_last"),
     ],
 )
 def test_str_to_snake_case_returns_correct_string(name, expected_result):

@@ -39,8 +39,10 @@ def str_to_snake_case(name: str) -> str:
     # upper-case letters, excluding last letter if it is followed by a lower-case letter
     uppercase_words = r"[A-Z]+(?=[A-Z][a-z]|\d|\W|$)"
     numbers = r"\d+"
+    # match upper-case only segments, this is placed after uppercase_words so that match gets priority
+    uppercase_only = r"[A-Z]+"
 
-    words = re.findall(rf"{lowercase_words}|{uppercase_words}|{numbers}", name)
+    words = re.findall(rf"{lowercase_words}|{uppercase_words}|{numbers}|{uppercase_only}", name)    
     return "_".join(map(str.lower, words))
 
 
