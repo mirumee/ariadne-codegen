@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## UNRELEASED
+
+- Improved `graphql-transport-ws` protocol compliance for `connection_ack` messages
+
+
 ## 0.11.0 (2023-12-05)
 
 - Removed `model_rebuild` calls for generated input, fragment and result models. 
