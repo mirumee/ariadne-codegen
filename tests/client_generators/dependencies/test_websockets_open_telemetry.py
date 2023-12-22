@@ -26,6 +26,7 @@ def mocked_websocket(mocked_ws_connect):
     websocket.__aiter__.return_value = [
         json.dumps({"type": "connection_ack"}),
     ]
+    websocket.recv.return_value = json.dumps({"type": "connection_ack"})
     return websocket
 
 
@@ -82,7 +83,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_headers(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("tracer", ["tracer name", None])
 async def test_execute_ws_creates_websocket_connection_with_passed_extra_headers(
-    mocked_ws_connect, tracer
+    mocked_ws_connect, mocked_websocket, tracer  # pylint: disable=unused-argument
 ):
     async for _ in AsyncBaseClientOpenTelemetry(
         ws_headers={"Client-A": "client_value_a", "Client-B": "client_value_b"},
@@ -103,7 +104,7 @@ async def test_execute_ws_creates_websocket_connection_with_passed_extra_headers
 @pytest.mark.asyncio
 @pytest.mark.parametrize("tracer", ["tracer name", None])
 async def test_execute_ws_creates_websocket_connection_with_passed_kwargs(
-    mocked_ws_connect, tracer
+    mocked_ws_connect, mocked_websocket, tracer  # pylint: disable=unused-argument
 ):
     async for _ in AsyncBaseClientOpenTelemetry(tracer=tracer).execute_ws(
         "", open_timeout=15, close_timeout=30

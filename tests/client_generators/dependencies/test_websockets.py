@@ -24,12 +24,13 @@ def mocked_websocket(mocked_ws_connect):
     websocket.__aiter__.return_value = [
         json.dumps({"type": "connection_ack"}),
     ]
+    websocket.recv.return_value = json.dumps({"type": "connection_ack"})
     return websocket
 
 
 @pytest.mark.asyncio
 async def test_execute_ws_creates_websocket_connection_with_correct_url(
-    mocked_ws_connect,
+    mocked_ws_connect, mocked_websocket  # pylint: disable=unused-argument
 ):
     async for _ in AsyncBaseClient(ws_url="ws://test_url").execute_ws(""):
         pass
@@ -40,7 +41,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_url(
 
 @pytest.mark.asyncio
 async def test_execute_ws_creates_websocket_connection_with_correct_subprotocol(
-    mocked_ws_connect,
+    mocked_ws_connect, mocked_websocket  # pylint: disable=unused-argument
 ):
     async for _ in AsyncBaseClient().execute_ws(""):
         pass
@@ -53,7 +54,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_subprotocol(
 
 @pytest.mark.asyncio
 async def test_execute_ws_creates_websocket_connection_with_correct_origin(
-    mocked_ws_connect,
+    mocked_ws_connect, mocked_websocket  # pylint: disable=unused-argument
 ):
     async for _ in AsyncBaseClient(ws_origin="test_origin").execute_ws(""):
         pass
@@ -64,7 +65,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_origin(
 
 @pytest.mark.asyncio
 async def test_execute_ws_creates_websocket_connection_with_correct_headers(
-    mocked_ws_connect,
+    mocked_ws_connect, mocked_websocket  # pylint: disable=unused-argument
 ):
     async for _ in AsyncBaseClient(ws_headers={"test_key": "test_value"}).execute_ws(
         ""
@@ -79,7 +80,7 @@ async def test_execute_ws_creates_websocket_connection_with_correct_headers(
 
 @pytest.mark.asyncio
 async def test_execute_ws_creates_websocket_connection_with_passed_extra_headers(
-    mocked_ws_connect,
+    mocked_ws_connect, mocked_websocket  # pylint: disable=unused-argument
 ):
     async for _ in AsyncBaseClient(
         ws_headers={"Client-A": "client_value_a", "Client-B": "client_value_b"}
@@ -98,7 +99,7 @@ async def test_execute_ws_creates_websocket_connection_with_passed_extra_headers
 
 @pytest.mark.asyncio
 async def test_execute_ws_creates_websocket_connection_with_passed_kwargs(
-    mocked_ws_connect,
+    mocked_ws_connect, mocked_websocket  # pylint: disable=unused-argument
 ):
     async for _ in AsyncBaseClient().execute_ws("", open_timeout=15, close_timeout=30):
         pass
