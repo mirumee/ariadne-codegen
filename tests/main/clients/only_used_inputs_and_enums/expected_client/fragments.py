@@ -8,3 +8,7 @@ class FragmentG(BaseModel):
 
 class FragmentGG(BaseModel):
     val: EnumGG
+
+
+FragmentG.model_rebuild()
+FragmentGG.model_rebuild()
