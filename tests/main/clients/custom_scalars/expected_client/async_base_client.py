@@ -333,7 +333,7 @@ class AsyncBaseClient:
         self,
         message: Data,
         websocket: WebSocketClientProtocol,
-        expected_type: GraphQLTransportWSMessageType | None = None,
+        expected_type: Optional[GraphQLTransportWSMessageType] = None,
     ) -> Optional[Dict[str, Any]]:
         try:
             message_dict = json.loads(message)

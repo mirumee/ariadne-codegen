@@ -639,7 +639,7 @@ class AsyncBaseClientOpenTelemetry:
         root_span: Span,
         message: Data,
         websocket: WebSocketClientProtocol,
-        expected_type: GraphQLTransportWSMessageType | None = None,
+        expected_type: Optional[GraphQLTransportWSMessageType] = None,
     ) -> Optional[Dict[str, Any]]:
         with self.tracer.start_as_current_span(  # type: ignore
             "received message", context=set_span_in_context(root_span)
