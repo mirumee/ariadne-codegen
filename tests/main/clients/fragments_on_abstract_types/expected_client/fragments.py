@@ -11,3 +11,7 @@ class FragmentA(BaseModel):
 class FragmentB(BaseModel):
     id: str
     value_b: str = Field(alias="valueB")
+
+
+FragmentA.model_rebuild()
+FragmentB.model_rebuild()
