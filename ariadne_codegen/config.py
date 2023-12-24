@@ -36,7 +36,7 @@ def get_client_settings(config_dict: Dict) -> ClientSettings:
     """Parse configuration dict and return ClientSettings instance."""
     section = get_section(config_dict).copy()
     settings_fields_names = {f.name for f in fields(ClientSettings)}
-    try:        
+    try:
         section["scalars"] = {
             name: ScalarData(
                 type_=data["type"],
