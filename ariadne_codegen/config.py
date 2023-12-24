@@ -34,13 +34,11 @@ def get_config_dict(config_file_name: Optional[str] = None) -> Dict:
 
 def get_client_settings(config_dict: Dict) -> ClientSettings:
     """Parse configuration dict and return ClientSettings instance."""
-    section = get_section(config_dict)
+    section = get_section(config_dict).copy()
     settings_fields_names = {f.name for f in fields(ClientSettings)}
-    try:
+    try:        
         section["scalars"] = {
-            name: data
-            if isinstance(data, ScalarData)
-            else ScalarData(
+            name: ScalarData(
                 type_=data["type"],
                 serialize=data.get("serialize"),
                 parse=data.get("parse"),
