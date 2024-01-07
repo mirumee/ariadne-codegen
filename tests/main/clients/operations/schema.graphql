@@ -1,6 +1,9 @@
+scalar CUSTOMID
+
 type Query {
     constQuery: String!
     a: TypeA!
+    s: TypeS!
     xyz: TypeXYZ!
 }
 
@@ -19,6 +22,10 @@ type TypeA {
 
 type TypeB {
     value: String!
+}
+
+type TypeS {
+  id: CUSTOMID!
 }
 
 type TypeX {

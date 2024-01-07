@@ -46,3 +46,9 @@ query getXYZ {
     }
   }
 }
+
+query getS {
+  s {
+    id
+  }
+}

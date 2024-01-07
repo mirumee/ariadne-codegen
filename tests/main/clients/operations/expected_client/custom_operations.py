@@ -4,6 +4,7 @@ __all__ = [
     "C_SUBSCRIPTION_GQL",
     "GET_A_GQL",
     "GET_A_WITH_FRAGMENT_GQL",
+    "GET_S_GQL",
     "GET_XYZ_GQL",
 ]
 
@@ -66,5 +67,13 @@ query getXYZ {
 
 fragment fragmentY on TypeY {
   valueY
+}
+"""
+
+GET_S_GQL = """
+query getS {
+  s {
+    id
+  }
 }
 """
