@@ -105,7 +105,7 @@ plugins = ["ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin"]
 operations_module_name = "custom_operations_module_name"
 ```
 
-- [`ariadne_codegen.contrib.extract_operations.NoReimportsPlugin`](ariadne_codegen/contrib/no_reimports.py) - This plugin removes content of generated `__init__.py`. This is useful in scenarios where generated plugins contain so many Pydantic models that client's eager initialization of entire package on first import is very slow.
+- [`ariadne_codegen.contrib.no_reimports.NoReimportsPlugin`](ariadne_codegen/contrib/no_reimports.py) - This plugin removes content of generated `__init__.py`. This is useful in scenarios where generated plugins contain so many Pydantic models that client's eager initialization of entire package on first import is very slow.
 
 
 ## Using generated client
