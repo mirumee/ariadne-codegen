@@ -1,8 +1,8 @@
 # CHANGELOG
 
-## UNRELEASED
+## 0.12.0 (UNRELEASED)
 
-- Improved `graphql-transport-ws` protocol compliance for `connection_ack` messages
+- Fixed `graphql-transport-ws` protocol implementation not waiting for the `connection_ack` message on new connection.
 
 
 ## 0.11.0 (2023-12-05)

@@ -438,7 +438,7 @@ class AsyncBaseClientOpenTelemetry:
 
         if expected_type and expected_type != type_:
             raise GraphQLClientInvalidMessageFormat(
-                f"Invalid message type - expected {expected_type.value}"
+                f"Invalid message received. Expected: {expected_type.value}"
             )
 
         if type_ == GraphQLTransportWSMessageType.NEXT:
@@ -677,7 +677,7 @@ class AsyncBaseClientOpenTelemetry:
 
             if expected_type and expected_type != type_:
                 raise GraphQLClientInvalidMessageFormat(
-                    f"Invalid message type - expected {expected_type.value}"
+                    f"Invalid message received. Expected: {expected_type.value}"
                 )
 
             if type_ == GraphQLTransportWSMessageType.NEXT:
