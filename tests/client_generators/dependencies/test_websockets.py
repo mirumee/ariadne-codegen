@@ -28,6 +28,12 @@ def mocked_websocket(mocked_ws_connect):
     return websocket
 
 
+@pytest.fixture
+def mocked_faulty_websocket(mocked_ws_connect):
+    websocket = mocked_ws_connect.return_value.__aenter__.return_value
+    return websocket
+
+
 @pytest.mark.asyncio
 async def test_execute_ws_creates_websocket_connection_with_correct_url(
     mocked_ws_connect, mocked_websocket  # pylint: disable=unused-argument
@@ -249,5 +255,18 @@ async def test_execute_ws_raises_graphql_multi_error_for_message_with_error_type
     )
 
     with pytest.raises(GraphQLClientGraphQLMultiError):
+        async for _ in AsyncBaseClient().execute_ws(""):
+            pass
+
+
+@pytest.mark.asyncio
+async def test_execute_ws_raises_invalid_message_format_for_missing_ack_after_init(
+    mocked_faulty_websocket,
+):
+    mocked_faulty_websocket.recv.return_value = json.dumps(
+        {"type": "next", "payload": {"data": "test_data"}}
+    )
+
+    with pytest.raises(GraphQLClientInvalidMessageFormat):
         async for _ in AsyncBaseClient().execute_ws(""):
             pass

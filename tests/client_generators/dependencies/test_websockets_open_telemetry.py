@@ -30,6 +30,12 @@ def mocked_websocket(mocked_ws_connect):
     return websocket
 
 
+@pytest.fixture
+def mocked_faulty_websocket(mocked_ws_connect):
+    websocket = mocked_ws_connect.return_value.__aenter__.return_value
+    return websocket
+
+
 @pytest.mark.asyncio
 async def test_execute_ws_creates_websocket_connection_with_correct_url(
     mocked_ws_connect,
@@ -260,6 +266,19 @@ async def test_execute_ws_raises_graphql_multi_error_for_message_with_error_type
             pass
 
 
+@pytest.mark.asyncio
+async def test_execute_ws_raises_invalid_message_format_for_missing_ack_after_init(
+    mocked_faulty_websocket,
+):
+    mocked_faulty_websocket.recv.return_value = json.dumps(
+        {"type": "next", "payload": {"data": "test_data"}}
+    )
+
+    with pytest.raises(GraphQLClientInvalidMessageFormat):
+        async for _ in AsyncBaseClientOpenTelemetry().execute_ws(""):
+            pass
+
+
 @pytest.fixture
 def mocked_start_as_current_span(mocker):
     mocker_get_tracer = mocker.patch(
@@ -395,3 +414,22 @@ async def test_execute_ws_creates_span_for_received_error_message(
     mocked_start_as_current_span.assert_any_call("received message", context=ANY)
     with mocked_start_as_current_span.return_value as span:
         span.set_attribute.assert_any_call("type", "error")
+
+
+@pytest.mark.asyncio
+async def test_execute_ws_ws_creates_span_for_missing_ack_after_init(
+    mocked_faulty_websocket, mocked_start_as_current_span
+):
+    mocked_faulty_websocket.recv.return_value = json.dumps(
+        {"type": "next", "payload": {"data": "test_data"}}
+    )
+
+    client = AsyncBaseClientOpenTelemetry(ws_url="ws://test_url", tracer="tracker")
+
+    with pytest.raises(GraphQLClientInvalidMessageFormat):
+        async for _ in client.execute_ws(""):
+            pass
+
+    mocked_start_as_current_span.assert_any_call("received message", context=ANY)
+    with mocked_start_as_current_span.return_value as span:
+        span.set_attribute.assert_any_call("type", "next")
