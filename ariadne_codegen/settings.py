@@ -1,5 +1,6 @@
 import enum
 import os
+import string
 from dataclasses import dataclass, field
 from keyword import iskeyword
 from pathlib import Path
@@ -63,6 +64,7 @@ class ClientSettings(BaseSettings):
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     fragments_module_name: str = "fragments"
+    result_types_directory_name: str = ""
     include_comments: CommentsStrategy = field(default=CommentsStrategy.STABLE)
     convert_to_snake_case: bool = True
     include_all_inputs: bool = True
@@ -107,6 +109,7 @@ class ClientSettings(BaseSettings):
 
         assert_string_is_valid_python_identifier(self.enums_module_name)
         assert_string_is_valid_python_identifier(self.input_types_module_name)
+        assert_string_is_valid_directory_name(self.result_types_directory_name)
 
         for file_path in self.files_to_include:
             assert_path_is_valid_file(file_path)
@@ -165,6 +168,11 @@ class ClientSettings(BaseSettings):
             if self.plugins
             else "No plugin is being used."
         )
+        result_types_directory_name_msg = (
+            f"Generating result types into '{self.result_types_directory_name}'."
+            if self.result_types_directory_name
+            else "Generating result types modules into package root."
+        )
         return dedent(
             f"""\
             Selected strategy: {Strategy.CLIENT}
@@ -179,6 +187,7 @@ class ClientSettings(BaseSettings):
             Generating inputs into '{self.input_types_module_name}.py'.
             Generating fragments into '{self.fragments_module_name}.py'.
             Comments type: {self.include_comments.value}
+            {result_types_directory_name_msg}
             {snake_case_msg}
             {async_client_msg}
             {files_to_include_msg}
@@ -236,7 +245,15 @@ def assert_path_is_valid_file(path: str):
 def assert_string_is_valid_python_identifier(name: str):
     if not name.isidentifier() and not iskeyword(name):
         raise InvalidConfiguration(
-            f"Provided name {name} cannot be used as python indetifier"
+            f"Provided name {name} cannot be used as python identifier."
+        )
+
+
+def assert_string_is_valid_directory_name(name: str):
+    invalid_chars = set('<>:"/\\|?*') | set(string.whitespace)
+    if any(char in invalid_chars for char in name):
+        raise InvalidConfiguration(
+            f"Provided name {name} contains invalid characters for a directory name."
         )
 
 

@@ -1,4 +1,5 @@
 import ast
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
@@ -54,6 +55,7 @@ class PackageGenerator:
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
         fragments_module_name: str = "fragments",
+        result_types_directory_name: str = "",
         comments_strategy: CommentsStrategy = CommentsStrategy.STABLE,
         queries_source: str = "",
         schema_source: str = "",
@@ -90,6 +92,7 @@ class PackageGenerator:
         self.enums_module_name = enums_module_name
         self.input_types_module_name = input_types_module_name
         self.fragments_module_name = fragments_module_name
+        self.result_types_directory_name = result_types_directory_name
 
         self.comments_strategy = comments_strategy
         self.queries_source = queries_source
@@ -114,6 +117,14 @@ class PackageGenerator:
         self._generated_files: List[str] = []
         self._unpacked_fragments: Set[str] = set()
         self._used_enums: List[str] = []
+
+        self._result_types_imports_level: int = 1
+        self._result_types_base_model_import = base_model_import
+
+        if result_types_directory_name:
+            self._result_types_imports_level = 2
+            self._result_types_base_model_import = deepcopy(base_model_import)
+            self._result_types_base_model_import.level = 2
 
     def generate(self) -> List[str]:
         """Generate package with graphql client."""
@@ -152,7 +163,8 @@ class PackageGenerator:
             enums_module_name=self.enums_module_name,
             fragments_module_name=self.fragments_module_name,
             fragments_definitions=self.fragments_definitions,
-            base_model_import=self.base_model_import,
+            base_model_import=self._result_types_base_model_import,
+            root_imports_level=self._result_types_imports_level,
             convert_to_snake_case=self.convert_to_snake_case,
             custom_scalars=self.custom_scalars,
             plugin_manager=self.plugin_manager,
@@ -163,8 +175,14 @@ class PackageGenerator:
         self._used_enums.extend(query_types_generator.get_used_enums())
         self._result_types_files[file_name] = query_types_generator.generate()
         operation_str = query_types_generator.get_operation_as_str()
+
+        if self.result_types_directory_name:
+            module_name = f"{self.result_types_directory_name}.{module_name}"
+
         self.init_generator.add_import(
-            query_types_generator.get_generated_public_names(), module_name, 1
+            names=query_types_generator.get_generated_public_names(),
+            from_=module_name,
+            level=1,
         )
 
         self.client_generator.add_method(
@@ -274,8 +292,19 @@ class PackageGenerator:
         )
 
     def _generate_result_types(self):
+        result_types_directory_path = self.package_path
+        if self.result_types_directory_name:
+            result_types_directory_path = (
+                self.package_path / self.result_types_directory_name
+            )
+            if not result_types_directory_path.exists():
+                result_types_directory_path.mkdir()
+            init_file_path = result_types_directory_path / "__init__.py"
+            init_file_path.touch()
+
         for file_name, module in self._result_types_files.items():
-            file_path = self.package_path / file_name
+            file_path = result_types_directory_path / file_name
+
             code = self._add_comments_to_code(ast_to_str(module), self.queries_source)
             if self.plugin_manager:
                 code = self.plugin_manager.generate_result_types_code(code)
@@ -403,6 +432,7 @@ def get_package_generator(
         enums_module_name=settings.enums_module_name,
         input_types_module_name=settings.input_types_module_name,
         fragments_module_name=settings.fragments_module_name,
+        result_types_directory_name=settings.result_types_directory_name,
         comments_strategy=settings.include_comments,
         queries_source=settings.queries_path,
         schema_source=settings.schema_source,

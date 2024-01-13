@@ -34,7 +34,7 @@ def get_config_dict(config_file_name: Optional[str] = None) -> Dict:
 
 def get_client_settings(config_dict: Dict) -> ClientSettings:
     """Parse configuration dict and return ClientSettings instance."""
-    section = get_section(config_dict)
+    section = get_section(config_dict).copy()
     settings_fields_names = {f.name for f in fields(ClientSettings)}
     try:
         section["scalars"] = {

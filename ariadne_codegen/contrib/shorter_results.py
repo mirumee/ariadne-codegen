@@ -35,6 +35,7 @@ This plugin can be enabled in the settings:
 """
 
 import ast
+import re
 from copy import deepcopy
 from typing import Dict, List, Optional, Union
 
@@ -70,6 +71,18 @@ class ShorterResultsPlugin(Plugin):
         self.class_dict: Dict[str, ast.ClassDef] = {}
         self.extended_imports: Dict[str, set] = {}
         self.imported_types: Dict[str, str] = {}
+
+        self.result_types_directory_name = (
+            config_dict.get("tool", {})
+            .get("ariadne-codegen", {})
+            .get("result_types_directory_name", "")
+        )
+
+        self.fragments_module_name = (
+            config_dict.get("tool", {})
+            .get("ariadne-codegen", {})
+            .get("fragments_module_name", "fragments")
+        )
 
         super().__init__(schema, config_dict)
 
@@ -111,16 +124,10 @@ class ShorterResultsPlugin(Plugin):
         fragments_definitions: Dict[str, FragmentDefinitionNode],
     ) -> ast.Module:
         """Store a map of all fragment classes and their AST."""
-        fragments_module_name = (
-            self.config_dict.get("tool", {})
-            .get("ariadne-codegen", {})
-            .get("fragments_module_name", "fragments")
-        )
-
         for fragment_class in [
             x.name for x in module.body if isinstance(x, ast.ClassDef)
         ]:
-            self.imported_types[fragment_class] = f".{fragments_module_name}"
+            self.imported_types[fragment_class] = f".{self.fragments_module_name}"
 
         return super().generate_fragments_module(module, fragments_definitions)
 
@@ -177,6 +184,13 @@ class ShorterResultsPlugin(Plugin):
         for import_from, alias in self.extended_imports.items():
             # We insert the import at the top, it will be sorted properly in a
             # post-process step that will order the imports.
+
+            if (
+                self.result_types_directory_name
+                and import_from != f".{self.fragments_module_name}"
+            ):
+                import_from = f".{self.result_types_directory_name}.{import_from}"
+
             module.body.insert(
                 0,
                 generate_import_from(
@@ -304,6 +318,14 @@ class ShorterResultsPlugin(Plugin):
             # ensure we add it to imports.
             if single_field_class in self.imported_types:
                 import_from = self.imported_types[single_field_class]
+
+                # When an enum shares a name with one of types, it results in broken
+                # enum import for that name. We need to exclude it from imports.
+                if self.result_types_directory_name and re.match(
+                    r"^\.\.+", import_from
+                ):
+                    continue
+
             elif single_field_class in self.class_dict:
                 import_from = method_def.name
             else:

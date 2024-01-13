@@ -76,6 +76,7 @@ class ResultTypesGenerator:
         fragments_module_name: Optional[str] = None,
         fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
         base_model_import: Optional[ast.ImportFrom] = None,
+        root_imports_level: int = 1,
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
@@ -90,6 +91,7 @@ class ResultTypesGenerator:
         self.fragments_definitions = (
             fragments_definitions if fragments_definitions else {}
         )
+        self.root_imports_level = root_imports_level
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.convert_to_snake_case = convert_to_snake_case
         self.plugin_manager = plugin_manager
@@ -432,6 +434,7 @@ class ResultTypesGenerator:
                 generate_import_from(
                     names=[arguments[MIXIN_IMPORT_NAME]],
                     from_=arguments[MIXIN_FROM_NAME],
+                    level=self.root_imports_level - 1,
                 )
             )
             extra_base_classes.append(arguments[MIXIN_IMPORT_NAME])
@@ -502,12 +505,22 @@ class ResultTypesGenerator:
     def _add_enums_scalars_fragments_imports(self):
         if self._used_enums:
             self._imports.append(
-                generate_import_from(self._used_enums, self.enums_module_name, 1)
+                generate_import_from(
+                    self._used_enums,
+                    self.enums_module_name,
+                    self.root_imports_level,
+                )
             )
 
         for scalar_name in self._used_scalars:
             scalar_data = self.custom_scalars[scalar_name]
-            self._imports.extend(generate_scalar_imports(scalar_data))
+            scalar_imports = generate_scalar_imports(scalar_data)
+            if self.root_imports_level > 1:
+                for stmt in scalar_imports:
+                    if stmt.module.startswith("."):
+                        stmt.level = self.root_imports_level - 1
+
+            self._imports.extend(scalar_imports)
 
         if (
             isinstance(self.operation_definition, OperationDefinitionNode)
@@ -518,7 +531,7 @@ class ResultTypesGenerator:
                 generate_import_from(
                     [str_to_pascal_case(f) for f in self._fragments_used_as_mixins],
                     self.fragments_module_name,
-                    1,
+                    self.root_imports_level,
                 )
             )
 
