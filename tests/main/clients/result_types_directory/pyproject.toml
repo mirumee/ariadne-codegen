@@ -1,0 +1,12 @@
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+include_comments = "none"
+target_package_name = "client_result_types_directory"
+files_to_include = ["common_mixins.py", "mixins_a.py", "mixins_b.py", "custom_scalars.py"]
+result_types_directory_name = "result_types"
+
+plugins = [
+    "ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin",
+    "ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin",
+]

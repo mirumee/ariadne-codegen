@@ -38,15 +38,22 @@ def copy_files(files_to_copy: List[Path], target_dir: Path):
 
 
 def assert_the_same_files_in_directories(dir1: Path, dir2: Path):
-    files1 = {f for f in dir1.glob("*") if f.name != "__pycache__"}
-    assert {f.name for f in files1} == {
-        f.name for f in dir2.glob("*") if f.name != "__pycache__"
+    files1 = {
+        f for f in dir1.glob("**/*") if f.is_file() and "__pycache__" not in f.parts
+    }
+    files2 = {
+        f for f in dir2.glob("**/*") if f.is_file() and "__pycache__" not in f.parts
+    }
+
+    assert {f.relative_to(dir1) for f in files1} == {
+        f.relative_to(dir2) for f in files2
     }
 
     for file_ in files1:
         content1 = file_.read_text()
-        content2 = dir2.joinpath(file_.name).read_text()
-        assert content1 == content2, file_.name
+        relative_path = file_.relative_to(dir1)
+        content2 = (dir2 / relative_path).read_text()
+        assert content1 == content2, relative_path
 
 
 def test_main_shows_version():
@@ -185,6 +192,21 @@ def test_main_shows_version():
             ),
             "client_only_used_inputs_and_enums",
             CLIENTS_PATH / "only_used_inputs_and_enums" / "expected_client",
+        ),
+        (
+            (
+                CLIENTS_PATH / "result_types_directory" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "result_types_directory" / "queries.graphql",
+                    CLIENTS_PATH / "result_types_directory" / "schema.graphql",
+                    CLIENTS_PATH / "result_types_directory" / "custom_scalars.py",
+                    CLIENTS_PATH / "result_types_directory" / "common_mixins.py",
+                    CLIENTS_PATH / "result_types_directory" / "mixins_a.py",
+                    CLIENTS_PATH / "result_types_directory" / "mixins_b.py",
+                ),
+            ),
+            "client_result_types_directory",
+            CLIENTS_PATH / "result_types_directory" / "expected_client",
         ),
     ],
     indirect=["project_dir"],

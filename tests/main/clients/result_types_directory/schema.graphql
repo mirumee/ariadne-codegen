@@ -1,0 +1,45 @@
+scalar SimpleScalar
+scalar ComplexScalar
+scalar DATETIME
+
+schema {
+  query: Query
+  subscription: Subscription
+}
+
+type Subscription {
+  subscribeToTypeA: TypeA!
+  subscribeToTypeB: TypeB!
+  subscribeToTypeI: TypeI!
+}
+
+type Query {
+  queryA: TypeA!
+  queryB: TypeB!
+  queryI(dataI: InputI!): TypeI!
+  justSimpleScalar: SimpleScalar!
+  justComplexScalar: ComplexScalar!
+}
+
+type TypeA {
+  fieldA: Int!
+}
+
+type TypeB {
+  fieldB: String!
+}
+
+type TypeI {
+  fieldI: Int!
+  date: DATETIME!
+}
+
+input InputI {
+  version: EnumI!
+}
+
+enum EnumI {
+  A
+  B
+  C
+}
