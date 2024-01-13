@@ -73,6 +73,7 @@ Optional settings:
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `fragments_module_name` (defaults to `"fragments"`) - name of file with generated fragments models
+- `result_types_directory_name` - name the subdirectory where modules with result types will be stored. If not specified, these modules will be saved in the root of the package
 - `include_comments` (defaults to `"stable"`) - option which sets content of comments included at the top of every generated file. Valid choices are: `"none"` (no comments), `"timestamp"` (comment with generation timestamp), `"stable"` (comment contains a message that this is a generated file)
 - `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
 - `include_all_inputs` (defaults to `true`) - a flag specifying whether to include all inputs defined in the schema, or only those used in supplied operations
