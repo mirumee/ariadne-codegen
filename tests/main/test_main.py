@@ -315,6 +315,22 @@ def test_main_can_read_config_from_provided_file(tmp_path):
             "schema.py",
             GRAPHQL_SCHEMAS_PATH / "all_types" / "expected_schema.py",
         ),
+        (
+            (
+                GRAPHQL_SCHEMAS_PATH / "example" / "pyproject-schema-graphql.toml",
+                (GRAPHQL_SCHEMAS_PATH / "example" / "schema.graphql",),
+            ),
+            "expected_schema.graphql",
+            GRAPHQL_SCHEMAS_PATH / "example" / "expected_schema.graphql",
+        ),
+        (
+            (
+                GRAPHQL_SCHEMAS_PATH / "example" / "pyproject-schema-gql.toml",
+                (GRAPHQL_SCHEMAS_PATH / "example" / "schema.graphql",),
+            ),
+            "expected_schema.gql",
+            GRAPHQL_SCHEMAS_PATH / "example" / "expected_schema.gql",
+        ),
     ],
     indirect=["project_dir"],
 )
