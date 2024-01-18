@@ -257,7 +257,7 @@ def assert_string_is_valid_schema_target_filename(filename: str):
             f"Provided file name {filename} is missing a file type."
         )
 
-    file_type = file_type[1:].lower() 
+    file_type = file_type[1:].lower()
     if file_type not in ("py", "graphql", "gql"):
         raise InvalidConfiguration(
             f"Provided file name {filename} has an invalid type {file_type}."

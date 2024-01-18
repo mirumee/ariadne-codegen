@@ -29,7 +29,9 @@ SCHEMA_STR = """
 """
 
 
-def test_generate_graphql_schema_graphql_file_creates_file_printed_schema(tmp_path):
+def test_generate_graphql_schema_graphql_file_creates_file_with_printed_schema(
+    tmp_path,
+):
     schema = build_schema(SCHEMA_STR)
     file_path = tmp_path / "test_schema.graphql"
 
@@ -42,11 +44,15 @@ def test_generate_graphql_schema_graphql_file_creates_file_printed_schema(tmp_pa
         assert content == print_schema(schema)
 
 
-def test_generate_graphql_schema_python_file_creates_file_with_variables(tmp_path):
+def test_generate_graphql_schema_python_file_creates_py_file_with_variables(
+    tmp_path,
+):
     schema = build_schema(SCHEMA_STR)
     file_path = tmp_path / "test_schema.py"
 
-    generate_graphql_schema_python_file(schema, file_path.as_posix(), "type_map", "schema")
+    generate_graphql_schema_python_file(
+        schema, file_path.as_posix(), "type_map", "schema"
+    )
 
     assert file_path.exists()
     assert file_path.is_file()
