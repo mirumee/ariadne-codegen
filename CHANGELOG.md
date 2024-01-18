@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.12.0 (UNRELEASED)
+
+- Added support to `graphqlschema` for saving schema as a GraphQL file.
+
+
 ## 0.11.0 (2023-12-05)
 
 - Removed `model_rebuild` calls for generated input, fragment and result models. 

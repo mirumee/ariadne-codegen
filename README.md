@@ -323,22 +323,44 @@ Example with simple schema and few queries and mutations is available [here](htt
 
 ## Generating graphql schema's python representation
 
-Instead of generating client, you can generate file with a copy of GraphQL schema as `GraphQLSchema` declaration. To do this call `ariadne-codegen` with `graphqlschema` argument:
+Instead of generating a client, you can generate a file with a copy of a GraphQL schema. To do this call `ariadne-codegen` with `graphqlschema` argument:
+
 ```
 ariadne-codegen graphqlschema
 ```
 
-`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers`, `remote_schema_verify_ssl` and `plugins` options with addition to some extra options specific to it:
+`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers`, `remote_schema_verify_ssl` options to retrieve the schema and `plugins` option to load plugins.
 
-- `target_file_path` (defaults to `"schema.py"`) - destination path for generated file
-- `schema_variable_name` (defaults to `"schema"`) - name for schema variable, must be valid python identifier
-- `type_map_variable_name` (defaults to `"type_map"`) - name for type map variable, must be valid python identifier
+In addition to the above, `graphqlschema` mode also accepts additional settings specific to it:
 
-Generated file contains:
+
+### `target_file_path`
+
+A string with destination path for generated file. Must be either a Python (`.py`), or GraphQL (`.graphql` or `.gql`) file.
+
+Defaults to `schema.py`.
+
+Generated Python file will contain:
 
 - Necessary imports
 - Type map declaration `{type_map_variable_name}: TypeMap = {...}`
 - Schema declaration `{schema_variable_name}: GraphQLSchema = GraphQLSchema(...)`
+
+Generated GraphQL file will contain a formatted output of the `print_schema` function from the `graphql-core` package.
+
+
+### `schema_variable_name`
+
+A string with a name for schema variable, must be valid python identifier.
+
+Defaults to `"schema"`. Used only if target is a Python file.
+
+
+### `type_map_variable_name`
+
+A string with a name for type map variable, must be valid python identifier.
+
+Defaults to `"type_map"`. Used only if target is a Python file.
 
 
 ## Contributing
