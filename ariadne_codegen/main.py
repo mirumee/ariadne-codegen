@@ -5,7 +5,10 @@ from graphql import assert_valid_schema
 
 from .client_generators.package import get_package_generator
 from .config import get_client_settings, get_config_dict, get_graphql_schema_settings
-from .graphql_schema_generators.schema import generate_graphql_schema_file
+from .graphql_schema_generators.schema import (
+    generate_graphql_schema_graphql_file,
+    generate_graphql_schema_python_file,
+)
 from .plugins.explorer import get_plugins_types
 from .plugins.manager import PluginManager
 from .schema import (
@@ -99,9 +102,15 @@ def graphql_schema(config_dict):
 
     sys.stdout.write(settings.used_settings_message)
 
-    generate_graphql_schema_file(
-        schema=schema,
-        target_file_path=settings.target_file_path,
-        type_map_name=settings.type_map_variable_name,
-        schema_variable_name=settings.schema_variable_name,
-    )
+    if settings.target_file_format == "py":
+        generate_graphql_schema_python_file(
+            schema=schema,
+            target_file_path=settings.target_file_path,
+            type_map_name=settings.type_map_variable_name,
+            schema_variable_name=settings.schema_variable_name,
+        )
+    else:
+        generate_graphql_schema_graphql_file(
+            schema=schema,
+            target_file_path=settings.target_file_path,
+        )

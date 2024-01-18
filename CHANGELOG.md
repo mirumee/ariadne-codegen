@@ -3,6 +3,7 @@
 ## 0.12.0 (UNRELEASED)
 
 - Fixed `graphql-transport-ws` protocol implementation not waiting for the `connection_ack` message on new connection.
+- Added support to `graphqlschema` for saving schema as a GraphQL file.
 
 
 ## 0.11.0 (2023-12-05)
