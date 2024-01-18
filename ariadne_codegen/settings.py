@@ -195,6 +195,8 @@ class GraphQLSchemaSettings(BaseSettings):
 
     def __post_init__(self):
         super().__post_init__()
+
+        assert_string_is_valid_schema_target_filename(self.target_file_path)
         assert_string_is_valid_python_identifier(self.schema_variable_name)
         assert_string_is_valid_python_identifier(self.type_map_variable_name)
 
@@ -206,16 +208,31 @@ class GraphQLSchemaSettings(BaseSettings):
             if self.plugins
             else "No plugin is being used."
         )
+
+        if self.target_file_format == "py":
+            return dedent(
+                f"""\
+                Selected strategy: {Strategy.GRAPHQL_SCHEMA}
+                Using schema from {self.schema_path or self.remote_schema_url}
+                Saving graphql schema to: {self.target_file_path}
+                Using {self.schema_variable_name} as variable name for schema.
+                Using {self.type_map_variable_name} as variable name for type map.
+                {plugins_msg}
+                """
+            )
+
         return dedent(
             f"""\
             Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-            Using schema from '{self.schema_path or self.remote_schema_url}'.
-            Saving graphql schema to: {self.target_file_path}.
-            Using {self.schema_variable_name} as variable name for schema.
-            Using {self.type_map_variable_name} as variable name for type map.
+            Using schema from {self.schema_path or self.remote_schema_url}
+            Saving graphql schema to: {self.target_file_path}
             {plugins_msg}
             """
         )
+
+    @property
+    def target_file_format(self):
+        return Path(self.target_file_path).suffix[1:].lower()
 
 
 def assert_path_exists(path: str):
@@ -233,10 +250,25 @@ def assert_path_is_valid_file(path: str):
         raise InvalidConfiguration(f"Provided path {path} isn't a file.")
 
 
+def assert_string_is_valid_schema_target_filename(filename: str):
+    file_type = Path(filename).suffix
+    if not file_type:
+        raise InvalidConfiguration(
+            f"Provided file name {filename} is missing a file type."
+        )
+
+    file_type = file_type[1:].lower() 
+    if file_type not in ("py", "graphql", "gql"):
+        raise InvalidConfiguration(
+            f"Provided file name {filename} has an invalid type {file_type}."
+            " Valid types are py, graphql and gql."
+        )
+
+
 def assert_string_is_valid_python_identifier(name: str):
     if not name.isidentifier() and not iskeyword(name):
         raise InvalidConfiguration(
-            f"Provided name {name} cannot be used as python indetifier"
+            f"Provided name {name} cannot be used as python identifier."
         )
 
 
