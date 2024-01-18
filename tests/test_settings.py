@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 import os
 from pathlib import Path
 from textwrap import dedent
@@ -246,7 +247,7 @@ def test_graphql_schema_settings_with_target_file_path_with_graphql_extension_is
     assert settings.target_file_format == "graphql"
 
 
-def test_graphql_schema_settings_with_target_file_path_with_graphql_extension_is_valid():
+def test_graphql_schema_settings_with_target_file_path_with_gql_extension_is_valid():
     settings = GraphQLSchemaSettings(
         remote_schema_url="http://testserver/graphq/",
         target_file_path="schema_file.gql",
