@@ -226,6 +226,45 @@ def test_graphq_schema_settings_without_schema_path_with_remote_schema_url_is_va
     assert not settings.schema_path
 
 
+def test_graphql_schema_settings_with_target_file_path_with_py_extension_is_valid():
+    settings = GraphQLSchemaSettings(
+        remote_schema_url="http://testserver/graphq/",
+        target_file_path="schema_file.py",
+    )
+
+    assert settings.target_file_path == "schema_file.py"
+    assert settings.target_file_format == "py"
+
+
+def test_graphql_schema_settings_with_target_file_path_with_graphql_extension_is_valid():
+    settings = GraphQLSchemaSettings(
+        remote_schema_url="http://testserver/graphq/",
+        target_file_path="schema_file.graphql",
+    )
+
+    assert settings.target_file_path == "schema_file.graphql"
+    assert settings.target_file_format == "graphql"
+
+
+def test_graphql_schema_settings_with_target_file_path_with_graphql_extension_is_valid():
+    settings = GraphQLSchemaSettings(
+        remote_schema_url="http://testserver/graphq/",
+        target_file_path="schema_file.gql",
+    )
+
+    assert settings.target_file_path == "schema_file.gql"
+    assert settings.target_file_format == "gql"
+
+
+def test_graphql_schema_settings_target_file_format_is_lowercased():
+    settings = GraphQLSchemaSettings(
+        remote_schema_url="http://testserver/graphq/",
+        target_file_path="schema_file.GQL",
+    )
+
+    assert settings.target_file_format == "gql"
+
+
 def test_graphq_schema_settings_without_schema_path_or_remote_schema_url_is_not_valid():
     with pytest.raises(InvalidConfiguration):
         GraphQLSchemaSettings()
@@ -234,6 +273,22 @@ def test_graphq_schema_settings_without_schema_path_or_remote_schema_url_is_not_
 def test_graphql_schema_settings_raises_invalid_configuration_for_invalid_schema_path():
     with pytest.raises(InvalidConfiguration):
         GraphQLSchemaSettings(schema_path="not_exisitng.graphql")
+
+
+def test_graphql_schema_settings_with_target_file_path_missing_extension_raises_exception():
+    with pytest.raises(InvalidConfiguration):
+        GraphQLSchemaSettings(
+            remote_schema_url="http://testserver/graphq/",
+            target_file_path="schema_file",
+        )
+
+
+def test_graphql_schema_settings_with_target_file_path_invalid_extension_raises_exception():
+    with pytest.raises(InvalidConfiguration):
+        GraphQLSchemaSettings(
+            remote_schema_url="http://testserver/graphq/",
+            target_file_path="schema_file.invalid",
+        )
 
 
 def test_graphql_schema_settings_with_invalid_schema_variable_name_raises_exception():

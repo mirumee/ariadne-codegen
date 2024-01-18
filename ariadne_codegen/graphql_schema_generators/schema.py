@@ -1,9 +1,8 @@
 import ast
 from pathlib import Path
 
-from graphql import GraphQLSchema
+from graphql import GraphQLSchema, print_schema
 from graphql.type.schema import TypeMap
-from graphql import print_schema
 
 from ..codegen import (
     generate_ann_assign,
