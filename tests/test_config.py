@@ -112,6 +112,16 @@ def test_get_client_settings_returns_client_settings_object(tmp_path):
         )
     }
 
+    # Regression test for #256: don't mutate config_dict's scalars
+    assert config_dict["tool"]["ariadne-codegen"]["scalars"] == {
+        "ID": {
+            "type": "str",
+            "parse": "parse_id",
+            "serialize": "serialize_id",
+            "import": ".custom_scalars",
+        },
+    }
+
 
 def test_get_client_settings_without_section_raises_missing_configuration_exception():
     config_dict = {"invalid-section": {"schema_path": "."}}
