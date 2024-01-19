@@ -112,7 +112,7 @@ def test_get_client_settings_returns_client_settings_object(tmp_path):
         )
     }
 
-    # Regression test for #256
+    # Regression test for #256: don't mutate config_dict's scalars
     assert config_dict["tool"]["ariadne-codegen"]["scalars"] == {
         "ID": {
             "type": "str",
