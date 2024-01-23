@@ -126,7 +126,7 @@ class FragmentsGenerator:
     ) -> List[ast.Call]:
         class_names = [c.name for c in class_defs]
         sorted_fragments_names = sorted(
-            top_level_fragments_names, key=lambda n: class_names.index(n)
+            top_level_fragments_names, key=class_names.index
         )
         return [
             generate_expr(generate_method_call(name, MODEL_REBUILD_METHOD))
