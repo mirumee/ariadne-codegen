@@ -1,8 +1,8 @@
 """
-To ensure all models with nested dependencies are fully rebuilt this test will
-create an instance of the query from `multiple_fragments` containing a `FullA`
-(extended from `ExampleQuery2ExampleQuery`) which in turn holds a `FullB`
-(extended from `FullAFieldB`).
+To ensure all models with nested dependencies are fully rebuilt this test
+creates an instance of the query from `multiple_fragments` containing the
+`FullA` fragment (used by the `ExampleQuery2ExampleQuery`) which itself includes
+a field of type `FullAFieldB` that extends the `FullB` fragment.
 
 If this model is not rebuilt with `FullA.model_rebuild()` `ExampleQuery2` will
 not be fully defined and we will get a `PydanticUserError`.
@@ -22,35 +22,40 @@ from .clients.multiple_fragments.expected_client.example_query_2 import (
 from .clients.multiple_fragments.expected_client.fragments import FullA
 
 
-def test_model_rebuild_validate():
-    # Perform some sanity checks on the schema for `ExampleQuery2` to test that
-    # it confirms to the fields of `FullA` and that it references `FullB`.
+def test_json_schema_contains_all_properties():
     json_schema = ExampleQuery2.model_json_schema()
-    assert all(
-        x in json_schema["$defs"] for x in ["ExampleQuery2ExampleQuery", "FullAFieldB"]
-    )
+    assert "ExampleQuery2ExampleQuery" in json_schema["$defs"]
+    assert "FullAFieldB" in json_schema["$defs"]
 
     query_props = json_schema["$defs"]["ExampleQuery2ExampleQuery"]["properties"]
-    assert all(x in query_props for x in ["id", "value", "fieldB"])
+    assert "id" in query_props
+    assert "value" in query_props
+    assert "fieldB" in query_props
     assert query_props["fieldB"]["$ref"] == "#/$defs/FullAFieldB"
 
-    # Assert we cannot validate a faulty type.
+
+@pytest.fixture
+def field_a():
     field_b = {"id": "321", "value": 13.37}
     field_a = {"id": "123", "value": "A", "field_b": field_b}
 
+    return field_a
+
+
+def test_validate_field_a_on_faulty_model(field_a):
     with pytest.raises(ValidationError):
         ExampleQuery2.model_validate(field_a)
 
-    # However it should work with the correct type and the type extending the
-    # correct type.
+
+def test_validate_field_a_on_correct_model(field_a):
     try:
         FullA.model_validate(field_a)
         ExampleQuery2ExampleQuery.model_validate(field_a)
     except ValidationError as e:
         assert False, f"model_valiadte failed: {e}"
 
-    # And since the model is rebuilt we should be able to construct a full
-    # `ExampleQuery2`.
+
+def test_validate_field_a_in_example_query(field_a):
     example_query_2 = {"example_query": field_a}
 
     try:
