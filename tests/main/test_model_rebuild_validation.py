@@ -35,28 +35,28 @@ def test_json_schema_contains_all_properties():
 
 
 @pytest.fixture
-def field_a():
+def field_a_data():
     field_b = {"id": "321", "value": 13.37}
     field_a = {"id": "123", "value": "A", "field_b": field_b}
 
     return field_a
 
 
-def test_validate_field_a_on_faulty_model(field_a):
+def test_validate_field_a_on_faulty_model(field_a_data):
     with pytest.raises(ValidationError):
-        ExampleQuery2.model_validate(field_a)
+        ExampleQuery2.model_validate(field_a_data)
 
 
-def test_validate_field_a_on_correct_model(field_a):
+def test_validate_field_a_on_correct_model(field_a_data):
     try:
-        FullA.model_validate(field_a)
-        ExampleQuery2ExampleQuery.model_validate(field_a)
+        FullA.model_validate(field_a_data)
+        ExampleQuery2ExampleQuery.model_validate(field_a_data)
     except ValidationError as e:
         assert False, f"model_valiadte failed: {e}"
 
 
-def test_validate_field_a_in_example_query(field_a):
-    example_query_2 = {"example_query": field_a}
+def test_validate_field_a_in_example_query(field_a_data):
+    example_query_2 = {"example_query": field_a_data}
 
     try:
         ExampleQuery2.model_validate(example_query_2)
