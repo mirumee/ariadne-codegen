@@ -1,11 +1,11 @@
 """
-To ensure all models with nested dependencies are fully rebuilt this test
-creates an instance of the query from `multiple_fragments` containing the
+To ensure all models with nested dependencies are fully rebuilt those tests
+create an instance of the query from `multiple_fragments` containing the
 `FullA` fragment (used by the `ExampleQuery2ExampleQuery`) which itself includes
 a field of type `FullAFieldB` that extends the `FullB` fragment.
 
 If this model is not rebuilt with `FullA.model_rebuild()` `ExampleQuery2` will
-not be fully defined and we will get a `PydanticUserError`.
+not be fully defined and we will raise a `PydanticUserError`.
 
 Reference to Pydantic documentation about when and why we need to call
 `model_rebuild` on our types:
