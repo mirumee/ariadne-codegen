@@ -57,3 +57,8 @@ class FragmentOnQueryWithUnionQueryUTypeC(BaseModel):
 class UnusedFragmentOnTypeA(BaseModel):
     id: str
     field_a: str = Field(alias="fieldA")
+
+
+FragmentOnQueryWithInterface.model_rebuild()
+FragmentOnQueryWithUnion.model_rebuild()
+UnusedFragmentOnTypeA.model_rebuild()
