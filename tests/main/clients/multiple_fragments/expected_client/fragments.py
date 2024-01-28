@@ -40,3 +40,10 @@ class MinimalA(BaseModel):
 
 class MinimalAFieldB(MinimalB):
     pass
+
+
+CompleteA.model_rebuild()
+FullB.model_rebuild()
+FullA.model_rebuild()
+MinimalB.model_rebuild()
+MinimalA.model_rebuild()

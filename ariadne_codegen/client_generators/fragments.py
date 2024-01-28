@@ -3,9 +3,9 @@ from typing import Dict, List, Optional, Set, cast
 
 from graphql import FragmentDefinitionNode, GraphQLSchema
 
-from ..codegen import generate_module
+from ..codegen import generate_expr, generate_method_call, generate_module
 from ..plugins.manager import PluginManager
-from .constants import BASE_MODEL_IMPORT
+from .constants import BASE_MODEL_IMPORT, MODEL_REBUILD_METHOD
 from .result_types import ResultTypesGenerator
 from .scalars import ScalarData
 
@@ -36,6 +36,7 @@ class FragmentsGenerator:
     def generate(self, exclude_names: Optional[Set[str]] = None) -> ast.Module:
         class_defs_dict: Dict[str, List[ast.ClassDef]] = {}
         imports: List[ast.ImportFrom] = []
+        top_level_class_names: List[str] = []
         dependencies_dict: Dict[str, Set[str]] = {}
 
         names_to_exclude = exclude_names or set()
@@ -53,7 +54,10 @@ class FragmentsGenerator:
                 plugin_manager=self.plugin_manager,
             )
             imports.extend(generator.get_imports())
-            class_defs_dict[name] = generator.get_classes()
+            class_defs = generator.get_classes()
+            class_defs_dict[name] = class_defs
+            if class_defs:
+                top_level_class_names.append(class_defs[0].name)
             dependencies_dict[name] = generator.get_fragments_used_as_mixins()
             self._generated_public_names.extend(generator.get_generated_public_names())
             self._used_enums.extend(generator.get_used_enums())
@@ -62,7 +66,15 @@ class FragmentsGenerator:
             class_defs_dict=class_defs_dict, dependencies_dict=dependencies_dict
         )
         module = generate_module(
-            body=cast(List[ast.stmt], imports) + cast(List[ast.stmt], sorted_class_defs)
+            body=cast(List[ast.stmt], imports)
+            + cast(List[ast.stmt], sorted_class_defs)
+            + cast(
+                List[ast.stmt],
+                self._get_model_rebuild_calls(
+                    top_level_fragments_names=top_level_class_names,
+                    class_defs=sorted_class_defs,
+                ),
+            )
         )
         if self.plugin_manager:
             module = self.plugin_manager.generate_fragments_module(
@@ -108,3 +120,15 @@ class FragmentsGenerator:
             visit(name)
 
         return sorted_names
+
+    def _get_model_rebuild_calls(
+        self, top_level_fragments_names: List[str], class_defs: List[ast.ClassDef]
+    ) -> List[ast.Call]:
+        class_names = [c.name for c in class_defs]
+        sorted_fragments_names = sorted(
+            top_level_fragments_names, key=class_names.index
+        )
+        return [
+            generate_expr(generate_method_call(name, MODEL_REBUILD_METHOD))
+            for name in sorted_fragments_names
+        ]

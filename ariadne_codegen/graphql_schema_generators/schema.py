@@ -1,7 +1,7 @@
 import ast
 from pathlib import Path
 
-from graphql import GraphQLSchema
+from graphql import GraphQLSchema, print_schema
 from graphql.type.schema import TypeMap
 
 from ..codegen import (
@@ -23,7 +23,11 @@ from .named_types import generate_named_type
 from .utils import get_optional_named_type
 
 
-def generate_graphql_schema_file(
+def generate_graphql_schema_graphql_file(schema: GraphQLSchema, target_file_path: str):
+    Path(target_file_path).write_text(print_schema(schema), encoding="UTF-8")
+
+
+def generate_graphql_schema_python_file(
     schema: GraphQLSchema,
     target_file_path: str,
     type_map_name: str,

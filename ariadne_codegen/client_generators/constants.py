@@ -56,6 +56,7 @@ DISCRIMINATOR_KEYWORD = "discriminator"
 MODEL_VALIDATE_METHOD = "model_validate"
 PLAIN_SERIALIZER = "PlainSerializer"
 BEFORE_VALIDATOR = "BeforeValidator"
+MODEL_REBUILD_METHOD = "model_rebuild"
 
 ENUM_MODULE = "enum"
 ENUM_CLASS = "Enum"
