@@ -6,9 +6,9 @@ from .base_model import BaseModel
 
 
 class UnionB(BaseModel):
-    query_u: Union[
-        "UnionBQueryUTypeA", "UnionBQueryUTypeB", "UnionBQueryUTypeC"
-    ] = Field(alias="queryU", discriminator="typename__")
+    query_u: Union["UnionBQueryUTypeA", "UnionBQueryUTypeB", "UnionBQueryUTypeC"] = (
+        Field(alias="queryU", discriminator="typename__")
+    )
 
 
 class UnionBQueryUTypeA(BaseModel):

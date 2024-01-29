@@ -133,9 +133,7 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return ListTypeA.model_validate(data).list_optional_type_a
 
-    async def get_animal_by_name(
-        self, name: str, **kwargs: Any
-    ) -> Union[
+    async def get_animal_by_name(self, name: str, **kwargs: Any) -> Union[
         GetAnimalByNameAnimalByNameAnimal,
         GetAnimalByNameAnimalByNameCat,
         GetAnimalByNameAnimalByNameDog,
@@ -163,9 +161,7 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return GetAnimalByName.model_validate(data).animal_by_name
 
-    async def list_animals(
-        self, **kwargs: Any
-    ) -> List[
+    async def list_animals(self, **kwargs: Any) -> List[
         Union[
             ListAnimalsListAnimalsAnimal,
             ListAnimalsListAnimalsCat,
