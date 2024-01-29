@@ -89,9 +89,9 @@ def parse_operation_field(
             schema=schema,
             field_node=field,
             custom_scalars=custom_scalars if custom_scalars else {},
-            fragments_definitions=fragments_definitions
-            if fragments_definitions
-            else {},
+            fragments_definitions=(
+                fragments_definitions if fragments_definitions else {}
+            ),
         )
     )
 

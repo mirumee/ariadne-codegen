@@ -25,11 +25,29 @@ def ast_to_str(
 ) -> str:
     """Convert ast object into string."""
     code = ast.unparse(ast_obj)
+    code = remove_blank_line_between_class_and_content(code)
     if remove_unused_imports:
         code = fix_code(code, remove_all_unused_imports=True)
     if multiline_strings:
         code = format_multiline_strings(code, offset=multiline_strings_offset)
     return format_str(isort.code(code), mode=Mode())
+
+
+def remove_blank_line_between_class_and_content(code: str) -> str:
+    """Removes blank lines between class and first method.
+
+    We are doing this for code style consistency and backwards compatibility.
+    """
+    code_lines: line[str] = []
+    skip_blank_lines = False
+    for line in code.splitlines():
+        if skip_blank_lines and line:
+            skip_blank_lines = False
+        elif line.startswith("class "):
+            skip_blank_lines = True
+        if not skip_blank_lines or line:
+            code_lines.append(line)
+    return "\n".join(code_lines)
 
 
 def str_to_snake_case(name: str) -> str:
