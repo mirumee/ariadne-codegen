@@ -10,6 +10,7 @@ from .custom_operations import (
     C_SUBSCRIPTION_GQL,
     GET_A_GQL,
     GET_A_WITH_FRAGMENT_GQL,
+    GET_S_GQL,
     GET_XYZ_GQL,
 )
 from .exceptions import (
@@ -26,6 +27,7 @@ from .get_a_with_fragment import (
     GetAWithFragmentA,
     GetAWithFragmentAValueB,
 )
+from .get_s import GetS, GetSS
 from .get_xyz import GetXYZ, GetXYZXyzTypeX, GetXYZXyzTypeY, GetXYZXyzTypeZ
 
 __all__ = [
@@ -42,6 +44,7 @@ __all__ = [
     "FragmentY",
     "GET_A_GQL",
     "GET_A_WITH_FRAGMENT_GQL",
+    "GET_S_GQL",
     "GET_XYZ_GQL",
     "GetA",
     "GetAA",
@@ -49,6 +52,8 @@ __all__ = [
     "GetAWithFragment",
     "GetAWithFragmentA",
     "GetAWithFragmentAValueB",
+    "GetS",
+    "GetSS",
     "GetXYZ",
     "GetXYZXyzTypeX",
     "GetXYZXyzTypeY",

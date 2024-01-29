@@ -10,10 +10,12 @@ from .custom_operations import (
     C_SUBSCRIPTION_GQL,
     GET_A_GQL,
     GET_A_WITH_FRAGMENT_GQL,
+    GET_S_GQL,
     GET_XYZ_GQL,
 )
 from .get_a import GetA
 from .get_a_with_fragment import GetAWithFragment
+from .get_s import GetS
 from .get_xyz import GetXYZ
 
 
@@ -77,3 +79,11 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return GetXYZ.model_validate(data)
+
+    async def get_s(self, **kwargs: Any) -> GetS:
+        variables: Dict[str, object] = {}
+        response = await self.execute(
+            query=GET_S_GQL, operation_name="getS", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return GetS.model_validate(data)
