@@ -2,7 +2,7 @@ import ast
 import re
 from keyword import iskeyword
 from textwrap import indent
-from typing import Optional
+from typing import List, Optional
 
 import isort
 from autoflake import fix_code  # type: ignore
@@ -38,7 +38,7 @@ def remove_blank_line_between_class_and_content(code: str) -> str:
 
     We are doing this for code style consistency and backwards compatibility.
     """
-    code_lines: line[str] = []
+    code_lines: List[str] = []
     skip_blank_lines = False
     for line in code.splitlines():
         if skip_blank_lines and line:
