@@ -321,7 +321,7 @@ Both `httpx` and `websockets` dependencies can be avoided by providing another b
 Example with simple schema and few queries and mutations is available [here](https://github.com/mirumee/ariadne-codegen/blob/main/EXAMPLE.md).
 
 
-## Generating graphql schema's python representation
+## Generating a copy of GraphSQL schema
 
 Instead of generating a client, you can generate a file with a copy of a GraphQL schema. To do this call `ariadne-codegen` with `graphqlschema` argument:
 
