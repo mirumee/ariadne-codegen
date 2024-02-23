@@ -34,12 +34,12 @@ from ..codegen import (
     generate_ann_assign,
     generate_class_def,
     generate_constant,
+    generate_expr,
     generate_import_from,
+    generate_method_call,
     generate_module,
     generate_pass,
     generate_pydantic_field,
-    generate_method_call,
-    generate_expr,
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
@@ -57,13 +57,13 @@ from .constants import (
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
     MIXIN_NAME,
+    MODEL_REBUILD_METHOD,
     OPTIONAL,
     PYDANTIC_MODULE,
     TYPENAME_ALIAS,
     TYPENAME_FIELD_NAME,
     TYPING_MODULE,
     UNION,
-    MODEL_REBUILD_METHOD,
 )
 from .result_fields import FieldContext, is_union, parse_operation_field
 from .scalars import ScalarData, generate_scalar_imports
