@@ -14,3 +14,7 @@ class InterfaceWithTypenameQueryI(BaseModel):
         alias="__typename"
     )
     id: str
+
+
+InterfaceWithTypename.model_rebuild()
+InterfaceWithTypenameQueryI.model_rebuild()

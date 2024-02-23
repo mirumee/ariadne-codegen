@@ -38,6 +38,8 @@ from ..codegen import (
     generate_module,
     generate_pass,
     generate_pydantic_field,
+    generate_method_call,
+    generate_expr,
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
@@ -61,6 +63,7 @@ from .constants import (
     TYPENAME_FIELD_NAME,
     TYPING_MODULE,
     UNION,
+    MODEL_REBUILD_METHOD,
 )
 from .result_fields import FieldContext, is_union, parse_operation_field
 from .scalars import ScalarData, generate_scalar_imports
@@ -152,8 +155,14 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
-        module_body = cast(List[ast.stmt], self._imports) + cast(
-            List[ast.stmt], self._class_defs
+        model_rebuild_calls = [
+            generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
+            for class_def in self._class_defs
+        ]
+        module_body = (
+            cast(List[ast.stmt], self._imports)
+            + cast(List[ast.stmt], self._class_defs)
+            + cast(List[ast.stmt], model_rebuild_calls)
         )
 
         module = generate_module(module_body)

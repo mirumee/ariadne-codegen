@@ -23,3 +23,9 @@ class UnionBQueryUTypeB(BaseModel):
 
 class UnionBQueryUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
+
+
+UnionB.model_rebuild()
+UnionBQueryUTypeA.model_rebuild()
+UnionBQueryUTypeB.model_rebuild()
+UnionBQueryUTypeC.model_rebuild()

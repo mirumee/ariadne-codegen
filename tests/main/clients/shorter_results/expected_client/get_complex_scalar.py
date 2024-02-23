@@ -10,3 +10,6 @@ class GetComplexScalar(BaseModel):
     just_complex_scalar: Annotated[
         ComplexScalar, BeforeValidator(parse_complex_scalar)
     ] = Field(alias="justComplexScalar")
+
+
+GetComplexScalar.model_rebuild()

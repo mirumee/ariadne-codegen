@@ -15,3 +15,8 @@ class GetAWithFragmentA(BaseModel):
 
 class GetAWithFragmentAValueB(FragmentB):
     pass
+
+
+GetAWithFragment.model_rebuild()
+GetAWithFragmentA.model_rebuild()
+GetAWithFragmentAValueB.model_rebuild()

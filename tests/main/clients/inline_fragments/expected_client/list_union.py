@@ -32,3 +32,9 @@ class ListUnionQueryListUTypeB(BaseModel):
 
 class ListUnionQueryListUTypeC(BaseModel):
     typename__: Literal["TypeC"] = Field(alias="__typename")
+
+
+ListUnion.model_rebuild()
+ListUnionQueryListUTypeA.model_rebuild()
+ListUnionQueryListUTypeB.model_rebuild()
+ListUnionQueryListUTypeC.model_rebuild()

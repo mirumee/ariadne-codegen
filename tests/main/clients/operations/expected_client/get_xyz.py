@@ -23,3 +23,9 @@ class GetXYZXyzTypeY(FragmentY):
 
 class GetXYZXyzTypeZ(BaseModel):
     typename__: Literal["TypeZ"] = Field(alias="__typename")
+
+
+GetXYZ.model_rebuild()
+GetXYZXyzTypeX.model_rebuild()
+GetXYZXyzTypeY.model_rebuild()
+GetXYZXyzTypeZ.model_rebuild()

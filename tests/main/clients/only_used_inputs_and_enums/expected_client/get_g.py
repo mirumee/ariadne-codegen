@@ -8,3 +8,7 @@ class GetG(BaseModel):
 
 class GetGG(FragmentG):
     pass
+
+
+GetG.model_rebuild()
+GetGG.model_rebuild()

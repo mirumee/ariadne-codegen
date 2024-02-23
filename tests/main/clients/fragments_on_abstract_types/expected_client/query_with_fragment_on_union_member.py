@@ -19,3 +19,8 @@ class QueryWithFragmentOnUnionMemberQueryUnionTypeA(BaseModel):
 
 class QueryWithFragmentOnUnionMemberQueryUnionTypeB(FragmentB):
     typename__: Literal["TypeB"] = Field(alias="__typename")
+
+
+QueryWithFragmentOnUnionMember.model_rebuild()
+QueryWithFragmentOnUnionMemberQueryUnionTypeA.model_rebuild()
+QueryWithFragmentOnUnionMemberQueryUnionTypeB.model_rebuild()

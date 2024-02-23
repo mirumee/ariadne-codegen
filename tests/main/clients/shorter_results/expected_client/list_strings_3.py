@@ -7,3 +7,6 @@ from .base_model import BaseModel
 
 class ListStrings3(BaseModel):
     list_optional_string: List[Optional[str]] = Field(alias="listOptionalString")
+
+
+ListStrings3.model_rebuild()

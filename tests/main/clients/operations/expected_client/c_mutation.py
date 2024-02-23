@@ -5,3 +5,6 @@ from .base_model import BaseModel
 
 class CMutation(BaseModel):
     const_mutation: int = Field(alias="constMutation")
+
+
+CMutation.model_rebuild()

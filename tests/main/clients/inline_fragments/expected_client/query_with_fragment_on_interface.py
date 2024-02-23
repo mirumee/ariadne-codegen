@@ -28,3 +28,9 @@ class QueryWithFragmentOnInterfaceQueryITypeB(BaseModel):
     typename__: Literal["TypeB"] = Field(alias="__typename")
     id: str
     field_b: str = Field(alias="fieldB")
+
+
+QueryWithFragmentOnInterface.model_rebuild()
+QueryWithFragmentOnInterfaceQueryIInterface.model_rebuild()
+QueryWithFragmentOnInterfaceQueryITypeA.model_rebuild()
+QueryWithFragmentOnInterfaceQueryITypeB.model_rebuild()

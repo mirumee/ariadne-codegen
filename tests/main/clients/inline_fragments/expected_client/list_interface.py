@@ -33,3 +33,9 @@ class ListInterfaceQueryListITypeB(BaseModel):
     typename__: Literal["TypeB"] = Field(alias="__typename")
     id: str
     field_b: str = Field(alias="fieldB")
+
+
+ListInterface.model_rebuild()
+ListInterfaceQueryListIInterface.model_rebuild()
+ListInterfaceQueryListITypeA.model_rebuild()
+ListInterfaceQueryListITypeB.model_rebuild()

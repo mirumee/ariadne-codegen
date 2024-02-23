@@ -10,3 +10,7 @@ class ExampleQuery2(BaseModel):
 
 class ExampleQuery2ExampleQuery(FullA):
     pass
+
+
+ExampleQuery2.model_rebuild()
+ExampleQuery2ExampleQuery.model_rebuild()

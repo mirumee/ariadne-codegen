@@ -13,3 +13,7 @@ class ListUsersByCountry(BaseModel):
 
 class ListUsersByCountryUsers(BasicUser, UserPersonalData):
     favourite_color: Optional[Color] = Field(alias="favouriteColor")
+
+
+ListUsersByCountry.model_rebuild()
+ListUsersByCountryUsers.model_rebuild()

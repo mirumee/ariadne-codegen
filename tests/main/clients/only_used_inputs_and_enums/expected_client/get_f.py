@@ -8,3 +8,7 @@ class GetF(BaseModel):
 
 class GetFF(BaseModel):
     val: EnumF
+
+
+GetF.model_rebuild()
+GetFF.model_rebuild()

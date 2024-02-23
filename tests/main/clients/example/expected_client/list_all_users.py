@@ -19,3 +19,8 @@ class ListAllUsersUsers(BaseModel):
 
 class ListAllUsersUsersLocation(BaseModel):
     country: Optional[str]
+
+
+ListAllUsers.model_rebuild()
+ListAllUsersUsers.model_rebuild()
+ListAllUsersUsersLocation.model_rebuild()
