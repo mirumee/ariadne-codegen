@@ -174,15 +174,11 @@ class ResultTypesGenerator:
             )
         return module
 
-    def include_model_rebuild(self, class_def: ast.ClassDef) -> List[ast.Expr]:
-        model_rebuild_calls = []
+    def include_model_rebuild(self, class_def: ast.ClassDef) -> bool:
         for node in ast.walk(class_def):
             if isinstance(node, ast.Name) and '"' in node.id:
-                call_expr = generate_expr(
-                    generate_method_call(class_def.name, MODEL_REBUILD_METHOD)
-                )
-                model_rebuild_calls.append(call_expr)
-        return model_rebuild_calls
+                return True
+        return False
 
     def get_imports(self) -> List[ast.ImportFrom]:
         return self._imports
