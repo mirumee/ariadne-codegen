@@ -35,8 +35,6 @@ class ListUnionQueryListUTypeC(BaseModel):
 
 
 ListUnion.model_rebuild()
-ListUnion.model_rebuild()
-ListUnion.model_rebuild()
 ListUnionQueryListUTypeA.model_rebuild()
 ListUnionQueryListUTypeB.model_rebuild()
 ListUnionQueryListUTypeC.model_rebuild()

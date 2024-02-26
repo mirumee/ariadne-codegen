@@ -18,6 +18,3 @@ class InterfaceWithTypenameQueryI(BaseModel):
 
 InterfaceWithTypename.model_rebuild()
 InterfaceWithTypenameQueryI.model_rebuild()
-InterfaceWithTypenameQueryI.model_rebuild()
-InterfaceWithTypenameQueryI.model_rebuild()
-InterfaceWithTypenameQueryI.model_rebuild()

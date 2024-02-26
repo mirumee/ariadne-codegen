@@ -19,4 +19,3 @@ class FragmentsWithMixinsQueryB(FragmentB, CommonMixin):
 
 
 FragmentsWithMixins.model_rebuild()
-FragmentsWithMixins.model_rebuild()

@@ -31,9 +31,6 @@ class QueryWithFragmentOnInterfaceQueryITypeB(BaseModel):
 
 
 QueryWithFragmentOnInterface.model_rebuild()
-QueryWithFragmentOnInterface.model_rebuild()
-QueryWithFragmentOnInterface.model_rebuild()
-QueryWithFragmentOnInterfaceQueryIInterface.model_rebuild()
 QueryWithFragmentOnInterfaceQueryIInterface.model_rebuild()
 QueryWithFragmentOnInterfaceQueryITypeA.model_rebuild()
 QueryWithFragmentOnInterfaceQueryITypeB.model_rebuild()

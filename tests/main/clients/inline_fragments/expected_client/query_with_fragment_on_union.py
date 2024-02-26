@@ -30,8 +30,6 @@ class QueryWithFragmentOnUnionQueryUTypeC(BaseModel):
 
 
 QueryWithFragmentOnUnion.model_rebuild()
-QueryWithFragmentOnUnion.model_rebuild()
-QueryWithFragmentOnUnion.model_rebuild()
 QueryWithFragmentOnUnionQueryUTypeA.model_rebuild()
 QueryWithFragmentOnUnionQueryUTypeB.model_rebuild()
 QueryWithFragmentOnUnionQueryUTypeC.model_rebuild()

@@ -18,6 +18,3 @@ class InterfaceCQueryI(BaseModel):
 
 InterfaceC.model_rebuild()
 InterfaceCQueryI.model_rebuild()
-InterfaceCQueryI.model_rebuild()
-InterfaceCQueryI.model_rebuild()
-InterfaceCQueryI.model_rebuild()

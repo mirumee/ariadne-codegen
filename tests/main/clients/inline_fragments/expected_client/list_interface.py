@@ -36,9 +36,6 @@ class ListInterfaceQueryListITypeB(BaseModel):
 
 
 ListInterface.model_rebuild()
-ListInterface.model_rebuild()
-ListInterface.model_rebuild()
-ListInterfaceQueryListIInterface.model_rebuild()
 ListInterfaceQueryListIInterface.model_rebuild()
 ListInterfaceQueryListITypeA.model_rebuild()
 ListInterfaceQueryListITypeB.model_rebuild()
