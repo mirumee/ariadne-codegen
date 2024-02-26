@@ -23,4 +23,3 @@ class ListAllUsersUsersLocation(BaseModel):
 
 ListAllUsers.model_rebuild()
 ListAllUsersUsers.model_rebuild()
-ListAllUsersUsersLocation.model_rebuild()

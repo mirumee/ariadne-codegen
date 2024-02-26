@@ -13,4 +13,3 @@ class ExampleQuery2ExampleQuery(FullA):
 
 
 ExampleQuery2.model_rebuild()
-ExampleQuery2ExampleQuery.model_rebuild()

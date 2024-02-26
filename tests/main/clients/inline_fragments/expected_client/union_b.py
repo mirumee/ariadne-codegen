@@ -26,6 +26,8 @@ class UnionBQueryUTypeC(BaseModel):
 
 
 UnionB.model_rebuild()
+UnionB.model_rebuild()
+UnionB.model_rebuild()
 UnionBQueryUTypeA.model_rebuild()
 UnionBQueryUTypeB.model_rebuild()
 UnionBQueryUTypeC.model_rebuild()

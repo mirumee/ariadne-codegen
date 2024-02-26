@@ -26,6 +26,8 @@ class GetXYZXyzTypeZ(BaseModel):
 
 
 GetXYZ.model_rebuild()
+GetXYZ.model_rebuild()
+GetXYZ.model_rebuild()
 GetXYZXyzTypeX.model_rebuild()
 GetXYZXyzTypeY.model_rebuild()
 GetXYZXyzTypeZ.model_rebuild()

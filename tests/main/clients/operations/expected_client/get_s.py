@@ -10,4 +10,3 @@ class GetSS(BaseModel):
 
 
 GetS.model_rebuild()
-GetSS.model_rebuild()

@@ -19,4 +19,3 @@ class GetATestQuery(BaseModel):
 
 
 GetA.model_rebuild()
-GetATestQuery.model_rebuild()

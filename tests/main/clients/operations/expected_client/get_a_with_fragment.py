@@ -19,4 +19,3 @@ class GetAWithFragmentAValueB(FragmentB):
 
 GetAWithFragment.model_rebuild()
 GetAWithFragmentA.model_rebuild()
-GetAWithFragmentAValueB.model_rebuild()

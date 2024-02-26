@@ -155,10 +155,15 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
-        model_rebuild_calls = [
-            generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
-            for class_def in self._class_defs
-        ]
+        model_rebuild_calls = []
+        for class_def in self._class_defs:
+            for node in ast.walk(class_def):
+                if isinstance(node, ast.Name) and '"' in node.id:
+                    call_expr = generate_expr(
+                        generate_method_call(class_def.name, MODEL_REBUILD_METHOD)
+                    )
+                    model_rebuild_calls.append(call_expr)
+
         module_body = (
             cast(List[ast.stmt], self._imports)
             + cast(List[ast.stmt], self._class_defs)

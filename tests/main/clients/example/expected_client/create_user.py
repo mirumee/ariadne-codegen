@@ -14,4 +14,3 @@ class CreateUserUserCreate(BaseModel):
 
 
 CreateUser.model_rebuild()
-CreateUserUserCreate.model_rebuild()

@@ -12,4 +12,3 @@ class GetQueryAQueryA(BaseModel):
 
 
 GetQueryA.model_rebuild()
-GetQueryAQueryA.model_rebuild()

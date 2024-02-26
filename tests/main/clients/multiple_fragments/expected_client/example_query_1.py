@@ -13,4 +13,3 @@ class ExampleQuery1ExampleQuery(MinimalA):
 
 
 ExampleQuery1.model_rebuild()
-ExampleQuery1ExampleQuery.model_rebuild()

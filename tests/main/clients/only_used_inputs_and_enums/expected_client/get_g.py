@@ -11,4 +11,3 @@ class GetGG(FragmentG):
 
 
 GetG.model_rebuild()
-GetGG.model_rebuild()

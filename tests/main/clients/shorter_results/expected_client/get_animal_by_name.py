@@ -31,6 +31,8 @@ class GetAnimalByNameAnimalByNameDog(BaseModel):
 
 
 GetAnimalByName.model_rebuild()
+GetAnimalByName.model_rebuild()
+GetAnimalByName.model_rebuild()
 GetAnimalByNameAnimalByNameAnimal.model_rebuild()
 GetAnimalByNameAnimalByNameCat.model_rebuild()
 GetAnimalByNameAnimalByNameDog.model_rebuild()

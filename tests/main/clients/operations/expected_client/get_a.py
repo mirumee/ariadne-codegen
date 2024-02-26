@@ -18,4 +18,3 @@ class GetAAValueB(BaseModel):
 
 GetA.model_rebuild()
 GetAA.model_rebuild()
-GetAAValueB.model_rebuild()

@@ -11,4 +11,3 @@ class GetFF(BaseModel):
 
 
 GetF.model_rebuild()
-GetFF.model_rebuild()

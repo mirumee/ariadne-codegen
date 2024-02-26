@@ -16,4 +16,3 @@ class ListTypeAListOptionalTypeA(BaseModel):
 
 
 ListTypeA.model_rebuild()
-ListTypeAListOptionalTypeA.model_rebuild()

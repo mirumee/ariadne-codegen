@@ -16,4 +16,3 @@ class ListUsersByCountryUsers(BasicUser, UserPersonalData):
 
 
 ListUsersByCountry.model_rebuild()
-ListUsersByCountryUsers.model_rebuild()

@@ -11,4 +11,3 @@ class GetAuthenticatedUserMe(BaseModel):
 
 
 GetAuthenticatedUser.model_rebuild()
-GetAuthenticatedUserMe.model_rebuild()

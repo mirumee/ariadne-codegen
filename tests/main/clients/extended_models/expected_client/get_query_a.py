@@ -14,4 +14,3 @@ class GetQueryAQueryA(BaseModel, MixinA, CommonMixin):
 
 
 GetQueryA.model_rebuild()
-GetQueryAQueryA.model_rebuild()

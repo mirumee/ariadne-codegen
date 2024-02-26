@@ -36,6 +36,8 @@ class ListAnimalsListAnimalsDog(BaseModel):
 
 
 ListAnimals.model_rebuild()
+ListAnimals.model_rebuild()
+ListAnimals.model_rebuild()
 ListAnimalsListAnimalsAnimal.model_rebuild()
 ListAnimalsListAnimalsCat.model_rebuild()
 ListAnimalsListAnimalsDog.model_rebuild()
