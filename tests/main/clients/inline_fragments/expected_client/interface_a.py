@@ -29,6 +29,3 @@ class InterfaceAQueryITypeB(BaseModel):
 
 
 InterfaceA.model_rebuild()
-InterfaceAQueryIInterface.model_rebuild()
-InterfaceAQueryITypeA.model_rebuild()
-InterfaceAQueryITypeB.model_rebuild()

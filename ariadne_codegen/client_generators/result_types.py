@@ -175,10 +175,23 @@ class ResultTypesGenerator:
         return module
 
     def include_model_rebuild(self, class_def: ast.ClassDef) -> bool:
-        for node in ast.walk(class_def):
-            if isinstance(node, ast.Name) and '"' in node.id:
-                return True
-        return False
+        class NameVisitor(ast.NodeVisitor):
+            def __init__(self):
+                self.found_name_with_quote = False
+
+            def visit_Name(self, node):
+                if '"' in node.id:
+                    self.found_name_with_quote = True
+                self.generic_visit(node)
+
+            def visit_Subscript(self, node):
+                if isinstance(node.value, ast.Name) and node.value.id == "Literal":
+                    return
+                self.generic_visit(node)
+
+        visitor = NameVisitor()
+        visitor.visit(class_def)
+        return visitor.found_name_with_quote
 
     def get_imports(self) -> List[ast.ImportFrom]:
         return self._imports

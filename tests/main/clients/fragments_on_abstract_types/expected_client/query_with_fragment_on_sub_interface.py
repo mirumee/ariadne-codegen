@@ -22,5 +22,3 @@ class QueryWithFragmentOnSubInterfaceQueryInterfaceInterfaceA(FragmentA):
 
 
 QueryWithFragmentOnSubInterface.model_rebuild()
-QueryWithFragmentOnSubInterfaceQueryInterfaceBaseInterface.model_rebuild()
-QueryWithFragmentOnSubInterfaceQueryInterfaceInterfaceA.model_rebuild()

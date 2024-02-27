@@ -28,6 +28,3 @@ class UnionAQueryUTypeC(BaseModel):
 
 
 UnionA.model_rebuild()
-UnionAQueryUTypeA.model_rebuild()
-UnionAQueryUTypeB.model_rebuild()
-UnionAQueryUTypeC.model_rebuild()

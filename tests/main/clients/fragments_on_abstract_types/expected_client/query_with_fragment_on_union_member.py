@@ -22,5 +22,3 @@ class QueryWithFragmentOnUnionMemberQueryUnionTypeB(FragmentB):
 
 
 QueryWithFragmentOnUnionMember.model_rebuild()
-QueryWithFragmentOnUnionMemberQueryUnionTypeA.model_rebuild()
-QueryWithFragmentOnUnionMemberQueryUnionTypeB.model_rebuild()
