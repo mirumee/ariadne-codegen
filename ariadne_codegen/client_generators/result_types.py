@@ -175,7 +175,7 @@ class ResultTypesGenerator:
         return module
 
     def include_model_rebuild(self, class_def: ast.ClassDef) -> bool:
-        visitor = NameVisitor()
+        visitor = ClassDefNamesVisitor()
         visitor.visit(class_def)
         return visitor.found_name_with_quote
 
@@ -578,7 +578,7 @@ class ResultTypesGenerator:
         return copied_node
 
 
-class NameVisitor(ast.NodeVisitor):
+class ClassDefNamesVisitor(ast.NodeVisitor):
     def __init__(self):
         self.found_name_with_quote = False
 
