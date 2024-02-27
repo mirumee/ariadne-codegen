@@ -13,3 +13,6 @@ class ListTypeA(BaseModel):
 
 class ListTypeAListOptionalTypeA(BaseModel):
     id: int
+
+
+ListTypeA.model_rebuild()

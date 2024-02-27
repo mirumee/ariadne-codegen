@@ -7,3 +7,6 @@ class GetS(BaseModel):
 
 class GetSS(BaseModel):
     id: int
+
+
+GetS.model_rebuild()

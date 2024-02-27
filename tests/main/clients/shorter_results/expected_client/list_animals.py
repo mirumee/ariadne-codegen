@@ -33,3 +33,6 @@ class ListAnimalsListAnimalsDog(BaseModel):
     typename__: Literal["Dog"] = Field(alias="__typename")
     name: str
     puppies: int
+
+
+ListAnimals.model_rebuild()

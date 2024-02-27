@@ -26,3 +26,6 @@ class InterfaceAQueryITypeB(BaseModel):
     typename__: Literal["TypeB"] = Field(alias="__typename")
     id: str
     field_b: str = Field(alias="fieldB")
+
+
+InterfaceA.model_rebuild()

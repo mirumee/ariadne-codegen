@@ -8,3 +8,6 @@ class GetAuthenticatedUser(BaseModel):
 class GetAuthenticatedUserMe(BaseModel):
     id: str
     username: str
+
+
+GetAuthenticatedUser.model_rebuild()

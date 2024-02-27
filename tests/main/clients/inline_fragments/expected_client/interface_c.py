@@ -14,3 +14,6 @@ class InterfaceCQueryI(BaseModel):
         alias="__typename"
     )
     id: str
+
+
+InterfaceC.model_rebuild()

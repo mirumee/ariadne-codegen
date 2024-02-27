@@ -34,7 +34,9 @@ from ..codegen import (
     generate_ann_assign,
     generate_class_def,
     generate_constant,
+    generate_expr,
     generate_import_from,
+    generate_method_call,
     generate_module,
     generate_pass,
     generate_pydantic_field,
@@ -55,6 +57,7 @@ from .constants import (
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
     MIXIN_NAME,
+    MODEL_REBUILD_METHOD,
     OPTIONAL,
     PYDANTIC_MODULE,
     TYPENAME_ALIAS,
@@ -152,8 +155,16 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
-        module_body = cast(List[ast.stmt], self._imports) + cast(
-            List[ast.stmt], self._class_defs
+        model_rebuild_calls = [
+            generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
+            for class_def in self._class_defs
+            if self.include_model_rebuild(class_def)
+        ]
+
+        module_body = (
+            cast(List[ast.stmt], self._imports)
+            + cast(List[ast.stmt], self._class_defs)
+            + cast(List[ast.stmt], model_rebuild_calls)
         )
 
         module = generate_module(module_body)
@@ -162,6 +173,11 @@ class ResultTypesGenerator:
                 module, operation_definition=self.operation_definition
             )
         return module
+
+    def include_model_rebuild(self, class_def: ast.ClassDef) -> bool:
+        visitor = ClassDefNamesVisitor()
+        visitor.visit(class_def)
+        return visitor.found_name_with_quote
 
     def get_imports(self) -> List[ast.ImportFrom]:
         return self._imports
@@ -560,3 +576,19 @@ class ResultTypesGenerator:
         copied_node = deepcopy(node)
         visit(copied_node, RemoveMixinVisitor())
         return copied_node
+
+
+class ClassDefNamesVisitor(ast.NodeVisitor):
+    def __init__(self):
+        self.found_name_with_quote = False
+
+    def visit_Name(self, node):  # pylint: disable=C0103
+        if '"' in node.id:
+            self.found_name_with_quote = True
+        self.generic_visit(node)
+
+    def visit_Subscript(self, node):  # pylint: disable=C0103
+        if isinstance(node.value, ast.Name) and node.value.id == "Literal":
+            return
+
+        self.generic_visit(node)
