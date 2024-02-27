@@ -179,14 +179,15 @@ class ResultTypesGenerator:
             def __init__(self):
                 self.found_name_with_quote = False
 
-            def visit_Name(self, node):
+            def visit_Name(self, node):  # pylint: disable=C0103
                 if '"' in node.id:
                     self.found_name_with_quote = True
                 self.generic_visit(node)
 
-            def visit_Subscript(self, node):
+            def visit_Subscript(self, node):  # pylint: disable=C0103
                 if isinstance(node.value, ast.Name) and node.value.id == "Literal":
                     return
+
                 self.generic_visit(node)
 
         visitor = NameVisitor()
