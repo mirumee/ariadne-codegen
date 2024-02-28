@@ -141,15 +141,15 @@ class ClientGenerator:
                 raise NotSupported(
                     "Subscriptions are only available when using async client."
                 )
-            method_def: Union[
-                ast.FunctionDef, ast.AsyncFunctionDef
-            ] = self._generate_subscription_method_def(
-                name=name,
-                operation_name=operation_name,
-                return_type=return_type,
-                arguments=arguments,
-                arguments_dict=arguments_dict,
-                operation_str=operation_str,
+            method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef] = (
+                self._generate_subscription_method_def(
+                    name=name,
+                    operation_name=operation_name,
+                    return_type=return_type,
+                    arguments=arguments,
+                    arguments_dict=arguments_dict,
+                    operation_str=operation_str,
+                )
             )
         elif async_:
             method_def = self._generate_async_method(
