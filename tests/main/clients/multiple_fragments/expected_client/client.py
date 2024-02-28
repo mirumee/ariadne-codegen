@@ -12,7 +12,7 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def example_query_1(self, **kwargs: Any) -> ExampleQuery1:
-        query = gql(
+        _query = gql(
             """
             query exampleQuery1 {
               exampleQuery {
@@ -33,15 +33,15 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="exampleQuery1", variables=variables, **kwargs
+        _variables: Dict[str, object] = {}
+        _response = await self.execute(
+            query=_query, operation_name="exampleQuery1", variables=_variables, **kwargs
         )
-        data = self.get_data(response)
-        return ExampleQuery1.model_validate(data)
+        _data = self.get_data(_response)
+        return ExampleQuery1.model_validate(_data)
 
     async def example_query_2(self, **kwargs: Any) -> ExampleQuery2:
-        query = gql(
+        _query = gql(
             """
             query exampleQuery2 {
               exampleQuery {
@@ -63,15 +63,15 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="exampleQuery2", variables=variables, **kwargs
+        _variables: Dict[str, object] = {}
+        _response = await self.execute(
+            query=_query, operation_name="exampleQuery2", variables=_variables, **kwargs
         )
-        data = self.get_data(response)
-        return ExampleQuery2.model_validate(data)
+        _data = self.get_data(_response)
+        return ExampleQuery2.model_validate(_data)
 
     async def example_query_3(self, **kwargs: Any) -> ExampleQuery3:
-        query = gql(
+        _query = gql(
             """
             query exampleQuery3 {
               exampleQuery {
@@ -89,9 +89,9 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="exampleQuery3", variables=variables, **kwargs
+        _variables: Dict[str, object] = {}
+        _response = await self.execute(
+            query=_query, operation_name="exampleQuery3", variables=_variables, **kwargs
         )
-        data = self.get_data(response)
-        return ExampleQuery3.model_validate(data)
+        _data = self.get_data(_response)
+        return ExampleQuery3.model_validate(_data)

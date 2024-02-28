@@ -16,7 +16,7 @@ class Client(AsyncBaseClient):
     async def query_with_fragment_on_sub_interface(
         self, **kwargs: Any
     ) -> QueryWithFragmentOnSubInterface:
-        query = gql(
+        _query = gql(
             """
             query queryWithFragmentOnSubInterface {
               queryInterface {
@@ -31,20 +31,20 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query,
+        _variables: Dict[str, object] = {}
+        _response = await self.execute(
+            query=_query,
             operation_name="queryWithFragmentOnSubInterface",
-            variables=variables,
+            variables=_variables,
             **kwargs
         )
-        data = self.get_data(response)
-        return QueryWithFragmentOnSubInterface.model_validate(data)
+        _data = self.get_data(_response)
+        return QueryWithFragmentOnSubInterface.model_validate(_data)
 
     async def query_with_fragment_on_sub_interface_with_inline_fragment(
         self, **kwargs: Any
     ) -> QueryWithFragmentOnSubInterfaceWithInlineFragment:
-        query = gql(
+        _query = gql(
             """
             query queryWithFragmentOnSubInterfaceWithInlineFragment {
               queryInterface {
@@ -62,20 +62,20 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query,
+        _variables: Dict[str, object] = {}
+        _response = await self.execute(
+            query=_query,
             operation_name="queryWithFragmentOnSubInterfaceWithInlineFragment",
-            variables=variables,
+            variables=_variables,
             **kwargs
         )
-        data = self.get_data(response)
-        return QueryWithFragmentOnSubInterfaceWithInlineFragment.model_validate(data)
+        _data = self.get_data(_response)
+        return QueryWithFragmentOnSubInterfaceWithInlineFragment.model_validate(_data)
 
     async def query_with_fragment_on_union_member(
         self, **kwargs: Any
     ) -> QueryWithFragmentOnUnionMember:
-        query = gql(
+        _query = gql(
             """
             query queryWithFragmentOnUnionMember {
               queryUnion {
@@ -90,12 +90,12 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query,
+        _variables: Dict[str, object] = {}
+        _response = await self.execute(
+            query=_query,
             operation_name="queryWithFragmentOnUnionMember",
-            variables=variables,
+            variables=_variables,
             **kwargs
         )
-        data = self.get_data(response)
-        return QueryWithFragmentOnUnionMember.model_validate(data)
+        _data = self.get_data(_response)
+        return QueryWithFragmentOnUnionMember.model_validate(_data)

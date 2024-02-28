@@ -10,16 +10,16 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def test(self, **kwargs: Any) -> Test:
-        query = gql(
+        _query = gql(
             """
             query test {
               testQuery
             }
             """
         )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="test", variables=variables, **kwargs
+        _variables: Dict[str, object] = {}
+        _response = await self.execute(
+            query=_query, operation_name="test", variables=_variables, **kwargs
         )
-        data = self.get_data(response)
-        return Test.model_validate(data)
+        _data = self.get_data(_response)
+        return Test.model_validate(_data)

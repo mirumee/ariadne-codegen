@@ -18,7 +18,7 @@ class Client(AsyncBaseClient):
     async def create_user(
         self, user_data: UserCreateInput, **kwargs: Any
     ) -> CreateUser:
-        query = gql(
+        _query = gql(
             """
             mutation CreateUser($userData: UserCreateInput!) {
               userCreate(userData: $userData) {
@@ -27,15 +27,15 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"userData": user_data}
-        response = await self.execute(
-            query=query, operation_name="CreateUser", variables=variables, **kwargs
+        _variables: Dict[str, object] = {"userData": user_data}
+        _response = await self.execute(
+            query=_query, operation_name="CreateUser", variables=_variables, **kwargs
         )
-        data = self.get_data(response)
-        return CreateUser.model_validate(data)
+        _data = self.get_data(_response)
+        return CreateUser.model_validate(_data)
 
     async def list_all_users(self, **kwargs: Any) -> ListAllUsers:
-        query = gql(
+        _query = gql(
             """
             query ListAllUsers {
               users {
@@ -50,17 +50,17 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
-        response = await self.execute(
-            query=query, operation_name="ListAllUsers", variables=variables, **kwargs
+        _variables: Dict[str, object] = {}
+        _response = await self.execute(
+            query=_query, operation_name="ListAllUsers", variables=_variables, **kwargs
         )
-        data = self.get_data(response)
-        return ListAllUsers.model_validate(data)
+        _data = self.get_data(_response)
+        return ListAllUsers.model_validate(_data)
 
     async def list_users_by_country(
         self, country: Union[Optional[str], UnsetType] = UNSET, **kwargs: Any
     ) -> ListUsersByCountry:
-        query = gql(
+        _query = gql(
             """
             query ListUsersByCountry($country: String) {
               users(country: $country) {
@@ -81,41 +81,44 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"country": country}
-        response = await self.execute(
-            query=query,
+        _variables: Dict[str, object] = {"country": country}
+        _response = await self.execute(
+            query=_query,
             operation_name="ListUsersByCountry",
-            variables=variables,
+            variables=_variables,
             **kwargs
         )
-        data = self.get_data(response)
-        return ListUsersByCountry.model_validate(data)
+        _data = self.get_data(_response)
+        return ListUsersByCountry.model_validate(_data)
 
     async def get_users_counter(self, **kwargs: Any) -> AsyncIterator[GetUsersCounter]:
-        query = gql(
+        _query = gql(
             """
             subscription GetUsersCounter {
               usersCounter
             }
             """
         )
-        variables: Dict[str, object] = {}
-        async for data in self.execute_ws(
-            query=query, operation_name="GetUsersCounter", variables=variables, **kwargs
+        _variables: Dict[str, object] = {}
+        async for _data in self.execute_ws(
+            query=_query,
+            operation_name="GetUsersCounter",
+            variables=_variables,
+            **kwargs
         ):
-            yield GetUsersCounter.model_validate(data)
+            yield GetUsersCounter.model_validate(_data)
 
     async def upload_file(self, file: Upload, **kwargs: Any) -> UploadFile:
-        query = gql(
+        _query = gql(
             """
             mutation uploadFile($file: Upload!) {
               fileUpload(file: $file)
             }
             """
         )
-        variables: Dict[str, object] = {"file": file}
-        response = await self.execute(
-            query=query, operation_name="uploadFile", variables=variables, **kwargs
+        _variables: Dict[str, object] = {"file": file}
+        _response = await self.execute(
+            query=_query, operation_name="uploadFile", variables=_variables, **kwargs
         )
-        data = self.get_data(response)
-        return UploadFile.model_validate(data)
+        _data = self.get_data(_response)
+        return UploadFile.model_validate(_data)

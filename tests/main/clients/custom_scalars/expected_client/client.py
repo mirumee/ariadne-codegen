@@ -21,7 +21,7 @@ class Client(AsyncBaseClient):
         other: Any,
         **kwargs: Any
     ) -> GetA:
-        query = gql(
+        _query = gql(
             """
             query getA($date: DATETIME!, $code: CODE!, $id: CUSTOMID!, $input: TestInput!, $other: NOTMAPPED!) {
               testQuery(date: $date, code: $code, id: $id, input: $input, other: $other) {
@@ -33,15 +33,15 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {
+        _variables: Dict[str, object] = {
             "date": date,
             "code": serialize_code(code),
             "id": id,
             "input": input,
             "other": other,
         }
-        response = await self.execute(
-            query=query, operation_name="getA", variables=variables, **kwargs
+        _response = await self.execute(
+            query=_query, operation_name="getA", variables=_variables, **kwargs
         )
-        data = self.get_data(response)
-        return GetA.model_validate(data)
+        _data = self.get_data(_response)
+        return GetA.model_validate(_data)

@@ -251,7 +251,7 @@ def test_add_method_generates_correct_async_method_body(async_base_client_import
     return_type_module_name = method_name
     expected_method_body = [
         ast.Assign(
-            targets=[ast.Name(id="query")],
+            targets=[ast.Name(id="_query")],
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
@@ -259,7 +259,7 @@ def test_add_method_generates_correct_async_method_body(async_base_client_import
             ),
         ),
         ast.AnnAssign(
-            target=ast.Name(id="variables"),
+            target=ast.Name(id="_variables"),
             annotation=ast.Subscript(
                 value=ast.Name(id=DICT),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
@@ -270,27 +270,27 @@ def test_add_method_generates_correct_async_method_body(async_base_client_import
             simple=1,
         ),
         ast.Assign(
-            targets=[ast.Name(id="response")],
+            targets=[ast.Name(id="_response")],
             value=ast.Await(
                 value=ast.Call(
                     func=ast.Attribute(value=ast.Name(id="self"), attr="execute"),
                     args=[],
                     keywords=[
-                        ast.keyword(arg="query", value=ast.Name(id="query")),
+                        ast.keyword(arg="query", value=ast.Name(id="_query")),
                         ast.keyword(
                             arg="operation_name", value=ast.Constant(value="ListXyz")
                         ),
-                        ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                        ast.keyword(arg="variables", value=ast.Name(id="_variables")),
                         ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                     ],
                 )
             ),
         ),
         ast.Assign(
-            targets=[ast.Name(id="data")],
+            targets=[ast.Name(id="_data")],
             value=ast.Call(
                 func=ast.Attribute(value=ast.Name(id="self"), attr="get_data"),
-                args=[ast.Name(id="response")],
+                args=[ast.Name(id="_response")],
                 keywords=[],
             ),
         ),
@@ -299,7 +299,7 @@ def test_add_method_generates_correct_async_method_body(async_base_client_import
                 func=ast.Attribute(
                     value=ast.Name(id="ListXyz"), attr=MODEL_VALIDATE_METHOD
                 ),
-                args=[ast.Name(id="data")],
+                args=[ast.Name(id="_data")],
                 keywords=[],
             )
         ),
@@ -393,7 +393,7 @@ def test_add_method_generates_correct_method_body(base_client_import):
     return_type_module_name = method_name
     expected_method_body = [
         ast.Assign(
-            targets=[ast.Name(id="query")],
+            targets=[ast.Name(id="_query")],
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
@@ -401,7 +401,7 @@ def test_add_method_generates_correct_method_body(base_client_import):
             ),
         ),
         ast.AnnAssign(
-            target=ast.Name(id="variables"),
+            target=ast.Name(id="_variables"),
             annotation=ast.Subscript(
                 value=ast.Name(id=DICT),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
@@ -412,25 +412,25 @@ def test_add_method_generates_correct_method_body(base_client_import):
             simple=1,
         ),
         ast.Assign(
-            targets=[ast.Name(id="response")],
+            targets=[ast.Name(id="_response")],
             value=ast.Call(
                 func=ast.Attribute(value=ast.Name(id="self"), attr="execute"),
                 args=[],
                 keywords=[
-                    ast.keyword(arg="query", value=ast.Name(id="query")),
+                    ast.keyword(arg="query", value=ast.Name(id="_query")),
                     ast.keyword(
                         arg="operation_name", value=ast.Constant(value="ListXyz")
                     ),
-                    ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                    ast.keyword(arg="variables", value=ast.Name(id="_variables")),
                     ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                 ],
             ),
         ),
         ast.Assign(
-            targets=[ast.Name(id="data")],
+            targets=[ast.Name(id="_data")],
             value=ast.Call(
                 func=ast.Attribute(value=ast.Name(id="self"), attr="get_data"),
-                args=[ast.Name(id="response")],
+                args=[ast.Name(id="_response")],
                 keywords=[],
             ),
         ),
@@ -439,7 +439,7 @@ def test_add_method_generates_correct_method_body(base_client_import):
                 func=ast.Attribute(
                     value=ast.Name(id="ListXyz"), attr=MODEL_VALIDATE_METHOD
                 ),
-                args=[ast.Name(id="data")],
+                args=[ast.Name(id="_data")],
                 keywords=[],
             )
         ),
@@ -486,7 +486,7 @@ def test_add_method_generates_async_generator_for_subscription_definition(
         ),
         body=[
             ast.Assign(
-                targets=[ast.Name(id="query")],
+                targets=[ast.Name(id="_query")],
                 value=ast.Call(
                     func=ast.Name(id="gql"),
                     args=[
@@ -496,7 +496,7 @@ def test_add_method_generates_async_generator_for_subscription_definition(
                 ),
             ),
             ast.AnnAssign(
-                target=ast.Name(id="variables"),
+                target=ast.Name(id="_variables"),
                 annotation=ast.Subscript(
                     value=ast.Name(id=DICT),
                     slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
@@ -505,16 +505,16 @@ def test_add_method_generates_async_generator_for_subscription_definition(
                 simple=1,
             ),
             ast.AsyncFor(
-                target=ast.Name(id="data"),
+                target=ast.Name(id="_data"),
                 iter=ast.Call(
                     func=ast.Attribute(value=ast.Name(id="self"), attr="execute_ws"),
                     args=[],
                     keywords=[
-                        ast.keyword(arg="query", value=ast.Name(id="query")),
+                        ast.keyword(arg="query", value=ast.Name(id="_query")),
                         ast.keyword(
                             arg="operation_name", value=ast.Constant(value="GetCounter")
                         ),
-                        ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                        ast.keyword(arg="variables", value=ast.Name(id="_variables")),
                         ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
                     ],
                 ),
@@ -526,7 +526,7 @@ def test_add_method_generates_async_generator_for_subscription_definition(
                                     value=ast.Name(id="GetCounter"),
                                     attr=MODEL_VALIDATE_METHOD,
                                 ),
-                                args=[ast.Name(id="data")],
+                                args=[ast.Name(id="_data")],
                                 keywords=[],
                             )
                         )
