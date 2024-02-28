@@ -4,7 +4,7 @@
 
 - Fixed `str_to_snake_case` utility to capture fully capitalized words followed by an underscore.
 - Re-added `model_rebuild` calls for models with forward references.
-
+- Refactor `ClientGenerator` class to use private fields
 
 ## 0.12.0 (2024-02-05)
 
@@ -13,10 +13,9 @@
 - Added support to `graphqlschema` for saving schema as a GraphQL file.
 - Restored `model_rebuild` calls for top level fragment models.
 
-
 ## 0.11.0 (2023-12-05)
 
-- Removed `model_rebuild` calls for generated input, fragment and result models. 
+- Removed `model_rebuild` calls for generated input, fragment and result models.
 - Added `NoReimportsPlugin` that makes the `__init__.py` of generated client package empty.
 - Added `include_all_inputs` config flag to generate only inputs used in supplied operations.
 - Added `include_all_enums` config flag to generate only enums used in supplied operations.
@@ -24,7 +23,6 @@
 - Fixed base clients to pass `mypy --strict` without installed optional dependencies.
 - Renamed `GraphQlClientInvalidResponseError` to `GraphQLClientInvalidResponseError` (breaking change).
 - Changed base clients to raise `GraphQLClientGraphQLMultiError` for payloads with `errors` key but no `data` (breaking change).
-
 
 ## 0.10.0 (2023-11-15)
 
@@ -41,14 +39,12 @@
 - Added `ExtractOperationsPlugin` that extracts operation strings from client methods to separate module.
 - Added Python 3.12 to tested versions.
 
-
 ## 0.9.0 (2023-09-11)
 
 - Fixed generating operation string for nested inline fragments.
 - Removed scalars module. Changed generated models and client to use annotated types for custom scalars. Removed `scalars_module_name` option. Removed `generate_scalars_module`, `generate_scalars_cod`, `generate_scalar_annotation` and `generate_scalar_imports` plugin hooks.
 - Removed pydantic warnings for fields with `model_` prefix.
 - Fixed generating result types with nullable directives.
-
 
 ## 0.8.0 (2023-08-22)
 
@@ -64,11 +60,9 @@
 - Fixed generating default values of input types from remote schemas.
 - Changed generating of input and result field names to add `_` to names reserved by pydantic.
 
-
 ## 0.7.1 (2023-06-06)
 
 - Fixed `AsyncBaseClient` and `BaseClient` to send `Content-Type` header with requests.
-
 
 ## 0.7.0 (2023-06-01)
 
@@ -86,7 +80,6 @@
 - Changed type hints for parse and serialize methods of scalars to `typing.Any`.
 - Added `process_schema` plugin hook.
 
-
 ## 0.6.0 (2023-04-18)
 
 - Changed logic how custom scalar imports are generated. Deprecated `import_` key.
@@ -94,7 +87,6 @@
 - Fixed parsing of list variables.
 - Changed base clients to remove unset arguments and input fields from variables payload.
 - Added `process_name` plugin hook.
-
 
 ## 0.5.0 (2023-04-05)
 
@@ -105,7 +97,6 @@
 - Added `remote_schema_verify_ssl` option.
 - Changed how default values for inputs are generated to handle potential cycles.
 - Fixed `BaseModel` incorrectly calling `parse` and `serialize` methods on entire list instead of its items for `List[Scalar]`.
-
 
 ## 0.4.0 (2023-03-20)
 
@@ -119,18 +110,15 @@
 - Added support for environment variables to remote schema headers values.
 - Added `--config` argument to `ariadne-codegen` script, to support reading configuration from custom path.
 
-
 ## 0.3.0 (2023-02-21)
 
 - Changed generated code to pass `mypy --strict`.
 - Changed base clients to get full url from user.
 - Added support for custom scalars.
 
-
 ## 0.2.1 (2023-02-13)
 
 - Fixed incorrectly raised exception when using custom scalar as query argument type.
-
 
 ## 0.2.0 (2023-02-02)
 
