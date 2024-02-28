@@ -3,6 +3,7 @@
 ## 0.13.0 (UNRELEASED)
 
 - Fixed `str_to_snake_case` utility to capture fully capitalized words followed by an underscore.
+- Re-added `model_rebuild` calls for models with forward references.
 
 
 ## 0.12.0 (2024-02-05)
