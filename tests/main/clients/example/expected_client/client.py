@@ -16,20 +16,20 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def create_user(
-        self, user_data: UserCreateInput, **kwargs: Any
+        self, user_data: UserCreateInput, query: UserCreateInput, **kwargs: Any
     ) -> CreateUser:
-        query = gql(
+        _query = gql(
             """
-            mutation CreateUser($userData: UserCreateInput!) {
-              userCreate(userData: $userData) {
+            mutation CreateUser($userData: UserCreateInput!, $query: UserCreateInput!) {
+              userCreate(userData: $userData, query: $query) {
                 id
               }
             }
             """
         )
-        variables: Dict[str, object] = {"userData": user_data}
+        variables: Dict[str, object] = {"userData": user_data, "query": query}
         response = await self.execute(
-            query=query, operation_name="CreateUser", variables=variables, **kwargs
+            query=_query, operation_name="CreateUser", variables=variables, **kwargs
         )
         data = self.get_data(response)
         return CreateUser.model_validate(data)
