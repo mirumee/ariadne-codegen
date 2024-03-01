@@ -129,8 +129,6 @@ class ClientGenerator:
         return variable
 
     def prepare_variable_names(self, arguments: ast.arguments) -> Dict[str, str]:
-        """Example return: {'query': '_query', 'variables': 'variables',
-        'response': 'response', 'data': 'data'}"""
         mapped_variable_names = [
             self._operation_str_variable,
             self._variables_dict_variable,
