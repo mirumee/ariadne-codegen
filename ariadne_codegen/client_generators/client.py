@@ -122,11 +122,27 @@ class ClientGenerator:
             module = self.plugin_manager.generate_client_module(module)
         return module
 
-    def get_name_variable(self, variable: str, arguments: ast.arguments):
+    def transform_variable_name(self, variable: str, arguments: ast.arguments):
         for _args in arguments.args:
             if _args.arg == variable:
                 return "_" + variable
         return variable
+
+    def prepare_variable_names(self, arguments: ast.arguments) -> Dict[str, str]:
+        """Example return: {'query': '_query', 'variables': 'variables',
+        'response': 'response', 'data': 'data'}"""
+        variable_names = [
+            self._operation_str_variable,
+            self._variables_dict_variable,
+            self._response_variable,
+            self._data_variable,
+        ]
+        variable_name_map = {}
+        for variable in variable_names:
+            variable_name_map[variable] = self.transform_variable_name(
+                variable, arguments
+            )
+        return variable_name_map
 
     def add_method(
         self,
@@ -141,21 +157,25 @@ class ClientGenerator:
         arguments, arguments_dict = self.arguments_generator.generate(
             definition.variable_definitions
         )
+
+        variable_names_map = self.prepare_variable_names(arguments)
+
         operation_name = definition.name.value if definition.name else ""
         if definition.operation == OperationType.SUBSCRIPTION:
             if not async_:
                 raise NotSupported(
                     "Subscriptions are only available when using async client."
                 )
-            method_def: Union[
-                ast.FunctionDef, ast.AsyncFunctionDef
-            ] = self._generate_subscription_method_def(
-                name=name,
-                operation_name=operation_name,
-                return_type=return_type,
-                arguments=arguments,
-                arguments_dict=arguments_dict,
-                operation_str=operation_str,
+            method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef] = (
+                self._generate_subscription_method_def(
+                    name=name,
+                    operation_name=operation_name,
+                    return_type=return_type,
+                    arguments=arguments,
+                    arguments_dict=arguments_dict,
+                    operation_str=operation_str,
+                    variable_names_map=variable_names_map,
+                )
             )
         elif async_:
             method_def = self._generate_async_method(
@@ -165,6 +185,7 @@ class ClientGenerator:
                 arguments_dict=arguments_dict,
                 operation_str=operation_str,
                 operation_name=operation_name,
+                variable_names_map=variable_names_map,
             )
         else:
             method_def = self._generate_method(
@@ -174,6 +195,7 @@ class ClientGenerator:
                 arguments_dict=arguments_dict,
                 operation_str=operation_str,
                 operation_name=operation_name,
+                variable_names_map=variable_names_map,
             )
 
         method_def.lineno = len(self._class_def.body) + 1
@@ -203,6 +225,7 @@ class ClientGenerator:
         arguments: ast.arguments,
         arguments_dict: ast.Dict,
         operation_str: str,
+        variable_names_map: Dict,
     ) -> ast.AsyncFunctionDef:
         return generate_async_method_definition(
             name=name,
@@ -211,10 +234,12 @@ class ClientGenerator:
                 value=generate_name(ASYNC_ITERATOR), slice_=generate_name(return_type)
             ),
             body=[
-                self._generate_operation_str_assign(operation_str, arguments, 1),
+                self._generate_operation_str_assign(
+                    operation_str, variable_names_map, 1
+                ),
                 self._generate_variables_assign(arguments_dict, 2),
                 self._generate_async_generator_loop(
-                    operation_name, return_type, arguments, 3
+                    operation_name, return_type, variable_names_map, 3
                 ),
             ],
         )
@@ -227,15 +252,20 @@ class ClientGenerator:
         arguments_dict: ast.Dict,
         operation_str: str,
         operation_name: str,
+        variable_names_map: Dict,
     ) -> ast.AsyncFunctionDef:
         return generate_async_method_definition(
             name=name,
             arguments=arguments,
             return_type=generate_name(return_type),
             body=[
-                self._generate_operation_str_assign(operation_str, arguments, 1),
+                self._generate_operation_str_assign(
+                    operation_str, variable_names_map, 1
+                ),
                 self._generate_variables_assign(arguments_dict, 2),
-                self._generate_async_response_assign(operation_name, arguments, 3),
+                self._generate_async_response_assign(
+                    operation_name, variable_names_map, 3
+                ),
                 self._generate_data_retrieval(),
                 self._generate_return_parsed_obj(return_type),
             ],
@@ -249,28 +279,28 @@ class ClientGenerator:
         arguments_dict: ast.Dict,
         operation_str: str,
         operation_name: str,
+        variable_names_map: Dict,
     ) -> ast.FunctionDef:
         return generate_method_definition(
             name=name,
             arguments=arguments,
             return_type=generate_name(return_type),
             body=[
-                self._generate_operation_str_assign(operation_str, arguments, 1),
+                self._generate_operation_str_assign(
+                    operation_str, variable_names_map, 1
+                ),
                 self._generate_variables_assign(arguments_dict, 2),
-                self._generate_response_assign(operation_name, arguments, 3),
+                self._generate_response_assign(operation_name, variable_names_map, 3),
                 self._generate_data_retrieval(),
                 self._generate_return_parsed_obj(return_type),
             ],
         )
 
     def _generate_operation_str_assign(
-        self, operation_str: str, arguments, lineno: int = 1
+        self, operation_str: str, variable_names_map, lineno: int = 1
     ) -> ast.Assign:
-        _operation_str_variable = self.get_name_variable(
-            self._operation_str_variable, arguments
-        )
         return generate_assign(
-            targets=[_operation_str_variable],
+            targets=[variable_names_map[self._operation_str_variable]],
             value=generate_call(
                 func=generate_name(self._gql_func_name),
                 args=[
@@ -294,38 +324,40 @@ class ClientGenerator:
         )
 
     def _generate_async_response_assign(
-        self, operation_name: str, arguments, lineno: int = 1
+        self, operation_name: str, variable_names_map, lineno: int = 1
     ) -> ast.Assign:
         return generate_assign(
             targets=[self._response_variable],
             value=generate_await(
                 self._generate_execute_call(
-                    operation_name=operation_name, arguments=arguments
+                    operation_name=operation_name, variable_names_map=variable_names_map
                 )
             ),
             lineno=lineno,
         )
 
     def _generate_response_assign(
-        self, operation_name: str, arguments, lineno: int = 1
+        self, operation_name: str, variable_names_map, lineno: int = 1
     ) -> ast.Assign:
         return generate_assign(
             targets=[self._response_variable],
             value=self._generate_execute_call(
-                operation_name=operation_name, arguments=arguments
+                operation_name=operation_name, variable_names_map=variable_names_map
             ),
             lineno=lineno,
         )
 
-    def _generate_execute_call(self, operation_name: str, arguments) -> ast.Call:
-        _operation_str_variable = self.get_name_variable(
-            self._operation_str_variable, arguments
-        )
+    def _generate_execute_call(
+        self, operation_name: str, variable_names_map
+    ) -> ast.Call:
         return generate_call(
             func=generate_attribute(generate_name("self"), "execute"),
             keywords=[
                 generate_keyword(
-                    value=generate_name(_operation_str_variable), arg="query"
+                    value=generate_name(
+                        variable_names_map[self._operation_str_variable]
+                    ),
+                    arg="query",
                 ),
                 generate_keyword(
                     value=generate_constant(operation_name), arg="operation_name"
@@ -357,18 +389,18 @@ class ClientGenerator:
         )
 
     def _generate_async_generator_loop(
-        self, operation_name: str, return_type: str, arguments, lineno: int = 1
+        self, operation_name: str, return_type: str, variable_names_map, lineno: int = 1
     ) -> ast.AsyncFor:
-        _operation_str_variable = self.get_name_variable(
-            self._operation_str_variable, arguments
-        )
         return generate_async_for(
             target=generate_name(self._data_variable),
             iter_=generate_call(
                 func=generate_attribute(value=generate_name("self"), attr="execute_ws"),
                 keywords=[
                     generate_keyword(
-                        value=generate_name(_operation_str_variable), arg="query"
+                        value=generate_name(
+                            variable_names_map[self._operation_str_variable]
+                        ),
+                        arg="query",
                     ),
                     generate_keyword(
                         value=generate_constant(operation_name), arg="operation_name"
