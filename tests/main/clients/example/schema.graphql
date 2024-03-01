@@ -9,7 +9,7 @@ type Query {
 }
 
 type Mutation {
-  userCreate(userData: UserCreateInput!, query: UserCreateInput!): User
+  userCreate(userData: UserCreateInput!): User
   userPreferences(data: UserPreferencesInput): Boolean!
   fileUpload(file: Upload!): Boolean!
 }
