@@ -69,6 +69,7 @@ disable = [
   "duplicate-code",
   "no-name-in-module",
   "too-many-locals",
+  "too-many-lines",
 ]
 
 [tool.pytest.ini_options]
