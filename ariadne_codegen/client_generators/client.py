@@ -199,7 +199,7 @@ class ClientGenerator:
 
         for variable in mapped_variable_names:
             variable_names[variable] = (
-                "_" + variable if variable in argument_names else variable
+                f"_{variable}" if variable in argument_names else variable
             )
 
         return variable_names

@@ -619,16 +619,16 @@ def test_add_method_triggers_generate_client_method_hook(
     assert mocked_plugin_manager.generate_client_method.called
 
 
-def test_add_method_generates_correct_method_body_for_shadowed_variables(
+def test_add_method_generates_correct_method_body_for_shadowed_query_variable(
     base_client_import,
 ):
     schema_str = """
     schema { query: Query }
-    type Query { xyz(query: String!, variables: String!, response: String!, data: String!): String }
+    type Query { xyz(query: String, name: String): String }
     """
     query_str = """
-    query GetXyz($query: String!, $variables: String!, $response: String!, $data: String! ) {
-        xyz(query: $query, variables: $variables, response: $response, data: $data) 
+    query GetXyz($query: String, $name: String ) {
+        xyz(query: $query, name: $name) 
     }
     """
     generator = ClientGenerator(
@@ -648,34 +648,113 @@ def test_add_method_generates_correct_method_body_for_shadowed_variables(
             ),
         ),
         ast.AnnAssign(
+            target=ast.Name(id="variables"),
+            annotation=ast.Subscript(
+                value=ast.Name(id="Dict"),
+                slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
+            ),
+            value=ast.Dict(
+                keys=[ast.Constant(value="query"), ast.Constant(value="name")],
+                values=[ast.Name(id="query"), ast.Name(id="name")],
+            ),
+            simple=1,
+        ),
+        ast.Assign(
+            targets=[ast.Name(id="response")],
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="execute"),
+                args=[],
+                keywords=[
+                    ast.keyword(arg="query", value=ast.Name(id="_query")),
+                    ast.keyword(
+                        arg="operation_name", value=ast.Constant(value="GetXyz")
+                    ),
+                    ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                    ast.keyword(value=ast.Name(id="kwargs")),
+                ],
+            ),
+        ),
+        ast.Assign(
+            targets=[ast.Name(id="data")],
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="get_data"),
+                args=[ast.Name(id="response")],
+                keywords=[],
+            ),
+        ),
+        ast.Return(
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="GetXyz"), attr="model_validate"),
+                args=[ast.Name(id="data")],
+                keywords=[],
+            )
+        ),
+    ]
+
+    generator.add_method(
+        definition=cast(OperationDefinitionNode, parse(query_str).definitions[0]),
+        name=method_name,
+        return_type=return_type,
+        return_type_module=return_type_module_name,
+        operation_str=query_str,
+        async_=False,
+    )
+    module = generator.generate()
+
+    class_def = get_class_def(module)
+    assert class_def
+    method_def = class_def.body[0]
+    assert isinstance(method_def, ast.FunctionDef)
+    assert compare_ast(method_def.body, expected_method_body)
+
+
+def test_add_method_generates_correct_method_body_for_shadowed_variables(
+    base_client_import,
+):
+    schema_str = """
+    schema { query: Query }
+    type Query { xyz(variables: String, name: String): String }
+    """
+    query_str = """
+    query GetXyz($variables: String, $name: String ) {
+        xyz(variables: $variables, name: $name) 
+    }
+    """
+    generator = ClientGenerator(
+        base_client_import=base_client_import,
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+    )
+    method_name = "list_xyz"
+    return_type = "GetXyz"
+    return_type_module_name = method_name
+    expected_method_body = [
+        ast.Assign(
+            targets=[ast.Name(id="query")],
+            value=ast.Call(
+                func=ast.Name("gql"),
+                keywords=[],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+            ),
+        ),
+        ast.AnnAssign(
             target=ast.Name(id="_variables"),
             annotation=ast.Subscript(
                 value=ast.Name(id="Dict"),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
-                keys=[
-                    ast.Constant(value="query"),
-                    ast.Constant(value="variables"),
-                    ast.Constant(value="response"),
-                    ast.Constant(value="data"),
-                ],
-                values=[
-                    ast.Name(id="query"),
-                    ast.Name(id="variables"),
-                    ast.Name(id="response"),
-                    ast.Name(id="data"),
-                ],
+                keys=[ast.Constant(value="variables"), ast.Constant(value="name")],
+                values=[ast.Name(id="variables"), ast.Name(id="name")],
             ),
             simple=1,
         ),
         ast.Assign(
-            targets=[ast.Name(id="_response")],
+            targets=[ast.Name(id="response")],
             value=ast.Call(
                 func=ast.Attribute(value=ast.Name(id="self"), attr="execute"),
                 args=[],
                 keywords=[
-                    ast.keyword(arg="query", value=ast.Name(id="_query")),
+                    ast.keyword(arg="query", value=ast.Name(id="query")),
                     ast.keyword(
                         arg="operation_name", value=ast.Constant(value="GetXyz")
                     ),
@@ -685,10 +764,188 @@ def test_add_method_generates_correct_method_body_for_shadowed_variables(
             ),
         ),
         ast.Assign(
-            targets=[ast.Name(id="_data")],
+            targets=[ast.Name(id="data")],
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="get_data"),
+                args=[ast.Name(id="response")],
+                keywords=[],
+            ),
+        ),
+        ast.Return(
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="GetXyz"), attr="model_validate"),
+                args=[ast.Name(id="data")],
+                keywords=[],
+            )
+        ),
+    ]
+
+    generator.add_method(
+        definition=cast(OperationDefinitionNode, parse(query_str).definitions[0]),
+        name=method_name,
+        return_type=return_type,
+        return_type_module=return_type_module_name,
+        operation_str=query_str,
+        async_=False,
+    )
+    module = generator.generate()
+
+    class_def = get_class_def(module)
+    assert class_def
+    method_def = class_def.body[0]
+    assert isinstance(method_def, ast.FunctionDef)
+    assert compare_ast(method_def.body, expected_method_body)
+
+
+def test_add_method_generates_correct_method_body_for_shadowed_response_variable(
+    base_client_import,
+):
+    schema_str = """
+    schema { query: Query }
+    type Query { xyz(response: String, name: String): String }
+    """
+    query_str = """
+    query GetXyz($response: String, $name: String ) {
+        xyz(response: $response, name: $name) 
+    }
+    """
+    generator = ClientGenerator(
+        base_client_import=base_client_import,
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+    )
+    method_name = "list_xyz"
+    return_type = "GetXyz"
+    return_type_module_name = method_name
+    expected_method_body = [
+        ast.Assign(
+            targets=[ast.Name(id="query")],
+            value=ast.Call(
+                func=ast.Name("gql"),
+                keywords=[],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+            ),
+        ),
+        ast.AnnAssign(
+            target=ast.Name(id="variables"),
+            annotation=ast.Subscript(
+                value=ast.Name(id="Dict"),
+                slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
+            ),
+            value=ast.Dict(
+                keys=[ast.Constant(value="response"), ast.Constant(value="name")],
+                values=[ast.Name(id="response"), ast.Name(id="name")],
+            ),
+            simple=1,
+        ),
+        ast.Assign(
+            targets=[ast.Name(id="_response")],
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="execute"),
+                args=[],
+                keywords=[
+                    ast.keyword(arg="query", value=ast.Name(id="query")),
+                    ast.keyword(
+                        arg="operation_name", value=ast.Constant(value="GetXyz")
+                    ),
+                    ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                    ast.keyword(value=ast.Name(id="kwargs")),
+                ],
+            ),
+        ),
+        ast.Assign(
+            targets=[ast.Name(id="data")],
             value=ast.Call(
                 func=ast.Attribute(value=ast.Name(id="self"), attr="get_data"),
                 args=[ast.Name(id="_response")],
+                keywords=[],
+            ),
+        ),
+        ast.Return(
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="GetXyz"), attr="model_validate"),
+                args=[ast.Name(id="data")],
+                keywords=[],
+            )
+        ),
+    ]
+
+    generator.add_method(
+        definition=cast(OperationDefinitionNode, parse(query_str).definitions[0]),
+        name=method_name,
+        return_type=return_type,
+        return_type_module=return_type_module_name,
+        operation_str=query_str,
+        async_=False,
+    )
+    module = generator.generate()
+
+    class_def = get_class_def(module)
+    assert class_def
+    method_def = class_def.body[0]
+    assert isinstance(method_def, ast.FunctionDef)
+    assert compare_ast(method_def.body, expected_method_body)
+
+
+def test_add_method_generates_correct_method_body_for_shadowed_data_variable(
+    base_client_import,
+):
+    schema_str = """
+    schema { query: Query }
+    type Query { xyz(data: String, name: String): String }
+    """
+    query_str = """
+    query GetXyz($data: String, $name: String ) {
+        xyz(data: $data, name: $name) 
+    }
+    """
+    generator = ClientGenerator(
+        base_client_import=base_client_import,
+        arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
+    )
+    method_name = "list_xyz"
+    return_type = "GetXyz"
+    return_type_module_name = method_name
+    expected_method_body = [
+        ast.Assign(
+            targets=[ast.Name(id="query")],
+            value=ast.Call(
+                func=ast.Name("gql"),
+                keywords=[],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+            ),
+        ),
+        ast.AnnAssign(
+            target=ast.Name(id="variables"),
+            annotation=ast.Subscript(
+                value=ast.Name(id="Dict"),
+                slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
+            ),
+            value=ast.Dict(
+                keys=[ast.Constant(value="data"), ast.Constant(value="name")],
+                values=[ast.Name(id="data"), ast.Name(id="name")],
+            ),
+            simple=1,
+        ),
+        ast.Assign(
+            targets=[ast.Name(id="response")],
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="execute"),
+                args=[],
+                keywords=[
+                    ast.keyword(arg="query", value=ast.Name(id="query")),
+                    ast.keyword(
+                        arg="operation_name", value=ast.Constant(value="GetXyz")
+                    ),
+                    ast.keyword(arg="variables", value=ast.Name(id="variables")),
+                    ast.keyword(value=ast.Name(id="kwargs")),
+                ],
+            ),
+        ),
+        ast.Assign(
+            targets=[ast.Name(id="_data")],
+            value=ast.Call(
+                func=ast.Attribute(value=ast.Name(id="self"), attr="get_data"),
+                args=[ast.Name(id="response")],
                 keywords=[],
             ),
         ),
