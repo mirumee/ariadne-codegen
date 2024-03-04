@@ -122,24 +122,6 @@ class ClientGenerator:
             module = self.plugin_manager.generate_client_module(module)
         return module
 
-    def transform_variable_name(self, variable: str, arguments: ast.arguments):
-        for _args in arguments.args:
-            if _args.arg == variable:
-                return "_" + variable
-        return variable
-
-    def prepare_variable_names(self, arguments: ast.arguments) -> Dict[str, str]:
-        mapped_variable_names = [
-            self._operation_str_variable,
-            self._variables_dict_variable,
-            self._response_variable,
-            self._data_variable,
-        ]
-        variable_names = {}
-        for variable in mapped_variable_names:
-            variable_names[variable] = self.transform_variable_name(variable, arguments)
-        return variable_names
-
     def add_method(
         self,
         definition: OperationDefinitionNode,
@@ -154,7 +136,7 @@ class ClientGenerator:
             definition.variable_definitions
         )
 
-        variable_names = self.prepare_variable_names(arguments)
+        variable_names = self.get_variable_names(arguments)
 
         operation_name = definition.name.value if definition.name else ""
         if definition.operation == OperationType.SUBSCRIPTION:
@@ -204,6 +186,23 @@ class ClientGenerator:
         self._add_import(
             generate_import_from(names=[return_type], from_=return_type_module, level=1)
         )
+
+    def get_variable_names(self, arguments: ast.arguments) -> Dict[str, str]:
+        mapped_variable_names = [
+            self._operation_str_variable,
+            self._variables_dict_variable,
+            self._response_variable,
+            self._data_variable,
+        ]
+        variable_names = {}
+        argument_names = set(arg.arg for arg in arguments.args)
+
+        for variable in mapped_variable_names:
+            variable_names[variable] = (
+                "_" + variable if variable in argument_names else variable
+            )
+
+        return variable_names
 
     def _add_import(self, import_: Optional[ast.ImportFrom] = None):
         if not import_:
