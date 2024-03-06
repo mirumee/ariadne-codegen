@@ -26,3 +26,8 @@ class InputAB(BaseModel):
 
 class InputE(BaseModel):
     val: EnumE
+
+
+InputA.model_rebuild()
+InputAA.model_rebuild()
+InputAB.model_rebuild()
