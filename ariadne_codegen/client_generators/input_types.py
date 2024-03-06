@@ -9,7 +9,6 @@ from graphql import (
     GraphQLSchema,
 )
 
-
 from ..codegen import (
     generate_ann_assign,
     generate_class_def,
