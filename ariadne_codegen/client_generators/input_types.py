@@ -19,7 +19,7 @@ from ..codegen import (
     generate_method_call,
     generate_module,
     generate_pydantic_field,
-    include_model_rebuild,
+    model_has_forward_refs,
 )
 from ..plugins.manager import PluginManager
 from ..utils import process_name
@@ -92,7 +92,7 @@ class InputTypesGenerator:
         model_rebuild_calls = [
             generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
             for class_def in class_defs
-            if include_model_rebuild(class_def)
+            if model_has_forward_refs(class_def)
         ]
 
         module_body = (

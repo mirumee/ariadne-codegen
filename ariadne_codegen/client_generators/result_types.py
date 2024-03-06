@@ -40,7 +40,7 @@ from ..codegen import (
     generate_module,
     generate_pass,
     generate_pydantic_field,
-    include_model_rebuild,
+    model_has_forward_refs,
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
@@ -159,7 +159,7 @@ class ResultTypesGenerator:
         model_rebuild_calls = [
             generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
             for class_def in self._class_defs
-            if include_model_rebuild(class_def)
+            if model_has_forward_refs(class_def)
         ]
 
         module_body = (

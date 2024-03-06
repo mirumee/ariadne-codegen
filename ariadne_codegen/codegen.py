@@ -334,7 +334,7 @@ def generate_pass() -> ast.Pass:
     return ast.Pass()
 
 
-def include_model_rebuild(class_def: ast.ClassDef) -> bool:
+def model_has_forward_refs(class_def: ast.ClassDef) -> bool:
     visitor = ClassDefNamesVisitor()
     visitor.visit(class_def)
     return visitor.found_name_with_quote
