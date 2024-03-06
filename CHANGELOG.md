@@ -1,8 +1,8 @@
 # CHANGELOG
 
-## Unreleased
+## 0.14.0 (Unreleased)
 
-- Fixed `model_rebuild` for input types with forward references.
+- Re-added `model_rebuild` calls for input types with forward references.
 
 
 ## 0.13.0 (2024-03-4)
