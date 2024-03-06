@@ -46,3 +46,7 @@ class NotificationsPreferencesInput(BaseModel):
     receive_push_notifications: bool = Field(alias="receivePushNotifications")
     receive_sms: bool = Field(alias="receiveSms")
     title: str
+
+
+UserCreateInput.model_rebuild()
+UserPreferencesInput.model_rebuild()

@@ -40,6 +40,7 @@ from ..codegen import (
     generate_module,
     generate_pass,
     generate_pydantic_field,
+    include_model_rebuild,
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
@@ -158,7 +159,7 @@ class ResultTypesGenerator:
         model_rebuild_calls = [
             generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
             for class_def in self._class_defs
-            if self.include_model_rebuild(class_def)
+            if include_model_rebuild(class_def)
         ]
 
         module_body = (
@@ -173,11 +174,6 @@ class ResultTypesGenerator:
                 module, operation_definition=self.operation_definition
             )
         return module
-
-    def include_model_rebuild(self, class_def: ast.ClassDef) -> bool:
-        visitor = ClassDefNamesVisitor()
-        visitor.visit(class_def)
-        return visitor.found_name_with_quote
 
     def get_imports(self) -> List[ast.ImportFrom]:
         return self._imports
@@ -576,19 +572,3 @@ class ResultTypesGenerator:
         copied_node = deepcopy(node)
         visit(copied_node, RemoveMixinVisitor())
         return copied_node
-
-
-class ClassDefNamesVisitor(ast.NodeVisitor):
-    def __init__(self):
-        self.found_name_with_quote = False
-
-    def visit_Name(self, node):  # pylint: disable=C0103
-        if '"' in node.id:
-            self.found_name_with_quote = True
-        self.generic_visit(node)
-
-    def visit_Subscript(self, node):  # pylint: disable=C0103
-        if isinstance(node.value, ast.Name) and node.value.id == "Literal":
-            return
-
-        self.generic_visit(node)

@@ -9,14 +9,18 @@ from graphql import (
     GraphQLSchema,
 )
 
+
 from ..codegen import (
     generate_ann_assign,
     generate_class_def,
     generate_constant,
+    generate_expr,
     generate_import_from,
     generate_keyword,
+    generate_method_call,
     generate_module,
     generate_pydantic_field,
+    include_model_rebuild,
 )
 from ..plugins.manager import PluginManager
 from ..utils import process_name
@@ -28,6 +32,7 @@ from .constants import (
     BASE_MODEL_IMPORT,
     FIELD_CLASS,
     LIST,
+    MODEL_REBUILD_METHOD,
     OPTIONAL,
     PLAIN_SERIALIZER,
     PYDANTIC_MODULE,
@@ -85,8 +90,16 @@ class InputTypesGenerator:
             scalar_data = self.custom_scalars[scalar_name]
             self._imports.extend(generate_scalar_imports(scalar_data))
 
-        module_body = cast(List[ast.stmt], self._imports) + cast(
-            List[ast.stmt], class_defs
+        model_rebuild_calls = [
+            generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
+            for class_def in class_defs
+            if include_model_rebuild(class_def)
+        ]
+
+        module_body = (
+            cast(List[ast.stmt], self._imports)
+            + cast(List[ast.stmt], class_defs)
+            + cast(List[ast.stmt], model_rebuild_calls)
         )
         module = generate_module(body=module_body)
 
