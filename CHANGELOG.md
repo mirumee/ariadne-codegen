@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## Unreleased
+
+- Fixed `model_rebuild` for input types with forward references.
+
+
 ## 0.13.0 (2024-03-4)
 
 - Fixed `str_to_snake_case` utility to capture fully capitalized words followed by an underscore.
