@@ -1,15 +1,15 @@
 """
-Plugin to only import types when you call methods
+Plugin to only import types for GraphQL responses when you call methods.
 
 This will massively reduce import times for larger projects since you only have
 to load the input types when loading the client.
 
-All result types that's used to process the server response will only be
-imported when the method is called.
+All input and return types that's used to process the server response will
+only be imported when the method is called.
 """
 
 import ast
-from typing import Dict
+from typing import Dict, List, Optional, Set, Union
 
 from graphql import GraphQLSchema
 
@@ -27,15 +27,15 @@ class NoGlobalImportsPlugin(Plugin):
         # Types that should only be imported in a `TYPE_CHECKING` context. This
         # is all the types used as arguments to a method or as a return type,
         # i.e. for type checking.
-        self.input_and_return_types: set[str] = set()
+        self.input_and_return_types: Set[str] = set()
 
         # Imported classes are classes imported from local imports. We keep a
         # map between name and module so we know how to import them in each
         # method.
-        self.imported_classes: dict[str, str] = {}
+        self.imported_classes: Dict[str, str] = {}
 
         # Imported classes in each method definition.
-        self.imported_in_method: set[str] = set()
+        self.imported_in_method: Set[str] = set()
 
         super().__init__(schema, config_dict)
 
@@ -55,6 +55,7 @@ class NoGlobalImportsPlugin(Plugin):
         types used as input types.
 
         :param module: The ast for the module
+        :returns: A modified `ast.Module`
         """
         self._store_imported_classes(module.body)
 
@@ -83,7 +84,7 @@ class NoGlobalImportsPlugin(Plugin):
 
         return super().generate_client_module(module)
 
-    def _store_imported_classes(self, module_body: list[ast.stmt]):
+    def _store_imported_classes(self, module_body: List[ast.stmt]):
         """Fetch and store imported classes.
 
         Grab all imported classes with level 1 or starting with `.` because
@@ -110,8 +111,8 @@ class NoGlobalImportsPlugin(Plugin):
                     self.imported_classes[name.name] = from_
 
     def _rewrite_input_args_to_constants(
-        self, method_def: ast.FunctionDef | ast.AsyncFunctionDef
-    ) -> ast.FunctionDef | ast.AsyncFunctionDef:
+        self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
+    ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
         """Rewrite the arguments to a method.
 
         For any `ast.Name` that requires an import convert it to an
@@ -134,7 +135,7 @@ class NoGlobalImportsPlugin(Plugin):
         return method_def
 
     def _insert_import_statement_in_method(
-        self, method_def: ast.FunctionDef | ast.AsyncFunctionDef
+        self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
     ):
         """Insert import statement in method.
 
@@ -175,7 +176,7 @@ class NoGlobalImportsPlugin(Plugin):
             ),
         )
 
-    def _get_call_arg_from_return(self, return_stmt: ast.Return) -> ast.Call | None:
+    def _get_call_arg_from_return(self, return_stmt: ast.Return) -> Optional[ast.Call]:
         """Get the class used in the return statement.
 
         :param return_stmt: The statement used for return
@@ -193,7 +194,9 @@ class NoGlobalImportsPlugin(Plugin):
 
         return None
 
-    def _get_call_arg_from_async_for(self, last_stmt: ast.AsyncFor) -> ast.Call | None:
+    def _get_call_arg_from_async_for(
+        self, last_stmt: ast.AsyncFor
+    ) -> Optional[ast.Call]:
         """Get the class used in the yield expression.
 
         :param last_stmt: The statement used in `ast.AsyncFor`
@@ -224,7 +227,7 @@ class NoGlobalImportsPlugin(Plugin):
 
         return None
 
-    def _get_class_from_call(self, call: ast.Call) -> ast.Name | None:
+    def _get_class_from_call(self, call: ast.Call) -> Optional[ast.Name]:
         """Get the class from an `ast.Call`.
 
         :param call: The `ast.Call` arg
@@ -238,7 +241,7 @@ class NoGlobalImportsPlugin(Plugin):
 
         return call.func.value
 
-    def _update_imports(self, module: ast.Module) -> ast.Name | None:
+    def _update_imports(self, module: ast.Module):
         """Update all imports.
 
         Iterate over all imports and remove the aliases that we use as input or
@@ -279,7 +282,7 @@ class NoGlobalImportsPlugin(Plugin):
         # `ImportFrom` that ends up without any names, the formatting will not
         # work! It will only remove the empty `import from` but not other unused
         # imports.
-        non_empty_imports: list[ast.Import | ast.ImportFrom] = []
+        non_empty_imports: List[Union[ast.Import, ast.ImportFrom]] = []
         last_import_at = 0
         for i, node in enumerate(module.body):
             if isinstance(node, ast.Import):
