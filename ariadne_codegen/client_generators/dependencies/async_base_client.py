@@ -1,5 +1,6 @@
 import enum
 import json
+import time
 from typing import IO, Any, AsyncIterator, Dict, List, Optional, Tuple, TypeVar, cast
 from uuid import uuid4
 
@@ -9,6 +10,7 @@ from pydantic_core import to_jsonable_python
 
 from .base_model import UNSET, Upload
 from .exceptions import (
+    GraphQLClientError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQLClientInvalidMessageFormat,
@@ -164,11 +166,17 @@ class AsyncBaseClient:
         ) as websocket:
             await self._send_connection_init(websocket)
             # wait for connection_ack from server
-            await self._handle_ws_message(
-                await websocket.recv(),
-                websocket,
-                expected_type=GraphQLTransportWSMessageType.CONNECTION_ACK,
-            )
+            # if ping is received, send pong and continue to wait for connection_ack
+            # if connection ack is not recived within 5 seconds raise error
+            connection_start = time.time()
+            async for message in websocket:
+                data = await self._handle_ws_message(message, websocket)
+                if data and "connection_ack" in data:
+                    break
+                if time.time() - connection_start > 5:
+                    raise GraphQLClientError(
+                        "Connection ack not received within 5 seconds",
+                    )
             await self._send_subscribe(
                 websocket,
                 operation_id=operation_id,
@@ -366,5 +374,7 @@ class AsyncBaseClient:
             raise GraphQLClientGraphQLMultiError.from_errors_dicts(
                 errors_dicts=payload, data=message_dict
             )
+        elif type_ == GraphQLTransportWSMessageType.CONNECTION_ACK:
+            return {"connection_ack": True}
 
         return None
