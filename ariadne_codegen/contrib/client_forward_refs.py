@@ -1,5 +1,15 @@
 """
-Plugin to only import types for GraphQL responses when you call methods.
+Plugin that delays imports of Pydantic models in client module.
+
+Puts all imports under the `typing.TYPE_CHECKING` flag, making
+type annotations for generated client's methods forward references.
+
+This greatly improves import time of generated `client` module when
+there are many Pydantic models.
+
+Because generated client's methods need type definitions for models
+they are using, those models imports will be also inserted in their
+bodies.
 
 This will massively reduce import times for larger projects since you only have
 to load the input types when loading the client.
