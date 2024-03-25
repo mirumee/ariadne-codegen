@@ -2,7 +2,7 @@
 
 ## 0.14.0 (Unreleased)
 
-- Added `NoGlobalImportsPlugin` to standard plugins.
+- Added `ClientForwardRefsPlugin` to standard plugins.
 - Re-added `model_rebuild` calls for input types with forward references.
 
 

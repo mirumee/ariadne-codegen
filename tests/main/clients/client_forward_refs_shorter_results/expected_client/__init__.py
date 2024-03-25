@@ -1,6 +1,12 @@
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
 from .client import Client
+from .client_forward_refs_shorter_resultsfragments import (
+    FragmentWithSingleField,
+    FragmentWithSingleFieldQueryUnwrapFragment,
+    ListAnimalsFragment,
+    ListAnimalsFragmentListAnimals,
+)
 from .exceptions import (
     GraphQLClientError,
     GraphQLClientGraphQLError,
@@ -29,12 +35,6 @@ from .list_strings_2 import ListStrings2
 from .list_strings_3 import ListStrings3
 from .list_strings_4 import ListStrings4
 from .list_type_a import ListTypeA, ListTypeAListOptionalTypeA
-from .no_global_imports_fragments import (
-    FragmentWithSingleField,
-    FragmentWithSingleFieldQueryUnwrapFragment,
-    ListAnimalsFragment,
-    ListAnimalsFragmentListAnimals,
-)
 from .subscribe_strings import SubscribeStrings
 from .unwrap_fragment import UnwrapFragment
 

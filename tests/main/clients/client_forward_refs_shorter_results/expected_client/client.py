@@ -3,6 +3,9 @@ from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional, Unio
 from .async_base_client import AsyncBaseClient
 
 if TYPE_CHECKING:
+    from .client_forward_refs_shorter_resultsfragments import (
+        FragmentWithSingleFieldQueryUnwrapFragment,
+    )
     from .custom_scalars import ComplexScalar, SimpleScalar
     from .get_animal_by_name import (
         GetAnimalByNameAnimalByNameAnimal,
@@ -17,9 +20,6 @@ if TYPE_CHECKING:
         ListAnimalsListAnimalsDog,
     )
     from .list_type_a import ListTypeAListOptionalTypeA
-    from .no_global_imports_shorter_resultsfragments import (
-        FragmentWithSingleFieldQueryUnwrapFragment,
-    )
 
 
 def gql(q: str) -> str:

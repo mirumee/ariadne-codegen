@@ -19,7 +19,7 @@ TYPE_CHECKING_MODULE: str = "typing"
 TYPE_CHECKING_FLAG: str = "TYPE_CHECKING"
 
 
-class NoGlobalImportsPlugin(Plugin):
+class ClientForwardRefsPlugin(Plugin):
     """Only import types when you call an endpoint needing it"""
 
     def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:

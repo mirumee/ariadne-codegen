@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import Field
 
-from .no_global_imports_shorter_resultsfragments import ListAnimalsFragment
+from .client_forward_refs_shorter_resultsfragments import ListAnimalsFragment
 
 
 class GetAnimalFragmentWithExtra(ListAnimalsFragment):

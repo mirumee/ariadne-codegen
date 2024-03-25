@@ -2,12 +2,12 @@
 schema_path = "schema.graphql"
 queries_path = "queries.graphql"
 include_comments = "none"
-target_package_name = "no_global_imports_shorter_results"
+target_package_name = "client_forward_refs_shorter_results"
 files_to_include = ["custom_scalars.py"]
-fragments_module_name = "no_global_imports_shorter_resultsfragments"
+fragments_module_name = "client_forward_refs_shorter_resultsfragments"
 plugins = [
     "ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin",
-    "ariadne_codegen.contrib.no_global_imports.NoGlobalImportsPlugin"
+    "ariadne_codegen.contrib.client_forward_refs.ClientForwardRefsPlugin"
 ]
 
 [tool.ariadne-codegen.scalars.SimpleScalar]
