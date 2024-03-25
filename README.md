@@ -96,7 +96,7 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
 
 - [`ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin`](ariadne_codegen/contrib/extract_operations.py) - This extracts query strings from generated client's methods into separate `operations.py` module. It also modifies the generated client to import these definitions. Generated module name can be customized by adding `operations_module_name="custom_name"` to the `[tool.ariadne-codegen.operations]` section in config. Eg.:
 
-- [`ariadne_codegen.contrib.no_global_imports.NoGlobalImportsPlugin`](ariadne_codegen/contrib/no_global_imports.py) - This plugin processes generated client module and convert all input arguments and return types to strings. The types will be imported only for type checking.
+- [`ariadne_codegen.contrib.no_global_imports.NoGlobalImportsPlugin`](ariadne_codegen/contrib/no_global_imports.py) - This plugin changes generated client module moving all Pydantic models imports under the `TYPE_CHECKING` condition, making them forward references. This greatly improves the import performance for `client` module.
 
 ```toml
 [tool.ariadne-codegen]
