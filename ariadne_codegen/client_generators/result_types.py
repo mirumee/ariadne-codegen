@@ -342,7 +342,7 @@ class ResultTypesGenerator:
 
     def _get_inline_fragment_root_type(
         self, selection_value: str, root_type: str
-    ) -> str | None:
+    ) -> Optional[str]:
         type_ = self.schema.type_map.get(root_type)
         if not type_:
             return None

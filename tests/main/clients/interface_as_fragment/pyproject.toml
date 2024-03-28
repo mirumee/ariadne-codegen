@@ -2,3 +2,4 @@
 schema_path = "schema.graphql"
 queries_path = "queries.graphql"
 target_package_name = "interface_as_fragment"
+include_comments = "none"
