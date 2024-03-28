@@ -1,0 +1,22 @@
+type Item {
+  id: ID
+}
+
+type ItemResult {
+  contacts: [Item!]
+  errors: [ItemServiceError!]
+}
+
+interface ItemError {
+  message: String!
+}
+
+union ItemServiceError = ItemServiceInternalError
+
+type ItemServiceInternalError implements ItemError {
+  message: String!
+}
+
+type Mutation {
+  change_item(id: ID!): ItemResult
+}
