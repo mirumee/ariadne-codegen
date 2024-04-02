@@ -279,7 +279,9 @@ class ClientForwardRefsPlugin(Plugin):
         # unless that's the type we return. This behaviour can differ if you use
         # a plugin such as `ShorterResultsPlugin` that will import a type that
         # is different from the type returned.
-        return_types_not_used_as_input |= self.imported_in_method - self.input_and_return_types
+        return_types_not_used_as_input |= (
+            self.imported_in_method - self.input_and_return_types
+        )
 
         if len(return_types_not_used_as_input) == 0:
             return None
