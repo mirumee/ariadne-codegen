@@ -1,0 +1,86 @@
+query GetAuthenticatedUser {
+  me {
+    id
+    username
+  }
+}
+
+query ListStrings_1 {
+  optionalListOptionalString
+}
+
+query ListStrings_2 {
+  optionalListString
+}
+
+query ListStrings_3 {
+  listOptionalString
+}
+
+query ListStrings_4 {
+  listString
+}
+
+query ListTypeA {
+  listOptionalTypeA {
+    id
+  }
+}
+
+query GetAnimalByName($name: String!) {
+  animalByName(name: $name) {
+    name
+    ... on Cat {
+      kittens
+    }
+    ... on Dog {
+      puppies
+    }
+  }
+}
+
+query ListAnimals {
+  listAnimals {
+    name
+    ... on Cat {
+      kittens
+    }
+    ... on Dog {
+      puppies
+    }
+  }
+}
+
+query GetAnimalFragmentWithExtra {
+  ...ListAnimalsFragment
+  listString
+}
+
+query GetSimpleScalar {
+  justSimpleScalar
+}
+
+query GetComplexScalar {
+  justComplexScalar
+}
+
+fragment ListAnimalsFragment on Query {
+  listAnimals {
+    name
+  }
+}
+
+subscription SubscribeStrings {
+  optionalListString
+}
+
+
+fragment FragmentWithSingleField on Query {
+  queryUnwrapFragment {
+    id
+  }
+}
+
+query UnwrapFragment {
+  ...FragmentWithSingleField
+}
