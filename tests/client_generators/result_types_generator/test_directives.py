@@ -217,8 +217,11 @@ def test_generator_returns_module_with_handled_skip_and_include_directives(direc
     assert compare_ast(class_def.body[0], expected_field_def_1)
     assert compare_ast(class_def.body[2], expected_field_def_2)
 
+
 @pytest.mark.parametrize("directive", [INCLUDE_DIRECTIVE_NAME, SKIP_DIRECTIVE_NAME])
-def test_generator_returns_module_with_handled_skip_and_include_directives_snake_case(directive):
+def test_generator_returns_module_with_handled_skip_and_include_directives_snake_case(
+    directive,
+):
     query_str = f"""
     query CustomQuery {{
         query3 {{
@@ -240,7 +243,7 @@ def test_generator_returns_module_with_handled_skip_and_include_directives_snake
             keywords=[
                 ast.keyword(arg="alias", value=ast.Constant(value="camelCaseField")),
                 ast.keyword(arg="default", value=ast.Constant(value=None)),
-            ]
+            ],
         ),
         simple=1,
     )

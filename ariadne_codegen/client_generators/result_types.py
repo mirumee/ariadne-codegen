@@ -407,7 +407,9 @@ class ResultTypesGenerator:
             keywords[DISCRIMINATOR_KEYWORD] = generate_constant(TYPENAME_ALIAS)
 
         if keywords and isinstance(field_implementation.value, ast.Constant):
-            keywords[DEFAULT_KEYWORD] = generate_constant(field_implementation.value.value)
+            keywords[DEFAULT_KEYWORD] = generate_constant(
+                field_implementation.value.value
+            )
 
         if keywords:
             field_implementation.value = generate_pydantic_field(keywords)
