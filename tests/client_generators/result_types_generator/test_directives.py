@@ -6,6 +6,7 @@ from graphql import OperationDefinitionNode, build_ast_schema, parse
 
 from ariadne_codegen.client_generators.constants import (
     BASE_MODEL_CLASS_NAME,
+    FIELD_CLASS,
     INCLUDE_DIRECTIVE_NAME,
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
@@ -215,3 +216,46 @@ def test_generator_returns_module_with_handled_skip_and_include_directives(direc
     assert class_def.name == "CustomQueryQuery3"
     assert compare_ast(class_def.body[0], expected_field_def_1)
     assert compare_ast(class_def.body[2], expected_field_def_2)
+
+@pytest.mark.parametrize("directive", [INCLUDE_DIRECTIVE_NAME, SKIP_DIRECTIVE_NAME])
+def test_generator_returns_module_with_handled_skip_and_include_directives_snake_case(directive):
+    query_str = f"""
+    query CustomQuery {{
+        query3 {{
+            camelCaseField @{directive} {{
+                fielda
+            }}
+        }}
+    }}
+    """
+    expected_field_def_3 = ast.AnnAssign(
+        target=ast.Name(id="camel_case_field"),
+        annotation=ast.Subscript(
+            value=ast.Name(id=OPTIONAL),
+            slice=ast.Name(id='"CustomQueryQuery3CamelCaseField"'),
+        ),
+        value=ast.Call(
+            func=ast.Name(id=FIELD_CLASS),
+            args=[],
+            keywords=[
+                ast.keyword(arg="alias", value=ast.Constant(value="camelCaseField")),
+                ast.keyword(arg="default", value=ast.Constant(value=None)),
+            ]
+        ),
+        simple=1,
+    )
+
+    generator = ResultTypesGenerator(
+        schema=build_ast_schema(parse(SCHEMA_STR)),
+        operation_definition=cast(
+            OperationDefinitionNode, parse(query_str).definitions[0]
+        ),
+        enums_module_name="enums",
+        convert_to_snake_case=True,
+    )
+
+    module = generator.generate()
+
+    class_def = get_class_def(module, 1)
+    assert class_def.name == "CustomQueryQuery3"
+    assert compare_ast(class_def.body[0], expected_field_def_3)

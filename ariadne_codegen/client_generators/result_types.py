@@ -48,6 +48,7 @@ from .constants import (
     ANY,
     BASE_MODEL_CLASS_NAME,
     BEFORE_VALIDATOR,
+    DEFAULT_KEYWORD,
     DISCRIMINATOR_KEYWORD,
     FIELD_CLASS,
     LIST,
@@ -404,6 +405,9 @@ class ResultTypesGenerator:
 
         if is_union(field_implementation.annotation):
             keywords[DISCRIMINATOR_KEYWORD] = generate_constant(TYPENAME_ALIAS)
+
+        if keywords and isinstance(field_implementation.value, ast.Constant):
+            keywords[DEFAULT_KEYWORD] = generate_constant(field_implementation.value.value)
 
         if keywords:
             field_implementation.value = generate_pydantic_field(keywords)
