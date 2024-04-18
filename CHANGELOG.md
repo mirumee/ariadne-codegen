@@ -4,6 +4,7 @@
 
 - Added `ClientForwardRefsPlugin` to standard plugins.
 - Re-added `model_rebuild` calls for input types with forward references.
+- Fixed fragments on interfaces being omitted from generated client.
 
 
 ## 0.13.0 (2024-03-4)

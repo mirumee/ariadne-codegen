@@ -186,6 +186,17 @@ def test_main_shows_version():
             "client_only_used_inputs_and_enums",
             CLIENTS_PATH / "only_used_inputs_and_enums" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "interface_as_fragment" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "interface_as_fragment" / "queries.graphql",
+                    CLIENTS_PATH / "interface_as_fragment" / "schema.graphql",
+                ),
+            ),
+            "interface_as_fragment",
+            CLIENTS_PATH / "interface_as_fragment" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
