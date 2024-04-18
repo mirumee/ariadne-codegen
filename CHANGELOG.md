@@ -3,7 +3,7 @@
 ## 0.14.0 (Unreleased)
 
 - Re-added `model_rebuild` calls for input types with forward references.
-- Fixed generating fragments that are used through their interfaces
+- Fixed fragments on interfaces being omitted from generated client.
 
 
 ## 0.13.0 (2024-03-4)
