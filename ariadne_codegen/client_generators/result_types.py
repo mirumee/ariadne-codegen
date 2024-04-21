@@ -327,9 +327,12 @@ class ResultTypesGenerator:
                     fields.extend(sub_fields)
                     fragments = fragments.union(sub_fragments)
             elif isinstance(selection, InlineFragmentNode):
-                if selection.type_condition.name.value == root_type:
+                root_type_value = self._get_inline_fragment_root_type(
+                    selection.type_condition.name.value, root_type
+                )
+                if root_type_value:
                     sub_fields, sub_fragments = self._resolve_selection_set(
-                        selection.selection_set, root_type
+                        selection.selection_set, root_type_value
                     )
                     fields.extend(sub_fields)
                     fragments = fragments.union(sub_fragments)
@@ -337,6 +340,23 @@ class ResultTypesGenerator:
             set(fragments)
         )
         return fields, fragments
+
+    def _get_inline_fragment_root_type(
+        self, selection_value: str, root_type: str
+    ) -> Optional[str]:
+        type_ = self.schema.type_map.get(root_type)
+        if not type_:
+            return None
+
+        if isinstance(type_, GraphQLObjectType) and selection_value in {
+            interface.name for interface in type_.interfaces
+        }:
+            return selection_value
+
+        if selection_value == root_type:
+            return root_type
+
+        return None
 
     def _unpack_fragment(
         self,
