@@ -96,6 +96,8 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
 
 - [`ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin`](ariadne_codegen/contrib/extract_operations.py) - This extracts query strings from generated client's methods into separate `operations.py` module. It also modifies the generated client to import these definitions. Generated module name can be customized by adding `operations_module_name="custom_name"` to the `[tool.ariadne-codegen.operations]` section in config. Eg.:
 
+- [`ariadne_codegen.contrib.client_forward_refs.ClientForwardRefsPlugin`](ariadne_codegen/contrib/client_forward_refs.py) - This plugin changes generated client module moving all Pydantic models imports under the `TYPE_CHECKING` condition, making them forward references. This greatly improves the import performance of the `client` module.
+
 ```toml
 [tool.ariadne-codegen]
 ...
@@ -321,7 +323,7 @@ Both `httpx` and `websockets` dependencies can be avoided by providing another b
 Example with simple schema and few queries and mutations is available [here](https://github.com/mirumee/ariadne-codegen/blob/main/EXAMPLE.md).
 
 
-## Generating graphql schema's python representation
+## Generating a copy of GraphSQL schema
 
 Instead of generating a client, you can generate a file with a copy of a GraphQL schema. To do this call `ariadne-codegen` with `graphqlschema` argument:
 

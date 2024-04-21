@@ -34,10 +34,13 @@ from ..codegen import (
     generate_ann_assign,
     generate_class_def,
     generate_constant,
+    generate_expr,
     generate_import_from,
+    generate_method_call,
     generate_module,
     generate_pass,
     generate_pydantic_field,
+    model_has_forward_refs,
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
@@ -56,6 +59,7 @@ from .constants import (
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
     MIXIN_NAME,
+    MODEL_REBUILD_METHOD,
     OPTIONAL,
     PYDANTIC_MODULE,
     TYPENAME_ALIAS,
@@ -153,8 +157,16 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
-        module_body = cast(List[ast.stmt], self._imports) + cast(
-            List[ast.stmt], self._class_defs
+        model_rebuild_calls = [
+            generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
+            for class_def in self._class_defs
+            if model_has_forward_refs(class_def)
+        ]
+
+        module_body = (
+            cast(List[ast.stmt], self._imports)
+            + cast(List[ast.stmt], self._class_defs)
+            + cast(List[ast.stmt], model_rebuild_calls)
         )
 
         module = generate_module(module_body)

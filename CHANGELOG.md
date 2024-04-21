@@ -1,6 +1,19 @@
 # CHANGELOG
 
-## 0.12.0 (UNRELEASED)
+## 0.14.0 (Unreleased)
+
+- Added `ClientForwardRefsPlugin` to standard plugins.
+- Re-added `model_rebuild` calls for input types with forward references.
+
+
+## 0.13.0 (2024-03-4)
+
+- Fixed `str_to_snake_case` utility to capture fully capitalized words followed by an underscore.
+- Re-added `model_rebuild` calls for models with forward references.
+- Fixed potential name conflicts between field args and generated client's method code.
+
+
+## 0.12.0 (2024-02-05)
 
 - Fixed `graphql-transport-ws` protocol implementation not waiting for the `connection_ack` message on new connection.
 - Fixed `get_client_settings` mutating `config_dict` instance.

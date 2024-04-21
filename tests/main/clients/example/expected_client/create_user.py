@@ -11,3 +11,6 @@ class CreateUser(BaseModel):
 
 class CreateUserUserCreate(BaseModel):
     id: str
+
+
+CreateUser.model_rebuild()

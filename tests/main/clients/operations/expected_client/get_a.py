@@ -14,3 +14,7 @@ class GetAA(BaseModel):
 
 class GetAAValueB(BaseModel):
     value: str
+
+
+GetA.model_rebuild()
+GetAA.model_rebuild()

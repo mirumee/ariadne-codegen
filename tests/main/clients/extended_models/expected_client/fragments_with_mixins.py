@@ -16,3 +16,6 @@ class FragmentsWithMixinsQueryA(FragmentA, CommonMixin):
 
 class FragmentsWithMixinsQueryB(FragmentB, CommonMixin):
     pass
+
+
+FragmentsWithMixins.model_rebuild()

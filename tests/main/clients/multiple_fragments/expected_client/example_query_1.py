@@ -10,3 +10,6 @@ class ExampleQuery1(BaseModel):
 
 class ExampleQuery1ExampleQuery(MinimalA):
     value: str
+
+
+ExampleQuery1.model_rebuild()
