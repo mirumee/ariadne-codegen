@@ -1,4 +1,5 @@
 import ast
+import sys
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Set, Tuple, Union, cast
 
@@ -252,6 +253,8 @@ class ResultTypesGenerator:
             field_name = self._get_field_name(field)
             name = self._process_field_name(field_name, field=field)
             field_definition = self._get_field_from_schema(type_name, field.name.value)
+            if field_definition.deprecation_reason:
+                sys.stdout.write(f"DeprecationWarning: {type_name}.{field_name} is deprecated. {field_definition.deprecation_reason}\n")
             annotation, default_value, field_context = parse_operation_field(
                 schema=self.schema,
                 field=field,
