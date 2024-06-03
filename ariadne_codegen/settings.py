@@ -37,6 +37,7 @@ class BaseSettings:
     remote_schema_url: str = ""
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
+    enable_custom_operations: bool = False
     plugins: List[str] = field(default_factory=list)
 
     def __post_init__(self):

@@ -1,0 +1,41 @@
+schema {
+  query: Query
+}
+
+type Query {
+  products(channel: String, first: Int): ProductCountableConnection
+  app: App
+  productTypes: ProductTypeCountableConnection
+}
+
+type Product {
+  id: ID!
+  slug: String!
+  name: String!
+}
+
+type ProductCountableEdge {
+  node: Product!
+  cursor: String!
+}
+
+type ProductCountableConnection {
+  edges: [ProductCountableEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type App {
+  id: ID!
+}
+
+type ProductTypeCountableConnection {
+  pageInfo: PageInfo!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}

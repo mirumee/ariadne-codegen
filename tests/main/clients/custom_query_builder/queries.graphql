@@ -1,0 +1,10 @@
+query ListAllProducts {
+  products {
+    edges {
+      node {
+        id
+        slug
+      }
+    }
+  }
+}

@@ -14,10 +14,15 @@ from ..codegen import (
     generate_await,
     generate_call,
     generate_class_def,
+    generate_comp,
     generate_constant,
     generate_expr,
+    generate_formatted_value,
+    generate_import,
     generate_import_from,
+    generate_joined_str,
     generate_keyword,
+    generate_list_comp,
     generate_method_definition,
     generate_module,
     generate_name,
@@ -32,7 +37,11 @@ from .arguments import ArgumentsGenerator
 from .constants import (
     ANY,
     ASYNC_ITERATOR,
+    BASE_GRAPHQL_OPERATION_CLASS_NAME,
+    BASE_OPERATION_FILE_PATH,
     DICT,
+    HTTPX,
+    HTTPX_RESPONSE,
     KWARGS_NAMES,
     LIST,
     MODEL_VALIDATE_METHOD,
@@ -66,7 +75,7 @@ class ClientGenerator:
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.arguments_generator = arguments_generator
 
-        self._imports: List[ast.ImportFrom] = []
+        self._imports: List[Union[ast.ImportFrom, ast.Import]] = []
         self._add_import(
             generate_import_from(
                 [OPTIONAL, LIST, DICT, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE
@@ -185,6 +194,95 @@ class ClientGenerator:
         self._class_def.body.append(method_def)
         self._add_import(
             generate_import_from(names=[return_type], from_=return_type_module, level=1)
+        )
+
+    def add_custom_query_method(self):
+        method_def = self._generate_custom_query_method("query")
+
+        method_def.lineno = len(self._class_def.body) + 1
+        self._class_def.body.append(method_def)
+        base_schema_import = generate_import_from(
+            names=[BASE_GRAPHQL_OPERATION_CLASS_NAME],
+            from_=BASE_OPERATION_FILE_PATH.stem,
+            level=1,
+        )
+        httpx_import = generate_import(names=[HTTPX])
+        self._add_import(base_schema_import)
+        self._imports.append(httpx_import)
+
+    def _generate_custom_query_method(self, name):
+        query_str_assign = self._generate_custom_query_str_assign()
+        return_stmt = self._generate_custom_query_return_stmt()
+
+        method_body = [query_str_assign, return_stmt]
+        return generate_async_method_definition(
+            name=name,
+            arguments=self._generate_custom_query_arguments(),
+            return_type=generate_name(HTTPX_RESPONSE),
+            body=method_body,
+        )
+
+    def _generate_custom_query_str_assign(self):
+        list_comprehension = generate_list_comp(
+            elt=generate_call(
+                func=generate_name("str"),
+                args=[generate_name("query")],
+            ),
+            generators=[generate_comp(target="query", iter="queries")],
+        )
+        query_str_value = generate_joined_str(
+            values=[
+                generate_constant("query "),
+                generate_formatted_value(generate_name("operation_name")),
+                generate_constant(" { "),
+                generate_formatted_value(
+                    generate_call(
+                        func=generate_attribute(
+                            value=generate_constant("' '"), attr="join"
+                        ),
+                        args=[list_comprehension],
+                    )
+                ),
+                generate_constant(" }"),
+            ]
+        )
+
+        return generate_assign(targets=["query_str"], value=query_str_value)
+
+    def _generate_custom_query_return_stmt(self):
+        return generate_return(
+            value=generate_await(
+                value=generate_call(
+                    func=generate_attribute(
+                        value=generate_name("self"),
+                        attr="execute",
+                    ),
+                    args=[generate_name("query_str")],
+                    keywords=[
+                        generate_keyword(
+                            arg="operation_name",
+                            value=generate_name("operation_name"),
+                        )
+                    ],
+                )
+            )
+        )
+
+    def _generate_custom_query_arguments(self):
+        self_arg = generate_arg("self")
+        queries_arg = generate_arg(
+            "queries",
+            annotation=generate_name(BASE_GRAPHQL_OPERATION_CLASS_NAME),
+        )
+        operation_name_arg = generate_arg(
+            "operation_name",
+            annotation=generate_name("str"),
+        )
+        return generate_arguments(
+            args=[self_arg],
+            vararg=queries_arg,
+            kwonlyargs=[operation_name_arg],
+            kw_defaults=[None],
         )
 
     def get_variable_names(self, arguments: ast.arguments) -> Dict[str, str]:

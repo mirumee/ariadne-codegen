@@ -13,9 +13,11 @@ from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
 from .comments import get_comment
 from .constants import (
+    BASE_GRAPHQL_OPERATION_CLASS_NAME,
     BASE_MODEL_CLASS_NAME,
     BASE_MODEL_FILE_PATH,
     BASE_MODEL_IMPORT,
+    BASE_OPERATION_FILE_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
     DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
@@ -26,6 +28,9 @@ from .constants import (
     UPLOAD_CLASS_NAME,
     UPLOAD_IMPORT,
 )
+from .custom_fields import CustomFieldsGenerator
+from .custom_fields_typing import CustomFieldsTypingGenerator
+from .custom_operation import CustomOperationGenerator
 from .enums import EnumsGenerator
 from .fragments import FragmentsGenerator
 from .init_file import InitFileGenerator
@@ -45,6 +50,10 @@ class PackageGenerator:
         enums_generator: EnumsGenerator,
         input_types_generator: InputTypesGenerator,
         fragments_generator: FragmentsGenerator,
+        custom_fields_generator: CustomFieldsGenerator,
+        custom_fields_typing_generator: CustomFieldsTypingGenerator,
+        custom_query_generator: Optional[CustomOperationGenerator],
+        custom_mutation_generator: Optional[CustomOperationGenerator] = None,
         fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
         client_name: str = "Client",
         async_client: bool = True,
@@ -54,6 +63,7 @@ class PackageGenerator:
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
         fragments_module_name: str = "fragments",
+        custom_help_field_module_name: str = "custom_typing_fields",
         comments_strategy: CommentsStrategy = CommentsStrategy.STABLE,
         queries_source: str = "",
         schema_source: str = "",
@@ -61,12 +71,14 @@ class PackageGenerator:
         include_all_inputs: bool = True,
         include_all_enums: bool = True,
         base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
+        base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         upload_import: ast.ImportFrom = UPLOAD_IMPORT,
         unset_import: ast.ImportFrom = UNSET_IMPORT,
         files_to_include: Optional[List[str]] = None,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
+        enable_custom_operations: bool = False,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -80,6 +92,11 @@ class PackageGenerator:
         self.enums_generator = enums_generator
         self.input_types_generator = input_types_generator
         self.fragments_generator = fragments_generator
+        self.custom_fields_generator = custom_fields_generator
+        self.custom_query_generator = custom_query_generator
+        self.custom_mutation_generator = custom_mutation_generator
+        self.custom_fields_typing_generator = custom_fields_typing_generator
+        self.custom_help_field_module_name = custom_help_field_module_name
 
         self.client_name = client_name
         self.async_client = async_client
@@ -104,6 +121,8 @@ class PackageGenerator:
         self.upload_import = upload_import
         self.unset_import = unset_import
 
+        self.base_schema_root_file_path = Path(base_schema_root_file_path)
+
         self.files_to_include = (
             [Path(f) for f in files_to_include] if files_to_include else []
         )
@@ -115,6 +134,10 @@ class PackageGenerator:
         self._unpacked_fragments: Set[str] = set()
         self._used_enums: List[str] = []
 
+        self.enable_custom_operations = enable_custom_operations
+        if self.enable_custom_operations:
+            self.files_to_include.append(self.base_schema_root_file_path)
+
     def generate(self) -> List[str]:
         """Generate package with graphql client."""
         self._include_exceptions()
@@ -125,6 +148,14 @@ class PackageGenerator:
         self._generate_result_types()
         self._generate_fragments()
         self._copy_files()
+        if self.enable_custom_operations:
+            self._generate_custom_fields_typing()
+            self._generate_custom_fields()
+            if self.custom_query_generator:
+                self._generate_custom_queries()
+            if self.custom_mutation_generator:
+                self._generate_custom_mutations()
+            self.client_generator.add_custom_query_method()
         self._generate_client()
         self._generate_enums()
         self._generate_init()
@@ -335,6 +366,39 @@ class PackageGenerator:
         init_file_path.write_text(code)
         self._generated_files.append(init_file_path.name)
 
+    def _generate_custom_queries(self):
+        file_path = self.package_path / "custom_queries.py"
+        module = self.custom_query_generator.generate()
+        code = self._add_comments_to_code(ast_to_str(module, False))
+        file_path.write_text(code)
+        self._generated_files.append(file_path.name)
+
+    def _generate_custom_mutations(self):
+        file_path = self.package_path / "custom_mutations.py"
+        module = self.custom_mutation_generator.generate()
+        code = self._add_comments_to_code(ast_to_str(module, False))
+        file_path.write_text(code)
+        self._generated_files.append(file_path.name)
+
+    def _generate_custom_fields_typing(self):
+        file_path = self.package_path / "custom_typing_fields.py"
+        module = self.custom_fields_typing_generator.generate()
+        code = self._add_comments_to_code(ast_to_str(module, False))
+        file_path.write_text(code)
+        self._generated_files.append(file_path.name)
+        self.init_generator.add_import(
+            self.custom_fields_typing_generator.get_generated_public_names(),
+            self.custom_help_field_module_name,
+            1,
+        )
+
+    def _generate_custom_fields(self):
+        file_path = self.package_path / "custom_fields.py"
+        module = self.custom_fields_generator.generate()
+        code = self._add_comments_to_code(ast_to_str(module, False))
+        file_path.write_text(code)
+        self._generated_files.append(file_path.name)
+
 
 def get_package_generator(
     schema: GraphQLSchema,
@@ -384,6 +448,38 @@ def get_package_generator(
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
     )
+    custom_fields_generator = CustomFieldsGenerator(schema=schema)
+    custom_fields_typing_generator = CustomFieldsTypingGenerator(schema=schema)
+    custom_query_generator = None
+    if schema.query_type:
+        custom_query_generator = CustomOperationGenerator(
+            graphql_fields=schema.query_type.fields,
+            base_client_import=generate_import_from(
+                names=["BaseGraphQLOperation"],
+                from_=Path("base_operation").stem,
+                level=1,
+            ),
+            name="Query",
+            base_name=BASE_GRAPHQL_OPERATION_CLASS_NAME,
+            enums_module_name=settings.enums_module_name,
+            custom_scalars=settings.scalars,
+            plugin_manager=plugin_manager,
+        )
+    custom_mutation_generator = None
+    if schema.mutation_type:
+        custom_mutation_generator = CustomOperationGenerator(
+            graphql_fields=schema.mutation_type.fields,
+            base_client_import=generate_import_from(
+                names=["BaseGraphQLOperation"],
+                from_=Path("base_operation").stem,
+                level=1,
+            ),
+            name="Mutation",
+            base_name=BASE_GRAPHQL_OPERATION_CLASS_NAME,
+            enums_module_name=settings.enums_module_name,
+            custom_scalars=settings.scalars,
+            plugin_manager=plugin_manager,
+        )
 
     return PackageGenerator(
         package_name=settings.target_package_name,
@@ -403,6 +499,10 @@ def get_package_generator(
         enums_module_name=settings.enums_module_name,
         input_types_module_name=settings.input_types_module_name,
         fragments_module_name=settings.fragments_module_name,
+        custom_fields_generator=custom_fields_generator,
+        custom_fields_typing_generator=custom_fields_typing_generator,
+        custom_query_generator=custom_query_generator,
+        custom_mutation_generator=custom_mutation_generator,
         comments_strategy=settings.include_comments,
         queries_source=settings.queries_path,
         schema_source=settings.schema_source,
@@ -416,4 +516,5 @@ def get_package_generator(
         files_to_include=settings.files_to_include,
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
+        enable_custom_operations=settings.enable_custom_operations,
     )
