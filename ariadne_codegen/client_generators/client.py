@@ -17,11 +17,9 @@ from ..codegen import (
     generate_comp,
     generate_constant,
     generate_expr,
-    generate_formatted_value,
-    generate_import,
     generate_import_from,
-    generate_joined_str,
     generate_keyword,
+    generate_list,
     generate_list_comp,
     generate_method_definition,
     generate_module,
@@ -37,15 +35,20 @@ from .arguments import ArgumentsGenerator
 from .constants import (
     ANY,
     ASYNC_ITERATOR,
-    BASE_GRAPHQL_OPERATION_CLASS_NAME,
+    BASE_GRAPHQL_FIELD_CLASS_NAME,
     BASE_OPERATION_FILE_PATH,
     DICT,
-    HTTPX,
-    HTTPX_RESPONSE,
+    DOCUMENT_NODE,
+    GRAPHQL_MODULE,
     KWARGS_NAMES,
     LIST,
     MODEL_VALIDATE_METHOD,
+    NAME_NODE,
+    OPERATION_DEFINITION_NODE,
+    OPERATION_TYPE,
     OPTIONAL,
+    PRINT_AST,
+    SELECTION_SET_NODE,
     TYPING_MODULE,
     UNION,
     UNSET_IMPORT,
@@ -77,9 +80,7 @@ class ClientGenerator:
 
         self._imports: List[Union[ast.ImportFrom, ast.Import]] = []
         self._add_import(
-            generate_import_from(
-                [OPTIONAL, LIST, DICT, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE
-            )
+            generate_import_from([OPTIONAL, LIST, DICT, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE)
         )
         self._add_import(base_client_import)
         self._add_import(unset_import)
@@ -150,19 +151,17 @@ class ClientGenerator:
         operation_name = definition.name.value if definition.name else ""
         if definition.operation == OperationType.SUBSCRIPTION:
             if not async_:
-                raise NotSupported(
-                    "Subscriptions are only available when using async client."
-                )
-            method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef] = (
-                self._generate_subscription_method_def(
-                    name=name,
-                    operation_name=operation_name,
-                    return_type=return_type,
-                    arguments=arguments,
-                    arguments_dict=arguments_dict,
-                    operation_str=operation_str,
-                    variable_names=variable_names,
-                )
+                raise NotSupported("Subscriptions are only available when using async client.")
+            method_def: Union[
+                ast.FunctionDef, ast.AsyncFunctionDef
+            ] = self._generate_subscription_method_def(
+                name=name,
+                operation_name=operation_name,
+                return_type=return_type,
+                arguments=arguments,
+                arguments_dict=arguments_dict,
+                operation_str=operation_str,
+                variable_names=variable_names,
             )
         elif async_:
             method_def = self._generate_async_method(
@@ -196,94 +195,178 @@ class ClientGenerator:
             generate_import_from(names=[return_type], from_=return_type_module, level=1)
         )
 
-    def add_custom_query_method(self):
-        method_def = self._generate_custom_query_method("query")
-
-        method_def.lineno = len(self._class_def.body) + 1
-        self._class_def.body.append(method_def)
-        base_schema_import = generate_import_from(
-            names=[BASE_GRAPHQL_OPERATION_CLASS_NAME],
-            from_=BASE_OPERATION_FILE_PATH.stem,
-            level=1,
+    def add_execute_custom_operation_method(self):
+        self._add_import(
+            generate_import_from(
+                [
+                    DOCUMENT_NODE,
+                    OPERATION_DEFINITION_NODE,
+                    NAME_NODE,
+                    SELECTION_SET_NODE,
+                    PRINT_AST,
+                ],
+                GRAPHQL_MODULE,
+            )
         )
-        httpx_import = generate_import(names=[HTTPX])
-        self._add_import(base_schema_import)
-        self._imports.append(httpx_import)
-
-    def _generate_custom_query_method(self, name):
-        query_str_assign = self._generate_custom_query_str_assign()
-        return_stmt = self._generate_custom_query_return_stmt()
-
-        method_body = [query_str_assign, return_stmt]
-        return generate_async_method_definition(
-            name=name,
-            arguments=self._generate_custom_query_arguments(),
-            return_type=generate_name(HTTPX_RESPONSE),
-            body=method_body,
+        self._add_import(
+            generate_import_from(
+                [BASE_GRAPHQL_FIELD_CLASS_NAME], BASE_OPERATION_FILE_PATH.stem, level=1
+            )
         )
-
-    def _generate_custom_query_str_assign(self):
-        list_comprehension = generate_list_comp(
-            elt=generate_call(
-                func=generate_name("str"),
-                args=[generate_name("query")],
-            ),
-            generators=[generate_comp(target="query", iter="queries")],
-        )
-        query_str_value = generate_joined_str(
-            values=[
-                generate_constant("query "),
-                generate_formatted_value(generate_name("operation_name")),
-                generate_constant(" { "),
-                generate_formatted_value(
+        execute_await = generate_await(
+            value=generate_call(
+                func=generate_attribute(value=generate_name("self"), attr="execute"),
+                args=[
                     generate_call(
-                        func=generate_attribute(
-                            value=generate_constant("' '"), attr="join"
-                        ),
-                        args=[list_comprehension],
+                        func=generate_name("print_ast"),
+                        args=[generate_name("operation_ast")],
                     )
-                ),
-                generate_constant(" }"),
-            ]
+                ],
+                keywords=[
+                    generate_keyword(arg="operation_name", value=generate_name("operation_name"))
+                ],
+            )
         )
 
-        return generate_assign(targets=["query_str"], value=query_str_value)
+        operation_definition_node = generate_call(
+            func=generate_name("OperationDefinitionNode"),
+            keywords=[
+                generate_keyword(arg="operation", value=generate_name("operation_type")),
+                generate_keyword(
+                    arg="name",
+                    value=generate_call(
+                        func=generate_name("NameNode"),
+                        keywords=[
+                            generate_keyword(arg="value", value=generate_name("operation_name"))
+                        ],
+                    ),
+                ),
+                generate_keyword(
+                    arg="selection_set",
+                    value=generate_call(
+                        func=generate_name("SelectionSetNode"),
+                        keywords=[
+                            generate_keyword(
+                                arg="selections",
+                                value=generate_list_comp(
+                                    elt=generate_call(
+                                        func=generate_attribute(
+                                            value=generate_name("field"),
+                                            attr="to_ast",
+                                        ),
+                                    ),
+                                    generators=[
+                                        generate_comp(
+                                            target="field",
+                                            iter="fields",
+                                        )
+                                    ],
+                                ),
+                            )
+                        ],
+                    ),
+                ),
+            ],
+        )
+        operation_ast = generate_call(
+            func=generate_name("DocumentNode"),
+            keywords=[
+                generate_keyword(
+                    arg="definitions",
+                    value=generate_list(elements=[operation_definition_node]),
+                )
+            ],
+        )
+        body_return = generate_return(
+            value=generate_call(
+                func=generate_attribute(value=generate_name("self"), attr="get_data"),
+                args=[generate_name("response")],
+            )
+        )
+        async_def_node = generate_async_method_definition(
+            name="execute_custom_operation",
+            arguments=generate_arguments(
+                args=[
+                    generate_arg("self"),
+                    generate_arg(
+                        "*fields",
+                        annotation=generate_name("GraphQLField"),
+                    ),
+                    generate_arg(
+                        "operation_type",
+                        annotation=generate_name("OperationType"),
+                    ),
+                    generate_arg("operation_name", annotation=generate_name("str")),
+                ],
+            ),
+            body=[
+                generate_assign(
+                    targets=["operation_ast"],
+                    value=operation_ast,
+                ),
+                generate_assign(
+                    targets=["response"],
+                    value=execute_await,
+                ),
+                body_return,
+            ],
+            return_type=generate_subscript(
+                generate_name(DICT),
+                generate_tuple([generate_name("str"), generate_name("Any")]),
+            ),
+        )
+        self._class_def.body.append(async_def_node)
 
-    def _generate_custom_query_return_stmt(self):
-        return generate_return(
+    def create_custom_operation_method(self, name, operation_type):
+        self._add_import(
+            generate_import_from(
+                [
+                    OPERATION_TYPE,
+                ],
+                GRAPHQL_MODULE,
+            )
+        )
+        body_return = generate_return(
             value=generate_await(
                 value=generate_call(
                     func=generate_attribute(
                         value=generate_name("self"),
-                        attr="execute",
+                        attr="execute_custom_operation",
                     ),
-                    args=[generate_name("query_str")],
+                    args=[
+                        generate_name("*fields"),
+                    ],
                     keywords=[
                         generate_keyword(
-                            arg="operation_name",
-                            value=generate_name("operation_name"),
-                        )
+                            arg="operation_type",
+                            value=generate_attribute(
+                                value=generate_name("OperationType"),
+                                attr=operation_type,
+                            ),
+                        ),
+                        generate_keyword(
+                            arg="operation_name", value=generate_name("operation_name")
+                        ),
                     ],
                 )
             )
         )
-
-    def _generate_custom_query_arguments(self):
-        self_arg = generate_arg("self")
-        queries_arg = generate_arg(
-            "queries",
-            annotation=generate_name(BASE_GRAPHQL_OPERATION_CLASS_NAME),
+        async_def_query = generate_async_method_definition(
+            name=name,
+            arguments=generate_arguments(
+                args=[
+                    generate_arg("self"),
+                    generate_arg("*fields", annotation=generate_name("GraphQLField")),
+                    generate_arg("operation_name", annotation=generate_name("str")),
+                ],
+            ),
+            body=[body_return],
+            return_type=generate_subscript(
+                generate_name(DICT),
+                generate_tuple([generate_name("str"), generate_name("Any")]),
+            ),
         )
-        operation_name_arg = generate_arg(
-            "operation_name",
-            annotation=generate_name("str"),
-        )
-        return generate_arguments(
-            args=[self_arg],
-            vararg=queries_arg,
-            kwonlyargs=[operation_name_arg],
-            kw_defaults=[None],
-        )
+        self._class_def.body.append(async_def_query)
 
     def get_variable_names(self, arguments: ast.arguments) -> Dict[str, str]:
         mapped_variable_names = [
@@ -296,9 +379,7 @@ class ClientGenerator:
         argument_names = set(arg.arg for arg in arguments.args)
 
         for variable in mapped_variable_names:
-            variable_names[variable] = (
-                f"_{variable}" if variable in argument_names else variable
-            )
+            variable_names[variable] = f"_{variable}" if variable in argument_names else variable
 
         return variable_names
 
@@ -388,9 +469,7 @@ class ClientGenerator:
             targets=[variable_names[self._operation_str_variable]],
             value=generate_call(
                 func=generate_name(self._gql_func_name),
-                args=[
-                    [generate_constant(l + "\n") for l in operation_str.splitlines()]
-                ],
+                args=[[generate_constant(l + "\n") for l in operation_str.splitlines()]],
             ),
             lineno=lineno,
         )
@@ -413,9 +492,7 @@ class ClientGenerator:
     ) -> ast.Assign:
         return generate_assign(
             targets=[variable_names[self._response_variable]],
-            value=generate_await(
-                self._generate_execute_call(variable_names, operation_name)
-            ),
+            value=generate_await(self._generate_execute_call(variable_names, operation_name)),
             lineno=lineno,
         )
 
@@ -441,9 +518,7 @@ class ClientGenerator:
                     value=generate_name(variable_names[self._operation_str_variable]),
                     arg="query",
                 ),
-                generate_keyword(
-                    value=generate_constant(operation_name), arg="operation_name"
-                ),
+                generate_keyword(value=generate_constant(operation_name), arg="operation_name"),
                 generate_keyword(
                     value=generate_name(variable_names[self._variables_dict_variable]),
                     arg="variables",
@@ -466,9 +541,7 @@ class ClientGenerator:
     ) -> ast.Return:
         return generate_return(
             generate_call(
-                func=generate_attribute(
-                    generate_name(return_type), MODEL_VALIDATE_METHOD
-                ),
+                func=generate_attribute(generate_name(return_type), MODEL_VALIDATE_METHOD),
                 args=[generate_name(variable_names[self._data_variable])],
             )
         )
@@ -486,18 +559,14 @@ class ClientGenerator:
                 func=generate_attribute(value=generate_name("self"), attr="execute_ws"),
                 keywords=[
                     generate_keyword(
-                        value=generate_name(
-                            variable_names[self._operation_str_variable]
-                        ),
+                        value=generate_name(variable_names[self._operation_str_variable]),
                         arg="query",
                     ),
                     generate_keyword(
                         value=generate_constant(operation_name), arg="operation_name"
                     ),
                     generate_keyword(
-                        value=generate_name(
-                            variable_names[self._variables_dict_variable]
-                        ),
+                        value=generate_name(variable_names[self._variables_dict_variable]),
                         arg="variables",
                     ),
                     generate_keyword(value=generate_name(KWARGS_NAMES)),

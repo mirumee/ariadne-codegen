@@ -23,6 +23,12 @@ CALLABLE = "Callable"
 ANNOTATED = "Annotated"
 LITERAL = "Literal"
 ASYNC_ITERATOR = "AsyncIterator"
+DOCUMENT_NODE = "DocumentNode"
+OPERATION_DEFINITION_NODE = "OperationDefinitionNode"
+NAME_NODE = "NameNode"
+SELECTION_SET_NODE = "SelectionSetNode"
+PRINT_AST = "print_ast"
+OPERATION_TYPE = "OperationType"
 
 HTTPX = "httpx"
 HTTPX_RESPONSE = "httpx.Response"
@@ -34,6 +40,7 @@ COMMENT_DATETIME_FORMAT = "%Y-%m-%d %H:%M"
 
 BASE_OPERATION_FILE_PATH = Path(__file__).parent / "dependencies" / "base_operation.py"
 BASE_GRAPHQL_OPERATION_CLASS_NAME = "BaseGraphQLOperation"
+BASE_GRAPHQL_FIELD_CLASS_NAME = "GraphQLField"
 CUSTOM_FIELDS_FILE_PATH = Path(__file__).parent / "custom_fields.py"
 
 BASE_MODEL_FILE_PATH = Path(__file__).parent / "dependencies" / "base_model.py"
@@ -58,6 +65,7 @@ TYPENAME_FIELD_NAME = "__typename"
 TYPENAME_ALIAS = "typename__"
 
 TYPING_MODULE = "typing"
+GRAPHQL_MODULE = "graphql"
 PYDANTIC_MODULE = "pydantic"
 FIELD_CLASS = "Field"
 ALIAS_KEYWORD = "alias"
@@ -80,9 +88,7 @@ INCLUDE_DIRECTIVE_NAME = "include"
 
 KWARGS_NAMES = "kwargs"
 
-DEFAULT_ASYNC_BASE_CLIENT_PATH = (
-    Path(__file__).parent / "dependencies" / "async_base_client.py"
-)
+DEFAULT_ASYNC_BASE_CLIENT_PATH = Path(__file__).parent / "dependencies" / "async_base_client.py"
 DEFAULT_ASYNC_BASE_CLIENT_NAME = "AsyncBaseClient"
 
 DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH = (

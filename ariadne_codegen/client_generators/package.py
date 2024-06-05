@@ -2,7 +2,7 @@ import ast
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNode
+from graphql import FragmentDefinitionNode, GraphQLSchema, OperationDefinitionNode, OperationType
 
 from ..codegen import generate_import_from
 from ..exceptions import ParsingError
@@ -83,9 +83,7 @@ class PackageGenerator:
         self.package_path = Path(target_path) / package_name
 
         self.schema = schema
-        self.fragments_definitions = (
-            fragments_definitions if fragments_definitions else {}
-        )
+        self.fragments_definitions = fragments_definitions if fragments_definitions else {}
 
         self.init_generator = init_generator
         self.client_generator = client_generator
@@ -123,9 +121,7 @@ class PackageGenerator:
 
         self.base_schema_root_file_path = Path(base_schema_root_file_path)
 
-        self.files_to_include = (
-            [Path(f) for f in files_to_include] if files_to_include else []
-        )
+        self.files_to_include = [Path(f) for f in files_to_include] if files_to_include else []
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
 
@@ -151,11 +147,18 @@ class PackageGenerator:
         if self.enable_custom_operations:
             self._generate_custom_fields_typing()
             self._generate_custom_fields()
+            self.client_generator.add_execute_custom_operation_method()
             if self.custom_query_generator:
                 self._generate_custom_queries()
+                self.client_generator.create_custom_operation_method(
+                    "query", OperationType.QUERY.value.upper()
+                )
             if self.custom_mutation_generator:
                 self._generate_custom_mutations()
-            self.client_generator.add_custom_query_method()
+                self.client_generator.create_custom_operation_method(
+                    "mutation", OperationType.MUTATION.value.upper()
+                )
+
         self._generate_client()
         self._generate_enums()
         self._generate_init()
@@ -250,9 +253,7 @@ class PackageGenerator:
             code = self.plugin_manager.generate_client_code(code)
         client_file_path.write_text(code)
         self._generated_files.append(client_file_path.name)
-        self._used_enums.extend(
-            self.client_generator.arguments_generator.get_used_enums()
-        )
+        self._used_enums.extend(self.client_generator.arguments_generator.get_used_enums())
         self.init_generator.add_import(
             names=[self.client_generator.name], from_=self.client_file_name, level=1
         )
@@ -260,9 +261,7 @@ class PackageGenerator:
     def _add_comments_to_code(self, code: str, source: Optional[str] = None) -> str:
         comment = get_comment(strategy=self.comments_strategy, source=source)
         if self.plugin_manager:
-            comment = self.plugin_manager.get_file_comment(
-                comment, code=code, source=source
-            )
+            comment = self.plugin_manager.get_file_comment(comment, code=code, source=source)
         if comment:
             return comment + "\n\n" + code
 
@@ -314,14 +313,10 @@ class PackageGenerator:
             self._generated_files.append(file_path.name)
 
     def _generate_fragments(self):
-        if not set(self.fragments_definitions.keys()).difference(
-            self._unpacked_fragments
-        ):
+        if not set(self.fragments_definitions.keys()).difference(self._unpacked_fragments):
             return
 
-        module = self.fragments_generator.generate(
-            exclude_names=self._unpacked_fragments
-        )
+        module = self.fragments_generator.generate(exclude_names=self._unpacked_fragments)
         file_path = self.package_path / f"{self.fragments_module_name}.py"
         code = self._add_comments_to_code(ast_to_str(module), self.queries_source)
         file_path.write_text(code)
@@ -454,11 +449,6 @@ def get_package_generator(
     if schema.query_type:
         custom_query_generator = CustomOperationGenerator(
             graphql_fields=schema.query_type.fields,
-            base_client_import=generate_import_from(
-                names=["BaseGraphQLOperation"],
-                from_=Path("base_operation").stem,
-                level=1,
-            ),
             name="Query",
             base_name=BASE_GRAPHQL_OPERATION_CLASS_NAME,
             enums_module_name=settings.enums_module_name,
@@ -469,11 +459,6 @@ def get_package_generator(
     if schema.mutation_type:
         custom_mutation_generator = CustomOperationGenerator(
             graphql_fields=schema.mutation_type.fields,
-            base_client_import=generate_import_from(
-                names=["BaseGraphQLOperation"],
-                from_=Path("base_operation").stem,
-                level=1,
-            ),
             name="Mutation",
             base_name=BASE_GRAPHQL_OPERATION_CLASS_NAME,
             enums_module_name=settings.enums_module_name,

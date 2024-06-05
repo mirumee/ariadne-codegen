@@ -119,7 +119,6 @@ class CustomFieldsGenerator:
                 class_name, definition.name, additional_fields_typing
             )
         )
-        class_def.body.append(self._generate_get_method(class_name))
         return class_def
 
     def _generate_fields_method(
@@ -158,31 +157,6 @@ class CustomFieldsGenerator:
                     )
                 ),
                 generate_return(value=generate_name("self")),
-            ],
-            return_type=generate_name(f'"{class_name}"'),
-        )
-
-    def _generate_get_method(self, class_name):
-        name_arg = generate_keyword(
-            arg="name",
-            value=generate_name("self._name"),
-        )
-        return generate_method_definition(
-            "__get__",
-            arguments=generate_arguments(
-                [
-                    generate_arg(name="self"),
-                    generate_arg(name="instance"),
-                    generate_arg(name="owner"),
-                ]
-            ),
-            body=[
-                generate_return(
-                    value=generate_call(
-                        func=generate_name(class_name),
-                        keywords=[name_arg],
-                    )
-                ),
             ],
             return_type=generate_name(f'"{class_name}"'),
         )
