@@ -30,7 +30,11 @@ dependencies = [
   "black",
   "isort",
   "autoflake",
-    "ariadne",
+]
+
+[project.optional-dependencies]
+dev = [
+  "ariadne",
   "pytest",
   "pylint",
   "mypy",
@@ -40,11 +44,6 @@ dependencies = [
   "pytest-httpx",
   "freezegun",
   "requests-toolbelt",
-]
-
-[project.optional-dependencies]
-dev = [
-
 ]
 subscriptions = ["websockets~=11.0"]
 opentelemetry = ["opentelemetry-api"]
