@@ -200,9 +200,7 @@ def test_main_shows_version():
         (
             (
                 CLIENTS_PATH / "custom_query_builder" / "pyproject.toml",
-                (
-                    CLIENTS_PATH / "custom_query_builder" / "schema.graphql",
-                ),
+                (CLIENTS_PATH / "custom_query_builder" / "schema.graphql",),
             ),
             "example_client",
             CLIENTS_PATH / "custom_query_builder" / "expected_client",
