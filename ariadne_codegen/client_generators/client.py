@@ -81,7 +81,15 @@ class ClientGenerator:
         self._imports: List[Union[ast.ImportFrom, ast.Import]] = []
         self._add_import(
             generate_import_from(
-                [OPTIONAL, LIST, DICT, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE
+                [
+                    OPTIONAL,
+                    LIST,
+                    DICT,
+                    ANY,
+                    UNION,
+                    ASYNC_ITERATOR,
+                ],
+                TYPING_MODULE,
             )
         )
         self._add_import(base_client_import)
@@ -268,7 +276,7 @@ class ClientGenerator:
                                     generators=[
                                         generate_comp(
                                             target="field",
-                                            iter="fields",
+                                            iter_="fields",
                                         )
                                     ],
                                 ),

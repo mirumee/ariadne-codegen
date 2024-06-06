@@ -24,14 +24,13 @@ class GraphQLArgument:
     ) -> Union[StringValueNode, IntValueNode, FloatValueNode, BooleanValueNode]:
         if isinstance(value, str):
             return StringValueNode(value=value)
-        elif isinstance(value, int):
+        if isinstance(value, int):
             return IntValueNode(value=str(value))
-        elif isinstance(value, float):
+        if isinstance(value, float):
             return FloatValueNode(value=str(value))
-        elif isinstance(value, bool):
+        if isinstance(value, bool):
             return BooleanValueNode(value=value)
-        else:
-            raise TypeError(f"Unsupported argument type: {type(value)}")
+        raise TypeError(f"Unsupported argument type: {type(value)}")
 
     def to_ast(self) -> ArgumentNode:
         return ArgumentNode(name=NameNode(value=self._name), value=self._value)

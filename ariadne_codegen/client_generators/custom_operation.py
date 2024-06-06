@@ -31,12 +31,9 @@ from .constants import (
     ANY,
     BASE_MODEL_FILE_PATH,
     CUSTOM_FIELDS_FILE_PATH,
-    DICT,
     INPUT_SCALARS_MAP,
     OPTIONAL,
-    TYPE_CHECKING,
     TYPING_MODULE,
-    UNION,
     UPLOAD_CLASS_NAME,
 )
 from .scalars import ScalarData

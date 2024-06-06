@@ -43,7 +43,7 @@ class TypeCollector:
                     if isinstance(subfield_type, GraphQLObjectType):
                         stack.append(subfield_type)
                     elif isinstance(subfield_type, GraphQLUnionType):
-                        stack.extend([union_type for union_type in subfield_type.types])
+                        stack.extend(subfield_type.types)
                 for interface in current_type.interfaces:
                     stack.append(interface)
 

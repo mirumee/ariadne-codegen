@@ -1,5 +1,5 @@
 import ast
-from typing import List, Union, cast
+from typing import List, cast
 
 from graphql import (
     GraphQLInterfaceType,

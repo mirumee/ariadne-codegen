@@ -300,12 +300,12 @@ def generate_list_comp(
 
 
 def generate_comp(
-    target: str, iter: str, ifs: Optional[List[ast.expr]] = None, is_async: int = 0
+    target: str, iter_: str, ifs: Optional[List[ast.expr]] = None, is_async: int = 0
 ) -> ast.comprehension:
     "Generate comprehension"
     return ast.comprehension(
         target=generate_name(target),
-        iter=generate_name(iter),
+        iter=generate_name(iter_),
         ifs=ifs if ifs else [],
         is_async=is_async,
     )
