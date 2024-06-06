@@ -1,7 +1,12 @@
 import ast
 from typing import Dict, List, Optional, Set, Union, cast
 
-from graphql import GraphQLObjectType, GraphQLSchema
+from graphql import (
+    GraphQLInterfaceType,
+    GraphQLObjectType,
+    GraphQLSchema,
+    GraphQLUnionType,
+)
 
 from ..codegen import (
     generate_ann_assign,
@@ -13,7 +18,6 @@ from ..codegen import (
     generate_constant,
     generate_expr,
     generate_import_from,
-    generate_keyword,
     generate_method_definition,
     generate_module,
     generate_name,
@@ -70,23 +74,31 @@ class CustomFieldsGenerator:
 
     def _parse_object_type_definitions(self, class_definitions):
         class_defs = []
+        interface_defs = []
         for type_name in class_definitions:
             graphql_type = self.schema.get_type(type_name)
             if isinstance(graphql_type, GraphQLObjectType):
-                class_def = self._parse_graphql_types_definition(
-                    graphql_type, "GraphQLField"
+                class_def = self._generate_class_def_body(
+                    definition=graphql_type,
+                    class_name=f"{graphql_type.name}Fields",
                 )
                 class_defs.append(class_def)
-        return class_defs
 
-    def _parse_graphql_types_definition(
-        self, definition: GraphQLObjectType, base_name
+        return [*interface_defs, *class_defs]
+
+    def _generate_class_def_body(
+        self,
+        definition: Union[GraphQLObjectType, GraphQLInterfaceType],
+        class_name: str,
     ) -> ast.ClassDef:
-        class_name = f"{definition.name}Fields"
-        class_def = generate_class_def(name=class_name, base_names=[base_name])
+        base_names = ["GraphQLField"]
         additional_fields_typing = set()
+        definition_fields: Dict[str, ast.ClassDef] = dict(definition.fields.items())
+        for interface in definition.interfaces:
+            definition_fields.update(dict(interface.fields.items()))
+        class_def = generate_class_def(name=class_name, base_names=base_names)
 
-        for lineno, (org_name, field) in enumerate(definition.fields.items(), start=1):
+        for lineno, (org_name, field) in enumerate(definition_fields.items(), start=1):
             name = process_name(
                 org_name,
                 convert_to_snake_case=self.convert_to_snake_case,
@@ -98,10 +110,16 @@ class CustomFieldsGenerator:
                 )
                 additional_fields_typing.add(f"{final_type.name}Fields")
             else:
-                self._add_import(
-                    generate_import_from([f"{definition.name}GraphQLField"], level=1)
-                )
-                field_class_name = generate_name(f"{definition.name}GraphQLField")
+                field_name = f"{definition.name}GraphQLField"
+                if isinstance(final_type, GraphQLInterfaceType):
+                    field_name = f"{final_type.name}Interface"
+                    additional_fields_typing.add(field_name)
+                if isinstance(final_type, GraphQLUnionType):
+                    field_name = f"{final_type.name}Union"
+                    additional_fields_typing.add(field_name)
+                self._add_import(generate_import_from([field_name], level=1))
+                field_class_name = generate_name(field_name)
+
                 field_implementation = generate_ann_assign(
                     target=name,
                     annotation=field_class_name,
@@ -119,6 +137,7 @@ class CustomFieldsGenerator:
                 class_name, definition.name, additional_fields_typing
             )
         )
+
         return class_def
 
     def _generate_fields_method(

@@ -1,6 +1,11 @@
-from typing import Dict, Set
+from typing import Dict, Set, Union
 
-from graphql import GraphQLObjectType, GraphQLSchema
+from graphql import (
+    GraphQLInterfaceType,
+    GraphQLObjectType,
+    GraphQLSchema,
+    GraphQLUnionType,
+)
 
 
 class TypeCollector:
@@ -32,11 +37,15 @@ class TypeCollector:
             self.visited_types.add(current_type.name)
             self.collected_types.add(current_type.name)
 
-            if isinstance(current_type, GraphQLObjectType):
+            if isinstance(current_type, (GraphQLObjectType, GraphQLInterfaceType)):
                 for subfield in current_type.fields.values():
                     subfield_type = get_final_type(subfield)
                     if isinstance(subfield_type, GraphQLObjectType):
                         stack.append(subfield_type)
+                    elif isinstance(subfield_type, GraphQLUnionType):
+                        stack.extend([union_type for union_type in subfield_type.types])
+                for interface in current_type.interfaces:
+                    stack.append(interface)
 
 
 def get_final_type(type_):

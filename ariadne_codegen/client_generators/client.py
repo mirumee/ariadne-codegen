@@ -80,7 +80,9 @@ class ClientGenerator:
 
         self._imports: List[Union[ast.ImportFrom, ast.Import]] = []
         self._add_import(
-            generate_import_from([OPTIONAL, LIST, DICT, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE)
+            generate_import_from(
+                [OPTIONAL, LIST, DICT, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE
+            )
         )
         self._add_import(base_client_import)
         self._add_import(unset_import)
@@ -151,17 +153,19 @@ class ClientGenerator:
         operation_name = definition.name.value if definition.name else ""
         if definition.operation == OperationType.SUBSCRIPTION:
             if not async_:
-                raise NotSupported("Subscriptions are only available when using async client.")
-            method_def: Union[
-                ast.FunctionDef, ast.AsyncFunctionDef
-            ] = self._generate_subscription_method_def(
-                name=name,
-                operation_name=operation_name,
-                return_type=return_type,
-                arguments=arguments,
-                arguments_dict=arguments_dict,
-                operation_str=operation_str,
-                variable_names=variable_names,
+                raise NotSupported(
+                    "Subscriptions are only available when using async client."
+                )
+            method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef] = (
+                self._generate_subscription_method_def(
+                    name=name,
+                    operation_name=operation_name,
+                    return_type=return_type,
+                    arguments=arguments,
+                    arguments_dict=arguments_dict,
+                    operation_str=operation_str,
+                    variable_names=variable_names,
+                )
             )
         elif async_:
             method_def = self._generate_async_method(
@@ -223,7 +227,9 @@ class ClientGenerator:
                     )
                 ],
                 keywords=[
-                    generate_keyword(arg="operation_name", value=generate_name("operation_name"))
+                    generate_keyword(
+                        arg="operation_name", value=generate_name("operation_name")
+                    )
                 ],
             )
         )
@@ -231,13 +237,17 @@ class ClientGenerator:
         operation_definition_node = generate_call(
             func=generate_name("OperationDefinitionNode"),
             keywords=[
-                generate_keyword(arg="operation", value=generate_name("operation_type")),
+                generate_keyword(
+                    arg="operation", value=generate_name("operation_type")
+                ),
                 generate_keyword(
                     arg="name",
                     value=generate_call(
                         func=generate_name("NameNode"),
                         keywords=[
-                            generate_keyword(arg="value", value=generate_name("operation_name"))
+                            generate_keyword(
+                                arg="value", value=generate_name("operation_name")
+                            )
                         ],
                     ),
                 ),
@@ -379,7 +389,9 @@ class ClientGenerator:
         argument_names = set(arg.arg for arg in arguments.args)
 
         for variable in mapped_variable_names:
-            variable_names[variable] = f"_{variable}" if variable in argument_names else variable
+            variable_names[variable] = (
+                f"_{variable}" if variable in argument_names else variable
+            )
 
         return variable_names
 
@@ -469,7 +481,9 @@ class ClientGenerator:
             targets=[variable_names[self._operation_str_variable]],
             value=generate_call(
                 func=generate_name(self._gql_func_name),
-                args=[[generate_constant(l + "\n") for l in operation_str.splitlines()]],
+                args=[
+                    [generate_constant(l + "\n") for l in operation_str.splitlines()]
+                ],
             ),
             lineno=lineno,
         )
@@ -492,7 +506,9 @@ class ClientGenerator:
     ) -> ast.Assign:
         return generate_assign(
             targets=[variable_names[self._response_variable]],
-            value=generate_await(self._generate_execute_call(variable_names, operation_name)),
+            value=generate_await(
+                self._generate_execute_call(variable_names, operation_name)
+            ),
             lineno=lineno,
         )
 
@@ -518,7 +534,9 @@ class ClientGenerator:
                     value=generate_name(variable_names[self._operation_str_variable]),
                     arg="query",
                 ),
-                generate_keyword(value=generate_constant(operation_name), arg="operation_name"),
+                generate_keyword(
+                    value=generate_constant(operation_name), arg="operation_name"
+                ),
                 generate_keyword(
                     value=generate_name(variable_names[self._variables_dict_variable]),
                     arg="variables",
@@ -541,7 +559,9 @@ class ClientGenerator:
     ) -> ast.Return:
         return generate_return(
             generate_call(
-                func=generate_attribute(generate_name(return_type), MODEL_VALIDATE_METHOD),
+                func=generate_attribute(
+                    generate_name(return_type), MODEL_VALIDATE_METHOD
+                ),
                 args=[generate_name(variable_names[self._data_variable])],
             )
         )
@@ -559,14 +579,18 @@ class ClientGenerator:
                 func=generate_attribute(value=generate_name("self"), attr="execute_ws"),
                 keywords=[
                     generate_keyword(
-                        value=generate_name(variable_names[self._operation_str_variable]),
+                        value=generate_name(
+                            variable_names[self._operation_str_variable]
+                        ),
                         arg="query",
                     ),
                     generate_keyword(
                         value=generate_constant(operation_name), arg="operation_name"
                     ),
                     generate_keyword(
-                        value=generate_name(variable_names[self._variables_dict_variable]),
+                        value=generate_name(
+                            variable_names[self._variables_dict_variable]
+                        ),
                         arg="variables",
                     ),
                     generate_keyword(value=generate_name(KWARGS_NAMES)),

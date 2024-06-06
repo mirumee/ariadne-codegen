@@ -88,7 +88,9 @@ INCLUDE_DIRECTIVE_NAME = "include"
 
 KWARGS_NAMES = "kwargs"
 
-DEFAULT_ASYNC_BASE_CLIENT_PATH = Path(__file__).parent / "dependencies" / "async_base_client.py"
+DEFAULT_ASYNC_BASE_CLIENT_PATH = (
+    Path(__file__).parent / "dependencies" / "async_base_client.py"
+)
 DEFAULT_ASYNC_BASE_CLIENT_NAME = "AsyncBaseClient"
 
 DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH = (
