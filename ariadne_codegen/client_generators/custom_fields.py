@@ -134,14 +134,14 @@ class CustomFieldsGenerator:
 
         class_def.body.append(
             self._generate_fields_method(
-                class_name, definition.name, additional_fields_typing
+                class_name, definition.name, sorted(additional_fields_typing)
             )
         )
 
         return class_def
 
     def _generate_fields_method(
-        self, class_name: str, definition_name: str, additional_fields_typing
+        self, class_name: str, definition_name: str, additional_fields_typing: List
     ) -> ast.FunctionDef:
         field_class_name = generate_name(f"{definition_name}GraphQLField")
         self._add_import(

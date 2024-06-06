@@ -1,4 +1,4 @@
-from typing import Dict, Set, Union
+from typing import Dict, List, Set
 
 from graphql import (
     GraphQLInterfaceType,
@@ -14,12 +14,12 @@ class TypeCollector:
         self.collected_types: Set[str] = set()
         self.visited_types: Set[str] = set()
 
-    def collect(self) -> Set[str]:
+    def collect(self) -> List[str]:
         if self.schema.query_type:
             self._collect_types(self.schema.query_type.fields)
         if self.schema.mutation_type:
             self._collect_types(self.schema.mutation_type.fields)
-        return self.collected_types
+        return sorted(self.collected_types)
 
     def _collect_types(self, fields: Dict[str, GraphQLObjectType]) -> None:
         for field in fields.values():

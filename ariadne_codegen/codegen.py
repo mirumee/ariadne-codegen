@@ -72,7 +72,7 @@ def generate_arguments(
     args: Optional[List[ast.arg]] = None,
     vararg: Optional[ast.arg] = None,
     kwonlyargs: Optional[list[ast.arg]] = None,
-    kw_defaults: Optional[list[ast.expr | None]] = None,
+    kw_defaults: Optional[list[Union[ast.expr, None]]] = None,
     kwarg: Optional[ast.arg] = None,
     defaults: Optional[List[ast.expr]] = None,
 ) -> ast.arguments:

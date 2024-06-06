@@ -12,21 +12,31 @@ from graphql import (
 from .async_base_client import AsyncBaseClient
 from .base_operation import GraphQLField
 from .list_all_products import ListAllProducts
-from .operations import LIST_ALL_PRODUCTS_GQL
 
 
 def gql(q: str) -> str:
     return q
 
 
-class AutoGenClient(AsyncBaseClient):
+class Client(AsyncBaseClient):
     async def list_all_products(self, **kwargs: Any) -> ListAllProducts:
+        query = gql(
+            """
+            query ListAllProducts {
+              products {
+                edges {
+                  node {
+                    id
+                    slug
+                  }
+                }
+              }
+            }
+            """
+        )
         variables: Dict[str, object] = {}
         response = await self.execute(
-            query=LIST_ALL_PRODUCTS_GQL,
-            operation_name="ListAllProducts",
-            variables=variables,
-            **kwargs
+            query=query, operation_name="ListAllProducts", variables=variables, **kwargs
         )
         data = self.get_data(response)
         return ListAllProducts.model_validate(data)

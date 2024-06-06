@@ -4,7 +4,7 @@ from itertools import zip_longest
 from textwrap import dedent
 from typing import List, Optional, Set, Union, cast
 
-from requests_toolbelt.multipart import decoder
+# from requests_toolbelt.multipart import decoder
 
 
 def compare_ast(
@@ -69,13 +69,13 @@ def sorted_imports(imports: List[ast.ImportFrom]) -> List[ast.ImportFrom]:
     return sorted(imports, key=lambda import_: import_.module or "")
 
 
-def decode_multipart_request(request):
-    return {
-        extract_name_from_part(part): part
-        for part in decoder.MultipartDecoder(
-            request.content, request.headers.get("content-type")
-        ).parts
-    }
+# def decode_multipart_request(request):
+#     return {
+#         extract_name_from_part(part): part
+#         for part in decoder.MultipartDecoder(
+#             request.content, request.headers.get("content-type")
+#         ).parts
+#     }
 
 
 def extract_name_from_part(part):
