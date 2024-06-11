@@ -37,6 +37,7 @@ class BaseSettings:
     remote_schema_url: str = ""
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
+    enable_custom_operations: bool = False
     plugins: List[str] = field(default_factory=list)
 
     def __post_init__(self):
@@ -73,7 +74,7 @@ class ClientSettings(BaseSettings):
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
 
     def __post_init__(self):
-        if not self.queries_path:
+        if not self.queries_path and not self.enable_custom_operations:
             raise TypeError("__init__ missing 1 required argument: 'queries_path'")
         super().__post_init__()
 

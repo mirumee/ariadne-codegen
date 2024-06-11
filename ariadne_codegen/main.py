@@ -61,9 +61,12 @@ def client(config_dict):
     schema = plugin_manager.process_schema(schema)
     assert_valid_schema(schema)
 
-    definitions = get_graphql_queries(settings.queries_path, schema)
-    queries = filter_operations_definitions(definitions)
-    fragments = filter_fragments_definitions(definitions)
+    fragments = []
+    queries = []
+    if settings.queries_path:
+        definitions = get_graphql_queries(settings.queries_path, schema)
+        queries = filter_operations_definitions(definitions)
+        fragments = filter_fragments_definitions(definitions)
 
     sys.stdout.write(settings.used_settings_message)
 

@@ -14,10 +14,13 @@ from ..codegen import (
     generate_await,
     generate_call,
     generate_class_def,
+    generate_comp,
     generate_constant,
     generate_expr,
     generate_import_from,
     generate_keyword,
+    generate_list,
+    generate_list_comp,
     generate_method_definition,
     generate_module,
     generate_name,
@@ -32,11 +35,20 @@ from .arguments import ArgumentsGenerator
 from .constants import (
     ANY,
     ASYNC_ITERATOR,
+    BASE_GRAPHQL_FIELD_CLASS_NAME,
+    BASE_OPERATION_FILE_PATH,
     DICT,
+    DOCUMENT_NODE,
+    GRAPHQL_MODULE,
     KWARGS_NAMES,
     LIST,
     MODEL_VALIDATE_METHOD,
+    NAME_NODE,
+    OPERATION_DEFINITION_NODE,
+    OPERATION_TYPE,
     OPTIONAL,
+    PRINT_AST,
+    SELECTION_SET_NODE,
     TYPING_MODULE,
     UNION,
     UNSET_IMPORT,
@@ -66,10 +78,18 @@ class ClientGenerator:
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.arguments_generator = arguments_generator
 
-        self._imports: List[ast.ImportFrom] = []
+        self._imports: List[Union[ast.ImportFrom, ast.Import]] = []
         self._add_import(
             generate_import_from(
-                [OPTIONAL, LIST, DICT, ANY, UNION, ASYNC_ITERATOR], TYPING_MODULE
+                [
+                    OPTIONAL,
+                    LIST,
+                    DICT,
+                    ANY,
+                    UNION,
+                    ASYNC_ITERATOR,
+                ],
+                TYPING_MODULE,
             )
         )
         self._add_import(base_client_import)
@@ -186,6 +206,185 @@ class ClientGenerator:
         self._add_import(
             generate_import_from(names=[return_type], from_=return_type_module, level=1)
         )
+
+    def add_execute_custom_operation_method(self):
+        self._add_import(
+            generate_import_from(
+                [
+                    DOCUMENT_NODE,
+                    OPERATION_DEFINITION_NODE,
+                    NAME_NODE,
+                    SELECTION_SET_NODE,
+                    PRINT_AST,
+                ],
+                GRAPHQL_MODULE,
+            )
+        )
+        self._add_import(
+            generate_import_from(
+                [BASE_GRAPHQL_FIELD_CLASS_NAME], BASE_OPERATION_FILE_PATH.stem, level=1
+            )
+        )
+        execute_await = generate_await(
+            value=generate_call(
+                func=generate_attribute(value=generate_name("self"), attr="execute"),
+                args=[
+                    generate_call(
+                        func=generate_name("print_ast"),
+                        args=[generate_name("operation_ast")],
+                    )
+                ],
+                keywords=[
+                    generate_keyword(
+                        arg="operation_name", value=generate_name("operation_name")
+                    )
+                ],
+            )
+        )
+
+        operation_definition_node = generate_call(
+            func=generate_name("OperationDefinitionNode"),
+            keywords=[
+                generate_keyword(
+                    arg="operation", value=generate_name("operation_type")
+                ),
+                generate_keyword(
+                    arg="name",
+                    value=generate_call(
+                        func=generate_name("NameNode"),
+                        keywords=[
+                            generate_keyword(
+                                arg="value", value=generate_name("operation_name")
+                            )
+                        ],
+                    ),
+                ),
+                generate_keyword(
+                    arg="selection_set",
+                    value=generate_call(
+                        func=generate_name("SelectionSetNode"),
+                        keywords=[
+                            generate_keyword(
+                                arg="selections",
+                                value=generate_list_comp(
+                                    elt=generate_call(
+                                        func=generate_attribute(
+                                            value=generate_name("field"),
+                                            attr="to_ast",
+                                        ),
+                                    ),
+                                    generators=[
+                                        generate_comp(
+                                            target="field",
+                                            iter_="fields",
+                                        )
+                                    ],
+                                ),
+                            )
+                        ],
+                    ),
+                ),
+            ],
+        )
+        operation_ast = generate_call(
+            func=generate_name("DocumentNode"),
+            keywords=[
+                generate_keyword(
+                    arg="definitions",
+                    value=generate_list(elements=[operation_definition_node]),
+                )
+            ],
+        )
+        body_return = generate_return(
+            value=generate_call(
+                func=generate_attribute(value=generate_name("self"), attr="get_data"),
+                args=[generate_name("response")],
+            )
+        )
+        async_def_node = generate_async_method_definition(
+            name="execute_custom_operation",
+            arguments=generate_arguments(
+                args=[
+                    generate_arg("self"),
+                    generate_arg(
+                        "*fields",
+                        annotation=generate_name("GraphQLField"),
+                    ),
+                    generate_arg(
+                        "operation_type",
+                        annotation=generate_name("OperationType"),
+                    ),
+                    generate_arg("operation_name", annotation=generate_name("str")),
+                ],
+            ),
+            body=[
+                generate_assign(
+                    targets=["operation_ast"],
+                    value=operation_ast,
+                ),
+                generate_assign(
+                    targets=["response"],
+                    value=execute_await,
+                ),
+                body_return,
+            ],
+            return_type=generate_subscript(
+                generate_name(DICT),
+                generate_tuple([generate_name("str"), generate_name("Any")]),
+            ),
+        )
+        self._class_def.body.append(async_def_node)
+
+    def create_custom_operation_method(self, name, operation_type):
+        self._add_import(
+            generate_import_from(
+                [
+                    OPERATION_TYPE,
+                ],
+                GRAPHQL_MODULE,
+            )
+        )
+        body_return = generate_return(
+            value=generate_await(
+                value=generate_call(
+                    func=generate_attribute(
+                        value=generate_name("self"),
+                        attr="execute_custom_operation",
+                    ),
+                    args=[
+                        generate_name("*fields"),
+                    ],
+                    keywords=[
+                        generate_keyword(
+                            arg="operation_type",
+                            value=generate_attribute(
+                                value=generate_name("OperationType"),
+                                attr=operation_type,
+                            ),
+                        ),
+                        generate_keyword(
+                            arg="operation_name", value=generate_name("operation_name")
+                        ),
+                    ],
+                )
+            )
+        )
+        async_def_query = generate_async_method_definition(
+            name=name,
+            arguments=generate_arguments(
+                args=[
+                    generate_arg("self"),
+                    generate_arg("*fields", annotation=generate_name("GraphQLField")),
+                    generate_arg("operation_name", annotation=generate_name("str")),
+                ],
+            ),
+            body=[body_return],
+            return_type=generate_subscript(
+                generate_name(DICT),
+                generate_tuple([generate_name("str"), generate_name("Any")]),
+            ),
+        )
+        self._class_def.body.append(async_def_query)
 
     def get_variable_names(self, arguments: ast.arguments) -> Dict[str, str]:
         mapped_variable_names = [
