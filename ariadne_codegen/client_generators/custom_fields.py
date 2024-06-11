@@ -231,7 +231,7 @@ class CustomFieldsGenerator:
         return_keywords = []
         field_class_name = generate_name(class_name)
         field_kwonlyargs = []
-        field_kw_defaults: List[ast.expr | None] = []
+        field_kw_defaults: List[Union[ast.expr, None]] = []
         for arg_name, argument in arguments.items():
             argument_final_type = get_final_type(argument.type)
             field_kwonlyargs.append(
