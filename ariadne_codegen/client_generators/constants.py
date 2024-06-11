@@ -42,6 +42,7 @@ BASE_OPERATION_FILE_PATH = Path(__file__).parent / "dependencies" / "base_operat
 BASE_GRAPHQL_OPERATION_CLASS_NAME = "BaseGraphQLOperation"
 BASE_GRAPHQL_FIELD_CLASS_NAME = "GraphQLField"
 CUSTOM_FIELDS_FILE_PATH = Path(__file__).parent / "custom_fields.py"
+CUSTOM_FIELDS_TYPING_FILE_PATH = Path(__file__).parent / "custom_typing_fields.py"
 
 BASE_MODEL_FILE_PATH = Path(__file__).parent / "dependencies" / "base_model.py"
 BASE_MODEL_CLASS_NAME = "BaseModel"

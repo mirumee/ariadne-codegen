@@ -5,8 +5,10 @@ from graphql import (
     GraphQLEnumType,
     GraphQLFieldMap,
     GraphQLInputObjectType,
+    GraphQLInterfaceType,
     GraphQLObjectType,
     GraphQLScalarType,
+    GraphQLUnionType,
 )
 
 from ariadne_codegen.exceptions import ParsingError
@@ -31,6 +33,7 @@ from .constants import (
     ANY,
     BASE_MODEL_FILE_PATH,
     CUSTOM_FIELDS_FILE_PATH,
+    CUSTOM_FIELDS_TYPING_FILE_PATH,
     INPUT_SCALARS_MAP,
     OPTIONAL,
     TYPING_MODULE,
@@ -63,7 +66,6 @@ class CustomOperationGenerator:
 
         self._class_def = generate_class_def(name=name, base_names=[])
 
-        self._used_enums: List[str] = []
         self._used_inputs: List[str] = []
 
     def generate(self) -> ast.Module:
@@ -71,14 +73,14 @@ class CustomOperationGenerator:
 
         for name, field in self.graphql_fields.items():
             final_type = get_final_type(field)
-            if isinstance(final_type, GraphQLObjectType):
-                method_def = self._generate_method(
-                    operation_name=name,
-                    operation_args=field.args,
-                    type_name=final_type.name,
-                )
-                method_def.lineno = len(self._class_def.body) + 1
-                self._class_def.body.append(method_def)
+            # if isinstance(final_type, GraphQLObjectType):
+            method_def = self._generate_method(
+                operation_name=name,
+                operation_args=field.args,
+                final_type=final_type,
+            )
+            method_def.lineno = len(self._class_def.body) + 1
+            self._class_def.body.append(method_def)
 
         if not self._class_def.body:
             self._class_def.body.append(ast.Pass())
@@ -100,22 +102,41 @@ class CustomOperationGenerator:
                 self._imports.append(import_)
 
     def _generate_method(
-        self, operation_name: str, operation_args, type_name: str
+        self,
+        operation_name: str,
+        operation_args,
+        final_type,
     ) -> ast.FunctionDef:
         arguments = self._generate_method_arguments(operation_args)
+        from_ = CUSTOM_FIELDS_TYPING_FILE_PATH.stem
+        if isinstance(final_type, GraphQLObjectType):
+            return_type_name = f"{final_type.name}Fields"
+            from_ = CUSTOM_FIELDS_FILE_PATH.stem
+        elif isinstance(final_type, GraphQLInterfaceType):
+            return_type_name = f"{final_type.name}Interface"
+            from_ = CUSTOM_FIELDS_FILE_PATH.stem
+        elif isinstance(final_type, GraphQLUnionType):
+            return_type_name = f"{final_type.name}Union"
+        else:
+            return_type_name = "GraphQLField"
         self._type_imports.append(
             generate_import_from(
-                from_=CUSTOM_FIELDS_FILE_PATH.stem,
-                names=[f"{type_name}Fields"],
+                from_=from_,
+                names=[return_type_name],
                 level=1,
             )
         )
+
         return generate_method_definition(
             name=str_to_snake_case(operation_name),
             arguments=arguments,
-            return_type=generate_name(f"{type_name}Fields"),
+            return_type=generate_name(return_type_name),
             body=[
-                self._generate_return_stmt(type_name, operation_name, operation_args)
+                self._generate_return_stmt(
+                    return_type_name,
+                    operation_name,
+                    operation_args,
+                )
             ],
             decorator_list=[generate_name("classmethod")],
         )
@@ -134,31 +155,19 @@ class CustomOperationGenerator:
         kw_defaults = []
         for arg_name, arg_type in operation_args.items():
             arg_final_type = get_final_type(arg_type)
-            if isinstance(arg_final_type, GraphQLInputObjectType):
-                self._add_import(
-                    generate_import_from(
-                        names=[arg_final_type.name], from_="input_types", level=1
-                    )
-                )
-            if isinstance(arg_final_type, GraphQLEnumType):
-                self._add_import(
-                    generate_import_from(
-                        names=[arg_final_type.name], from_="enums", level=1
-                    )
-                )
             annotation, _ = self._parse_graphql_type_name(arg_final_type)
             kw_only_args.append(generate_arg(name=arg_name, annotation=annotation))
             kw_defaults.append(generate_constant(value=None))
         return kw_only_args, kw_defaults
 
-    def _generate_return_stmt(self, type_name, operation_name, operation_args):
+    def _generate_return_stmt(self, return_type_name, operation_name, operation_args):
         keywords = [
             generate_keyword(arg=arg_name, value=generate_name(arg_name))
             for arg_name in operation_args
         ]
         return generate_return(
             value=generate_call(
-                func=generate_name(f"{type_name}Fields"),
+                func=generate_name(return_type_name),
                 args=[],
                 keywords=[
                     generate_keyword(
@@ -177,8 +186,15 @@ class CustomOperationGenerator:
         used_custom_scalar = None
         if isinstance(type_, GraphQLInputObjectType):
             self._used_inputs.append(name)
+            self._add_import(
+                generate_import_from(
+                    names=[name],
+                    from_="input_types",
+                    level=1,
+                )
+            )
         elif isinstance(type_, GraphQLEnumType):
-            self._used_enums.append(name)
+            self._add_import(generate_import_from(names=[name], level=1))
         elif isinstance(type_, GraphQLScalarType):
             if name not in self.custom_scalars:
                 name = INPUT_SCALARS_MAP.get(name, ANY)

@@ -62,9 +62,6 @@ class CustomFieldsTypingGenerator:
     def _generate_field_class(self, class_def: ast.ClassDef) -> ast.ClassDef:
         class_name = f"{class_def.name}GraphQLField"
         class_body: List[ast.stmt] = []
-        if isinstance(class_def, GraphQLInterfaceType):
-            class_name = f"{class_def.name}Interface"
-            class_body.append(self._generate_on_method(class_name))
         if isinstance(class_def, GraphQLUnionType):
             class_name = f"{class_def.name}Union"
             class_body.append(self._generate_on_method(class_name))
