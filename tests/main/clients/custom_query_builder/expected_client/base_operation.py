@@ -9,9 +9,13 @@ from graphql import (
     IntValueNode,
     NamedTypeNode,
     NameNode,
+    ObjectFieldNode,
+    ObjectValueNode,
     SelectionSetNode,
     StringValueNode,
 )
+
+from .base_model import BaseModel
 
 
 class GraphQLArgument:
@@ -21,7 +25,9 @@ class GraphQLArgument:
 
     def _convert_value(
         self, value: Any
-    ) -> Union[StringValueNode, IntValueNode, FloatValueNode, BooleanValueNode]:
+    ) -> Union[
+        StringValueNode, IntValueNode, FloatValueNode, BooleanValueNode, ObjectValueNode
+    ]:
         if isinstance(value, str):
             return StringValueNode(value=value)
         if isinstance(value, int):
@@ -30,6 +36,12 @@ class GraphQLArgument:
             return FloatValueNode(value=str(value))
         if isinstance(value, bool):
             return BooleanValueNode(value=value)
+        if isinstance(value, BaseModel):
+            fields = [
+                ObjectFieldNode(name=NameNode(value=k), value=self._convert_value(v))
+                for k, v in value.model_dump().items()
+            ]
+            return ObjectValueNode(fields=fields)
         raise TypeError(f"Unsupported argument type: {type(value)}")
 
     def to_ast(self) -> ArgumentNode:
@@ -60,15 +72,17 @@ class GraphQLField:
             sub_field.to_ast() for sub_field in self._subfields
         ]
         if self._inline_fragments:
-            selections = [
-                InlineFragmentNode(
-                    type_condition=NamedTypeNode(name=NameNode(value=name)),
-                    selection_set=SelectionSetNode(
-                        selections=[sub_field.to_ast() for sub_field in subfields]
-                    ),
-                )
-                for name, subfields in self._inline_fragments.items()
-            ]
+            selections.extend(
+                [
+                    InlineFragmentNode(
+                        type_condition=NamedTypeNode(name=NameNode(value=name)),
+                        selection_set=SelectionSetNode(
+                            selections=[sub_field.to_ast() for sub_field in subfields]
+                        ),
+                    )
+                    for name, subfields in self._inline_fragments.items()
+                ]
+            )
         return FieldNode(
             name=NameNode(value=self._build_field_name()),
             arguments=[arg.to_ast() for arg in self._arguments],

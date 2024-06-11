@@ -25,12 +25,8 @@ class PageInfoGraphQLField(GraphQLField):
     pass
 
 
-class ObjectWithMetadataInterface(GraphQLField):
-    def on(
-        self, type_name: str, *subfields: GraphQLField
-    ) -> "ObjectWithMetadataInterface":
-        self._inline_fragments[type_name] = subfields
-        return self
+class ObjectWithMetadataGraphQLField(GraphQLField):
+    pass
 
 
 class MetadataItemGraphQLField(GraphQLField):

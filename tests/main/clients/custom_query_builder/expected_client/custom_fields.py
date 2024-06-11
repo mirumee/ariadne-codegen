@@ -5,7 +5,7 @@ from . import (
     CollectionTranslatableContentGraphQLField,
     MetadataErrorGraphQLField,
     MetadataItemGraphQLField,
-    ObjectWithMetadataInterface,
+    ObjectWithMetadataGraphQLField,
     PageInfoGraphQLField,
     ProductCountableConnectionGraphQLField,
     ProductCountableEdgeGraphQLField,
@@ -74,6 +74,40 @@ class MetadataItemFields(GraphQLField):
         return self
 
 
+class ObjectWithMetadataInterface(GraphQLField):
+    @classmethod
+    def private_metadata(cls) -> "MetadataItemFields":
+        return MetadataItemFields("private_metadata")
+
+    @classmethod
+    def private_metafield(
+        cls, *, key: Optional[str] = None
+    ) -> "ObjectWithMetadataGraphQLField":
+        return ObjectWithMetadataGraphQLField("private_metafield", key=key)
+
+    @classmethod
+    def metadata(cls) -> "MetadataItemFields":
+        return MetadataItemFields("metadata")
+
+    @classmethod
+    def metafield(
+        cls, *, key: Optional[str] = None
+    ) -> "ObjectWithMetadataGraphQLField":
+        return ObjectWithMetadataGraphQLField("metafield", key=key)
+
+    def fields(
+        self, *subfields: Union[ObjectWithMetadataGraphQLField, "MetadataItemFields"]
+    ) -> "ObjectWithMetadataInterface":
+        self._subfields.extend(subfields)
+        return self
+
+    def on(
+        self, type_name: str, *subfields: GraphQLField
+    ) -> "ObjectWithMetadataInterface":
+        self._inline_fragments[type_name] = subfields
+        return self
+
+
 class PageInfoFields(GraphQLField):
     has_next_page: PageInfoGraphQLField = PageInfoGraphQLField("hasNextPage")
     has_previous_page: PageInfoGraphQLField = PageInfoGraphQLField("hasPreviousPage")
@@ -94,13 +128,17 @@ class ProductFields(GraphQLField):
     def private_metadata(cls) -> "MetadataItemFields":
         return MetadataItemFields("private_metadata")
 
-    private_metafield: ProductGraphQLField = ProductGraphQLField("privateMetafield")
+    @classmethod
+    def private_metafield(cls, *, key: Optional[str] = None) -> "ProductGraphQLField":
+        return ProductGraphQLField("private_metafield", key=key)
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
         return MetadataItemFields("metadata")
 
-    metafield: ProductGraphQLField = ProductGraphQLField("metafield")
+    @classmethod
+    def metafield(cls, *, key: Optional[str] = None) -> "ProductGraphQLField":
+        return ProductGraphQLField("metafield", key=key)
 
     def fields(
         self, *subfields: Union[ProductGraphQLField, "MetadataItemFields"]
@@ -238,7 +276,9 @@ class UpdateMetadataFields(GraphQLField):
     def errors(cls) -> "MetadataErrorFields":
         return MetadataErrorFields("errors")
 
-    item: ObjectWithMetadataInterface = ObjectWithMetadataInterface("item")
+    @classmethod
+    def item(cls) -> "ObjectWithMetadataInterface":
+        return ObjectWithMetadataInterface("item")
 
     def fields(
         self,
