@@ -460,7 +460,9 @@ def get_package_generator(
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
     )
-    custom_fields_generator = CustomFieldsGenerator(schema=schema)
+    custom_fields_generator = CustomFieldsGenerator(
+        schema=schema, custom_scalars=settings.scalars, plugin_manager=plugin_manager
+    )
     custom_fields_typing_generator = CustomFieldsTypingGenerator(schema=schema)
     custom_query_generator = None
     if schema.query_type:
@@ -471,6 +473,12 @@ def get_package_generator(
             enums_module_name=settings.enums_module_name,
             custom_scalars=settings.scalars,
             plugin_manager=plugin_manager,
+            arguments_generator=ArgumentsGenerator(
+                schema=schema,
+                convert_to_snake_case=settings.convert_to_snake_case,
+                custom_scalars=settings.scalars,
+                plugin_manager=plugin_manager,
+            ),
         )
     custom_mutation_generator = None
     if schema.mutation_type:
@@ -481,6 +489,12 @@ def get_package_generator(
             enums_module_name=settings.enums_module_name,
             custom_scalars=settings.scalars,
             plugin_manager=plugin_manager,
+            arguments_generator=ArgumentsGenerator(
+                schema=schema,
+                convert_to_snake_case=settings.convert_to_snake_case,
+                custom_scalars=settings.scalars,
+                plugin_manager=plugin_manager,
+            ),
         )
 
     return PackageGenerator(

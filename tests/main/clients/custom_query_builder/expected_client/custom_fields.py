@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from . import (
     AppGraphQLField,
@@ -77,23 +77,23 @@ class MetadataItemFields(GraphQLField):
 class ObjectWithMetadataInterface(GraphQLField):
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
-        return MetadataItemFields("private_metadata")
+        return MetadataItemFields("private_metadata", arguments={})
 
     @classmethod
-    def private_metafield(
-        cls, *, key: Optional[str] = None
-    ) -> "ObjectWithMetadataGraphQLField":
-        return ObjectWithMetadataGraphQLField("private_metafield", key=key)
+    def private_metafield(cls, key: str) -> "ObjectWithMetadataGraphQLField":
+        return ObjectWithMetadataGraphQLField(
+            "private_metafield", arguments={"key": {"type": "String!", "value": key}}
+        )
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
-        return MetadataItemFields("metadata")
+        return MetadataItemFields("metadata", arguments={})
 
     @classmethod
-    def metafield(
-        cls, *, key: Optional[str] = None
-    ) -> "ObjectWithMetadataGraphQLField":
-        return ObjectWithMetadataGraphQLField("metafield", key=key)
+    def metafield(cls, key: str) -> "ObjectWithMetadataGraphQLField":
+        return ObjectWithMetadataGraphQLField(
+            "metafield", arguments={"key": {"type": "String!", "value": key}}
+        )
 
     def fields(
         self, *subfields: Union[ObjectWithMetadataGraphQLField, "MetadataItemFields"]
@@ -126,19 +126,23 @@ class ProductFields(GraphQLField):
 
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
-        return MetadataItemFields("private_metadata")
+        return MetadataItemFields("private_metadata", arguments={})
 
     @classmethod
-    def private_metafield(cls, *, key: Optional[str] = None) -> "ProductGraphQLField":
-        return ProductGraphQLField("private_metafield", key=key)
+    def private_metafield(cls, key: str) -> "ProductGraphQLField":
+        return ProductGraphQLField(
+            "private_metafield", arguments={"key": {"type": "String!", "value": key}}
+        )
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
-        return MetadataItemFields("metadata")
+        return MetadataItemFields("metadata", arguments={})
 
     @classmethod
-    def metafield(cls, *, key: Optional[str] = None) -> "ProductGraphQLField":
-        return ProductGraphQLField("metafield", key=key)
+    def metafield(cls, key: str) -> "ProductGraphQLField":
+        return ProductGraphQLField(
+            "metafield", arguments={"key": {"type": "String!", "value": key}}
+        )
 
     def fields(
         self, *subfields: Union[ProductGraphQLField, "MetadataItemFields"]
@@ -150,11 +154,11 @@ class ProductFields(GraphQLField):
 class ProductCountableConnectionFields(GraphQLField):
     @classmethod
     def edges(cls) -> "ProductCountableEdgeFields":
-        return ProductCountableEdgeFields("edges")
+        return ProductCountableEdgeFields("edges", arguments={})
 
     @classmethod
     def page_info(cls) -> "PageInfoFields":
-        return PageInfoFields("page_info")
+        return PageInfoFields("page_info", arguments={})
 
     total_count: ProductCountableConnectionGraphQLField = (
         ProductCountableConnectionGraphQLField("totalCount")
@@ -175,7 +179,7 @@ class ProductCountableConnectionFields(GraphQLField):
 class ProductCountableEdgeFields(GraphQLField):
     @classmethod
     def node(cls) -> "ProductFields":
-        return ProductFields("node")
+        return ProductFields("node", arguments={})
 
     cursor: ProductCountableEdgeGraphQLField = ProductCountableEdgeGraphQLField(
         "cursor"
@@ -218,7 +222,7 @@ class ProductTranslatableContentFields(GraphQLField):
 class ProductTypeCountableConnectionFields(GraphQLField):
     @classmethod
     def page_info(cls) -> "PageInfoFields":
-        return PageInfoFields("page_info")
+        return PageInfoFields("page_info", arguments={})
 
     def fields(
         self,
@@ -231,11 +235,11 @@ class ProductTypeCountableConnectionFields(GraphQLField):
 class TranslatableItemConnectionFields(GraphQLField):
     @classmethod
     def page_info(cls) -> "PageInfoFields":
-        return PageInfoFields("page_info")
+        return PageInfoFields("page_info", arguments={})
 
     @classmethod
     def edges(cls) -> "TranslatableItemEdgeFields":
-        return TranslatableItemEdgeFields("edges")
+        return TranslatableItemEdgeFields("edges", arguments={})
 
     total_count: TranslatableItemConnectionGraphQLField = (
         TranslatableItemConnectionGraphQLField("totalCount")
@@ -270,15 +274,15 @@ class TranslatableItemEdgeFields(GraphQLField):
 class UpdateMetadataFields(GraphQLField):
     @classmethod
     def metadata_errors(cls) -> "MetadataErrorFields":
-        return MetadataErrorFields("metadata_errors")
+        return MetadataErrorFields("metadata_errors", arguments={})
 
     @classmethod
     def errors(cls) -> "MetadataErrorFields":
-        return MetadataErrorFields("errors")
+        return MetadataErrorFields("errors", arguments={})
 
     @classmethod
     def item(cls) -> "ObjectWithMetadataInterface":
-        return ObjectWithMetadataInterface("item")
+        return ObjectWithMetadataInterface("item", arguments={})
 
     def fields(
         self,

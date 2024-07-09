@@ -16,6 +16,7 @@ from ..codegen import (
     generate_class_def,
     generate_comp,
     generate_constant,
+    generate_dict,
     generate_expr,
     generate_import_from,
     generate_keyword,
@@ -44,15 +45,19 @@ from .constants import (
     LIST,
     MODEL_VALIDATE_METHOD,
     NAME_NODE,
+    NAMED_TYPE_NODE,
     OPERATION_DEFINITION_NODE,
     OPERATION_TYPE,
     OPTIONAL,
     PRINT_AST,
     SELECTION_SET_NODE,
+    TUPLE,
     TYPING_MODULE,
     UNION,
     UNSET_IMPORT,
     UPLOAD_IMPORT,
+    VARIABLE_DEFINITION_NODE,
+    VARIABLE_NODE,
 )
 from .scalars import ScalarData, generate_scalar_imports
 
@@ -207,6 +212,417 @@ class ClientGenerator:
             generate_import_from(names=[return_type], from_=return_type_module, level=1)
         )
 
+    def create_combine_variables_method(self):
+        method_body = [
+            generate_assign(
+                targets=["variables_types_combined"],
+                value=generate_dict(),
+            ),
+            generate_assign(
+                targets=["processed_variables_combined"],
+                value=generate_dict(),
+            ),
+            ast.For(
+                target=generate_tuple(
+                    elts=[
+                        generate_name("idx"),
+                        generate_name("field"),
+                    ],
+                ),
+                iter=generate_call(
+                    func=generate_name("enumerate"),
+                    args=[generate_name("fields")],
+                ),
+                body=[
+                    generate_expr(
+                        value=generate_call(
+                            func=generate_attribute(
+                                value=generate_name("variables_types_combined"),
+                                attr="update",
+                            ),
+                            args=[
+                                generate_call(
+                                    func=generate_attribute(
+                                        value=generate_name("field"),
+                                        attr="get_variables_types",
+                                    ),
+                                    args=[generate_name("idx")],
+                                )
+                            ],
+                        )
+                    ),
+                    generate_expr(
+                        value=generate_call(
+                            func=generate_attribute(
+                                value=generate_name("processed_variables_combined"),
+                                attr="update",
+                            ),
+                            args=[
+                                generate_call(
+                                    func=generate_attribute(
+                                        value=generate_name("field"),
+                                        attr="get_processed_variables",
+                                    ),
+                                    args=[generate_name("idx")],
+                                )
+                            ],
+                        )
+                    ),
+                ],
+                orelse=[],
+                lineno=1,
+            ),
+            generate_return(
+                value=generate_tuple(
+                    elts=[
+                        generate_name("variables_types_combined"),
+                        generate_name("processed_variables_combined"),
+                    ],
+                )
+            ),
+        ]
+
+        args = generate_arguments(
+            args=[
+                generate_arg("self"),
+                generate_arg(
+                    name="fields",
+                    annotation=generate_subscript(
+                        generate_name(TUPLE),
+                        generate_tuple(
+                            [
+                                generate_name("GraphQLField"),
+                                generate_name("..."),
+                            ]
+                        ),
+                    ),
+                ),
+            ],
+        )
+
+        returns = generate_subscript(
+            generate_name(TUPLE),
+            generate_tuple(
+                [
+                    generate_subscript(
+                        generate_name(DICT),
+                        generate_tuple([generate_name("str"), generate_name("Any")]),
+                    ),
+                    generate_subscript(
+                        generate_name(DICT),
+                        generate_tuple([generate_name("str"), generate_name("Any")]),
+                    ),
+                ]
+            ),
+        )
+
+        method_def = generate_method_definition(
+            name="_combine_variables",
+            arguments=args,
+            body=method_body,
+            decorator_list=[],
+            return_type=returns,
+        )
+
+        return method_def
+
+    def create_build_variable_definitions_method(self):
+        method_body = [
+            generate_return(
+                value=generate_list_comp(
+                    elt=generate_call(
+                        func=generate_name("VariableDefinitionNode"),
+                        keywords=[
+                            generate_keyword(
+                                arg="variable",
+                                value=generate_call(
+                                    func=generate_name("VariableNode"),
+                                    keywords=[
+                                        generate_keyword(
+                                            arg="name",
+                                            value=generate_call(
+                                                func=generate_name("NameNode"),
+                                                keywords=[
+                                                    generate_keyword(
+                                                        arg="value",
+                                                        value=generate_name("var_name"),
+                                                    )
+                                                ],
+                                            ),
+                                        )
+                                    ],
+                                ),
+                            ),
+                            generate_keyword(
+                                arg="type",
+                                value=generate_call(
+                                    func=generate_name("NamedTypeNode"),
+                                    keywords=[
+                                        generate_keyword(
+                                            arg="name",
+                                            value=generate_call(
+                                                func=generate_name("NameNode"),
+                                                keywords=[
+                                                    generate_keyword(
+                                                        arg="value",
+                                                        value=generate_name(
+                                                            "var_value",
+                                                        ),
+                                                    )
+                                                ],
+                                            ),
+                                        )
+                                    ],
+                                ),
+                            ),
+                        ],
+                    ),
+                    generators=[
+                        generate_comp(
+                            target="var_name, var_value",
+                            iter_="variables_types_combined.items()",
+                        )
+                    ],
+                )
+            )
+        ]
+        return generate_method_definition(
+            name="_build_variable_definitions",
+            arguments=generate_arguments(
+                args=[
+                    generate_arg("self"),
+                    generate_arg(
+                        "variables_types_combined",
+                        annotation=generate_subscript(
+                            generate_name(DICT),
+                            generate_tuple(
+                                [
+                                    generate_name("str"),
+                                    generate_name("str"),
+                                ]
+                            ),
+                        ),
+                    ),
+                ]
+            ),
+            body=method_body,
+            return_type=generate_subscript(
+                generate_name("List"), generate_name("VariableDefinitionNode")
+            ),
+        )
+
+    def create_build_operation_ast_method(self):
+        keywords = [
+            generate_keyword(
+                arg="definitions",
+                value=generate_list(
+                    elements=[
+                        generate_call(
+                            func=generate_name("OperationDefinitionNode"),
+                            keywords=[
+                                generate_keyword(
+                                    arg="operation",
+                                    value=generate_name("operation_type"),
+                                ),
+                                generate_keyword(
+                                    arg="name",
+                                    value=generate_call(
+                                        func=generate_name("NameNode"),
+                                        keywords=[
+                                            generate_keyword(
+                                                arg="value",
+                                                value=generate_name(
+                                                    "operation_name",
+                                                ),
+                                            )
+                                        ],
+                                    ),
+                                ),
+                                generate_keyword(
+                                    arg="variable_definitions",
+                                    value=generate_name(
+                                        "variable_definitions",
+                                    ),
+                                ),
+                                generate_keyword(
+                                    arg="selection_set",
+                                    value=generate_call(
+                                        func=generate_name(
+                                            "SelectionSetNode",
+                                        ),
+                                        keywords=[
+                                            generate_keyword(
+                                                arg="selections",
+                                                value=generate_list_comp(
+                                                    elt=generate_call(
+                                                        func=generate_attribute(
+                                                            value=generate_name(
+                                                                "field",
+                                                            ),
+                                                            attr="to_ast",
+                                                        ),
+                                                        args=[generate_name("idx")],
+                                                    ),
+                                                    generators=[
+                                                        generate_comp(
+                                                            target="idx, field",
+                                                            iter_="enumerate(fields)",
+                                                        )
+                                                    ],
+                                                ),
+                                            )
+                                        ],
+                                    ),
+                                ),
+                            ],
+                        )
+                    ]
+                ),
+            )
+        ]
+        method_body = [
+            generate_return(
+                value=generate_call(
+                    func=generate_name("DocumentNode"),
+                    keywords=keywords,
+                )
+            )
+        ]
+        return generate_method_definition(
+            name="_build_operation_ast",
+            arguments=generate_arguments(
+                args=[
+                    generate_arg("self"),
+                    generate_arg(
+                        "fields",
+                        annotation=generate_subscript(
+                            generate_name(TUPLE),
+                            generate_tuple(
+                                [
+                                    generate_name("GraphQLField"),
+                                    generate_name("..."),
+                                ]
+                            ),
+                        ),
+                    ),
+                    generate_arg(
+                        "operation_type",
+                        annotation=generate_name("OperationType"),
+                    ),
+                    generate_arg("operation_name", annotation=generate_name("str")),
+                    generate_arg(
+                        "variable_definitions",
+                        annotation=generate_subscript(
+                            generate_name("List"),
+                            generate_name("VariableDefinitionNode"),
+                        ),
+                    ),
+                ]
+            ),
+            body=method_body,
+            return_type=generate_name("DocumentNode"),
+        )
+
+    def create_execute_custom_operation_method(self):
+        variables_types_combined = generate_name("variables_types_combined")
+        processed_variables_combined = generate_name("processed_variables_combined")
+        method_body = [
+            ast.Assign(
+                targets=[
+                    generate_tuple(
+                        elts=[variables_types_combined, processed_variables_combined],
+                    )
+                ],
+                value=generate_call(
+                    func=generate_attribute(
+                        value=generate_name("self"), attr="_combine_variables"
+                    ),
+                    args=[generate_name("fields")],
+                ),
+                lineno=1,
+            ),
+            generate_assign(
+                targets=["variable_definitions"],
+                value=generate_call(
+                    func=generate_attribute(
+                        value=generate_name("self"), attr="_build_variable_definitions"
+                    ),
+                    args=[generate_name("variables_types_combined")],
+                ),
+            ),
+            generate_assign(
+                targets=["operation_ast"],
+                value=generate_call(
+                    func=generate_attribute(
+                        value=generate_name("self"), attr="_build_operation_ast"
+                    ),
+                    args=[
+                        generate_name("fields"),
+                        generate_name("operation_type"),
+                        generate_name("operation_name"),
+                        generate_name("variable_definitions"),
+                    ],
+                ),
+            ),
+            generate_assign(
+                targets=["response"],
+                value=generate_await(
+                    value=generate_call(
+                        func=generate_attribute(
+                            value=generate_name("self"),
+                            attr="execute",
+                        ),
+                        args=[
+                            generate_call(
+                                func=generate_name("print_ast"),
+                                args=[generate_name("operation_ast")],
+                            )
+                        ],
+                        keywords=[
+                            generate_keyword(
+                                arg="variables",
+                                value=generate_name("processed_variables_combined"),
+                            ),
+                            generate_keyword(
+                                arg="operation_name",
+                                value=generate_name("operation_name"),
+                            ),
+                        ],
+                    )
+                ),
+            ),
+            generate_return(
+                value=generate_call(
+                    func=generate_attribute(
+                        value=generate_name("self"),
+                        attr="get_data",
+                    ),
+                    args=[generate_name("response")],
+                )
+            ),
+        ]
+        return generate_async_method_definition(
+            name="execute_custom_operation",
+            arguments=generate_arguments(
+                args=[
+                    generate_arg("self"),
+                    generate_arg("*fields", annotation=generate_name("GraphQLField")),
+                    generate_arg(
+                        "operation_type",
+                        annotation=generate_name(
+                            "OperationType",
+                        ),
+                    ),
+                    generate_arg("operation_name", annotation=generate_name("str")),
+                ]
+            ),
+            body=method_body,
+            return_type=generate_subscript(
+                generate_name(DICT),
+                generate_tuple([generate_name("str"), generate_name("Any")]),
+            ),
+        )
+
     def add_execute_custom_operation_method(self):
         self._add_import(
             generate_import_from(
@@ -216,6 +632,9 @@ class ClientGenerator:
                     NAME_NODE,
                     SELECTION_SET_NODE,
                     PRINT_AST,
+                    VARIABLE_DEFINITION_NODE,
+                    VARIABLE_NODE,
+                    NAMED_TYPE_NODE,
                 ],
                 GRAPHQL_MODULE,
             )
@@ -225,115 +644,12 @@ class ClientGenerator:
                 [BASE_GRAPHQL_FIELD_CLASS_NAME], BASE_OPERATION_FILE_PATH.stem, level=1
             )
         )
-        execute_await = generate_await(
-            value=generate_call(
-                func=generate_attribute(value=generate_name("self"), attr="execute"),
-                args=[
-                    generate_call(
-                        func=generate_name("print_ast"),
-                        args=[generate_name("operation_ast")],
-                    )
-                ],
-                keywords=[
-                    generate_keyword(
-                        arg="operation_name", value=generate_name("operation_name")
-                    )
-                ],
-            )
-        )
+        self._add_import(generate_import_from([DICT, TUPLE, LIST, ANY], "typing"))
 
-        operation_definition_node = generate_call(
-            func=generate_name("OperationDefinitionNode"),
-            keywords=[
-                generate_keyword(
-                    arg="operation", value=generate_name("operation_type")
-                ),
-                generate_keyword(
-                    arg="name",
-                    value=generate_call(
-                        func=generate_name("NameNode"),
-                        keywords=[
-                            generate_keyword(
-                                arg="value", value=generate_name("operation_name")
-                            )
-                        ],
-                    ),
-                ),
-                generate_keyword(
-                    arg="selection_set",
-                    value=generate_call(
-                        func=generate_name("SelectionSetNode"),
-                        keywords=[
-                            generate_keyword(
-                                arg="selections",
-                                value=generate_list_comp(
-                                    elt=generate_call(
-                                        func=generate_attribute(
-                                            value=generate_name("field"),
-                                            attr="to_ast",
-                                        ),
-                                    ),
-                                    generators=[
-                                        generate_comp(
-                                            target="field",
-                                            iter_="fields",
-                                        )
-                                    ],
-                                ),
-                            )
-                        ],
-                    ),
-                ),
-            ],
-        )
-        operation_ast = generate_call(
-            func=generate_name("DocumentNode"),
-            keywords=[
-                generate_keyword(
-                    arg="definitions",
-                    value=generate_list(elements=[operation_definition_node]),
-                )
-            ],
-        )
-        body_return = generate_return(
-            value=generate_call(
-                func=generate_attribute(value=generate_name("self"), attr="get_data"),
-                args=[generate_name("response")],
-            )
-        )
-        async_def_node = generate_async_method_definition(
-            name="execute_custom_operation",
-            arguments=generate_arguments(
-                args=[
-                    generate_arg("self"),
-                    generate_arg(
-                        "*fields",
-                        annotation=generate_name("GraphQLField"),
-                    ),
-                    generate_arg(
-                        "operation_type",
-                        annotation=generate_name("OperationType"),
-                    ),
-                    generate_arg("operation_name", annotation=generate_name("str")),
-                ],
-            ),
-            body=[
-                generate_assign(
-                    targets=["operation_ast"],
-                    value=operation_ast,
-                ),
-                generate_assign(
-                    targets=["response"],
-                    value=execute_await,
-                ),
-                body_return,
-            ],
-            return_type=generate_subscript(
-                generate_name(DICT),
-                generate_tuple([generate_name("str"), generate_name("Any")]),
-            ),
-        )
-        self._class_def.body.append(async_def_node)
+        self._class_def.body.append(self.create_execute_custom_operation_method())
+        self._class_def.body.append(self.create_combine_variables_method())
+        self._class_def.body.append(self.create_build_variable_definitions_method())
+        self._class_def.body.append(self.create_build_operation_ast_method())
 
     def create_custom_operation_method(self, name, operation_type):
         self._add_import(
