@@ -114,119 +114,131 @@ class CustomOperationGenerator:
         operation_args,
         final_type,
     ) -> ast.FunctionDef:
-        arguments = self._generate_method_arguments(operation_args)
-        return_type_name, from_ = self._get_return_type_and_from(final_type)
-
-        self._type_imports.append(
-            generate_import_from(
-                from_=from_,
-                names=[return_type_name],
-                level=1,
-            )
-        )
+        method_arguments, return_arguments = self._generate_arguments(operation_args)
+        return_type_name = self._get_return_type_and_from(final_type)
 
         return generate_method_definition(
             name=str_to_snake_case(operation_name),
-            arguments=arguments,
+            arguments=method_arguments,
             return_type=generate_name(return_type_name),
             body=[
-                self._generate_return_stmt(
-                    return_type_name,
-                    operation_name,
-                    operation_args,
+                generate_return(
+                    value=generate_call(
+                        func=generate_name(return_type_name),
+                        args=[],
+                        keywords=[
+                            generate_keyword(
+                                arg="field_name",
+                                value=generate_constant(value=operation_name),
+                            ),
+                            return_arguments,
+                        ],
+                    )
                 )
             ],
             decorator_list=[generate_name("classmethod")],
         )
 
-    def _generate_method_arguments(self, operation_args):
+    def _generate_arguments(self, operation_args):
         cls_arg = generate_arg(name="cls")
-        kw_only_args, kw_defaults, args = self._generate_kw_args_and_defaults(
-            operation_args,
+        args, kw_only_args, kw_defaults = [], [], []
+        return_arguments_keys, return_arguments_values = [], []
+
+        for arg_name, arg_value in operation_args.items():
+            final_type = get_final_type(arg_value)
+            is_required = isinstance(arg_value.type, GraphQLNonNull)
+            name = self._process_argument_name(arg_name)
+            annotation, used_custom_scalar = self._parse_graphql_type_name(
+                final_type, not is_required
+            )
+
+            self._accumulate_method_arguments(
+                args, kw_only_args, kw_defaults, arg_name, annotation, is_required
+            )
+            self._accumulate_return_arguments(
+                return_arguments_keys,
+                return_arguments_values,
+                arg_name,
+                name,
+                final_type,
+                is_required,
+                used_custom_scalar,
+            )
+
+        method_arguments = self._assemble_method_arguments(
+            cls_arg, args, kw_only_args, kw_defaults
         )
+        return_arguments = self._assemble_return_arguments(
+            return_arguments_keys, return_arguments_values
+        )
+
+        return method_arguments, return_arguments
+
+    def _process_argument_name(self, arg_name):
+        return process_name(arg_name, convert_to_snake_case=self.convert_to_snake_case)
+
+    def _accumulate_method_arguments(
+        self, args, kw_only_args, kw_defaults, arg_name, annotation, is_required
+    ):
+        if is_required:
+            args.append(generate_arg(name=arg_name, annotation=annotation))
+        else:
+            kw_only_args.append(generate_arg(name=arg_name, annotation=annotation))
+            kw_defaults.append(generate_constant(value=None))
+
+    def _accumulate_return_arguments(
+        self,
+        return_arguments_keys,
+        return_arguments_values,
+        arg_name,
+        name,
+        final_type,
+        is_required,
+        used_custom_scalar,
+    ):
+        constant_value = f"{final_type.name}!" if is_required else final_type.name
+        return_arg_dict_value = self._generate_return_arg_value(
+            name,
+            used_custom_scalar,
+        )
+
+        return_arguments_keys.append(generate_constant(arg_name))
+        return_arguments_values.append(
+            generate_dict(
+                keys=[generate_constant("type"), generate_constant("value")],
+                values=[generate_constant(constant_value), return_arg_dict_value],
+            )
+        )
+
+    def _generate_return_arg_value(self, name, used_custom_scalar):
+        return_arg_dict_value = generate_name(name)
+
+        if used_custom_scalar:
+            self._used_custom_scalars.append(used_custom_scalar)
+            scalar_data = self.custom_scalars[used_custom_scalar]
+            if scalar_data.serialize_name:
+                return_arg_dict_value = generate_call(
+                    func=generate_name(scalar_data.serialize_name),
+                    args=[generate_name(name)],
+                )
+
+        return return_arg_dict_value
+
+    def _assemble_method_arguments(self, cls_arg, args, kw_only_args, kw_defaults):
         return generate_arguments(
             args=[cls_arg, *args],
             kwonlyargs=kw_only_args,
             kw_defaults=kw_defaults,
         )
 
-    def _generate_kw_args_and_defaults(self, operation_args):
-        kw_only_args = []
-        kw_defaults = []
-        args = []
-        for arg_name, arg_type in operation_args.items():
-            arg_name = process_name(
-                arg_name,
-                convert_to_snake_case=self.convert_to_snake_case,
-            )
-            arg_final_type = get_final_type(arg_type)
-            is_required = isinstance(arg_type.type, GraphQLNonNull)
-            annotation, _ = self._parse_graphql_type_name(
-                arg_final_type,
-                not is_required,
-            )
-            arg = generate_arg(name=arg_name, annotation=annotation)
-            if is_required:
-                args.append(arg)
-            else:
-                kw_only_args.append(arg)
-                kw_defaults.append(generate_constant(value=None))
-        return kw_only_args, kw_defaults, args
-
-    def _generate_return_stmt(self, return_type_name, operation_name, operation_args):
-        arguments_dict = self._generate_arguments_dict(operation_args)
-
-        arguments_keyword = generate_keyword(
+    def _assemble_return_arguments(self, keys, values):
+        return generate_keyword(
             arg="arguments",
             value=generate_dict(
-                keys=arguments_dict.keys(),
-                values=arguments_dict.values(),
+                keys=keys,
+                values=values,
             ),
         )
-
-        return generate_return(
-            value=generate_call(
-                func=generate_name(return_type_name),
-                args=[],
-                keywords=[
-                    generate_keyword(
-                        arg="field_name", value=generate_constant(value=operation_name)
-                    ),
-                    arguments_keyword,
-                ],
-            )
-        )
-
-    def _generate_arguments_dict(self, operation_args):
-        arguments_dict = {}
-        for arg_name, arg_value in operation_args.items():
-            final_type = get_final_type(arg_value)
-            is_required = isinstance(arg_value.type, GraphQLNonNull)
-            constant_value = f"{final_type.name}!" if is_required else final_type.name
-            arguments_dict[generate_constant(arg_name)] = generate_dict(
-                keys=[generate_constant("type"), generate_constant("value")],
-                values=[
-                    generate_constant(constant_value),
-                    self._get_dict_value(arg_name, arg_value),
-                ],
-            )
-        return arguments_dict
-
-    def _get_dict_value(self, name: str, arg_value) -> Union[ast.Name, ast.Call]:
-        name = process_name(
-            name,
-            convert_to_snake_case=self.convert_to_snake_case,
-        )
-        _, used_custom_scalar = self._parse_graphql_type_name(get_final_type(arg_value))
-        if used_custom_scalar:
-            self._used_custom_scalars.append(used_custom_scalar)
-            scalar_data = self.custom_scalars[used_custom_scalar]
-            if scalar_data.serialize_name:
-                return generate_call(
-                    func=generate_name(scalar_data.serialize_name),
-                    args=[generate_name(name)],
-                )
-        return generate_name(name)
 
     def _parse_graphql_type_name(
         self, type_, nullable: bool = True
@@ -284,7 +296,14 @@ class CustomOperationGenerator:
         else:
             return_type_name = "GraphQLField"
             from_ = CUSTOM_FIELDS_TYPING_FILE_PATH.stem
-        return return_type_name, from_
+        self._type_imports.append(
+            generate_import_from(
+                from_=from_,
+                names=[return_type_name],
+                level=1,
+            )
+        )
+        return return_type_name
 
     def _add_custom_scalar_imports(self):
         for custom_scalar_name in self._used_custom_scalars:
