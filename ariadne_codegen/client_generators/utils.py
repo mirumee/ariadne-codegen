@@ -46,6 +46,8 @@ class TypeCollector:
                         stack.extend(subfield_type.types)
                 for interface in current_type.interfaces:
                     stack.append(interface)
+            elif isinstance(current_type, GraphQLUnionType):
+                stack.extend(current_type.types)
 
 
 def get_final_type(type_):

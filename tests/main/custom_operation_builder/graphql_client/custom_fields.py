@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 from . import (
     AdminGraphQLField,
@@ -13,13 +13,15 @@ from .base_operation import GraphQLField
 class AdminFields(GraphQLField):
     id: AdminGraphQLField = AdminGraphQLField("id")
     name: AdminGraphQLField = AdminGraphQLField("name")
-    email: AdminGraphQLField = AdminGraphQLField("email")
     privileges: AdminGraphQLField = AdminGraphQLField("privileges")
+    email: AdminGraphQLField = AdminGraphQLField("email")
     created_at: AdminGraphQLField = AdminGraphQLField("createdAt")
 
     @classmethod
-    def metafield(cls, *, key: Optional[str] = None) -> "AdminGraphQLField":
-        return AdminGraphQLField("metafield", key=key)
+    def metafield(cls, key: str) -> "AdminGraphQLField":
+        return AdminGraphQLField(
+            "metafield", arguments={"key": {"type": "String!", "value": key}}
+        )
 
     def fields(self, *subfields: AdminGraphQLField) -> "AdminFields":
         self._subfields.extend(subfields)
@@ -29,13 +31,15 @@ class AdminFields(GraphQLField):
 class GuestFields(GraphQLField):
     id: GuestGraphQLField = GuestGraphQLField("id")
     name: GuestGraphQLField = GuestGraphQLField("name")
-    email: GuestGraphQLField = GuestGraphQLField("email")
     visit_count: GuestGraphQLField = GuestGraphQLField("visitCount")
+    email: GuestGraphQLField = GuestGraphQLField("email")
     created_at: GuestGraphQLField = GuestGraphQLField("createdAt")
 
     @classmethod
-    def metafield(cls, *, key: Optional[str] = None) -> "GuestGraphQLField":
-        return GuestGraphQLField("metafield", key=key)
+    def metafield(cls, key: str) -> "GuestGraphQLField":
+        return GuestGraphQLField(
+            "metafield", arguments={"key": {"type": "String!", "value": key}}
+        )
 
     def fields(self, *subfields: GuestGraphQLField) -> "GuestFields":
         self._subfields.extend(subfields)
@@ -48,8 +52,10 @@ class PersonInterface(GraphQLField):
     email: PersonGraphQLField = PersonGraphQLField("email")
 
     @classmethod
-    def metafield(cls, *, key: Optional[str] = None) -> "PersonGraphQLField":
-        return PersonGraphQLField("metafield", key=key)
+    def metafield(cls, key: str) -> "PersonGraphQLField":
+        return PersonGraphQLField(
+            "metafield", arguments={"key": {"type": "String!", "value": key}}
+        )
 
     def fields(self, *subfields: PersonGraphQLField) -> "PersonInterface":
         self._subfields.extend(subfields)
@@ -67,7 +73,7 @@ class PostFields(GraphQLField):
 
     @classmethod
     def author(cls) -> "PersonInterface":
-        return PersonInterface("author")
+        return PersonInterface("author", arguments={})
 
     published_at: PostGraphQLField = PostGraphQLField("publishedAt")
 
@@ -81,19 +87,20 @@ class PostFields(GraphQLField):
 class UserFields(GraphQLField):
     id: UserGraphQLField = UserGraphQLField("id")
     name: UserGraphQLField = UserGraphQLField("name")
-    email: UserGraphQLField = UserGraphQLField("email")
     age: UserGraphQLField = UserGraphQLField("age")
+    email: UserGraphQLField = UserGraphQLField("email")
     role: UserGraphQLField = UserGraphQLField("role")
-
-    @classmethod
-    def friends(cls) -> "UserFields":
-        return UserFields("friends")
-
     created_at: UserGraphQLField = UserGraphQLField("createdAt")
 
     @classmethod
-    def metafield(cls, *, key: Optional[str] = None) -> "UserGraphQLField":
-        return UserGraphQLField("metafield", key=key)
+    def friends(cls) -> "UserFields":
+        return UserFields("friends", arguments={})
+
+    @classmethod
+    def metafield(cls, key: str) -> "UserGraphQLField":
+        return UserGraphQLField(
+            "metafield", arguments={"key": {"type": "String!", "value": key}}
+        )
 
     def fields(self, *subfields: Union[UserGraphQLField, "UserFields"]) -> "UserFields":
         self._subfields.extend(subfields)

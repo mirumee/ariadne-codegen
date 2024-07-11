@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional
 
 from .custom_fields import PostFields, UserFields
 from .input_types import AddUserInput, UpdateUserInput
@@ -6,58 +6,65 @@ from .input_types import AddUserInput, UpdateUserInput
 
 class Mutation:
     @classmethod
-    def add_user(cls, *, user_input: Optional[AddUserInput] = None) -> UserFields:
-        return UserFields(field_name="addUser", user_input=user_input)
-
-    @classmethod
-    def update_user(
-        cls,
-        *,
-        user_id: Optional[str] = None,
-        user_input: Optional[UpdateUserInput] = None
-    ) -> UserFields:
+    def add_user(cls, user_input: AddUserInput) -> UserFields:
         return UserFields(
-            field_name="updateUser", user_id=user_id, user_input=user_input
+            field_name="addUser",
+            arguments={"user_input": {"type": "AddUserInput!", "value": user_input}},
         )
 
     @classmethod
-    def delete_user(cls, *, user_id: Optional[str] = None) -> UserFields:
-        return UserFields(field_name="deleteUser", user_id=user_id)
+    def update_user(cls, user_id: str, user_input: UpdateUserInput) -> UserFields:
+        return UserFields(
+            field_name="updateUser",
+            arguments={
+                "user_id": {"type": "ID!", "value": user_id},
+                "user_input": {"type": "UpdateUserInput!", "value": user_input},
+            },
+        )
+
+    @classmethod
+    def delete_user(cls, user_id: str) -> UserFields:
+        return UserFields(
+            field_name="deleteUser",
+            arguments={"user_id": {"type": "ID!", "value": user_id}},
+        )
 
     @classmethod
     def add_post(
-        cls,
-        *,
-        title: Optional[str] = None,
-        content: Optional[str] = None,
-        authorId: Optional[str] = None,
-        publishedAt: Optional[Any] = None
+        cls, title: str, content: str, author_id: str, published_at: str
     ) -> PostFields:
         return PostFields(
             field_name="addPost",
-            title=title,
-            content=content,
-            authorId=authorId,
-            publishedAt=publishedAt,
+            arguments={
+                "title": {"type": "String!", "value": title},
+                "content": {"type": "String!", "value": content},
+                "authorId": {"type": "ID!", "value": author_id},
+                "publishedAt": {"type": "String!", "value": published_at},
+            },
         )
 
     @classmethod
     def update_post(
         cls,
+        post_id: str,
         *,
-        post_id: Optional[str] = None,
         title: Optional[str] = None,
         content: Optional[str] = None,
-        publishedAt: Optional[Any] = None
+        published_at: Optional[str] = None
     ) -> PostFields:
         return PostFields(
             field_name="updatePost",
-            post_id=post_id,
-            title=title,
-            content=content,
-            publishedAt=publishedAt,
+            arguments={
+                "post_id": {"type": "ID!", "value": post_id},
+                "title": {"type": "String", "value": title},
+                "content": {"type": "String", "value": content},
+                "publishedAt": {"type": "String", "value": published_at},
+            },
         )
 
     @classmethod
-    def delete_post(cls, *, post_id: Optional[str] = None) -> PostFields:
-        return PostFields(field_name="deletePost", post_id=post_id)
+    def delete_post(cls, post_id: str) -> PostFields:
+        return PostFields(
+            field_name="deletePost",
+            arguments={"post_id": {"type": "ID!", "value": post_id}},
+        )

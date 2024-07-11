@@ -147,13 +147,16 @@ class CustomOperationGenerator:
         for arg_name, arg_value in operation_args.items():
             final_type = get_final_type(arg_value)
             is_required = isinstance(arg_value.type, GraphQLNonNull)
-            name = self._process_argument_name(arg_name)
+            name = process_name(
+                arg_name,
+                convert_to_snake_case=self.convert_to_snake_case,
+            )
             annotation, used_custom_scalar = self._parse_graphql_type_name(
                 final_type, not is_required
             )
 
             self._accumulate_method_arguments(
-                args, kw_only_args, kw_defaults, arg_name, annotation, is_required
+                args, kw_only_args, kw_defaults, name, annotation, is_required
             )
             self._accumulate_return_arguments(
                 return_arguments_keys,
@@ -174,16 +177,13 @@ class CustomOperationGenerator:
 
         return method_arguments, return_arguments
 
-    def _process_argument_name(self, arg_name):
-        return process_name(arg_name, convert_to_snake_case=self.convert_to_snake_case)
-
     def _accumulate_method_arguments(
-        self, args, kw_only_args, kw_defaults, arg_name, annotation, is_required
+        self, args, kw_only_args, kw_defaults, name, annotation, is_required
     ):
         if is_required:
-            args.append(generate_arg(name=arg_name, annotation=annotation))
+            args.append(generate_arg(name=name, annotation=annotation))
         else:
-            kw_only_args.append(generate_arg(name=arg_name, annotation=annotation))
+            kw_only_args.append(generate_arg(name=name, annotation=annotation))
             kw_defaults.append(generate_constant(value=None))
 
     def _accumulate_return_arguments(

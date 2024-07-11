@@ -1,11 +1,14 @@
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 from graphql import (
     DocumentNode,
+    NamedTypeNode,
     NameNode,
     OperationDefinitionNode,
     OperationType,
     SelectionSetNode,
+    VariableDefinitionNode,
+    VariableNode,
     print_ast,
 )
 
@@ -17,25 +20,73 @@ def gql(q: str) -> str:
     return q
 
 
-class AutoGenClient(AsyncBaseClient):
+class Client(AsyncBaseClient):
     async def execute_custom_operation(
         self, *fields: GraphQLField, operation_type: OperationType, operation_name: str
     ) -> Dict[str, Any]:
-        operation_ast = DocumentNode(
+        variables_types_combined, processed_variables_combined = (
+            self._combine_variables(fields)
+        )
+        variable_definitions = self._build_variable_definitions(
+            variables_types_combined
+        )
+        operation_ast = self._build_operation_ast(
+            fields, operation_type, operation_name, variable_definitions
+        )
+        response = await self.execute(
+            print_ast(operation_ast),
+            variables=processed_variables_combined,
+            operation_name=operation_name,
+        )
+        return self.get_data(response)
+
+    def _combine_variables(
+        self, fields: Tuple[GraphQLField, ...]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        variables_types_combined = {}
+        processed_variables_combined = {}
+        for field in fields:
+            formatted_variables = field.get_formatted_variables()
+            variables_types_combined.update(
+                {k: v["type"] for k, v in formatted_variables.items()}
+            )
+            processed_variables_combined.update(
+                {k: v["value"] for k, v in formatted_variables.items()}
+            )
+        return (variables_types_combined, processed_variables_combined)
+
+    def _build_variable_definitions(
+        self, variables_types_combined: Dict[str, str]
+    ) -> List[VariableDefinitionNode]:
+        return [
+            VariableDefinitionNode(
+                variable=VariableNode(name=NameNode(value=var_name)),
+                type=NamedTypeNode(name=NameNode(value=var_value)),
+            )
+            for var_name, var_value in variables_types_combined.items()
+        ]
+
+    def _build_operation_ast(
+        self,
+        fields: Tuple[GraphQLField, ...],
+        operation_type: OperationType,
+        operation_name: str,
+        variable_definitions: List[VariableDefinitionNode],
+    ) -> DocumentNode:
+        return DocumentNode(
             definitions=[
                 OperationDefinitionNode(
                     operation=operation_type,
                     name=NameNode(value=operation_name),
+                    variable_definitions=variable_definitions,
                     selection_set=SelectionSetNode(
-                        selections=[field.to_ast() for field in fields]
+                        selections=[
+                            field.to_ast(idx) for idx, field in enumerate(fields)
+                        ]
                     ),
                 )
             ]
         )
-        response = await self.execute(
-            print_ast(operation_ast), operation_name=operation_name
-        )
-        return self.get_data(response)
 
     async def query(self, *fields: GraphQLField, operation_name: str) -> Dict[str, Any]:
         return await self.execute_custom_operation(

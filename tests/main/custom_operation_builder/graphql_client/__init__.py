@@ -1,6 +1,6 @@
 from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel, Upload
-from .client import AutoGenClient
+from .client import Client
 from .custom_typing_fields import (
     AdminGraphQLField,
     GuestGraphQLField,
@@ -23,8 +23,8 @@ __all__ = [
     "AddUserInput",
     "AdminGraphQLField",
     "AsyncBaseClient",
-    "AutoGenClient",
     "BaseModel",
+    "Client",
     "GraphQLClientError",
     "GraphQLClientGraphQLError",
     "GraphQLClientGraphQLMultiError",

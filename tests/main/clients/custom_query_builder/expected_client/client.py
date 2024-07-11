@@ -45,9 +45,14 @@ class Client(AsyncBaseClient):
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         variables_types_combined = {}
         processed_variables_combined = {}
-        for idx, field in enumerate(fields):
-            variables_types_combined.update(field.get_variables_types(idx))
-            processed_variables_combined.update(field.get_processed_variables(idx))
+        for field in fields:
+            formatted_variables = field.get_formatted_variables()
+            variables_types_combined.update(
+                {k: v["type"] for k, v in formatted_variables.items()}
+            )
+            processed_variables_combined.update(
+                {k: v["value"] for k, v in formatted_variables.items()}
+            )
         return (variables_types_combined, processed_variables_combined)
 
     def _build_variable_definitions(

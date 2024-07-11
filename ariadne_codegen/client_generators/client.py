@@ -223,17 +223,15 @@ class ClientGenerator:
                 value=generate_dict(),
             ),
             ast.For(
-                target=generate_tuple(
-                    elts=[
-                        generate_name("idx"),
-                        generate_name("field"),
-                    ],
-                ),
-                iter=generate_call(
-                    func=generate_name("enumerate"),
-                    args=[generate_name("fields")],
-                ),
+                target=generate_name("field"),
+                iter=generate_name("fields"),
                 body=[
+                    generate_assign(
+                        targets=["formatted_variables"],
+                        value=generate_call(
+                            func=generate_name("field.get_formatted_variables")
+                        ),
+                    ),
                     generate_expr(
                         value=generate_call(
                             func=generate_attribute(
@@ -241,12 +239,15 @@ class ClientGenerator:
                                 attr="update",
                             ),
                             args=[
-                                generate_call(
-                                    func=generate_attribute(
-                                        value=generate_name("field"),
-                                        attr="get_variables_types",
-                                    ),
-                                    args=[generate_name("idx")],
+                                ast.DictComp(
+                                    key=generate_name("k"),
+                                    value=generate_name('v["type"]'),
+                                    generators=[
+                                        generate_comp(
+                                            target="k, v",
+                                            iter_="formatted_variables.items()",
+                                        )
+                                    ],
                                 )
                             ],
                         )
@@ -258,12 +259,15 @@ class ClientGenerator:
                                 attr="update",
                             ),
                             args=[
-                                generate_call(
-                                    func=generate_attribute(
-                                        value=generate_name("field"),
-                                        attr="get_processed_variables",
-                                    ),
-                                    args=[generate_name("idx")],
+                                ast.DictComp(
+                                    key=generate_name("k"),
+                                    value=generate_name('v["value"]'),
+                                    generators=[
+                                        generate_comp(
+                                            target="k, v",
+                                            iter_="formatted_variables.items()",
+                                        )
+                                    ],
                                 )
                             ],
                         )

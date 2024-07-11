@@ -1,0 +1,98 @@
+enum Role {
+  ADMIN
+  USER
+}
+
+input AddUserInput {
+  name: String!
+  age: Int!
+  email: String!
+  role: Role!
+  createdAt: String!
+}
+
+input UpdateUserInput {
+  name: String
+  age: Int
+  email: String
+  role: Role
+  createdAt: String
+}
+
+interface PersonInterface {
+  id: ID!
+  name: String!
+  email: String!
+  metafield(key: String!): String
+}
+
+type User implements PersonInterface {
+  id: ID!
+  name: String!
+  age: Int
+  email: String!
+  role: Role!
+  createdAt: String
+  friends: [User]
+}
+
+type Admin implements PersonInterface {
+  id: ID!
+  name: String!
+  privileges: [String!]!
+  email: String!
+  createdAt: String
+}
+
+type Guest implements PersonInterface {
+  id: ID!
+  name: String!
+  visitCount: Int
+  email: String!
+  createdAt: String
+}
+
+type Post {
+  id: ID!
+  title: String!
+  content: String!
+  author: PersonInterface
+  publishedAt: String
+}
+
+type Query {
+  hello: String
+  greeting(name: String): String
+  user(user_id: ID!): User
+  users: [User]
+  search(text: String!): [SearchResult]
+  posts: [Post]
+  person(person_id: ID!): PersonInterface
+  people: [PersonInterface]
+}
+
+union SearchResult = User | Admin | Guest
+
+type Mutation {
+  addUser(user_input: AddUserInput!): User
+  updateUser(user_id: ID!, user_input: UpdateUserInput!): User
+  deleteUser(user_id: ID!): User
+  addPost(
+    title: String!
+    content: String!
+    authorId: ID!
+    publishedAt: String!
+  ): Post
+  updatePost(
+    post_id: ID!
+    title: String
+    content: String
+    publishedAt: String
+  ): Post
+  deletePost(post_id: ID!): Post
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}
