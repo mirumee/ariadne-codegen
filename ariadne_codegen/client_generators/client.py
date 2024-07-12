@@ -278,8 +278,9 @@ class ClientGenerator:
                 lineno=1,
             ),
             generate_return(
-                value=generate_tuple(
-                    elts=[
+                value=generate_dict(
+                    keys=[generate_constant("types"), generate_constant("values")],
+                    values=[
                         generate_name("variables_types_combined"),
                         generate_name("processed_variables_combined"),
                     ],
@@ -306,13 +307,10 @@ class ClientGenerator:
         )
 
         returns = generate_subscript(
-            generate_name(TUPLE),
+            generate_name(DICT),
             generate_tuple(
                 [
-                    generate_subscript(
-                        generate_name(DICT),
-                        generate_tuple([generate_name("str"), generate_name("Any")]),
-                    ),
+                    generate_name("str"),
                     generate_subscript(
                         generate_name(DICT),
                         generate_tuple([generate_name("str"), generate_name("Any")]),
@@ -508,8 +506,6 @@ class ClientGenerator:
         )
 
     def create_execute_custom_operation_method(self):
-        variables_types_combined = generate_name("variables_types_combined")
-        processed_variables_combined = generate_name("processed_variables_combined")
         method_body = [
             generate_assign(
                 targets=["selections"],
@@ -521,11 +517,7 @@ class ClientGenerator:
                 ),
             ),
             ast.Assign(
-                targets=[
-                    generate_tuple(
-                        elts=[variables_types_combined, processed_variables_combined],
-                    )
-                ],
+                targets=[generate_name("combined_variables")],
                 value=generate_call(
                     func=generate_attribute(
                         value=generate_name("self"), attr="_combine_variables"
@@ -540,7 +532,7 @@ class ClientGenerator:
                     func=generate_attribute(
                         value=generate_name("self"), attr="_build_variable_definitions"
                     ),
-                    args=[generate_name("variables_types_combined")],
+                    args=[generate_name('combined_variables["types"]')],
                 ),
             ),
             generate_assign(
@@ -574,7 +566,7 @@ class ClientGenerator:
                         keywords=[
                             generate_keyword(
                                 arg="variables",
-                                value=generate_name("processed_variables_combined"),
+                                value=generate_name('combined_variables["values"]'),
                             ),
                             generate_keyword(
                                 arg="operation_name",

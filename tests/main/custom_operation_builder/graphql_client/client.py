@@ -26,25 +26,23 @@ class Client(AsyncBaseClient):
         self, *fields: GraphQLField, operation_type: OperationType, operation_name: str
     ) -> Dict[str, Any]:
         selections = self._build_selection_set(fields)
-        variables_types_combined, processed_variables_combined = (
-            self._combine_variables(fields)
-        )
+        combined_variables = self._combine_variables(fields)
         variable_definitions = self._build_variable_definitions(
-            variables_types_combined
+            combined_variables["types"]
         )
         operation_ast = self._build_operation_ast(
             selections, operation_type, operation_name, variable_definitions
         )
         response = await self.execute(
             print_ast(operation_ast),
-            variables=processed_variables_combined,
+            variables=combined_variables["values"],
             operation_name=operation_name,
         )
         return self.get_data(response)
 
     def _combine_variables(
         self, fields: Tuple[GraphQLField, ...]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    ) -> Dict[str, Dict[str, Any]]:
         variables_types_combined = {}
         processed_variables_combined = {}
         for field in fields:
@@ -55,7 +53,10 @@ class Client(AsyncBaseClient):
             processed_variables_combined.update(
                 {k: v["value"] for k, v in formatted_variables.items()}
             )
-        return (variables_types_combined, processed_variables_combined)
+        return {
+            "types": variables_types_combined,
+            "values": processed_variables_combined,
+        }
 
     def _build_variable_definitions(
         self, variables_types_combined: Dict[str, str]
@@ -86,7 +87,9 @@ class Client(AsyncBaseClient):
             ]
         )
 
-    def _build_selection_set(self, fields: List[GraphQLField]) -> List[SelectionNode]:
+    def _build_selection_set(
+        self, fields: Tuple[GraphQLField, ...]
+    ) -> List[SelectionNode]:
         return [field.to_ast(idx) for idx, field in enumerate(fields)]
 
     async def query(self, *fields: GraphQLField, operation_name: str) -> Dict[str, Any]:

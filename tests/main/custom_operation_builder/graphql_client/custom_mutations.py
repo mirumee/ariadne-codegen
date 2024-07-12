@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .custom_fields import PostFields, UserFields
 from .input_types import AddUserInput, UpdateUserInput
@@ -7,7 +7,9 @@ from .input_types import AddUserInput, UpdateUserInput
 class Mutation:
     @classmethod
     def add_user(cls, user_input: AddUserInput) -> UserFields:
-        arguments = {"user_input": {"type": "AddUserInput!", "value": user_input}}
+        arguments: Dict[str, Dict[str, Any]] = {
+            "user_input": {"type": "AddUserInput!", "value": user_input}
+        }
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -15,7 +17,7 @@ class Mutation:
 
     @classmethod
     def update_user(cls, user_id: str, user_input: UpdateUserInput) -> UserFields:
-        arguments = {
+        arguments: Dict[str, Dict[str, Any]] = {
             "user_id": {"type": "ID!", "value": user_id},
             "user_input": {"type": "UpdateUserInput!", "value": user_input},
         }
@@ -26,7 +28,9 @@ class Mutation:
 
     @classmethod
     def delete_user(cls, user_id: str) -> UserFields:
-        arguments = {"user_id": {"type": "ID!", "value": user_id}}
+        arguments: Dict[str, Dict[str, Any]] = {
+            "user_id": {"type": "ID!", "value": user_id}
+        }
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -36,7 +40,7 @@ class Mutation:
     def add_post(
         cls, title: str, content: str, author_id: str, published_at: str
     ) -> PostFields:
-        arguments = {
+        arguments: Dict[str, Dict[str, Any]] = {
             "title": {"type": "String!", "value": title},
             "content": {"type": "String!", "value": content},
             "authorId": {"type": "ID!", "value": author_id},
@@ -56,7 +60,7 @@ class Mutation:
         content: Optional[str] = None,
         published_at: Optional[str] = None
     ) -> PostFields:
-        arguments = {
+        arguments: Dict[str, Dict[str, Any]] = {
             "post_id": {"type": "ID!", "value": post_id},
             "title": {"type": "String", "value": title},
             "content": {"type": "String", "value": content},
@@ -69,7 +73,9 @@ class Mutation:
 
     @classmethod
     def delete_post(cls, post_id: str) -> PostFields:
-        arguments = {"post_id": {"type": "ID!", "value": post_id}}
+        arguments: Dict[str, Dict[str, Any]] = {
+            "post_id": {"type": "ID!", "value": post_id}
+        }
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }

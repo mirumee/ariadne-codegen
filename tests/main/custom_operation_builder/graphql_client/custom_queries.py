@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from .custom_fields import PersonInterfaceInterface, PostFields, UserFields
 from .custom_typing_fields import GraphQLField, SearchResultUnion
@@ -7,7 +7,7 @@ from .custom_typing_fields import GraphQLField, SearchResultUnion
 class Query:
     @classmethod
     def hello(cls) -> GraphQLField:
-        arguments = {}
+        arguments: Dict[str, Dict[str, Any]] = {}
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -15,7 +15,9 @@ class Query:
 
     @classmethod
     def greeting(cls, *, name: Optional[str] = None) -> GraphQLField:
-        arguments = {"name": {"type": "String", "value": name}}
+        arguments: Dict[str, Dict[str, Any]] = {
+            "name": {"type": "String", "value": name}
+        }
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -23,7 +25,9 @@ class Query:
 
     @classmethod
     def user(cls, user_id: str) -> UserFields:
-        arguments = {"user_id": {"type": "ID!", "value": user_id}}
+        arguments: Dict[str, Dict[str, Any]] = {
+            "user_id": {"type": "ID!", "value": user_id}
+        }
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -31,7 +35,7 @@ class Query:
 
     @classmethod
     def users(cls) -> UserFields:
-        arguments = {}
+        arguments: Dict[str, Dict[str, Any]] = {}
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -39,7 +43,9 @@ class Query:
 
     @classmethod
     def search(cls, text: str) -> SearchResultUnion:
-        arguments = {"text": {"type": "String!", "value": text}}
+        arguments: Dict[str, Dict[str, Any]] = {
+            "text": {"type": "String!", "value": text}
+        }
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -47,7 +53,7 @@ class Query:
 
     @classmethod
     def posts(cls) -> PostFields:
-        arguments = {}
+        arguments: Dict[str, Dict[str, Any]] = {}
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -55,7 +61,9 @@ class Query:
 
     @classmethod
     def person(cls, person_id: str) -> PersonInterfaceInterface:
-        arguments = {"person_id": {"type": "ID!", "value": person_id}}
+        arguments: Dict[str, Dict[str, Any]] = {
+            "person_id": {"type": "ID!", "value": person_id}
+        }
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -65,7 +73,7 @@ class Query:
 
     @classmethod
     def people(cls) -> PersonInterfaceInterface:
-        arguments = {}
+        arguments: Dict[str, Dict[str, Any]] = {}
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
