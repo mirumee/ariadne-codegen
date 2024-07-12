@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Union
 
 from . import (
     AdminGraphQLField,
