@@ -13,11 +13,14 @@ from graphql import (
 )
 
 from ..codegen import (
+    generate_ann_assign,
     generate_annotation_name,
     generate_arg,
     generate_arguments,
+    generate_assign,
     generate_call,
     generate_class_def,
+    generate_comp,
     generate_constant,
     generate_dict,
     generate_import_from,
@@ -26,6 +29,8 @@ from ..codegen import (
     generate_module,
     generate_name,
     generate_return,
+    generate_subscript,
+    generate_tuple,
 )
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
@@ -36,6 +41,7 @@ from .constants import (
     BASE_MODEL_FILE_PATH,
     CUSTOM_FIELDS_FILE_PATH,
     CUSTOM_FIELDS_TYPING_FILE_PATH,
+    DICT,
     INPUT_SCALARS_MAP,
     OPTIONAL,
     TYPING_MODULE,
@@ -69,7 +75,7 @@ class CustomOperationGenerator:
 
         self._imports: List[ast.ImportFrom] = []
         self._type_imports: List[ast.ImportFrom] = []
-        self._add_import(generate_import_from([OPTIONAL, ANY], TYPING_MODULE))
+        self._add_import(generate_import_from([OPTIONAL, ANY, DICT], TYPING_MODULE))
 
         self._class_def = generate_class_def(name=name, base_names=[])
 
@@ -114,7 +120,11 @@ class CustomOperationGenerator:
         operation_args,
         final_type,
     ) -> ast.FunctionDef:
-        method_arguments, return_arguments = self._generate_arguments(operation_args)
+        (
+            method_arguments,
+            return_arguments_keys,
+            return_arguments_values,
+        ) = self._generate_arguments(operation_args)
         return_type_name = self._get_return_type_and_from(final_type)
 
         return generate_method_definition(
@@ -122,6 +132,52 @@ class CustomOperationGenerator:
             arguments=method_arguments,
             return_type=generate_name(return_type_name),
             body=[
+                generate_ann_assign(
+                    "arguments",
+                    generate_subscript(
+                        generate_name(DICT),
+                        generate_tuple(
+                            [
+                                generate_name("str"),
+                                generate_subscript(
+                                    generate_name(DICT),
+                                    generate_tuple(
+                                        [
+                                            generate_name("str"),
+                                            generate_name(ANY),
+                                        ]
+                                    ),
+                                ),
+                            ]
+                        ),
+                    ),
+                    generate_dict(return_arguments_keys, return_arguments_values),
+                ),
+                generate_assign(
+                    ["cleared_arguments"],
+                    ast.DictComp(
+                        key=generate_name("key"),
+                        value=generate_name("value"),
+                        generators=[
+                            generate_comp(
+                                target="key, value",
+                                iter_="arguments.items()",
+                                ifs=[
+                                    ast.Compare(
+                                        left=generate_subscript(
+                                            value=generate_name("value"),
+                                            slice_=ast.Index(
+                                                value=generate_constant("value"),
+                                            ),  # type: ignore
+                                        ),
+                                        ops=[ast.IsNot()],
+                                        comparators=[generate_constant(None)],
+                                    )
+                                ],
+                            )
+                        ],
+                    ),
+                ),
                 generate_return(
                     value=generate_call(
                         func=generate_name(return_type_name),
@@ -131,10 +187,13 @@ class CustomOperationGenerator:
                                 arg="field_name",
                                 value=generate_constant(value=operation_name),
                             ),
-                            return_arguments,
+                            generate_keyword(
+                                arg="arguments",
+                                value=generate_name("cleared_arguments"),
+                            ),
                         ],
                     )
-                )
+                ),
             ],
             decorator_list=[generate_name("classmethod")],
         )
@@ -171,11 +230,8 @@ class CustomOperationGenerator:
         method_arguments = self._assemble_method_arguments(
             cls_arg, args, kw_only_args, kw_defaults
         )
-        return_arguments = self._assemble_return_arguments(
-            return_arguments_keys, return_arguments_values
-        )
 
-        return method_arguments, return_arguments
+        return method_arguments, return_arguments_keys, return_arguments_values
 
     def _accumulate_method_arguments(
         self, args, kw_only_args, kw_defaults, name, annotation, is_required
@@ -229,15 +285,6 @@ class CustomOperationGenerator:
             args=[cls_arg, *args],
             kwonlyargs=kw_only_args,
             kw_defaults=kw_defaults,
-        )
-
-    def _assemble_return_arguments(self, keys, values):
-        return generate_keyword(
-            arg="arguments",
-            value=generate_dict(
-                keys=keys,
-                values=values,
-            ),
         )
 
     def _parse_graphql_type_name(

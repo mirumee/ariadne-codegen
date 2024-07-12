@@ -50,6 +50,7 @@ from .constants import (
     OPERATION_TYPE,
     OPTIONAL,
     PRINT_AST,
+    SELECTION_NODE,
     SELECTION_SET_NODE,
     TUPLE,
     TYPING_MODULE,
@@ -457,23 +458,7 @@ class ClientGenerator:
                                         keywords=[
                                             generate_keyword(
                                                 arg="selections",
-                                                value=generate_list_comp(
-                                                    elt=generate_call(
-                                                        func=generate_attribute(
-                                                            value=generate_name(
-                                                                "field",
-                                                            ),
-                                                            attr="to_ast",
-                                                        ),
-                                                        args=[generate_name("idx")],
-                                                    ),
-                                                    generators=[
-                                                        generate_comp(
-                                                            target="idx, field",
-                                                            iter_="enumerate(fields)",
-                                                        )
-                                                    ],
-                                                ),
+                                                value=generate_name("selections"),
                                             )
                                         ],
                                     ),
@@ -498,15 +483,10 @@ class ClientGenerator:
                 args=[
                     generate_arg("self"),
                     generate_arg(
-                        "fields",
+                        "selections",
                         annotation=generate_subscript(
-                            generate_name(TUPLE),
-                            generate_tuple(
-                                [
-                                    generate_name("GraphQLField"),
-                                    generate_name("..."),
-                                ]
-                            ),
+                            generate_name(LIST),
+                            generate_name(SELECTION_NODE),
                         ),
                     ),
                     generate_arg(
@@ -531,6 +511,15 @@ class ClientGenerator:
         variables_types_combined = generate_name("variables_types_combined")
         processed_variables_combined = generate_name("processed_variables_combined")
         method_body = [
+            generate_assign(
+                targets=["selections"],
+                value=generate_call(
+                    func=generate_attribute(
+                        value=generate_name("self"), attr="_build_selection_set"
+                    ),
+                    args=[generate_name("fields")],
+                ),
+            ),
             ast.Assign(
                 targets=[
                     generate_tuple(
@@ -561,7 +550,7 @@ class ClientGenerator:
                         value=generate_name("self"), attr="_build_operation_ast"
                     ),
                     args=[
-                        generate_name("fields"),
+                        generate_name("selections"),
                         generate_name("operation_type"),
                         generate_name("operation_name"),
                         generate_name("variable_definitions"),
@@ -627,6 +616,53 @@ class ClientGenerator:
             ),
         )
 
+    def create_build_selection_set(self):
+        return generate_method_definition(
+            name="_build_selection_set",
+            arguments=generate_arguments(
+                args=[
+                    generate_arg("self"),
+                    generate_arg(
+                        "fields",
+                        annotation=generate_subscript(
+                            generate_name("Tuple"),
+                            generate_tuple(
+                                [
+                                    generate_name("GraphQLField"),
+                                    generate_name("..."),
+                                ]
+                            ),
+                        ),
+                    ),
+                ]
+            ),
+            body=[
+                generate_return(
+                    value=generate_list_comp(
+                        elt=generate_call(
+                            func=generate_attribute(
+                                value=generate_name(
+                                    "field",
+                                ),
+                                attr="to_ast",
+                            ),
+                            args=[generate_name("idx")],
+                        ),
+                        generators=[
+                            generate_comp(
+                                target="idx, field",
+                                iter_="enumerate(fields)",
+                            )
+                        ],
+                    ),
+                ),
+            ],
+            return_type=generate_subscript(
+                generate_name(LIST),
+                generate_name(SELECTION_NODE),
+            ),
+        )
+
     def add_execute_custom_operation_method(self):
         self._add_import(
             generate_import_from(
@@ -639,6 +675,7 @@ class ClientGenerator:
                     VARIABLE_DEFINITION_NODE,
                     VARIABLE_NODE,
                     NAMED_TYPE_NODE,
+                    SELECTION_NODE,
                 ],
                 GRAPHQL_MODULE,
             )
@@ -654,6 +691,7 @@ class ClientGenerator:
         self._class_def.body.append(self.create_combine_variables_method())
         self._class_def.body.append(self.create_build_variable_definitions_method())
         self._class_def.body.append(self.create_build_operation_ast_method())
+        self._class_def.body.append(self.create_build_selection_set())
 
     def create_custom_operation_method(self, name, operation_type):
         self._add_import(

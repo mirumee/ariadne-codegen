@@ -1,7 +1,7 @@
 from .base_operation import GraphQLField
 
 
-class PersonGraphQLField(GraphQLField):
+class PersonInterfaceGraphQLField(GraphQLField):
     pass
 
 

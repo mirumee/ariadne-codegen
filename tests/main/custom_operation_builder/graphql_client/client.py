@@ -6,6 +6,7 @@ from graphql import (
     NameNode,
     OperationDefinitionNode,
     OperationType,
+    SelectionNode,
     SelectionSetNode,
     VariableDefinitionNode,
     VariableNode,
@@ -24,6 +25,7 @@ class Client(AsyncBaseClient):
     async def execute_custom_operation(
         self, *fields: GraphQLField, operation_type: OperationType, operation_name: str
     ) -> Dict[str, Any]:
+        selections = self._build_selection_set(fields)
         variables_types_combined, processed_variables_combined = (
             self._combine_variables(fields)
         )
@@ -31,7 +33,7 @@ class Client(AsyncBaseClient):
             variables_types_combined
         )
         operation_ast = self._build_operation_ast(
-            fields, operation_type, operation_name, variable_definitions
+            selections, operation_type, operation_name, variable_definitions
         )
         response = await self.execute(
             print_ast(operation_ast),
@@ -68,7 +70,7 @@ class Client(AsyncBaseClient):
 
     def _build_operation_ast(
         self,
-        fields: Tuple[GraphQLField, ...],
+        selections: List[SelectionNode],
         operation_type: OperationType,
         operation_name: str,
         variable_definitions: List[VariableDefinitionNode],
@@ -79,14 +81,13 @@ class Client(AsyncBaseClient):
                     operation=operation_type,
                     name=NameNode(value=operation_name),
                     variable_definitions=variable_definitions,
-                    selection_set=SelectionSetNode(
-                        selections=[
-                            field.to_ast(idx) for idx, field in enumerate(fields)
-                        ]
-                    ),
+                    selection_set=SelectionSetNode(selections=selections),
                 )
             ]
         )
+
+    def _build_selection_set(self, fields: List[GraphQLField]) -> List[SelectionNode]:
+        return [field.to_ast(idx) for idx, field in enumerate(fields)]
 
     async def query(self, *fields: GraphQLField, operation_name: str) -> Dict[str, Any]:
         return await self.execute_custom_operation(

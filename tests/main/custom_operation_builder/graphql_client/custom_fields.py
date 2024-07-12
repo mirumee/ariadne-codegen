@@ -3,7 +3,7 @@ from typing import Union
 from . import (
     AdminGraphQLField,
     GuestGraphQLField,
-    PersonGraphQLField,
+    PersonInterfaceGraphQLField,
     PostGraphQLField,
     UserGraphQLField,
 )
@@ -46,22 +46,26 @@ class GuestFields(GraphQLField):
         return self
 
 
-class PersonInterface(GraphQLField):
-    id: PersonGraphQLField = PersonGraphQLField("id")
-    name: PersonGraphQLField = PersonGraphQLField("name")
-    email: PersonGraphQLField = PersonGraphQLField("email")
+class PersonInterfaceInterface(GraphQLField):
+    id: PersonInterfaceGraphQLField = PersonInterfaceGraphQLField("id")
+    name: PersonInterfaceGraphQLField = PersonInterfaceGraphQLField("name")
+    email: PersonInterfaceGraphQLField = PersonInterfaceGraphQLField("email")
 
     @classmethod
-    def metafield(cls, key: str) -> "PersonGraphQLField":
-        return PersonGraphQLField(
+    def metafield(cls, key: str) -> "PersonInterfaceGraphQLField":
+        return PersonInterfaceGraphQLField(
             "metafield", arguments={"key": {"type": "String!", "value": key}}
         )
 
-    def fields(self, *subfields: PersonGraphQLField) -> "PersonInterface":
+    def fields(
+        self, *subfields: PersonInterfaceGraphQLField
+    ) -> "PersonInterfaceInterface":
         self._subfields.extend(subfields)
         return self
 
-    def on(self, type_name: str, *subfields: GraphQLField) -> "PersonInterface":
+    def on(
+        self, type_name: str, *subfields: GraphQLField
+    ) -> "PersonInterfaceInterface":
         self._inline_fragments[type_name] = subfields
         return self
 
@@ -72,13 +76,13 @@ class PostFields(GraphQLField):
     content: PostGraphQLField = PostGraphQLField("content")
 
     @classmethod
-    def author(cls) -> "PersonInterface":
-        return PersonInterface("author", arguments={})
+    def author(cls) -> "PersonInterfaceInterface":
+        return PersonInterfaceInterface("author", arguments={})
 
     published_at: PostGraphQLField = PostGraphQLField("publishedAt")
 
     def fields(
-        self, *subfields: Union[PostGraphQLField, "PersonInterface"]
+        self, *subfields: Union[PostGraphQLField, "PersonInterfaceInterface"]
     ) -> "PostFields":
         self._subfields.extend(subfields)
         return self

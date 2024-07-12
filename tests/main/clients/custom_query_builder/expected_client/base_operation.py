@@ -29,7 +29,7 @@ class GraphQLField:
     ) -> None:
         self._field_name = field_name
         self._variables = arguments or {}
-        self._formatted_variables: Dict[str, Dict[str, Any]] = {}
+        self.formatted_variables: Dict[str, Dict[str, Any]] = {}
         self._subfields: List[GraphQLField] = []
         self._alias: Optional[str] = None
         self._inline_fragments: Dict[str, Tuple[GraphQLField, ...]] = {}
@@ -69,7 +69,7 @@ class GraphQLField:
     def _format_variable_name(
         self, idx: int, var_name: str, used_names: Set[str]
     ) -> str:
-        base_name = f"{idx}_{var_name}"
+        base_name = f"{var_name}_{idx}"
         unique_name = base_name
         counter = 1
         while unique_name in used_names:
@@ -79,10 +79,10 @@ class GraphQLField:
         return unique_name
 
     def _collect_all_variables(self, idx: int, used_names: Set[str]) -> None:
-        self._formatted_variables = {}
+        self.formatted_variables = {}
         for k, v in self._variables.items():
             unique_name = self._format_variable_name(idx, k, used_names)
-            self._formatted_variables[unique_name] = {
+            self.formatted_variables[unique_name] = {
                 "name": k,
                 "type": v["type"],
                 "value": v["value"],
@@ -94,7 +94,7 @@ class GraphQLField:
         self._collect_all_variables(idx, used_names)
         formatted_args = [
             GraphQLArgument(v["name"], k).to_ast()
-            for k, v in self._formatted_variables.items()
+            for k, v in self.formatted_variables.items()
         ]
         return FieldNode(
             name=NameNode(value=self._build_field_name()),
@@ -107,12 +107,12 @@ class GraphQLField:
         )
 
     def get_formatted_variables(self) -> Dict[str, Dict[str, Any]]:
-        formatted_variables = self._formatted_variables
+        formatted_variables = self.formatted_variables
         for subfield in self._subfields:
             subfield.get_formatted_variables()
-            self._formatted_variables.update(subfield._formatted_variables)
+            self.formatted_variables.update(subfield.formatted_variables)
         for subfields in self._inline_fragments.values():
             for subfield in subfields:
                 subfield.get_formatted_variables()
-                self._formatted_variables.update(subfield._formatted_variables)
+                self.formatted_variables.update(subfield.formatted_variables)
         return formatted_variables

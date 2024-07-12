@@ -4,7 +4,7 @@ from .client import Client
 from .custom_typing_fields import (
     AdminGraphQLField,
     GuestGraphQLField,
-    PersonGraphQLField,
+    PersonInterfaceGraphQLField,
     PostGraphQLField,
     SearchResultUnion,
     UserGraphQLField,
@@ -31,7 +31,7 @@ __all__ = [
     "GraphQLClientHttpError",
     "GraphQLClientInvalidResponseError",
     "GuestGraphQLField",
-    "PersonGraphQLField",
+    "PersonInterfaceGraphQLField",
     "PostGraphQLField",
     "Role",
     "SearchResultUnion",

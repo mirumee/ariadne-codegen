@@ -1,47 +1,74 @@
 from typing import Optional
 
-from .custom_fields import PersonInterface, PostFields, UserFields
+from .custom_fields import PersonInterfaceInterface, PostFields, UserFields
 from .custom_typing_fields import GraphQLField, SearchResultUnion
 
 
 class Query:
     @classmethod
     def hello(cls) -> GraphQLField:
-        return GraphQLField(field_name="hello", arguments={})
+        arguments = {}
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return GraphQLField(field_name="hello", arguments=cleared_arguments)
 
     @classmethod
     def greeting(cls, *, name: Optional[str] = None) -> GraphQLField:
-        return GraphQLField(
-            field_name="greeting", arguments={"name": {"type": "String", "value": name}}
-        )
+        arguments = {"name": {"type": "String", "value": name}}
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return GraphQLField(field_name="greeting", arguments=cleared_arguments)
 
     @classmethod
     def user(cls, user_id: str) -> UserFields:
-        return UserFields(
-            field_name="user", arguments={"user_id": {"type": "ID!", "value": user_id}}
-        )
+        arguments = {"user_id": {"type": "ID!", "value": user_id}}
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return UserFields(field_name="user", arguments=cleared_arguments)
 
     @classmethod
     def users(cls) -> UserFields:
-        return UserFields(field_name="users", arguments={})
+        arguments = {}
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return UserFields(field_name="users", arguments=cleared_arguments)
 
     @classmethod
     def search(cls, text: str) -> SearchResultUnion:
-        return SearchResultUnion(
-            field_name="search", arguments={"text": {"type": "String!", "value": text}}
-        )
+        arguments = {"text": {"type": "String!", "value": text}}
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return SearchResultUnion(field_name="search", arguments=cleared_arguments)
 
     @classmethod
     def posts(cls) -> PostFields:
-        return PostFields(field_name="posts", arguments={})
+        arguments = {}
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return PostFields(field_name="posts", arguments=cleared_arguments)
 
     @classmethod
-    def person(cls, person_id: str) -> PersonInterface:
-        return PersonInterface(
-            field_name="person",
-            arguments={"person_id": {"type": "ID!", "value": person_id}},
+    def person(cls, person_id: str) -> PersonInterfaceInterface:
+        arguments = {"person_id": {"type": "ID!", "value": person_id}}
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return PersonInterfaceInterface(
+            field_name="person", arguments=cleared_arguments
         )
 
     @classmethod
-    def people(cls) -> PersonInterface:
-        return PersonInterface(field_name="people", arguments={})
+    def people(cls) -> PersonInterfaceInterface:
+        arguments = {}
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return PersonInterfaceInterface(
+            field_name="people", arguments=cleared_arguments
+        )

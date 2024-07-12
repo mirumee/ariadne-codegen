@@ -3,7 +3,7 @@ from graphql import print_ast
 from .graphql_client.custom_fields import (
     AdminFields,
     GuestFields,
-    PersonInterface,
+    PersonInterfaceInterface,
     PostFields,
     UserFields,
 )
@@ -21,7 +21,7 @@ def test_simple_hello():
 
 def test_greeting_with_name():
     built_query = print_ast(Query.greeting(name="Alice").to_ast(0))
-    expected_query = "greeting(name: $0_name)"
+    expected_query = "greeting(name: $name_0)"
     assert built_query == expected_query
 
 
@@ -36,7 +36,7 @@ def test_user_by_id():
         )
         .to_ast(0)
     )
-    expected_query = "user(user_id: $0_user_id) {\n  id\n  name\n  age\n  email\n}"
+    expected_query = "user(user_id: $user_id_0) {\n  id\n  name\n  age\n  email\n}"
     assert built_query == expected_query
 
 
@@ -72,7 +72,7 @@ def test_user_with_friends():
         .to_ast(0)
     )
     expected_query = (
-        "user(user_id: $0_user_id) {\n"
+        "user(user_id: $user_id_0) {\n"
         "  id\n"
         "  name\n"
         "  age\n"
@@ -114,7 +114,7 @@ def test_search_example():
         .to_ast(0)
     )
     expected_query = (
-        "search(text: $0_text) {\n"
+        "search(text: $text_0) {\n"
         "  ... on User {\n"
         "    id\n"
         "    name\n"
@@ -146,7 +146,9 @@ def test_posts_with_authors():
             PostFields.title,
             PostFields.content,
             PostFields.author().fields(
-                PersonInterface.id, PersonInterface.name, PersonInterface.email
+                PersonInterfaceInterface.id,
+                PersonInterfaceInterface.name,
+                PersonInterfaceInterface.email,
             ),
             PostFields.published_at,
         )
@@ -171,13 +173,17 @@ def test_posts_with_authors():
 def test_get_person():
     built_query = print_ast(
         Query.person(person_id="1")
-        .fields(PersonInterface.id, PersonInterface.name, PersonInterface.email)
+        .fields(
+            PersonInterfaceInterface.id,
+            PersonInterfaceInterface.name,
+            PersonInterfaceInterface.email,
+        )
         .on("User", UserFields.age, UserFields.role)
         .on("Admin", AdminFields.privileges)
         .to_ast(0)
     )
     expected_query = (
-        "person(person_id: $0_person_id) {\n"
+        "person(person_id: $person_id_0) {\n"
         "  id\n"
         "  name\n"
         "  email\n"
@@ -196,7 +202,11 @@ def test_get_person():
 def test_get_people():
     built_query = print_ast(
         Query.people()
-        .fields(PersonInterface.id, PersonInterface.name, PersonInterface.email)
+        .fields(
+            PersonInterfaceInterface.id,
+            PersonInterfaceInterface.name,
+            PersonInterfaceInterface.email,
+        )
         .on("User", UserFields.age, UserFields.role)
         .on("Admin", AdminFields.privileges)
         .to_ast(0)
@@ -238,7 +248,7 @@ def test_add_user_mutation():
     built_mutation = print_ast(mutation.to_ast(0))
     expected_mutation = (
         "addUser("
-        "user_input: $0_user_input"
+        "user_input: $user_input_0"
         ") {\n"
         "  id\n"
         "  name\n"
@@ -250,7 +260,7 @@ def test_add_user_mutation():
     )
     assert built_mutation == expected_mutation
     assert mutation.get_formatted_variables() == {
-        "0_user_input": {
+        "user_input_0": {
             "name": "user_input",
             "type": "AddUserInput!",
             "value": AddUserInput(
@@ -288,8 +298,8 @@ def test_update_user_mutation():
     )
     expected_mutation = (
         "updateUser("
-        "user_id: $0_user_id, "
-        "user_input: $0_user_input"
+        "user_id: $user_id_0, "
+        "user_input: $user_input_0"
         ") {\n"
         "  id\n"
         "  name\n"
@@ -311,7 +321,7 @@ def test_delete_user_mutation():
         )
         .to_ast(0)
     )
-    expected_mutation = "deleteUser(user_id: $0_user_id) {\n  id\n  name\n}"
+    expected_mutation = "deleteUser(user_id: $user_id_0) {\n  id\n  name\n}"
     assert built_mutation == expected_mutation
 
 
@@ -327,17 +337,20 @@ def test_add_post_mutation():
             PostFields.id,
             PostFields.title,
             PostFields.content,
-            PostFields.author().fields(PersonInterface.id, PersonInterface.name),
+            PostFields.author().fields(
+                PersonInterfaceInterface.id,
+                PersonInterfaceInterface.name,
+            ),
             PostFields.published_at,
         )
         .to_ast(0)
     )
     expected_mutation = (
         "addPost(\n"
-        "  title: $0_title\n"
-        "  content: $0_content\n"
-        "  authorId: $0_authorId\n"
-        "  publishedAt: $0_publishedAt\n"
+        "  title: $title_0\n"
+        "  content: $content_0\n"
+        "  authorId: $authorId_0\n"
+        "  publishedAt: $publishedAt_0\n"
         ") {\n"
         "  id\n"
         "  title\n"
@@ -370,10 +383,10 @@ def test_update_post_mutation():
     )
     expected_mutation = (
         "updatePost(\n"
-        "  post_id: $0_post_id\n"
-        "  title: $0_title\n"
-        "  content: $0_content\n"
-        "  publishedAt: $0_publishedAt\n"
+        "  post_id: $post_id_0\n"
+        "  title: $title_0\n"
+        "  content: $content_0\n"
+        "  publishedAt: $publishedAt_0\n"
         ") {\n"
         "  id\n"
         "  title\n"
@@ -393,7 +406,7 @@ def test_delete_post_mutation():
         )
         .to_ast(0)
     )
-    expected_mutation = "deletePost(post_id: $0_post_id) {\n  id\n  title\n}"
+    expected_mutation = "deletePost(post_id: $post_id_0) {\n  id\n  title\n}"
     assert built_mutation == expected_mutation
 
 
@@ -401,7 +414,7 @@ def test_user_specific_fields():
     built_query = print_ast(
         Query.user(user_id="1").fields(UserFields.id, UserFields.name).to_ast(0)
     )
-    expected_query = "user(user_id: $0_user_id) {\n  id\n  name\n}"
+    expected_query = "user(user_id: $user_id_0) {\n  id\n  name\n}"
     assert built_query == expected_query
 
 
@@ -417,7 +430,7 @@ def test_user_with_friends_specific_fields():
         .to_ast(0)
     )
     expected_query = (
-        "user(user_id: $0_user_id) {\n"
+        "user(user_id: $user_id_0) {\n"
         "  id\n"
         "  name\n"
         "  friends {\n"
@@ -434,11 +447,11 @@ def test_people_with_metadata():
     query = (
         Query.people()
         .fields(
-            PersonInterface.id,
-            PersonInterface.name,
-            PersonInterface.email,
-            PersonInterface.metafield(key="bio"),
-            PersonInterface.metafield(key="ots"),
+            PersonInterfaceInterface.id,
+            PersonInterfaceInterface.name,
+            PersonInterfaceInterface.email,
+            PersonInterfaceInterface.metafield(key="bio"),
+            PersonInterfaceInterface.metafield(key="ots"),
         )
         .on("User", UserFields.age, UserFields.role)
     )
@@ -448,8 +461,8 @@ def test_people_with_metadata():
         "  id\n"
         "  name\n"
         "  email\n"
-        "  metafield(key: $0_key)\n"
-        "  metafield(key: $0_key_1)\n"
+        "  metafield(key: $key_0)\n"
+        "  metafield(key: $key_0_1)\n"
         "  ... on User {\n"
         "    age\n"
         "    role\n"

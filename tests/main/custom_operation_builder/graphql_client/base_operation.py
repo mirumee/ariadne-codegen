@@ -69,7 +69,7 @@ class GraphQLField:
     def _format_variable_name(
         self, idx: int, var_name: str, used_names: Set[str]
     ) -> str:
-        base_name = f"{idx}_{var_name}"
+        base_name = f"{var_name}_{idx}"
         unique_name = base_name
         counter = 1
         while unique_name in used_names:
