@@ -26,21 +26,11 @@ class Query:
 
     @classmethod
     def app(cls) -> AppFields:
-        arguments: Dict[str, Dict[str, Any]] = {}
-        cleared_arguments = {
-            key: value for key, value in arguments.items() if value["value"] is not None
-        }
-        return AppFields(field_name="app", arguments=cleared_arguments)
+        return AppFields(field_name="app")
 
     @classmethod
     def product_types(cls) -> ProductTypeCountableConnectionFields:
-        arguments: Dict[str, Dict[str, Any]] = {}
-        cleared_arguments = {
-            key: value for key, value in arguments.items() if value["value"] is not None
-        }
-        return ProductTypeCountableConnectionFields(
-            field_name="productTypes", arguments=cleared_arguments
-        )
+        return ProductTypeCountableConnectionFields(field_name="productTypes")
 
     @classmethod
     def translations(

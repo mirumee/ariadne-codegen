@@ -34,6 +34,7 @@ type User implements PersonInterface {
   role: Role!
   createdAt: String
   friends: [User]
+  metafield(key: String!): String
 }
 
 type Admin implements PersonInterface {
@@ -42,6 +43,8 @@ type Admin implements PersonInterface {
   privileges: [String!]!
   email: String!
   createdAt: String
+  metafield(key: String!): String
+  customField(key: String): String
 }
 
 type Guest implements PersonInterface {
@@ -50,6 +53,7 @@ type Guest implements PersonInterface {
   visitCount: Int
   email: String!
   createdAt: String
+  metafield(key: String!): String
 }
 
 type Post {

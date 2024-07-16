@@ -7,11 +7,7 @@ from .custom_typing_fields import GraphQLField, SearchResultUnion
 class Query:
     @classmethod
     def hello(cls) -> GraphQLField:
-        arguments: Dict[str, Dict[str, Any]] = {}
-        cleared_arguments = {
-            key: value for key, value in arguments.items() if value["value"] is not None
-        }
-        return GraphQLField(field_name="hello", arguments=cleared_arguments)
+        return GraphQLField(field_name="hello")
 
     @classmethod
     def greeting(cls, *, name: Optional[str] = None) -> GraphQLField:
@@ -35,11 +31,7 @@ class Query:
 
     @classmethod
     def users(cls) -> UserFields:
-        arguments: Dict[str, Dict[str, Any]] = {}
-        cleared_arguments = {
-            key: value for key, value in arguments.items() if value["value"] is not None
-        }
-        return UserFields(field_name="users", arguments=cleared_arguments)
+        return UserFields(field_name="users")
 
     @classmethod
     def search(cls, text: str) -> SearchResultUnion:
@@ -53,11 +45,7 @@ class Query:
 
     @classmethod
     def posts(cls) -> PostFields:
-        arguments: Dict[str, Dict[str, Any]] = {}
-        cleared_arguments = {
-            key: value for key, value in arguments.items() if value["value"] is not None
-        }
-        return PostFields(field_name="posts", arguments=cleared_arguments)
+        return PostFields(field_name="posts")
 
     @classmethod
     def person(cls, person_id: str) -> PersonInterfaceInterface:
@@ -73,10 +61,4 @@ class Query:
 
     @classmethod
     def people(cls) -> PersonInterfaceInterface:
-        arguments: Dict[str, Dict[str, Any]] = {}
-        cleared_arguments = {
-            key: value for key, value in arguments.items() if value["value"] is not None
-        }
-        return PersonInterfaceInterface(
-            field_name="people", arguments=cleared_arguments
-        )
+        return PersonInterfaceInterface(field_name="people")

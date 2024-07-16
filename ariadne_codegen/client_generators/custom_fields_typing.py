@@ -8,7 +8,7 @@ from graphql import (
     GraphQLUnionType,
 )
 
-from ariadne_codegen.client_generators.utils import get_final_type
+from ariadne_codegen.client_generators.custom_generator_utils import get_final_type
 
 from ..codegen import (
     generate_arg,
@@ -21,18 +21,19 @@ from ..codegen import (
     generate_return,
     generate_subscript,
 )
-from .constants import BASE_OPERATION_FILE_PATH, OPERATION_TYPES
+from .constants import (
+    BASE_OPERATION_FILE_PATH,
+    GRAPHQL_BASE_FIELD_CLASS,
+    OPERATION_TYPES,
+)
 
 
 class CustomFieldsTypingGenerator:
-    def __init__(
-        self,
-        schema: GraphQLSchema,
-    ) -> None:
+    def __init__(self, schema: GraphQLSchema) -> None:
         self.schema = schema
         self.graphql_field_import = ast.ImportFrom(
             module=BASE_OPERATION_FILE_PATH.stem,
-            names=[ast.alias("GraphQLField")],
+            names=[ast.alias(GRAPHQL_BASE_FIELD_CLASS)],
             level=1,
         )
         self._public_names: List[str] = []
@@ -41,14 +42,19 @@ class CustomFieldsTypingGenerator:
         ]
 
     def generate(self) -> ast.Module:
+        """
+        Generates an AST module containing the custom fields and required imports.
+        """
         return generate_module(
-            body=(
-                cast(List[ast.stmt], [self.graphql_field_import])
-                + cast(List[ast.stmt], [self._class_defs])
-            )
+            body=cast(List[ast.stmt], [self.graphql_field_import])
+            + cast(List[ast.stmt], self._class_defs)
         )
 
-    def _filter_types(self):
+    def _filter_types(self) -> List[ast.ClassDef]:
+        """
+        Filters GraphQL types to include only objects, interfaces, and unions,
+        excluding internal and operation types.
+        """
         return [
             get_final_type(definition)
             for name, definition in self.schema.type_map.items()
@@ -59,22 +65,34 @@ class CustomFieldsTypingGenerator:
             and name not in OPERATION_TYPES
         ]
 
-    def _generate_field_class(self, class_def: ast.ClassDef) -> ast.ClassDef:
-        class_name = f"{class_def.name}GraphQLField"
+    def _generate_field_class(
+        self,
+        graphql_type: ast.ClassDef,
+    ) -> ast.ClassDef:
+        """
+        Generates a field class for the given GraphQL type.
+        """
+        class_name = f"{graphql_type.name}{GRAPHQL_BASE_FIELD_CLASS}"
         class_body: List[ast.stmt] = []
-        if isinstance(class_def, GraphQLUnionType):
-            class_name = f"{class_def.name}Union"
+
+        if isinstance(graphql_type, GraphQLUnionType):
+            class_name = f"{graphql_type.name}Union"
             class_body.append(self._generate_on_method(class_name))
+
         if class_name not in self._public_names:
             self._public_names.append(class_name)
+
         field_class_def = generate_class_def(
             name=class_name,
-            base_names=["GraphQLField"],
+            base_names=[GRAPHQL_BASE_FIELD_CLASS],
             body=class_body if class_body else cast(List[ast.stmt], [ast.Pass()]),
         )
         return field_class_def
 
     def _generate_on_method(self, class_name: str) -> ast.FunctionDef:
+        """
+        Generates the `on` method for a class.
+        """
         return generate_method_definition(
             "on",
             arguments=generate_arguments(
@@ -82,26 +100,23 @@ class CustomFieldsTypingGenerator:
                     generate_arg(name="self"),
                     generate_arg(name="type_name", annotation=generate_name("str")),
                     generate_arg(
-                        name="*subfields", annotation=generate_name("GraphQLField")
+                        name="*subfields",
+                        annotation=generate_name(GRAPHQL_BASE_FIELD_CLASS),
                     ),
                 ]
             ),
             body=[
-                cast(
-                    ast.stmt,
-                    ast.Assign(
-                        targets=[
-                            generate_subscript(
-                                value=generate_attribute(
-                                    value=generate_name("self"),
-                                    attr="_inline_fragments",
-                                ),
-                                slice_=generate_name("type_name"),
-                            )
-                        ],
-                        value=generate_name("subfields"),
-                        lineno=1,
-                    ),
+                ast.Assign(
+                    targets=[
+                        generate_subscript(
+                            value=generate_attribute(
+                                value=generate_name("self"), attr="_inline_fragments"
+                            ),
+                            slice_=generate_name("type_name"),
+                        )
+                    ],
+                    value=generate_name("subfields"),
+                    lineno=1,
                 ),
                 generate_return(value=generate_name("self")),
             ],
@@ -109,4 +124,7 @@ class CustomFieldsTypingGenerator:
         )
 
     def get_generated_public_names(self) -> List[str]:
+        """
+        Returns the list of generated public names.
+        """
         return self._public_names

@@ -398,11 +398,6 @@ class PackageGenerator:
         code = self._add_comments_to_code(ast_to_str(module, False))
         file_path.write_text(code)
         self._generated_files.append(file_path.name)
-        self.init_generator.add_import(
-            self.custom_fields_typing_generator.get_generated_public_names(),
-            self.custom_help_field_module_name,
-            1,
-        )
 
     def _generate_custom_fields(self):
         file_path = self.package_path / "custom_fields.py"

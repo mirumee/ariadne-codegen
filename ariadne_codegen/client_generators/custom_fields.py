@@ -1,37 +1,26 @@
 import ast
-from typing import Dict, List, Optional, Set, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from graphql import (
-    GraphQLEnumType,
-    GraphQLInputObjectType,
     GraphQLInterfaceType,
-    GraphQLNonNull,
+    GraphQLNamedType,
     GraphQLObjectType,
-    GraphQLScalarType,
     GraphQLSchema,
     GraphQLUnionType,
 )
 
-from ariadne_codegen.client_generators.scalars import (
-    ScalarData,
-    generate_scalar_imports,
-)
-from ariadne_codegen.exceptions import ParsingError
-from ariadne_codegen.plugins.manager import PluginManager
+from ariadne_codegen.client_generators.custom_arguments import ArgumentGenerator
 
 from ..codegen import (
     generate_ann_assign,
-    generate_annotation_name,
     generate_arg,
     generate_arguments,
     generate_attribute,
     generate_call,
     generate_class_def,
     generate_constant,
-    generate_dict,
     generate_expr,
     generate_import_from,
-    generate_keyword,
     generate_method_definition,
     generate_module,
     generate_name,
@@ -39,21 +28,28 @@ from ..codegen import (
     generate_subscript,
     generate_union_annotation,
 )
+from ..plugins.manager import PluginManager
 from ..utils import process_name
 from .constants import (
     ANY,
-    BASE_MODEL_FILE_PATH,
+    BASE_GRAPHQL_FIELD_CLASS_NAME,
     BASE_OPERATION_FILE_PATH,
-    INPUT_SCALARS_MAP,
+    DICT,
+    GRAPHQL_BASE_FIELD_CLASS,
+    GRAPHQL_INTERFACE_SUFFIX,
+    GRAPHQL_OBJECT_SUFFIX,
+    GRAPHQL_UNION_SUFFIX,
     OPTIONAL,
     TYPING_MODULE,
     UNION,
-    UPLOAD_CLASS_NAME,
 )
-from .utils import TypeCollector, get_final_type
+from .custom_generator_utils import TypeCollector, get_final_type
+from .scalars import ScalarData
 
 
 class CustomFieldsGenerator:
+    """Generates custom fields for a given GraphQL schema using Python's AST module."""
+
     def __init__(
         self,
         schema: GraphQLSchema,
@@ -65,143 +61,180 @@ class CustomFieldsGenerator:
         self.convert_to_snake_case = convert_to_snake_case
         self.plugin_manager = plugin_manager
         self.custom_scalars = custom_scalars if custom_scalars else {}
-        self._visited_types: Set[str] = set()
-        self._field_classes: Set[str] = set()
-        self._generated_modules: Dict[str, ast.Module] = {}
         self._imports: List[ast.ImportFrom] = [
             ast.ImportFrom(
                 module=BASE_OPERATION_FILE_PATH.stem,
-                names=[ast.alias("GraphQLField")],
+                names=[ast.alias(BASE_GRAPHQL_FIELD_CLASS_NAME)],
                 level=1,
             )
         ]
-        self._used_custom_scalars: List[str] = []
-        self._add_import(generate_import_from([OPTIONAL, UNION, ANY], TYPING_MODULE))
-
+        self._add_import(
+            generate_import_from(
+                [OPTIONAL, UNION, ANY, DICT],
+                TYPING_MODULE,
+            )
+        )
+        self.argument_generator = ArgumentGenerator(
+            self.custom_scalars,
+            self.convert_to_snake_case,
+            self.plugin_manager,
+        )
         self._class_defs: List[ast.ClassDef] = self._parse_object_type_definitions(
             TypeCollector(self.schema).collect()
         )
 
-    def _add_import(self, import_: Optional[ast.ImportFrom] = None):
-        if not import_:
-            return
-        if self.plugin_manager:
-            import_ = self.plugin_manager.generate_client_import(import_)
-        if import_.names:
-            self._imports.append(import_)
-
     def generate(self) -> ast.Module:
-        self._add_custom_scalar_imports()
+        """Generates an AST module containing the custom fields and required imports."""
+        self.argument_generator.add_custom_scalar_imports()
         module = generate_module(
-            body=(
-                cast(List[ast.stmt], self._imports)
-                + cast(
-                    List[ast.stmt],
-                    self._class_defs,
-                )
-            ),
+            body=cast(List[ast.stmt], self._imports + self._class_defs),
         )
-
         return module
 
-    def _parse_object_type_definitions(self, class_definitions):
+    def _add_import(self, import_: Optional[ast.ImportFrom] = None) -> None:
+        """Adds an import statement to the list of imports."""
+        if import_:
+            if self.plugin_manager:
+                import_ = self.plugin_manager.generate_client_import(import_)
+            if import_.names:
+                self._imports.append(import_)
+
+    def _parse_object_type_definitions(
+        self, type_names: List[str]
+    ) -> List[ast.ClassDef]:
+        """
+        Parses object type definitions from the schema
+        and generates AST class definitions.
+        """
         class_defs = []
-        interface_defs = []
-        for type_name in class_definitions:
+
+        for type_name in type_names:
             graphql_type = self.schema.get_type(type_name)
-            if isinstance(graphql_type, GraphQLObjectType):
+            if isinstance(graphql_type, (GraphQLObjectType, GraphQLInterfaceType)):
                 class_def = self._generate_class_def_body(
                     definition=graphql_type,
-                    class_name=f"{graphql_type.name}Fields",
+                    class_name=f"{graphql_type.name}{self._get_suffix(graphql_type)}",
                 )
+                if isinstance(graphql_type, GraphQLInterfaceType):
+                    class_def.body.append(
+                        self._generate_on_method(
+                            f"{graphql_type.name}{GRAPHQL_INTERFACE_SUFFIX}"
+                        )
+                    )
                 class_defs.append(class_def)
-            if isinstance(graphql_type, GraphQLInterfaceType):
-                class_def = self._generate_class_def_body(
-                    definition=graphql_type,
-                    class_name=f"{graphql_type.name}Interface",
-                )
-                class_def.body.append(
-                    self._generate_on_method(f"{graphql_type.name}Interface")
-                )
-                class_defs.append(class_def)
-        return [*interface_defs, *class_defs]
+
+        return class_defs
 
     def _generate_class_def_body(
         self,
         definition: Union[GraphQLObjectType, GraphQLInterfaceType],
         class_name: str,
     ) -> ast.ClassDef:
-        base_names = ["GraphQLField"]
+        """
+        Generates the body of a class definition for a given GraphQL object
+        or interface type.
+        """
+        base_names = [GRAPHQL_BASE_FIELD_CLASS]
         additional_fields_typing = set()
-        definition_fields: Dict[str, ast.ClassDef] = dict(definition.fields.items())
-        for interface in definition.interfaces:
-            definition_fields.update(dict(interface.fields.items()))
         class_def = generate_class_def(name=class_name, base_names=base_names)
-
-        for lineno, (org_name, field) in enumerate(definition_fields.items(), start=1):
+        for lineno, (org_name, field) in enumerate(
+            self._get_combined_fields(definition).items(), start=1
+        ):
             name = process_name(
-                org_name,
-                convert_to_snake_case=self.convert_to_snake_case,
+                org_name, convert_to_snake_case=self.convert_to_snake_case
             )
             final_type = get_final_type(field)
-            if isinstance(final_type, GraphQLObjectType):
-                field_name = f"{final_type.name}Fields"
-                class_def.body.append(
-                    self.generate_product_type_method(
-                        name, field_name, getattr(field, "args")
-                    )
-                )
+            field_name, method_required = self._get_field_name(
+                final_type, definition.name
+            )
+            if self._is_custom_type(final_type):
                 additional_fields_typing.add(field_name)
-            elif isinstance(final_type, GraphQLInterfaceType):
-                field_name = f"{final_type.name}Interface"
-                class_def.body.append(
-                    self.generate_product_type_method(
-                        name, field_name, getattr(field, "args")
-                    )
+            class_def.body.append(
+                self._generate_class_field(
+                    name, field_name, org_name, field, method_required, lineno
                 )
-                additional_fields_typing.add(field_name)
-            else:
-                field_name = f"{definition.name}GraphQLField"
-
-                if isinstance(final_type, GraphQLUnionType):
-                    field_name = f"{final_type.name}Union"
-                    additional_fields_typing.add(field_name)
-                if getattr(field, "args"):
-                    class_def.body.append(
-                        self.generate_product_type_method(
-                            name, field_name, getattr(field, "args")
-                        )
-                    )
-                else:
-                    self._add_import(generate_import_from([field_name], level=1))
-                    field_class_name = generate_name(field_name)
-
-                    field_implementation = generate_ann_assign(
-                        target=name,
-                        annotation=field_class_name,
-                        value=generate_call(
-                            func=field_class_name,
-                            args=[generate_constant(org_name)],
-                        ),
-                        lineno=lineno,
-                    )
-
-                    class_def.body.append(field_implementation)
+            )
 
         class_def.body.append(
             self._generate_fields_method(
                 class_name, definition.name, sorted(additional_fields_typing)
             )
         )
-
         return class_def
 
-    def _generate_fields_method(
-        self, class_name: str, definition_name: str, additional_fields_typing: List
-    ) -> ast.FunctionDef:
-        field_class_name = generate_name(f"{definition_name}GraphQLField")
+    def _get_combined_fields(
+        self, definition: Union[GraphQLObjectType, GraphQLInterfaceType]
+    ) -> Dict[str, ast.ClassDef]:
+        """Combines fields from the definition and its interfaces."""
+        fields = dict(definition.fields.items())
+        for interface in getattr(definition, "interfaces", []):
+            fields.update(dict(interface.fields.items()))
+        return fields
+
+    def _get_field_name(
+        self, final_type: GraphQLNamedType, definition_name: str
+    ) -> Tuple[str, bool]:
+        """
+        Returns the appropriate field name suffix based on the type of GraphQL type.
+        """
+        if isinstance(final_type, GraphQLObjectType):
+            return f"{final_type.name}{GRAPHQL_OBJECT_SUFFIX}", True
+        if isinstance(final_type, GraphQLInterfaceType):
+            return f"{final_type.name}{GRAPHQL_INTERFACE_SUFFIX}", True
+        if isinstance(final_type, GraphQLUnionType):
+            field_name = f"{final_type.name}{GRAPHQL_UNION_SUFFIX}"
+        else:
+            field_name = f"{definition_name}{GRAPHQL_BASE_FIELD_CLASS}"
         self._add_import(
-            generate_import_from([f"{definition_name}GraphQLField"], level=1)
+            generate_import_from(
+                [field_name],
+                from_="custom_typing_fields",
+                level=1,
+            )
+        )
+        return field_name, False
+
+    def _is_custom_type(
+        self,
+        final_type: Union[GraphQLObjectType, GraphQLInterfaceType, GraphQLUnionType],
+    ) -> bool:
+        """Checks if the final type is a custom type (Object, Interface, or Union)."""
+        return isinstance(
+            final_type, (GraphQLObjectType, GraphQLInterfaceType, GraphQLUnionType)
+        )
+
+    def _generate_class_field(
+        self,
+        name: str,
+        field_name: str,
+        org_name: str,
+        field: ast.ClassDef,
+        method_required: bool,
+        lineno: int,
+    ) -> ast.stmt:
+        """Handles the generation of field types."""
+        if getattr(field, "args") or method_required:
+            return self.generate_product_type_method(
+                name, field_name, getattr(field, "args")
+            )
+        return generate_ann_assign(
+            target=name,
+            annotation=generate_name(f'"{field_name}"'),
+            value=generate_call(
+                func=generate_name(field_name), args=[generate_constant(org_name)]
+            ),
+            lineno=lineno,
+        )
+
+    def _generate_fields_method(
+        self, class_name: str, definition_name: str, additional_fields_typing: List[str]
+    ) -> ast.FunctionDef:
+        """Generates the `fields` method for a class."""
+        field_class_name = generate_name(f"{definition_name}{GRAPHQL_BASE_FIELD_CLASS}")
+        self._add_import(
+            generate_import_from(
+                [field_class_name.id], from_="custom_typing_fields", level=1
+            )
         )
         fields_annotation: Union[ast.Name, ast.Subscript] = field_class_name
         if additional_fields_typing:
@@ -223,10 +256,14 @@ class CustomFieldsGenerator:
             ),
             body=[
                 generate_expr(
+                    value=generate_constant(
+                        value=f"Subfields should come from the {class_name} class"
+                    )
+                ),
+                generate_expr(
                     value=generate_call(
                         func=generate_attribute(
-                            value=generate_name("self"),
-                            attr="_subfields.extend",
+                            value=generate_name("self"), attr="_subfields.extend"
                         ),
                         args=[generate_name("subfields")],
                     )
@@ -236,99 +273,8 @@ class CustomFieldsGenerator:
             return_type=generate_name(f'"{class_name}"'),
         )
 
-    def _generate_kw_args_and_defaults(self, operation_args):
-        kw_only_args = []
-        kw_defaults = []
-        args = []
-        for arg_name, arg_type in operation_args.items():
-            arg_name = process_name(
-                arg_name,
-                convert_to_snake_case=self.convert_to_snake_case,
-            )
-            arg_final_type = get_final_type(arg_type)
-            is_required = isinstance(arg_type.type, GraphQLNonNull)
-            annotation, _ = self._parse_graphql_type_name(
-                arg_final_type,
-                not is_required,
-            )
-            arg = generate_arg(name=arg_name, annotation=annotation)
-            if is_required:
-                args.append(arg)
-            else:
-                kw_only_args.append(arg)
-                kw_defaults.append(generate_constant(value=None))
-        return kw_only_args, kw_defaults, args
-
-    def _get_dict_value(self, name: str, arg_value) -> Union[ast.Name, ast.Call]:
-        name = process_name(
-            name,
-            convert_to_snake_case=self.convert_to_snake_case,
-        )
-        _, used_custom_scalar = self._parse_graphql_type_name(get_final_type(arg_value))
-        if used_custom_scalar:
-            self._used_custom_scalars.append(used_custom_scalar)
-            scalar_data = self.custom_scalars[used_custom_scalar]
-            if scalar_data.serialize_name:
-                return generate_call(
-                    func=generate_name(scalar_data.serialize_name),
-                    args=[generate_name(name)],
-                )
-        return generate_name(name)
-
-    def _generate_arguments_dict(self, operation_args) -> Dict[ast.Constant, ast.Dict]:
-        arguments_dict = {}
-        for arg_name, arg_value in operation_args.items():
-            final_type = get_final_type(arg_value)
-            is_required = isinstance(arg_value.type, GraphQLNonNull)
-            constant_value = f"{final_type.name}!" if is_required else final_type.name
-            arguments_dict[generate_constant(arg_name)] = generate_dict(
-                keys=[generate_constant("type"), generate_constant("value")],
-                values=[
-                    generate_constant(constant_value),
-                    self._get_dict_value(arg_name, arg_value),
-                ],
-            )
-        return arguments_dict
-
-    def generate_product_type_method(
-        self, name, class_name, arguments=None
-    ) -> ast.FunctionDef:
-        arguments = arguments or {}
-        field_class_name = generate_name(class_name)
-        kw_only_args, kw_defaults, args = self._generate_kw_args_and_defaults(
-            arguments,
-        )
-        return_arguments_dict = self._generate_arguments_dict(arguments)
-
-        return_keyword = generate_keyword(
-            arg="arguments",
-            value=generate_dict(
-                keys=list(return_arguments_dict.keys()),
-                values=list(return_arguments_dict.values()),
-            ),
-        )
-
-        return generate_method_definition(
-            name,
-            arguments=generate_arguments(
-                args=[generate_arg(name="cls"), *args],
-                kwonlyargs=kw_only_args,
-                kw_defaults=kw_defaults,
-            ),
-            body=[
-                generate_return(
-                    value=generate_call(
-                        func=field_class_name,
-                        args=[generate_constant(name)],
-                        keywords=[return_keyword],
-                    )
-                ),
-            ],
-            return_type=generate_name(f'"{class_name}"'),
-            decorator_list=[generate_name("classmethod")],
-        )
-
     def _generate_on_method(self, class_name: str) -> ast.FunctionDef:
+        """Generates the `on` method for a class."""
         return generate_method_definition(
             "on",
             arguments=generate_arguments(
@@ -336,13 +282,14 @@ class CustomFieldsGenerator:
                     generate_arg(name="self"),
                     generate_arg(name="type_name", annotation=generate_name("str")),
                     generate_arg(
-                        name="*subfields", annotation=generate_name("GraphQLField")
+                        name="*subfields",
+                        annotation=generate_name(GRAPHQL_BASE_FIELD_CLASS),
                     ),
                 ]
             ),
-            body=[
-                cast(
-                    ast.stmt,
+            body=cast(
+                List[ast.stmt],
+                [
                     ast.Assign(
                         targets=[
                             generate_subscript(
@@ -356,45 +303,61 @@ class CustomFieldsGenerator:
                         value=generate_name("subfields"),
                         lineno=1,
                     ),
-                ),
-                generate_return(value=generate_name("self")),
-            ],
+                    generate_return(value=generate_name("self")),
+                ],
+            ),
             return_type=generate_name(f'"{class_name}"'),
         )
 
-    def _parse_graphql_type_name(
-        self, type_, nullable: bool = True
-    ) -> Tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
-        name = type_.name
-        used_custom_scalar = None
-        if isinstance(type_, GraphQLInputObjectType):
-            self._add_import(
-                generate_import_from(names=[name], from_="input_types", level=1)
+    def generate_product_type_method(
+        self, name: str, class_name: str, arguments: Optional[Dict[str, Any]] = None
+    ) -> ast.FunctionDef:
+        """Generates a method for a product type."""
+        arguments = arguments or {}
+        field_class_name = generate_name(class_name)
+        (
+            method_arguments,
+            return_arguments_keys,
+            return_arguments_values,
+        ) = self.argument_generator.generate_arguments(arguments)
+        self._imports.extend(self.argument_generator.imports)
+        arguments_body: List[ast.stmt] = []
+        arguments_keyword: List[ast.keyword] = []
+
+        if arguments:
+            (
+                arguments_body,
+                arguments_keyword,
+            ) = self.argument_generator.generate_clear_arguments_section(
+                return_arguments_keys, return_arguments_values
             )
-        elif isinstance(type_, GraphQLEnumType):
-            self._add_import(generate_import_from(names=[name], level=1))
-        elif isinstance(type_, GraphQLScalarType):
-            if name not in self.custom_scalars:
-                name = INPUT_SCALARS_MAP.get(name, ANY)
-                if name == UPLOAD_CLASS_NAME:
-                    self._add_import(
-                        generate_import_from(
-                            names=[UPLOAD_CLASS_NAME],
-                            from_=BASE_MODEL_FILE_PATH.stem,
-                            level=1,
+
+        return generate_method_definition(
+            name,
+            arguments=method_arguments,
+            body=cast(
+                List[ast.stmt],
+                [
+                    *arguments_body,
+                    generate_return(
+                        value=generate_call(
+                            func=field_class_name,
+                            args=[generate_constant(name)],
+                            keywords=arguments_keyword,
                         )
-                    )
-            else:
-                used_custom_scalar = name
-                name = self.custom_scalars[name].type_name
-                self._used_custom_scalars.append(used_custom_scalar)
-        else:
-            raise ParsingError(f"Incorrect argument type {name}")
+                    ),
+                ],
+            ),
+            return_type=generate_name(f'"{class_name}"'),
+            decorator_list=[generate_name("classmethod")],
+        )
 
-        return generate_annotation_name(name, nullable), used_custom_scalar
-
-    def _add_custom_scalar_imports(self):
-        for custom_scalar_name in self._used_custom_scalars:
-            scalar_data = self.custom_scalars[custom_scalar_name]
-            for import_ in generate_scalar_imports(scalar_data):
-                self._add_import(import_)
+    def _get_suffix(
+        self, graphql_type: Union[GraphQLObjectType, GraphQLInterfaceType]
+    ) -> str:
+        """Gets the appropriate suffix for a GraphQL type."""
+        if isinstance(graphql_type, GraphQLObjectType):
+            return GRAPHQL_OBJECT_SUFFIX
+        if isinstance(graphql_type, GraphQLInterfaceType):
+            return GRAPHQL_INTERFACE_SUFFIX
+        raise ValueError(f"Unexpected graphql_type: {graphql_type}")
