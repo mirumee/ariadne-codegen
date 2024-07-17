@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "ariadne-codegen"
 description = "Generate fully typed GraphQL client from schema, queries and mutations!"
 authors = [{ name = "Mirumee Software", email = "hello@mirumee.com" }]
-version = "0.14.0.dev2"
+version = "0.14.0"
 readme = "README.md"
 license = { file = "LICENSE" }
 classifiers = [

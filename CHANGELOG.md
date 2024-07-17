@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.14.0 (Unreleased)
+## 0.14.0 (2024-07-17)
 
 - Added `ClientForwardRefsPlugin` to standard plugins.
 - Re-added `model_rebuild` calls for input types with forward references.
