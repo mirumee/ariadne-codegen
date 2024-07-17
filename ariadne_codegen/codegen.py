@@ -24,8 +24,13 @@ from .client_generators.types import Annotation, CodegenResultFieldType
 from .exceptions import ParsingError
 
 
+def generate_import(names: List[str], level: int = 0) -> ast.Import:
+    """Generate import statement."""
+    return ast.Import(names=[ast.alias(n) for n in names], level=level)
+
+
 def generate_import_from(
-    names: List[str], from_: str, level: int = 0
+    names: List[str], from_: Optional[str] = None, level: int = 0
 ) -> ast.ImportFrom:
     """Generate import from statement."""
     return ast.ImportFrom(
@@ -34,7 +39,7 @@ def generate_import_from(
 
 
 def generate_nullable_annotation(
-    slice_: Union[ast.Name, ast.Subscript]
+    slice_: Union[ast.Name, ast.Subscript],
 ) -> ast.Subscript:
     """Generate optional annotation."""
     return ast.Subscript(value=ast.Name(id=OPTIONAL), slice=slice_)
@@ -65,15 +70,19 @@ def generate_arg(
 
 def generate_arguments(
     args: Optional[List[ast.arg]] = None,
-    defaults: Optional[List[ast.expr]] = None,
+    vararg: Optional[ast.arg] = None,
+    kwonlyargs: Optional[list[ast.arg]] = None,
+    kw_defaults: Optional[list[Union[ast.expr, None]]] = None,
     kwarg: Optional[ast.arg] = None,
+    defaults: Optional[List[ast.expr]] = None,
 ) -> ast.arguments:
     """Generate arguments."""
     return ast.arguments(
         posonlyargs=[],
         args=args if args else [],
-        kwonlyargs=[],
-        kw_defaults=[],
+        vararg=vararg,
+        kwonlyargs=kwonlyargs if kwonlyargs else [],
+        kw_defaults=kw_defaults if kw_defaults else [],
         kwarg=kwarg,
         defaults=defaults or [],
     )
@@ -85,13 +94,14 @@ def generate_async_method_definition(
     return_type: Union[ast.Name, ast.Subscript],
     body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
+    decorator_list: Optional[List[ast.Name]] = None,
 ) -> ast.AsyncFunctionDef:
     """Generate async function."""
     return ast.AsyncFunctionDef(
         name=name,
         args=arguments,
         body=body if body else [ast.Pass()],
-        decorator_list=[],
+        decorator_list=decorator_list if decorator_list else [],
         returns=return_type,
         lineno=lineno,
     )
@@ -118,9 +128,24 @@ def generate_name(name: str) -> ast.Name:
     return ast.Name(id=name)
 
 
+def generate_joined_str(values: list[ast.expr]) -> ast.JoinedStr:
+    """Generate joined str object."""
+    return ast.JoinedStr(values)
+
+
 def generate_constant(value: Any) -> ast.Constant:
     """Generate constant object."""
     return ast.Constant(value=value)
+
+
+def generate_formatted_value(
+    value: ast.expr, conversion: int = -1, format_spec: Optional[ast.expr] = None
+) -> ast.FormattedValue:
+    return ast.FormattedValue(
+        value=value,
+        conversion=conversion,
+        format_spec=format_spec,
+    )
 
 
 def generate_assign(
@@ -267,6 +292,25 @@ def generate_list(elements: List[Optional[ast.expr]]) -> ast.List:
     return ast.List(elts=elements)
 
 
+def generate_list_comp(
+    elt: ast.expr, generators: list[ast.comprehension]
+) -> ast.ListComp:
+    """Generate list comprehension"""
+    return ast.ListComp(elt=elt, generators=generators)
+
+
+def generate_comp(
+    target: str, iter_: str, ifs: Optional[List[ast.expr]] = None, is_async: int = 0
+) -> ast.comprehension:
+    "Generate comprehension"
+    return ast.comprehension(
+        target=generate_name(target),
+        iter=generate_name(iter_),
+        ifs=ifs if ifs else [],
+        is_async=is_async,
+    )
+
+
 def generate_lambda(body: ast.expr, args: Optional[ast.arguments] = None) -> ast.Lambda:
     """Generate lambda definition."""
     return ast.Lambda(args=args or generate_arguments(), body=body)
@@ -299,12 +343,13 @@ def generate_method_definition(
     return_type: Union[ast.Name, ast.Subscript],
     body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
+    decorator_list: Optional[List[ast.Name]] = None,
 ) -> ast.FunctionDef:
     return ast.FunctionDef(
         name=name,
         args=arguments,
         body=body if body else [ast.Pass()],
-        decorator_list=[],
+        decorator_list=decorator_list if decorator_list else [],
         returns=return_type,
         lineno=lineno,
     )
