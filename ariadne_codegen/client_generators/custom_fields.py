@@ -160,6 +160,7 @@ class CustomFieldsGenerator:
                 class_name, definition.name, sorted(additional_fields_typing)
             )
         )
+        class_def.body.append(self._generate_alias_method(class_name))
         return class_def
 
     def _get_combined_fields(
@@ -361,3 +362,28 @@ class CustomFieldsGenerator:
         if isinstance(graphql_type, GraphQLInterfaceType):
             return GRAPHQL_INTERFACE_SUFFIX
         raise ValueError(f"Unexpected graphql_type: {graphql_type}")
+
+    def _generate_alias_method(self, class_name: str) -> ast.FunctionDef:
+        """
+        Generates the `alias` method for a class.
+        """
+        return generate_method_definition(
+            "alias",
+            arguments=generate_arguments(
+                [
+                    generate_arg(name="self"),
+                    generate_arg(name="alias", annotation=generate_name("str")),
+                ]
+            ),
+            body=[
+                ast.Assign(
+                    targets=[
+                        generate_attribute(value=generate_name("self"), attr="_alias"),
+                    ],
+                    value=generate_name("alias"),
+                    lineno=1,
+                ),
+                generate_return(value=generate_name("self")),
+            ],
+            return_type=generate_name(f'"{class_name}"'),
+        )

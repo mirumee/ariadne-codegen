@@ -19,6 +19,12 @@ def test_simple_hello():
     assert built_query == expected_query
 
 
+def test_alias():
+    built_query = print_ast(Query.hello().alias("aliased_hello").to_ast(0))
+    expected_query = "aliased_hello: hello"
+    assert built_query == expected_query
+
+
 def test_greeting_with_name():
     query = Query.greeting(name="Alice")
     expected_query = "greeting(name: $name_0)"

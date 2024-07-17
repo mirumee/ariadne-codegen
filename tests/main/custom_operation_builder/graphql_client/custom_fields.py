@@ -40,6 +40,10 @@ class AdminFields(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "AdminFields":
+        self._alias = alias
+        return self
+
 
 class GuestFields(GraphQLField):
     id: "GuestGraphQLField" = GuestGraphQLField("id")
@@ -61,6 +65,10 @@ class GuestFields(GraphQLField):
     def fields(self, *subfields: GuestGraphQLField) -> "GuestFields":
         """Subfields should come from the GuestFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "GuestFields":
+        self._alias = alias
         return self
 
 
@@ -86,6 +94,10 @@ class PersonInterfaceInterface(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "PersonInterfaceInterface":
+        self._alias = alias
+        return self
+
     def on(
         self, type_name: str, *subfields: GraphQLField
     ) -> "PersonInterfaceInterface":
@@ -109,6 +121,10 @@ class PostFields(GraphQLField):
     ) -> "PostFields":
         """Subfields should come from the PostFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "PostFields":
+        self._alias = alias
         return self
 
 
@@ -137,4 +153,8 @@ class UserFields(GraphQLField):
     def fields(self, *subfields: Union[UserGraphQLField, "UserFields"]) -> "UserFields":
         """Subfields should come from the UserFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "UserFields":
+        self._alias = alias
         return self

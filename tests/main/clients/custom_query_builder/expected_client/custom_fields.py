@@ -28,6 +28,10 @@ class AppFields(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "AppFields":
+        self._alias = alias
+        return self
+
 
 class CollectionTranslatableContentFields(GraphQLField):
     id: "CollectionTranslatableContentGraphQLField" = (
@@ -56,6 +60,10 @@ class CollectionTranslatableContentFields(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "CollectionTranslatableContentFields":
+        self._alias = alias
+        return self
+
 
 class MetadataErrorFields(GraphQLField):
     field: "MetadataErrorGraphQLField" = MetadataErrorGraphQLField("field")
@@ -67,6 +75,10 @@ class MetadataErrorFields(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "MetadataErrorFields":
+        self._alias = alias
+        return self
+
 
 class MetadataItemFields(GraphQLField):
     key: "MetadataItemGraphQLField" = MetadataItemGraphQLField("key")
@@ -75,6 +87,10 @@ class MetadataItemFields(GraphQLField):
     def fields(self, *subfields: MetadataItemGraphQLField) -> "MetadataItemFields":
         """Subfields should come from the MetadataItemFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "MetadataItemFields":
+        self._alias = alias
         return self
 
 
@@ -116,6 +132,10 @@ class ObjectWithMetadataInterface(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "ObjectWithMetadataInterface":
+        self._alias = alias
+        return self
+
     def on(
         self, type_name: str, *subfields: GraphQLField
     ) -> "ObjectWithMetadataInterface":
@@ -132,6 +152,10 @@ class PageInfoFields(GraphQLField):
     def fields(self, *subfields: PageInfoGraphQLField) -> "PageInfoFields":
         """Subfields should come from the PageInfoFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "PageInfoFields":
+        self._alias = alias
         return self
 
 
@@ -175,6 +199,10 @@ class ProductFields(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "ProductFields":
+        self._alias = alias
+        return self
+
 
 class ProductCountableConnectionFields(GraphQLField):
     @classmethod
@@ -201,6 +229,10 @@ class ProductCountableConnectionFields(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "ProductCountableConnectionFields":
+        self._alias = alias
+        return self
+
 
 class ProductCountableEdgeFields(GraphQLField):
     @classmethod
@@ -216,6 +248,10 @@ class ProductCountableEdgeFields(GraphQLField):
     ) -> "ProductCountableEdgeFields":
         """Subfields should come from the ProductCountableEdgeFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "ProductCountableEdgeFields":
+        self._alias = alias
         return self
 
 
@@ -246,6 +282,10 @@ class ProductTranslatableContentFields(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "ProductTranslatableContentFields":
+        self._alias = alias
+        return self
+
 
 class ProductTypeCountableConnectionFields(GraphQLField):
     @classmethod
@@ -258,6 +298,10 @@ class ProductTypeCountableConnectionFields(GraphQLField):
     ) -> "ProductTypeCountableConnectionFields":
         """Subfields should come from the ProductTypeCountableConnectionFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "ProductTypeCountableConnectionFields":
+        self._alias = alias
         return self
 
 
@@ -286,6 +330,10 @@ class TranslatableItemConnectionFields(GraphQLField):
         self._subfields.extend(subfields)
         return self
 
+    def alias(self, alias: str) -> "TranslatableItemConnectionFields":
+        self._alias = alias
+        return self
+
 
 class TranslatableItemEdgeFields(GraphQLField):
     node: "TranslatableItemUnion" = TranslatableItemUnion("node")
@@ -299,6 +347,10 @@ class TranslatableItemEdgeFields(GraphQLField):
     ) -> "TranslatableItemEdgeFields":
         """Subfields should come from the TranslatableItemEdgeFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "TranslatableItemEdgeFields":
+        self._alias = alias
         return self
 
 
@@ -325,4 +377,8 @@ class UpdateMetadataFields(GraphQLField):
     ) -> "UpdateMetadataFields":
         """Subfields should come from the UpdateMetadataFields class"""
         self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "UpdateMetadataFields":
+        self._alias = alias
         return self
