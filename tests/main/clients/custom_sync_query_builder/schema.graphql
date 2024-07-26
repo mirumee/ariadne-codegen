@@ -1,0 +1,249 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  products(channel: String, first: Int): ProductCountableConnection
+  app: App
+  productTypes: ProductTypeCountableConnection
+  translations(
+    """
+    Return the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """
+    Return the elements in the list that come after the specified cursor.
+    """
+    after: String
+
+    """
+    Retrieve the first n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
+    """
+    first: Int
+
+    """
+    Retrieve the last n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
+    """
+    last: Int
+  ): TranslatableItemConnection
+}
+
+type Mutation {
+  updateMetadata(
+    """
+    ID or token (for Order and Checkout) of an object to update.
+    """
+    id: ID!
+  ): UpdateMetadata
+}
+
+type Product implements ObjectWithMetadata {
+  id: ID!
+  slug: String!
+  name: String!
+}
+
+type ProductCountableEdge {
+  node: Product!
+  cursor: String!
+}
+
+type ProductCountableConnection {
+  edges: [ProductCountableEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type App {
+  id: ID!
+}
+
+type ProductTypeCountableConnection {
+  pageInfo: PageInfo!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+interface ObjectWithMetadata {
+  """
+  List of private metadata items. Requires staff permissions to access.
+  """
+  privateMetadata: [MetadataItem!]!
+
+  """
+  A single key from private metadata. Requires staff permissions to access.
+
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  """
+  privateMetafield(key: String!): String
+
+  """
+  List of public metadata items. Can be accessed without permissions.
+  """
+  metadata: [MetadataItem!]!
+
+  """
+  A single key from public metadata.
+
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  """
+  metafield(key: String!): String
+}
+
+type MetadataItem {
+  """
+  Key of a metadata item.
+  """
+  key: String!
+
+  """
+  Value of a metadata item.
+  """
+  value: String!
+}
+
+type UpdateMetadata {
+  metadataErrors: [MetadataError!]!
+    @deprecated(
+      reason: "This field will be removed in Saleor 4.0. Use `errors` field instead."
+    )
+  errors: [MetadataError!]!
+  item: ObjectWithMetadata
+}
+type MetadataError {
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """
+  The error message.
+  """
+  message: String
+
+  """
+  The error code.
+  """
+  code: MetadataErrorCode!
+}
+
+"""
+An enumeration.
+"""
+enum MetadataErrorCode {
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  NOT_UPDATED
+}
+
+type TranslatableItemConnection {
+  """
+  Pagination data for this connection.
+  """
+  pageInfo: PageInfo!
+  edges: [TranslatableItemEdge!]!
+
+  """
+  A total count of items in the collection.
+  """
+  totalCount: Int
+}
+
+type TranslatableItemEdge {
+  """
+  The item at the end of the edge.
+  """
+  node: TranslatableItem!
+
+  """
+  A cursor for use in pagination.
+  """
+  cursor: String!
+}
+
+union TranslatableItem =
+    ProductTranslatableContent
+  | CollectionTranslatableContent
+
+type ProductTranslatableContent @doc(category: "Products") {
+  """
+  The ID of the product translatable content.
+  """
+  id: ID!
+
+  """
+  The ID of the product to translate.
+
+  Added in Saleor 3.14.
+  """
+  productId: ID!
+
+  """
+  SEO title to translate.
+  """
+  seoTitle: String
+
+  """
+  SEO description to translate.
+  """
+  seoDescription: String
+
+  """
+  Product's name to translate.
+  """
+  name: String!
+
+  """
+  Product's description to translate.
+
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+}
+
+type CollectionTranslatableContent @doc(category: "Products") {
+  """
+  The ID of the collection translatable content.
+  """
+  id: ID!
+
+  """
+  The ID of the collection to translate.
+
+  Added in Saleor 3.14.
+  """
+  collectionId: ID!
+
+  """
+  SEO title to translate.
+  """
+  seoTitle: String
+
+  """
+  SEO description to translate.
+  """
+  seoDescription: String
+
+  """
+  Collection's name to translate.
+  """
+  name: String!
+
+  """
+  Collection's description to translate.
+
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+}
+
+scalar JSONString

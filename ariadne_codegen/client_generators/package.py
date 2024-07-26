@@ -156,16 +156,16 @@ class PackageGenerator:
         if self.enable_custom_operations:
             self._generate_custom_fields_typing()
             self._generate_custom_fields()
-            self.client_generator.add_execute_custom_operation_method()
+            self.client_generator.add_execute_custom_operation_method(self.async_client)
             if self.custom_query_generator:
                 self._generate_custom_queries()
                 self.client_generator.create_custom_operation_method(
-                    "query", OperationType.QUERY.value.upper()
+                    "query", OperationType.QUERY.value.upper(), self.async_client
                 )
             if self.custom_mutation_generator:
                 self._generate_custom_mutations()
                 self.client_generator.create_custom_operation_method(
-                    "mutation", OperationType.MUTATION.value.upper()
+                    "mutation", OperationType.MUTATION.value.upper(), self.async_client
                 )
 
         self._generate_client()
