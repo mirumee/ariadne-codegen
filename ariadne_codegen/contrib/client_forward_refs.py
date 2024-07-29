@@ -242,7 +242,7 @@ class ClientForwardRefsPlugin(Plugin):
         """Get the class from an `ast.Call`.
 
         :param call: The `ast.Call` arg
-        :returns: `ast.Name` or `None`
+        :returns: `ast.alias` or `None`
         """
         if not isinstance(call.func, ast.Attribute):
             return None
@@ -250,7 +250,6 @@ class ClientForwardRefsPlugin(Plugin):
         if not isinstance(call.func.value, ast.Name):
             return None
         return ast.alias(name=call.func.value.id)
-        # return call.func.value
 
     def _update_imports(self, module: ast.Module) -> None:
         """Update all imports.

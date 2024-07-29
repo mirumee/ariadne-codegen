@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.14.1 (UNRELEASED)
+
+- Changed code typing to satisfy MyPy 1.11.0 version
+
+
 ## 0.14.0 (2024-07-17)
 
 - Added `ClientForwardRefsPlugin` to standard plugins.
