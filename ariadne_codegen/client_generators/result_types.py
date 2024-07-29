@@ -38,6 +38,7 @@ from ..codegen import (
     generate_import_from,
     generate_method_call,
     generate_module,
+    generate_name,
     generate_pass,
     generate_pydantic_field,
     model_has_forward_refs,
@@ -264,7 +265,7 @@ class ResultTypesGenerator:
             )
 
             field_implementation = generate_ann_assign(
-                target=name,
+                target=generate_name(name),
                 annotation=annotation,
                 lineno=lineno,
                 value=default_value,

@@ -55,6 +55,7 @@ def test_generate_returns_module_with_enum_class_definition():
                 targets=[ast.Name(id="import_")], value=ast.Constant(value="import")
             ),
         ],
+        type_params=[],
     )
     generator = EnumsGenerator(schema=build_ast_schema(parse(schema_str)))
 
@@ -101,6 +102,7 @@ def test_generate_returns_module_with_enum_class_definition_for_every_enum():
                     targets=[ast.Name(id="VALUE2")], value=ast.Constant(value="VALUE2")
                 ),
             ],
+            type_params=[],
         ),
         ast.ClassDef(
             name="TestEnumB",
@@ -112,6 +114,7 @@ def test_generate_returns_module_with_enum_class_definition_for_every_enum():
                 ast.Assign(targets=[ast.Name(id="B")], value=ast.Constant(value="B")),
                 ast.Assign(targets=[ast.Name(id="C")], value=ast.Constant(value="C")),
             ],
+            type_params=[],
         ),
         ast.ClassDef(
             name="TestEnumC",
@@ -125,6 +128,7 @@ def test_generate_returns_module_with_enum_class_definition_for_every_enum():
                 ast.Assign(targets=[ast.Name(id="D4")], value=ast.Constant(value="D4")),
                 ast.Assign(targets=[ast.Name(id="E5")], value=ast.Constant(value="E5")),
             ],
+            type_params=[],
         ),
     ]
     generator = EnumsGenerator(schema=build_ast_schema(parse(schema_str)))

@@ -1,5 +1,5 @@
 import ast
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from graphql import (
     GraphQLEnumType,
@@ -22,11 +22,6 @@ from .client_generators.constants import (
 )
 from .client_generators.types import Annotation, CodegenResultFieldType
 from .exceptions import ParsingError
-
-
-def generate_import(names: List[str], level: int = 0) -> ast.Import:
-    """Generate import statement."""
-    return ast.Import(names=[ast.alias(n) for n in names], level=level)
 
 
 def generate_import_from(
@@ -94,7 +89,8 @@ def generate_async_method_definition(
     return_type: Union[ast.Name, ast.Subscript],
     body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
-    decorator_list: Optional[List[ast.Name]] = None,
+    decorator_list: Optional[List[ast.expr]] = None,
+    type_params: Optional[List[ast.type_param]] = None,
 ) -> ast.AsyncFunctionDef:
     """Generate async function."""
     return ast.AsyncFunctionDef(
@@ -104,6 +100,7 @@ def generate_async_method_definition(
         decorator_list=decorator_list if decorator_list else [],
         returns=return_type,
         lineno=lineno,
+        type_params=type_params if type_params else [],
     )
 
 
@@ -111,15 +108,19 @@ def generate_class_def(
     name: str,
     base_names: Optional[List[str]] = None,
     body: Optional[List[ast.stmt]] = None,
+    type_params: Optional[List[ast.type_param]] = None,
 ) -> ast.ClassDef:
     """Generate class definition."""
-    bases = [ast.Name(id=name) for name in base_names] if base_names else []
+    bases = cast(
+        List[ast.expr], [ast.Name(id=name) for name in base_names] if base_names else []
+    )
     return ast.ClassDef(
         name=name,
         bases=bases,
         keywords=[],
         body=body if body else [],
         decorator_list=[],
+        type_params=type_params if type_params else [],
     )
 
 
@@ -153,28 +154,30 @@ def generate_assign(
 ) -> ast.Assign:
     """Generate assign object."""
     return ast.Assign(
-        targets=[ast.Name(t) for t in targets], value=value, lineno=lineno
+        targets=[ast.Name(t) for t in targets],
+        value=value,  # type:ignore
+        lineno=lineno,
     )
 
 
 def generate_ann_assign(
-    target: Union[str, ast.expr],
+    target: Union[ast.Name, ast.Attribute, ast.Subscript],
     annotation: Annotation,
     value: Optional[ast.expr] = None,
     lineno: int = 1,
 ) -> ast.AnnAssign:
     """Generate ann assign object."""
     return ast.AnnAssign(
-        target=target if isinstance(target, ast.expr) else ast.Name(id=target),
+        target=target,
         annotation=annotation,
-        simple=1,
         value=value,
+        simple=1,
         lineno=lineno,
     )
 
 
 def generate_union_annotation(
-    types: List[Union[ast.Name, ast.Subscript]], nullable: bool = True
+    types: List[ast.expr], nullable: bool = True
 ) -> ast.Subscript:
     """Generate union annotation."""
     result = ast.Subscript(value=ast.Name(id=UNION), slice=ast.Tuple(elts=types))
@@ -182,8 +185,8 @@ def generate_union_annotation(
 
 
 def generate_dict(
-    keys: Optional[List[ast.expr]] = None,
-    values: Optional[List[Optional[ast.expr]]] = None,
+    keys: Optional[List[Optional[ast.expr]]] = None,
+    values: Optional[List[ast.expr]] = None,
 ) -> ast.Dict:
     """Generate dict object."""
     return ast.Dict(keys=keys if keys else [], values=values if values else [])
@@ -201,7 +204,9 @@ def generate_call(
 ) -> ast.Call:
     """Generate call object."""
     return ast.Call(
-        func=func, args=args if args else [], keywords=keywords if keywords else []
+        func=func,
+        args=args if args else [],  # type:ignore
+        keywords=keywords if keywords else [],
     )
 
 
@@ -240,7 +245,10 @@ def parse_field_type(
         return generate_annotation_name('"' + type_.name + '"', nullable)
 
     if isinstance(type_, GraphQLUnionType):
-        subtypes = [parse_field_type(subtype, False) for subtype in type_.types]
+        subtypes = cast(
+            List[ast.expr],
+            [parse_field_type(subtype, False) for subtype in type_.types],
+        )
         return generate_union_annotation(subtypes, nullable)
 
     if isinstance(type_, GraphQLList):
@@ -255,7 +263,7 @@ def parse_field_type(
 
 
 def generate_method_call(
-    object_name: str, method_name: str, args: Optional[List[Optional[ast.expr]]] = None
+    object_name: str, method_name: str, args: Optional[List[ast.expr]] = None
 ) -> ast.Call:
     """Generate object`s method call."""
     return ast.Call(
@@ -287,7 +295,7 @@ def generate_trivial_lambda(name: str, argument_name: str) -> ast.Assign:
     )
 
 
-def generate_list(elements: List[Optional[ast.expr]]) -> ast.List:
+def generate_list(elements: List[ast.expr]) -> ast.List:
     """Generate list object."""
     return ast.List(elts=elements)
 
@@ -343,7 +351,8 @@ def generate_method_definition(
     return_type: Union[ast.Name, ast.Subscript],
     body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
-    decorator_list: Optional[List[ast.Name]] = None,
+    decorator_list: Optional[List[ast.expr]] = None,
+    type_params: Optional[List[ast.type_param]] = None,
 ) -> ast.FunctionDef:
     return ast.FunctionDef(
         name=name,
@@ -352,6 +361,7 @@ def generate_method_definition(
         decorator_list=decorator_list if decorator_list else [],
         returns=return_type,
         lineno=lineno,
+        type_params=type_params if type_params else [],
     )
 
 

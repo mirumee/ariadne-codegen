@@ -46,6 +46,7 @@ def test_generate_returns_module_with_parsed_inputs_scalar_field_with_default_va
                 simple=1,
             )
         ],
+        type_params=[],
     )
     module = generator.generate()
 

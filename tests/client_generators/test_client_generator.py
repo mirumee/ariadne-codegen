@@ -1,5 +1,5 @@
 import ast
-from typing import cast
+from typing import List, cast
 
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
@@ -57,6 +57,7 @@ def test_generate_returns_module_with_gql_lambda_definition(async_base_client_im
         body=[ast.Return(value=ast.Name(id="q"))],
         returns=ast.Name(id="str"),
         decorator_list=[],
+        type_params=[],
     )
 
     module = generator.generate()
@@ -484,61 +485,76 @@ def test_add_method_generates_async_generator_for_subscription_definition(
             kw_defaults=[],
             defaults=[],
         ),
-        body=[
-            ast.Assign(
-                targets=[ast.Name(id="query")],
-                value=ast.Call(
-                    func=ast.Name(id="gql"),
-                    args=[
-                        [ast.Constant(value="subscription GetCounter { counter }\n")]
-                    ],
-                    keywords=[],
+        body=cast(
+            List[ast.stmt],
+            [
+                ast.Assign(
+                    targets=[ast.Name(id="query")],
+                    value=ast.Call(
+                        func=ast.Name(id="gql"),
+                        args=[
+                            [
+                                ast.Constant(
+                                    value="subscription GetCounter { counter }\n"
+                                )
+                            ]
+                        ],
+                        keywords=[],
+                    ),
                 ),
-            ),
-            ast.AnnAssign(
-                target=ast.Name(id="variables"),
-                annotation=ast.Subscript(
-                    value=ast.Name(id=DICT),
-                    slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
-                ),
-                value=ast.Dict(keys=[], values=[]),
-                simple=1,
-            ),
-            ast.AsyncFor(
-                target=ast.Name(id="data"),
-                iter=ast.Call(
-                    func=ast.Attribute(value=ast.Name(id="self"), attr="execute_ws"),
-                    args=[],
-                    keywords=[
-                        ast.keyword(arg="query", value=ast.Name(id="query")),
-                        ast.keyword(
-                            arg="operation_name", value=ast.Constant(value="GetCounter")
+                ast.AnnAssign(
+                    target=ast.Name(id="variables"),
+                    annotation=ast.Subscript(
+                        value=ast.Name(id=DICT),
+                        slice=ast.Tuple(
+                            elts=[ast.Name(id="str"), ast.Name(id="object")]
                         ),
-                        ast.keyword(arg="variables", value=ast.Name(id="variables")),
-                        ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
-                    ],
+                    ),
+                    value=ast.Dict(keys=[], values=[]),
+                    simple=1,
                 ),
-                body=[
-                    ast.Expr(
-                        value=ast.Yield(
-                            value=ast.Call(
-                                func=ast.Attribute(
-                                    value=ast.Name(id="GetCounter"),
-                                    attr=MODEL_VALIDATE_METHOD,
-                                ),
-                                args=[ast.Name(id="data")],
-                                keywords=[],
+                ast.AsyncFor(
+                    target=ast.Name(id="data"),
+                    iter=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Name(id="self"), attr="execute_ws"
+                        ),
+                        args=[],
+                        keywords=[
+                            ast.keyword(arg="query", value=ast.Name(id="query")),
+                            ast.keyword(
+                                arg="operation_name",
+                                value=ast.Constant(value="GetCounter"),
+                            ),
+                            ast.keyword(
+                                arg="variables", value=ast.Name(id="variables")
+                            ),
+                            ast.keyword(value=ast.Name(id=KWARGS_NAMES)),
+                        ],
+                    ),
+                    body=[
+                        ast.Expr(
+                            value=ast.Yield(
+                                value=ast.Call(
+                                    func=ast.Attribute(
+                                        value=ast.Name(id="GetCounter"),
+                                        attr=MODEL_VALIDATE_METHOD,
+                                    ),
+                                    args=[ast.Name(id="data")],
+                                    keywords=[],
+                                )
                             )
                         )
-                    )
-                ],
-                orelse=[],
-            ),
-        ],
+                    ],
+                    orelse=[],
+                ),
+            ],
+        ),
         decorator_list=[],
         returns=ast.Subscript(
             value=ast.Name(id="AsyncIterator"), slice=ast.Name(id="GetCounter")
         ),
+        type_params=[],
     )
 
     generator.add_method(

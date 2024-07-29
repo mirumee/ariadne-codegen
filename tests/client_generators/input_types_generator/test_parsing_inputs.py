@@ -65,6 +65,7 @@ from ...utils import compare_ast, filter_class_defs
                             simple=1,
                         ),
                     ],
+                    type_params=[],
                 ),
                 ast.ClassDef(
                     name="CustomInput2",
@@ -78,6 +79,7 @@ from ...utils import compare_ast, filter_class_defs
                             simple=1,
                         )
                     ],
+                    type_params=[],
                 ),
             ],
         )

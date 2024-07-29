@@ -36,6 +36,7 @@ def test_get_classes_returns_list_with_types_generated_from_fragment():
                 ),
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="TestFragmentField1",
@@ -49,6 +50,7 @@ def test_get_classes_returns_list_with_types_generated_from_fragment():
                 )
             ],
             decorator_list=[],
+            type_params=[],
         ),
     ]
     generator = ResultTypesGenerator(
@@ -96,6 +98,7 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
                 ),
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="TestFragmentField1",
@@ -103,6 +106,7 @@ def test_get_classes_returns_types_generated_from_fragment_which_uses_other_frag
             keywords=[],
             body=[ast.Pass()],
             decorator_list=[],
+            type_params=[],
         ),
     ]
     generator = ResultTypesGenerator(

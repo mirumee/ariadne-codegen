@@ -221,7 +221,7 @@ class ArgumentGenerator:
     ) -> Tuple[List[ast.stmt], List[ast.keyword]]:
         arguments_body = [
             generate_ann_assign(
-                "arguments",
+                generate_name("arguments"),
                 generate_subscript(
                     generate_name(DICT),
                     generate_tuple(
@@ -240,8 +240,8 @@ class ArgumentGenerator:
                     ),
                 ),
                 generate_dict(
-                    return_arguments_keys,
-                    return_arguments_values,  # type: ignore
+                    return_arguments_keys,  # type: ignore
+                    return_arguments_values,
                 ),
             ),
             generate_assign(
