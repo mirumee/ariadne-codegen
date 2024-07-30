@@ -173,16 +173,17 @@ class ClientForwardRefsPlugin(Plugin):
         if import_class is None:
             return
 
-        import_class_id = import_class.id
+        import_class_name = import_class.name
 
         # We add the class to our set of imported in methods - these classes
         # don't need to be imported at all in the global scope.
-        self.imported_in_method.add(import_class.id)
+        self.imported_in_method.add(import_class_name)
         method_def.body.insert(
             0,
             ast.ImportFrom(
-                module=self.imported_classes[import_class_id],
+                module=self.imported_classes[import_class_name],
                 names=[import_class],
+                level=1,
             ),
         )
 
@@ -237,19 +238,18 @@ class ClientForwardRefsPlugin(Plugin):
 
         return None
 
-    def _get_class_from_call(self, call: ast.Call) -> Optional[ast.Name]:
+    def _get_class_from_call(self, call: ast.Call) -> Optional[ast.alias]:
         """Get the class from an `ast.Call`.
 
         :param call: The `ast.Call` arg
-        :returns: `ast.Name` or `None`
+        :returns: `ast.alias` or `None`
         """
         if not isinstance(call.func, ast.Attribute):
             return None
 
         if not isinstance(call.func.value, ast.Name):
             return None
-
-        return call.func.value
+        return ast.alias(name=call.func.value.id)
 
     def _update_imports(self, module: ast.Module) -> None:
         """Update all imports.
@@ -345,7 +345,7 @@ class ClientForwardRefsPlugin(Plugin):
             module_name = self.imported_classes[cls]
             if module_name not in type_checking_imports:
                 type_checking_imports[module_name] = ast.ImportFrom(
-                    module=module_name, names=[]
+                    module=module_name, names=[], level=1
                 )
 
             type_checking_imports[module_name].names.append(ast.alias(cls))
@@ -363,7 +363,8 @@ class ClientForwardRefsPlugin(Plugin):
             len(non_empty_imports),
             ast.ImportFrom(
                 module=TYPE_CHECKING_MODULE,
-                names=[ast.Name(TYPE_CHECKING_FLAG)],
+                names=[ast.alias(TYPE_CHECKING_FLAG)],
+                level=1,
             ),
         )
 

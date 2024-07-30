@@ -75,6 +75,7 @@ def test_generate_returns_module_with_class_for_every_fragment(
                 )
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="FragmentB",
@@ -97,6 +98,7 @@ def test_generate_returns_module_with_class_for_every_fragment(
                 )
             ],
             decorator_list=[],
+            type_params=[],
         ),
     ]
     generator = FragmentsGenerator(

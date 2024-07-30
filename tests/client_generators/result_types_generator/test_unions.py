@@ -116,6 +116,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
                 )
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomQueryQuery4CustomType1",
@@ -146,6 +147,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
                 ),
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomQueryQuery4CustomType2",
@@ -179,6 +181,7 @@ def test_generate_returns_module_with_classes_for_union_fields():
                 ),
             ],
             decorator_list=[],
+            type_params=[],
         ),
     ]
 
@@ -237,6 +240,7 @@ def test_generate_returns_module_with_class_generated_from_union_with_one_member
             ),
         ],
         decorator_list=[],
+        type_params=[],
     )
     generator = ResultTypesGenerator(
         schema=build_ast_schema(parse(SCHEMA_STR)),

@@ -219,7 +219,7 @@ class CustomFieldsGenerator:
                 name, field_name, getattr(field, "args")
             )
         return generate_ann_assign(
-            target=name,
+            target=generate_name(name),
             annotation=generate_name(f'"{field_name}"'),
             value=generate_call(
                 func=generate_name(field_name), args=[generate_constant(org_name)]

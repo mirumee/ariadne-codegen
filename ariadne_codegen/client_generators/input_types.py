@@ -18,6 +18,7 @@ from ..codegen import (
     generate_keyword,
     generate_method_call,
     generate_module,
+    generate_name,
     generate_pydantic_field,
     model_has_forward_refs,
 )
@@ -172,7 +173,7 @@ class InputTypesGenerator:
                 field.type, custom_scalars=self.custom_scalars
             )
             field_implementation = generate_ann_assign(
-                target=name,
+                target=generate_name(name),
                 annotation=annotation,
                 value=parse_input_field_default_value(
                     node=field.ast_node, annotation=annotation, field_type=field_type

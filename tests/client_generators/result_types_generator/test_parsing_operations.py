@@ -62,6 +62,7 @@ from .schema import SCHEMA_STR
                             simple=1,
                         )
                     ],
+                    type_params=[],
                 ),
                 ast.ClassDef(
                     name="CustomQueryQuery2",
@@ -75,6 +76,7 @@ from .schema import SCHEMA_STR
                             simple=1,
                         )
                     ],
+                    type_params=[],
                 ),
             ],
         ),
@@ -118,6 +120,7 @@ from .schema import SCHEMA_STR
                         )
                     ],
                     decorator_list=[],
+                    type_params=[],
                 ),
                 ast.ClassDef(
                     name="CustomQueryQuery1",
@@ -174,6 +177,7 @@ from .schema import SCHEMA_STR
                         ),
                     ],
                     decorator_list=[],
+                    type_params=[],
                 ),
                 ast.ClassDef(
                     name="CustomQueryQuery1Field1",
@@ -187,6 +191,7 @@ from .schema import SCHEMA_STR
                         )
                     ],
                     decorator_list=[],
+                    type_params=[],
                 ),
                 ast.ClassDef(
                     name="CustomQueryQuery1Field2",
@@ -202,6 +207,7 @@ from .schema import SCHEMA_STR
                         )
                     ],
                     decorator_list=[],
+                    type_params=[],
                 ),
             ],
         ),
@@ -263,6 +269,7 @@ def test_generate_returns_module_with_types_generated_from_mutation():
                     simple=1,
                 )
             ],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomMutationMutation1",
@@ -276,6 +283,7 @@ def test_generate_returns_module_with_types_generated_from_mutation():
                     simple=1,
                 )
             ],
+            type_params=[],
         ),
     ]
     generator = ResultTypesGenerator(
@@ -328,6 +336,7 @@ def test_generate_returns_module_with_types_generated_from_subscription():
                     simple=1,
                 )
             ],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomSubscriptionSubscription1",
@@ -341,6 +350,7 @@ def test_generate_returns_module_with_types_generated_from_subscription():
                     simple=1,
                 )
             ],
+            type_params=[],
         ),
     ]
     generator = ResultTypesGenerator(
@@ -441,6 +451,7 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
             ),
         ],
         decorator_list=[],
+        type_params=[],
     )
     generator = ResultTypesGenerator(
         schema=build_schema(SCHEMA_STR),
@@ -512,6 +523,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                 )
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomQueryInterfaceQueryInterfaceI",
@@ -545,6 +557,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                 ),
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomQueryInterfaceQueryTypeA",
@@ -589,6 +602,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                 ),
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomQueryInterfaceQueryTypeB",
@@ -633,6 +647,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
                 ),
             ],
             decorator_list=[],
+            type_params=[],
         ),
     ]
     operation_definition, fragment_def = cast(
@@ -685,6 +700,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
                 ),
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomQueryQuery1",
@@ -698,6 +714,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
                 )
             ],
             decorator_list=[],
+            type_params=[],
         ),
         ast.ClassDef(
             name="CustomQueryCamelCaseQuery",
@@ -709,6 +726,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
                 )
             ],
             decorator_list=[],
+            type_params=[],
         ),
     ]
     generator = ResultTypesGenerator(
@@ -743,6 +761,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
                         simple=1,
                     )
                 ],
+                type_params=[],
             ),
         ),
         (
@@ -759,6 +778,7 @@ def test_generate_returns_module_with_class_for_every_appearance_of_type():
                         simple=1,
                     )
                 ],
+                type_params=[],
             ),
         ),
     ],

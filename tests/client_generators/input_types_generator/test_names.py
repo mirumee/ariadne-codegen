@@ -77,6 +77,7 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                     ),
                 ],
                 decorator_list=[],
+                type_params=[],
             ),
         ),
         (
@@ -147,6 +148,7 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                     ),
                 ],
                 decorator_list=[],
+                type_params=[],
             ),
         ),
     ],

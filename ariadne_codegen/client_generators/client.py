@@ -850,7 +850,7 @@ class ClientGenerator:
         self, variable_names: Dict[str, str], arguments_dict: ast.Dict, lineno: int = 1
     ) -> ast.AnnAssign:
         return generate_ann_assign(
-            target=variable_names[self._variables_dict_variable],
+            target=generate_name(variable_names[self._variables_dict_variable]),
             annotation=generate_subscript(
                 generate_name(DICT),
                 generate_tuple([generate_name("str"), generate_name("object")]),

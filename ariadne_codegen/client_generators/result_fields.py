@@ -216,7 +216,9 @@ def parse_interface_type(
     )
     context.abstract_type = True
     if inline_fragments or fragments_on_subtypes:
-        types = [generate_annotation_name('"' + class_name + type_.name + '"', False)]
+        types: List[ast.expr] = [
+            generate_annotation_name('"' + class_name + type_.name + '"', False)
+        ]
         context.related_classes.append(
             RelatedClassData(class_name=class_name + type_.name, type_name=type_.name)
         )
@@ -275,7 +277,7 @@ def parse_union_type(
     class_name: str,
 ) -> Annotation:
     context.abstract_type = True
-    sub_annotations = [
+    sub_annotations: List[ast.expr] = [
         parse_operation_field_type(
             type_=subtype,
             context=context,

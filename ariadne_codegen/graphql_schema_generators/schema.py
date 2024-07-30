@@ -1,5 +1,6 @@
 import ast
 from pathlib import Path
+from typing import List, cast
 
 from graphql import GraphQLSchema, print_schema
 from graphql.type.schema import TypeMap
@@ -46,50 +47,53 @@ def generate_schema_module(
     schema: GraphQLSchema, type_map_name: str, schema_variable_name: str
 ) -> ast.Module:
     return generate_module(
-        body=[
-            generate_import_from(
-                names=[
-                    "DirectiveLocation",
-                    "GraphQLArgument",
-                    "GraphQLDirective",
-                    "GraphQLEnumType",
-                    "GraphQLEnumValue",
-                    "GraphQLField",
-                    "GraphQLInputField",
-                    "GraphQLInputObjectType",
-                    "GraphQLInterfaceType",
-                    "GraphQLList",
-                    "GraphQLNamedType",
-                    "GraphQLNonNull",
-                    "GraphQLObjectType",
-                    "GraphQLScalarType",
-                    "GraphQLSchema",
-                    "GraphQLUnionType",
-                    "GraphQLID",
-                    "GraphQLInt",
-                    "GraphQLFloat",
-                    "GraphQLString",
-                    "GraphQLBoolean",
-                    "Undefined",
-                ],
-                from_="graphql",
-            ),
-            generate_import_from(
-                names=["TypeMap"],
-                from_="graphql.type.schema",
-            ),
-            generate_import_from(names=["cast", "List"], from_="typing"),
-            generate_ann_assign(
-                target=type_map_name,
-                annotation=generate_name("TypeMap"),
-                value=generate_type_map(schema.type_map, type_map_name),
-            ),
-            generate_ann_assign(
-                target=schema_variable_name,
-                annotation=generate_name("GraphQLSchema"),
-                value=generate_schema(schema, type_map_name),
-            ),
-        ]
+        body=cast(
+            List[ast.stmt],
+            [
+                generate_import_from(
+                    names=[
+                        "DirectiveLocation",
+                        "GraphQLArgument",
+                        "GraphQLDirective",
+                        "GraphQLEnumType",
+                        "GraphQLEnumValue",
+                        "GraphQLField",
+                        "GraphQLInputField",
+                        "GraphQLInputObjectType",
+                        "GraphQLInterfaceType",
+                        "GraphQLList",
+                        "GraphQLNamedType",
+                        "GraphQLNonNull",
+                        "GraphQLObjectType",
+                        "GraphQLScalarType",
+                        "GraphQLSchema",
+                        "GraphQLUnionType",
+                        "GraphQLID",
+                        "GraphQLInt",
+                        "GraphQLFloat",
+                        "GraphQLString",
+                        "GraphQLBoolean",
+                        "Undefined",
+                    ],
+                    from_="graphql",
+                ),
+                generate_import_from(
+                    names=["TypeMap"],
+                    from_="graphql.type.schema",
+                ),
+                generate_import_from(names=["cast", "List"], from_="typing"),
+                generate_ann_assign(
+                    target=generate_name(type_map_name),
+                    annotation=generate_name("TypeMap"),
+                    value=generate_type_map(schema.type_map, type_map_name),
+                ),
+                generate_ann_assign(
+                    target=generate_name(schema_variable_name),
+                    annotation=generate_name("GraphQLSchema"),
+                    value=generate_schema(schema, type_map_name),
+                ),
+            ],
+        )
     )
 
 
