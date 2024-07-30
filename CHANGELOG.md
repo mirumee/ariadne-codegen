@@ -3,6 +3,7 @@
 ## 0.14.1 (UNRELEASED)
 
 - Changed code typing to satisfy MyPy 1.11.0 version
+- Added support for `async_client=false` to work with `enable_custom_operations=true`
 
 
 ## 0.14.0 (2024-07-17)

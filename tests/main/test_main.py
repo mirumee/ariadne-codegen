@@ -205,6 +205,14 @@ def test_main_shows_version():
             "example_client",
             CLIENTS_PATH / "custom_query_builder" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "custom_sync_query_builder" / "pyproject.toml",
+                (CLIENTS_PATH / "custom_sync_query_builder" / "schema.graphql",),
+            ),
+            "example_client",
+            CLIENTS_PATH / "custom_sync_query_builder" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
