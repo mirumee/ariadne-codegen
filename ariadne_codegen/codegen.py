@@ -90,7 +90,6 @@ def generate_async_method_definition(
     body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
     decorator_list: Optional[List[ast.expr]] = None,
-    type_params: Optional[List[ast.type_param]] = None,
 ) -> ast.AsyncFunctionDef:
     """Generate async function."""
     return ast.AsyncFunctionDef(
@@ -100,7 +99,7 @@ def generate_async_method_definition(
         decorator_list=decorator_list if decorator_list else [],
         returns=return_type,
         lineno=lineno,
-        type_params=type_params if type_params else [],
+        type_params=[],
     )
 
 
@@ -108,7 +107,6 @@ def generate_class_def(
     name: str,
     base_names: Optional[List[str]] = None,
     body: Optional[List[ast.stmt]] = None,
-    type_params: Optional[List[ast.type_param]] = None,
 ) -> ast.ClassDef:
     """Generate class definition."""
     bases = cast(
@@ -120,7 +118,7 @@ def generate_class_def(
         keywords=[],
         body=body if body else [],
         decorator_list=[],
-        type_params=type_params if type_params else [],
+        type_params=[],
     )
 
 
@@ -352,7 +350,6 @@ def generate_method_definition(
     body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
     decorator_list: Optional[List[ast.expr]] = None,
-    type_params: Optional[List[ast.type_param]] = None,
 ) -> ast.FunctionDef:
     return ast.FunctionDef(
         name=name,
@@ -361,7 +358,7 @@ def generate_method_definition(
         decorator_list=decorator_list if decorator_list else [],
         returns=return_type,
         lineno=lineno,
-        type_params=type_params if type_params else [],
+        type_params=[],
     )
 
 
