@@ -93,7 +93,7 @@ def generate_async_method_definition(
     decorator_list: Optional[List[ast.expr]] = None,
 ) -> ast.AsyncFunctionDef:
     """Generate async function."""
-    params = {
+    params: Dict[str, Any] = {
         "name": name,
         "args": arguments,
         "body": body if body else [ast.Pass()],
@@ -116,7 +116,7 @@ def generate_class_def(
     bases = cast(
         List[ast.expr], [ast.Name(id=name) for name in base_names] if base_names else []
     )
-    params = {
+    params: Dict[str, Any] = {
         "name": name,
         "bases": bases,
         "keywords": [],
@@ -358,18 +358,15 @@ def generate_method_definition(
     lineno: int = 1,
     decorator_list: Optional[List[ast.expr]] = None,
 ) -> ast.FunctionDef:
-    params = {
-        "name": name,
-        "args": arguments,
-        "body": body if body else [ast.Pass()],
-        "decorator_list": decorator_list if decorator_list else [],
-        "returns": return_type,
-        "lineno": lineno,
-    }
-    if sys.version_info >= (3, 12):
-        params["type_params"] = []
-
-    return ast.FunctionDef(**params)
+    return ast.FunctionDef(
+        name=name,
+        args=arguments,
+        body=body if body else [ast.Pass()],
+        decorator_list=decorator_list if decorator_list else [],
+        returns=return_type,
+        lineno=lineno,
+        type_params=[],
+    )
 
 
 def generate_async_for(
