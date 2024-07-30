@@ -358,15 +358,18 @@ def generate_method_definition(
     lineno: int = 1,
     decorator_list: Optional[List[ast.expr]] = None,
 ) -> ast.FunctionDef:
-    return ast.FunctionDef(
-        name=name,
-        args=arguments,
-        body=body if body else [ast.Pass()],
-        decorator_list=decorator_list if decorator_list else [],
-        returns=return_type,
-        lineno=lineno,
-        type_params=[],
-    )
+    params: Dict[str, Any] = {
+        "name": name,
+        "args": arguments,
+        "body": body if body else [ast.Pass()],
+        "decorator_list": decorator_list if decorator_list else [],
+        "returns": return_type,
+        "lineno": lineno,
+    }
+    if sys.version_info >= (3, 12):
+        params["type_params"] = []
+
+    return ast.FunctionDef(**params)
 
 
 def generate_async_for(
