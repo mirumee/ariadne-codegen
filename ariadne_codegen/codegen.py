@@ -1,4 +1,5 @@
 import ast
+import sys
 from typing import Any, Dict, List, Optional, Union, cast
 
 from graphql import (
@@ -92,15 +93,18 @@ def generate_async_method_definition(
     decorator_list: Optional[List[ast.expr]] = None,
 ) -> ast.AsyncFunctionDef:
     """Generate async function."""
-    return ast.AsyncFunctionDef(
-        name=name,
-        args=arguments,
-        body=body if body else [ast.Pass()],
-        decorator_list=decorator_list if decorator_list else [],
-        returns=return_type,
-        lineno=lineno,
-        type_params=[],
-    )
+    params = {
+        "name": name,
+        "args": arguments,
+        "body": body if body else [ast.Pass()],
+        "decorator_list": decorator_list if decorator_list else [],
+        "returns": return_type,
+        "lineno": lineno,
+    }
+    if sys.version_info >= (3, 12):
+        params["type_params"] = []
+
+    return ast.AsyncFunctionDef(**params)
 
 
 def generate_class_def(
@@ -112,14 +116,17 @@ def generate_class_def(
     bases = cast(
         List[ast.expr], [ast.Name(id=name) for name in base_names] if base_names else []
     )
-    return ast.ClassDef(
-        name=name,
-        bases=bases,
-        keywords=[],
-        body=body if body else [],
-        decorator_list=[],
-        type_params=[],
-    )
+    params = {
+        "name": name,
+        "bases": bases,
+        "keywords": [],
+        "body": body if body else [],
+        "decorator_list": [],
+    }
+    if sys.version_info >= (3, 12):
+        params["type_params"] = []
+
+    return ast.ClassDef(**params)
 
 
 def generate_name(name: str) -> ast.Name:
@@ -351,15 +358,18 @@ def generate_method_definition(
     lineno: int = 1,
     decorator_list: Optional[List[ast.expr]] = None,
 ) -> ast.FunctionDef:
-    return ast.FunctionDef(
-        name=name,
-        args=arguments,
-        body=body if body else [ast.Pass()],
-        decorator_list=decorator_list if decorator_list else [],
-        returns=return_type,
-        lineno=lineno,
-        type_params=[],
-    )
+    params = {
+        "name": name,
+        "args": arguments,
+        "body": body if body else [ast.Pass()],
+        "decorator_list": decorator_list if decorator_list else [],
+        "returns": return_type,
+        "lineno": lineno,
+    }
+    if sys.version_info >= (3, 12):
+        params["type_params"] = []
+
+    return ast.FunctionDef(**params)
 
 
 def generate_async_for(
