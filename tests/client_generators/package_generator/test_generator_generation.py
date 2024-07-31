@@ -88,80 +88,80 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
         "base_model",
     }
     assert (
-            client_generator.arguments_generator.convert_to_snake_case
-            == settings_without_defaults.convert_to_snake_case
+        client_generator.arguments_generator.convert_to_snake_case
+        == settings_without_defaults.convert_to_snake_case
     )
     assert (
-            client_generator.arguments_generator.custom_scalars
-            == settings_without_defaults.scalars
+        client_generator.arguments_generator.custom_scalars
+        == settings_without_defaults.scalars
     )
     assert client_generator.name == settings_without_defaults.client_name
     assert (
-            client_generator._class_def.bases[0].id
-            == settings_without_defaults.base_client_name
+        client_generator._class_def.bases[0].id
+        == settings_without_defaults.base_client_name
     )
     assert (
-            client_generator.enums_module_name
-            == settings_without_defaults.enums_module_name
+        client_generator.enums_module_name
+        == settings_without_defaults.enums_module_name
     )
     assert (
-            client_generator.input_types_module_name
-            == settings_without_defaults.input_types_module_name
+        client_generator.input_types_module_name
+        == settings_without_defaults.input_types_module_name
     )
     assert client_generator.custom_scalars == settings_without_defaults.scalars
     # input types generator
     assert (
-            input_types_generator.enums_module
-            == settings_without_defaults.enums_module_name
+        input_types_generator.enums_module
+        == settings_without_defaults.enums_module_name
     )
     assert (
-            input_types_generator.convert_to_snake_case
-            == settings_without_defaults.convert_to_snake_case
+        input_types_generator.convert_to_snake_case
+        == settings_without_defaults.convert_to_snake_case
     )
     assert input_types_generator.custom_scalars == settings_without_defaults.scalars
     # fragments generator
     assert (
-            fragments_generator.enums_module_name
-            == settings_without_defaults.enums_module_name
+        fragments_generator.enums_module_name
+        == settings_without_defaults.enums_module_name
     )
     assert (
-            fragments_generator.convert_to_snake_case
-            == settings_without_defaults.convert_to_snake_case
+        fragments_generator.convert_to_snake_case
+        == settings_without_defaults.convert_to_snake_case
     )
     assert fragments_generator.custom_scalars == settings_without_defaults.scalars
     # custom query generator
     assert (
-            custom_query_generator.enums_module_name
-            == settings_without_defaults.enums_module_name
+        custom_query_generator.enums_module_name
+        == settings_without_defaults.enums_module_name
     )
     assert custom_query_generator.custom_scalars == settings_without_defaults.scalars
     assert (
-            custom_query_generator.convert_to_snake_case
-            == settings_without_defaults.convert_to_snake_case
+        custom_query_generator.convert_to_snake_case
+        == settings_without_defaults.convert_to_snake_case
     )
     assert (
-            custom_query_generator.arguments_generator.convert_to_snake_case
-            == settings_without_defaults.convert_to_snake_case
+        custom_query_generator.arguments_generator.convert_to_snake_case
+        == settings_without_defaults.convert_to_snake_case
     )
     assert (
-            custom_query_generator.arguments_generator.custom_scalars
-            == settings_without_defaults.scalars
+        custom_query_generator.arguments_generator.custom_scalars
+        == settings_without_defaults.scalars
     )
     # custom mutation generator
     assert (
-            custom_mutation_generator.enums_module_name
-            == settings_without_defaults.enums_module_name
+        custom_mutation_generator.enums_module_name
+        == settings_without_defaults.enums_module_name
     )
     assert custom_mutation_generator.custom_scalars == settings_without_defaults.scalars
     assert (
-            custom_mutation_generator.convert_to_snake_case
-            == settings_without_defaults.convert_to_snake_case
+        custom_mutation_generator.convert_to_snake_case
+        == settings_without_defaults.convert_to_snake_case
     )
     assert (
-            custom_mutation_generator.arguments_generator.convert_to_snake_case
-            == settings_without_defaults.convert_to_snake_case
+        custom_mutation_generator.arguments_generator.convert_to_snake_case
+        == settings_without_defaults.convert_to_snake_case
     )
     assert (
-            custom_mutation_generator.arguments_generator.custom_scalars
-            == settings_without_defaults.scalars
+        custom_mutation_generator.arguments_generator.custom_scalars
+        == settings_without_defaults.scalars
     )

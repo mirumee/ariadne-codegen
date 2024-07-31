@@ -46,44 +46,44 @@ from .scalars import ScalarData
 
 class PackageGenerator:
     def __init__(
-            self,
-            package_name: str,
-            target_path: str,
-            schema: GraphQLSchema,
-            init_generator: InitFileGenerator,
-            client_generator: ClientGenerator,
-            enums_generator: EnumsGenerator,
-            input_types_generator: InputTypesGenerator,
-            fragments_generator: FragmentsGenerator,
-            custom_fields_generator: Optional[CustomFieldsGenerator] = None,
-            custom_fields_typing_generator: Optional[CustomFieldsTypingGenerator] = None,
-            custom_query_generator: Optional[CustomOperationGenerator] = None,
-            custom_mutation_generator: Optional[CustomOperationGenerator] = None,
-            fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
-            client_name: str = "Client",
-            async_client: bool = True,
-            base_client_name: str = "AsyncBaseClient",
-            base_client_file_path: str = DEFAULT_ASYNC_BASE_CLIENT_PATH.as_posix(),
-            client_file_name: str = "client",
-            enums_module_name: str = "enums",
-            input_types_module_name: str = "input_types",
-            fragments_module_name: str = "fragments",
-            custom_help_field_module_name: str = "custom_typing_fields",
-            comments_strategy: CommentsStrategy = CommentsStrategy.STABLE,
-            queries_source: str = "",
-            schema_source: str = "",
-            convert_to_snake_case: bool = True,
-            include_all_inputs: bool = True,
-            include_all_enums: bool = True,
-            base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
-            base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
-            base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
-            upload_import: ast.ImportFrom = UPLOAD_IMPORT,
-            unset_import: ast.ImportFrom = UNSET_IMPORT,
-            files_to_include: Optional[List[str]] = None,
-            custom_scalars: Optional[Dict[str, ScalarData]] = None,
-            plugin_manager: Optional[PluginManager] = None,
-            enable_custom_operations: bool = False,
+        self,
+        package_name: str,
+        target_path: str,
+        schema: GraphQLSchema,
+        init_generator: InitFileGenerator,
+        client_generator: ClientGenerator,
+        enums_generator: EnumsGenerator,
+        input_types_generator: InputTypesGenerator,
+        fragments_generator: FragmentsGenerator,
+        custom_fields_generator: Optional[CustomFieldsGenerator] = None,
+        custom_fields_typing_generator: Optional[CustomFieldsTypingGenerator] = None,
+        custom_query_generator: Optional[CustomOperationGenerator] = None,
+        custom_mutation_generator: Optional[CustomOperationGenerator] = None,
+        fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
+        client_name: str = "Client",
+        async_client: bool = True,
+        base_client_name: str = "AsyncBaseClient",
+        base_client_file_path: str = DEFAULT_ASYNC_BASE_CLIENT_PATH.as_posix(),
+        client_file_name: str = "client",
+        enums_module_name: str = "enums",
+        input_types_module_name: str = "input_types",
+        fragments_module_name: str = "fragments",
+        custom_help_field_module_name: str = "custom_typing_fields",
+        comments_strategy: CommentsStrategy = CommentsStrategy.STABLE,
+        queries_source: str = "",
+        schema_source: str = "",
+        convert_to_snake_case: bool = True,
+        include_all_inputs: bool = True,
+        include_all_enums: bool = True,
+        base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
+        base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
+        base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
+        upload_import: ast.ImportFrom = UPLOAD_IMPORT,
+        unset_import: ast.ImportFrom = UNSET_IMPORT,
+        files_to_include: Optional[List[str]] = None,
+        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        plugin_manager: Optional[PluginManager] = None,
+        enable_custom_operations: bool = False,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -156,16 +156,16 @@ class PackageGenerator:
         if self.enable_custom_operations:
             self._generate_custom_fields_typing()
             self._generate_custom_fields()
-            self.client_generator.add_execute_custom_operation_method()
+            self.client_generator.add_execute_custom_operation_method(self.async_client)
             if self.custom_query_generator:
                 self._generate_custom_queries()
                 self.client_generator.create_custom_operation_method(
-                    "query", OperationType.QUERY.value.upper()
+                    "query", OperationType.QUERY.value.upper(), self.async_client
                 )
             if self.custom_mutation_generator:
                 self._generate_custom_mutations()
                 self.client_generator.create_custom_operation_method(
-                    "mutation", OperationType.MUTATION.value.upper()
+                    "mutation", OperationType.MUTATION.value.upper(), self.async_client
                 )
 
         self._generate_client()
@@ -221,10 +221,10 @@ class PackageGenerator:
 
     def _include_exceptions(self):
         if self.base_client_file_path in (
-                DEFAULT_ASYNC_BASE_CLIENT_PATH,
-                DEFAULT_BASE_CLIENT_PATH,
-                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
-                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
+            DEFAULT_ASYNC_BASE_CLIENT_PATH,
+            DEFAULT_BASE_CLIENT_PATH,
+            DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
+            DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
         ):
             self.files_to_include.append(EXCEPTIONS_FILE_PATH)
             self.init_generator.add_import(
@@ -235,16 +235,16 @@ class PackageGenerator:
 
     def _validate_unique_file_names(self):
         file_names = (
-                [
-                    f"{self.client_file_name}.py",
-                    self.base_client_file_path.name,
-                    self.base_model_file_path.name,
-                    f"{self.enums_module_name}.py",
-                    f"{self.input_types_module_name}.py",
-                    f"{self.fragments_module_name}.py",
-                ]
-                + list(self._result_types_files.keys())
-                + [f.name for f in self.files_to_include]
+            [
+                f"{self.client_file_name}.py",
+                self.base_client_file_path.name,
+                self.base_model_file_path.name,
+                f"{self.enums_module_name}.py",
+                f"{self.input_types_module_name}.py",
+                f"{self.fragments_module_name}.py",
+            ]
+            + list(self._result_types_files.keys())
+            + [f.name for f in self.files_to_include]
         )
 
         if len(file_names) != len(set(file_names)):
@@ -327,7 +327,7 @@ class PackageGenerator:
 
     def _generate_fragments(self):
         if not set(self.fragments_definitions.keys()).difference(
-                self._unpacked_fragments
+            self._unpacked_fragments
         ):
             return
 
@@ -408,10 +408,10 @@ class PackageGenerator:
 
 
 def get_package_generator(
-        schema: GraphQLSchema,
-        fragments: List[FragmentDefinitionNode],
-        settings: ClientSettings,
-        plugin_manager: PluginManager,
+    schema: GraphQLSchema,
+    fragments: List[FragmentDefinitionNode],
+    settings: ClientSettings,
+    plugin_manager: PluginManager,
 ) -> PackageGenerator:
     init_generator = InitFileGenerator(plugin_manager=plugin_manager)
     client_generator = ClientGenerator(
