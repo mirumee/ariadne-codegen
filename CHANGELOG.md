@@ -4,7 +4,7 @@
 
 - Changed code typing to satisfy MyPy 1.11.0 version
 - Added support for `async_client=false` to work with `enable_custom_operations=true`
-
+- Fix propagating `convert_to_snake_case` to clients during package generation
 
 ## 0.14.0 (2024-07-17)
 
