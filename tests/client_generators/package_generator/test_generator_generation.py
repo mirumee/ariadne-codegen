@@ -81,10 +81,10 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
     custom_mutation_generator = package_generator.custom_mutation_generator
 
     # client generator
+    # pylint: disable=protected-access
     assert {i.module for i in client_generator._imports} == {
         "typing",
         "valid_file",
-        "base_model",
         "base_model",
     }
     assert (
@@ -96,6 +96,7 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
         == settings_without_defaults.scalars
     )
     assert client_generator.name == settings_without_defaults.client_name
+    # pylint: disable=protected-access
     assert (
         client_generator._class_def.bases[0].id
         == settings_without_defaults.base_client_name
