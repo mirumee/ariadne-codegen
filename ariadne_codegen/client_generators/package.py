@@ -456,7 +456,10 @@ def get_package_generator(
         plugin_manager=plugin_manager,
     )
     custom_fields_generator = CustomFieldsGenerator(
-        schema=schema, custom_scalars=settings.scalars, plugin_manager=plugin_manager
+        schema=schema,
+        custom_scalars=settings.scalars,
+        convert_to_snake_case=settings.convert_to_snake_case,
+        plugin_manager=plugin_manager,
     )
     custom_fields_typing_generator = CustomFieldsTypingGenerator(schema=schema)
     custom_query_generator = None
@@ -466,6 +469,7 @@ def get_package_generator(
             name="Query",
             base_name=BASE_GRAPHQL_OPERATION_CLASS_NAME,
             enums_module_name=settings.enums_module_name,
+            convert_to_snake_case=settings.convert_to_snake_case,
             custom_scalars=settings.scalars,
             plugin_manager=plugin_manager,
             arguments_generator=ArgumentsGenerator(
@@ -482,6 +486,7 @@ def get_package_generator(
             name="Mutation",
             base_name=BASE_GRAPHQL_OPERATION_CLASS_NAME,
             enums_module_name=settings.enums_module_name,
+            convert_to_snake_case=settings.convert_to_snake_case,
             custom_scalars=settings.scalars,
             plugin_manager=plugin_manager,
             arguments_generator=ArgumentsGenerator(
