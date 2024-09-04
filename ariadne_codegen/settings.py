@@ -1,10 +1,10 @@
 import enum
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from .client_generators.constants import (
     DEFAULT_ASYNC_BASE_CLIENT_NAME,
@@ -35,12 +35,16 @@ class Strategy(str, enum.Enum):
 class BaseSettings:
     schema_path: str = ""
     remote_schema_url: str = ""
-    remote_schema_headers: dict = field(default_factory=dict)
+    remote_schema_headers: Dict[str, str] = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
     enable_custom_operations: bool = False
     plugins: List[str] = field(default_factory=list)
 
     def __post_init__(self):
+        for f in fields(self):
+            value = getattr(self, f.name)
+            setattr(self, f.name, self.resolve_value(value))
+
         if not self.schema_path and not self.remote_schema_url:
             raise InvalidConfiguration(
                 "Schema source not provided. Use schema_path or remote_schema_url"
@@ -49,7 +53,21 @@ class BaseSettings:
         if self.schema_path:
             assert_path_exists(self.schema_path)
 
-        self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
+    def resolve_value(self, value: Any) -> Any:
+        if isinstance(value, str):
+            return self.get_env_or_value(value)
+        elif isinstance(value, dict):
+            return {k: self.resolve_value(v) for k, v in value.items()}
+        elif isinstance(value, list):
+            return [self.resolve_value(item) for item in value]
+        return value
+
+    @staticmethod
+    def get_env_or_value(value: str) -> str:
+        if value.startswith("$"):
+            env_var_name = value[1:]
+            return os.environ.get(env_var_name, value)
+        return value
 
 
 @dataclass
@@ -74,9 +92,10 @@ class ClientSettings(BaseSettings):
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
 
     def __post_init__(self):
+        super().__post_init__()
+        
         if not self.queries_path and not self.enable_custom_operations:
             raise TypeError("__init__ missing 1 required argument: 'queries_path'")
-        super().__post_init__()
 
         try:
             self.include_comments = CommentsStrategy(self.include_comments)
@@ -93,10 +112,8 @@ class ClientSettings(BaseSettings):
             data.graphql_name = name
 
         assert_path_exists(self.queries_path)
-
         assert_string_is_valid_python_identifier(self.target_package_name)
         assert_path_is_valid_directory(self.target_package_path)
-
         assert_string_is_valid_python_identifier(self.client_name)
         assert_string_is_valid_python_identifier(self.client_file_name)
         assert_string_is_valid_python_identifier(self.base_client_name)
@@ -105,7 +122,6 @@ class ClientSettings(BaseSettings):
         assert_class_is_defined_in_file(
             Path(self.base_client_file_path), self.base_client_name
         )
-
         assert_string_is_valid_python_identifier(self.enums_module_name)
         assert_string_is_valid_python_identifier(self.input_types_module_name)
 
@@ -156,7 +172,7 @@ class ClientSettings(BaseSettings):
         )
         files_to_include_list = ",".join(self.files_to_include)
         files_to_include_msg = (
-            f"Coping following files into package: {files_to_include_list}"
+            f"Copying following files into package: {files_to_include_list}"
             if self.files_to_include
             else "No files to copy."
         )
@@ -175,7 +191,7 @@ class ClientSettings(BaseSettings):
             Generating package into '{self.target_package_path}'.
             Using '{self.client_name}' as client name.
             Using '{self.base_client_name}' as base client class.
-            Coping base client class from '{self.base_client_file_path}'.
+            Copying base client class from '{self.base_client_file_path}'.
             Generating enums into '{self.enums_module_name}.py'.
             Generating inputs into '{self.input_types_module_name}.py'.
             Generating fragments into '{self.fragments_module_name}.py'.
@@ -267,31 +283,17 @@ def assert_string_is_valid_schema_target_filename(filename: str):
 
 
 def assert_string_is_valid_python_identifier(name: str):
-    if not name.isidentifier() and not iskeyword(name):
+    if not name.isidentifier() or iskeyword(name):
         raise InvalidConfiguration(
             f"Provided name {name} cannot be used as python identifier."
         )
-
-
-def resolve_headers(headers: Dict) -> Dict:
-    return {key: get_header_value(value) for key, value in headers.items()}
-
-
-def get_header_value(value: str) -> str:
-    env_var_prefix = "$"
-    if value.startswith(env_var_prefix):
-        env_var_name = value.lstrip(env_var_prefix)
-        var_value = os.environ.get(env_var_name)
-        if not var_value:
-            raise InvalidConfiguration(
-                f"Environment variable {env_var_name} not found."
-            )
-        return var_value
-
-    return value
 
 
 def assert_class_is_defined_in_file(file_path: Path, class_name: str):
     file_content = file_path.read_text()
     if f"class {class_name}" not in file_content:
         raise InvalidConfiguration(f"Cannot import {class_name} from {file_path}")
+
+
+def resolve_headers(headers: Dict[str, str]) -> Dict[str, str]:
+    return BaseSettings().resolve_value(headers)
