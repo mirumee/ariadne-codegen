@@ -36,7 +36,7 @@ dependencies = [
 dev = [
   "ariadne",
   "pytest",
-  "pylint",
+  "pylint==3.2.7",
   "mypy",
   "types-toml",
   "pytest-mock",
