@@ -42,7 +42,7 @@ class ClientForwardRefsPlugin(Plugin):
         # Imported classes are classes imported from local imports. We keep a
         # map between name and module so we know how to import them in each
         # method.
-        self.imported_classes: Dict[str, str] = {}
+        self.imported_classes: Dict[str, tuple[int, str]] = {}
 
         # Imported classes in each method definition.
         self.imported_in_method: Set[str] = set()
@@ -116,9 +116,8 @@ class ClientForwardRefsPlugin(Plugin):
                 continue
 
             for name in node.names:
-                from_ = "." * node.level + node.module
                 if isinstance(name, ast.alias):
-                    self.imported_classes[name.name] = from_
+                    self.imported_classes[name.name] = (node.level, node.module)
 
     def _rewrite_input_args_to_constants(
         self, method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef]
@@ -178,12 +177,14 @@ class ClientForwardRefsPlugin(Plugin):
         # We add the class to our set of imported in methods - these classes
         # don't need to be imported at all in the global scope.
         self.imported_in_method.add(import_class_name)
+
+        level, module_name = self.imported_classes[import_class_name]
         method_def.body.insert(
             0,
             ast.ImportFrom(
-                module=self.imported_classes[import_class_name],
+                module=module_name,
                 names=[import_class],
-                level=1,
+                level=level,
             ),
         )
 
@@ -342,10 +343,12 @@ class ClientForwardRefsPlugin(Plugin):
         """
         type_checking_imports = {}
         for cls in self.input_and_return_types:
-            module_name = self.imported_classes[cls]
+            level, module_name = self.imported_classes[cls]
             if module_name not in type_checking_imports:
                 type_checking_imports[module_name] = ast.ImportFrom(
-                    module=module_name, names=[], level=1
+                    module=module_name,
+                    names=[],
+                    level=level,
                 )
 
             type_checking_imports[module_name].names.append(ast.alias(cls))
@@ -364,7 +367,7 @@ class ClientForwardRefsPlugin(Plugin):
             ast.ImportFrom(
                 module=TYPE_CHECKING_MODULE,
                 names=[ast.alias(TYPE_CHECKING_FLAG)],
-                level=1,
+                level=0,
             ),
         )
 
