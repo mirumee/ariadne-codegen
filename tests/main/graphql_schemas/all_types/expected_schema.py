@@ -214,14 +214,14 @@ schema: GraphQLSchema = GraphQLSchema(
         ),
         GraphQLDirective(
             name="specifiedBy",
-            description="Exposes a URL that specifies the behaviour of this scalar.",
+            description="Exposes a URL that specifies the behavior of this scalar.",
             is_repeatable=False,
             locations=(DirectiveLocation.SCALAR,),
             args={
                 "url": GraphQLArgument(
                     GraphQLNonNull(GraphQLString),
                     default_value=Undefined,
-                    description="The URL that specifies the behaviour of this scalar.",
+                    description="The URL that specifies the behavior of this scalar.",
                     deprecation_reason=None,
                 )
             },

@@ -271,7 +271,7 @@ class ClientForwardRefsPlugin(Plugin):
         return_types_not_used_as_input = set(self.input_and_return_types)
 
         # The ones we import in the method don't need to be imported at all -
-        # unless that's the type we return. This behaviour can differ if you use
+        # unless that's the type we return. This behavior can differ if you use
         # a plugin such as `ShorterResultsPlugin` that will import a type that
         # is different from the type returned.
         return_types_not_used_as_input |= (
