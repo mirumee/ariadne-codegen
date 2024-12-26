@@ -1,5 +1,6 @@
 import enum
 import os
+import re
 from dataclasses import dataclass, field
 from keyword import iskeyword
 from pathlib import Path
@@ -50,6 +51,7 @@ class BaseSettings:
             assert_path_exists(self.schema_path)
 
         self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
+        self.remote_schema_url = resolve_schema(self.remote_schema_url)
 
 
 @dataclass
@@ -276,20 +278,29 @@ def assert_string_is_valid_python_identifier(name: str):
 def resolve_headers(headers: Dict) -> Dict:
     return {key: get_header_value(value) for key, value in headers.items()}
 
+def resolve_schema(value: str) -> str:
+    return _replace_env_vars(value)
+
 
 def get_header_value(value: str) -> str:
-    env_var_prefix = "$"
-    if value.startswith(env_var_prefix):
-        env_var_name = value.lstrip(env_var_prefix)
+    return _replace_env_vars(value)
+
+
+def _replace_env_vars(value: str) -> str:
+    pattern = re.compile(r"\${?([\w_]+)}?")
+
+    def replacer(match):
+        env_var_name = match.group(1)
         var_value = os.environ.get(env_var_name)
+
         if not var_value:
             raise InvalidConfiguration(
                 f"Environment variable {env_var_name} not found."
             )
+
         return var_value
 
-    return value
-
+    return pattern.sub(replacer, value)
 
 def assert_class_is_defined_in_file(file_path: Path, class_name: str):
     file_content = file_path.read_text()

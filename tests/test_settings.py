@@ -133,8 +133,24 @@ def test_client_settings_without_schema_path_or_remote_schema_url_raises_excepti
         ClientSettings(queries_path=queries_path)
 
 
+@pytest.mark.parametrize(
+    "configured_header, expected_header",
+    [
+        ("$TEST_VAR", "test_value"),
+        ("Bearer: $TEST_VAR", "Bearer: test_value"),
+        ("Bearer: ${TEST_VAR}", "Bearer: test_value"),
+        pytest.param(
+            "$NOT_SET_VAR",
+            "",
+            marks=pytest.mark.xfail(raises=InvalidConfiguration),
+        ),
+    ],
+)
 def test_client_settings_resolves_env_variable_for_remote_schema_header_with_prefix(
-    tmp_path, mocker
+    tmp_path,
+    mocker,
+    configured_header,
+    expected_header,
 ):
     queries_path = tmp_path / "queries.graphql"
     queries_path.touch()
@@ -143,10 +159,42 @@ def test_client_settings_resolves_env_variable_for_remote_schema_header_with_pre
     settings = ClientSettings(
         queries_path=queries_path,
         remote_schema_url="https://test",
-        remote_schema_headers={"Authorization": "$TEST_VAR"},
+        remote_schema_headers={"Authorization": configured_header},
     )
 
-    assert settings.remote_schema_headers["Authorization"] == "test_value"
+    assert settings.remote_schema_headers["Authorization"] == expected_header
+
+
+@pytest.mark.parametrize(
+    "configured_url, expected_url",
+    [
+        ("$TEST_VAR", "test_value"),
+        ("https://${TEST_VAR}/graphql", "https://test_value/graphql"),
+        ("https://$TEST_VAR/graphql", "https://test_value/graphql"),
+        ("https://TEST_VAR/graphql", "https://TEST_VAR/graphql"),
+        pytest.param(
+            "https://${NOT_SET_VAR}/graphql",
+            "",
+            marks=pytest.mark.xfail(raises=InvalidConfiguration),
+        ),
+    ],
+)
+def test_client_settings_resolves_env_variable_for_remote_schema(
+    tmp_path,
+    mocker,
+    configured_url,
+    expected_url,
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    mocker.patch.dict(os.environ, {"TEST_VAR": "test_value"})
+
+    settings = ClientSettings(
+        queries_path=queries_path,
+        remote_schema_url=configured_url,
+    )
+
+    assert settings.remote_schema_url == expected_url
 
 
 def test_client_settings_doesnt_resolve_remote_schema_header_without_prefix(tmp_path):
