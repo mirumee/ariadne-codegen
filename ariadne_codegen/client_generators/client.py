@@ -111,20 +111,22 @@ class ClientGenerator:
 
     def generate(self) -> ast.Module:
         """Generate module with class definition of graphql client."""
-        self._add_import(
-            generate_import_from(
-                names=self.arguments_generator.get_used_inputs(),
-                from_=self.input_types_module_name,
-                level=1,
+        if used_inputs := self.arguments_generator.get_used_inputs():
+            self._add_import(
+                generate_import_from(
+                    names=used_inputs,
+                    from_=self.input_types_module_name,
+                    level=1,
+                )
             )
-        )
-        self._add_import(
-            generate_import_from(
-                names=self.arguments_generator.get_used_enums(),
-                from_=self.enums_module_name,
-                level=1,
+        if used_enums := self.arguments_generator.get_used_enums():
+            self._add_import(
+                generate_import_from(
+                    names=used_enums,
+                    from_=self.enums_module_name,
+                    level=1,
+                )
             )
-        )
         for custom_scalar_name in self.arguments_generator.get_used_custom_scalars():
             scalar_data = self.custom_scalars[custom_scalar_name]
             for import_ in generate_scalar_imports(scalar_data):
