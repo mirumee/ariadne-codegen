@@ -6,6 +6,8 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List
 
+from graphql.validation import UniqueFragmentNamesRule, NoUnusedFragmentsRule
+
 from .client_generators.constants import (
     DEFAULT_ASYNC_BASE_CLIENT_NAME,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
@@ -24,6 +26,18 @@ class CommentsStrategy(str, enum.Enum):
     NONE = "none"
     STABLE = "stable"
     TIMESTAMP = "timestamp"
+
+class ValidationRuleSkips(str, enum.Enum):
+    UniqueFragmentNames = "UniqueFragmentNames"
+    NoUnusedFragments = "NoUnusedFragments"
+
+def get_validation_rule(rule: ValidationRuleSkips):
+    if rule == ValidationRuleSkips.UniqueFragmentNames:
+        return UniqueFragmentNamesRule
+    elif rule == ValidationRuleSkips.NoUnusedFragments:
+        return NoUnusedFragmentsRule
+    else:
+        raise ValueError(f"Unknown validation rule: {rule}")
 
 
 class Strategy(str, enum.Enum):
@@ -70,6 +84,7 @@ class ClientSettings(BaseSettings):
     include_all_enums: bool = True
     async_client: bool = True
     opentelemetry_client: bool = False
+    skip_validation_rules: List[ValidationRuleSkips] = field(default_factory=lambda: [ValidationRuleSkips.UniqueFragmentNames,])
     files_to_include: List[str] = field(default_factory=list)
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
 
