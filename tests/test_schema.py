@@ -1,3 +1,4 @@
+from ariadne_codegen.settings import get_validation_rule
 import httpx
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema
@@ -15,6 +16,7 @@ from ariadne_codegen.schema import (
     read_graphql_file,
     walk_graphql_files,
 )
+from ariadne_codegen.settings import ValidationRuleSkips
 
 
 @pytest.fixture
@@ -63,6 +65,49 @@ def test_query_2_str():
         }
     """
 
+@pytest.fixture
+def test_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
+                default
+                ...fragmentA
+            }
+        }
+    """
+
+@pytest.fixture
+def test_duplicate_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
+                default
+                ...fragmentA
+            }
+        }
+    """
+
+@pytest.fixture
+def test_unused_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
+                default
+            }
+        }
+    """
 
 @pytest.fixture
 def single_file_schema(tmp_path_factory, schema_str):
@@ -130,6 +175,24 @@ def path_fixture(request):
 def single_file_query(tmp_path_factory, test_query_str):
     file_ = tmp_path_factory.mktemp("queries").joinpath("query1.graphql")
     file_.write_text(test_query_str, encoding="utf-8")
+    return file_
+
+@pytest.fixture
+def single_file_query_with_fragment(tmp_path_factory, test_query_str, test_fragment_str):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query1_fragment.graphql")
+    file_.write_text(test_query_str + test_fragment_str, encoding="utf-8")
+    return file_
+
+@pytest.fixture
+def single_file_query_with_duplicate_fragment(tmp_path_factory, test_query_str, test_duplicate_fragment_str):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query1_duplicate_fragment.graphql")
+    file_.write_text(test_query_str + test_duplicate_fragment_str, encoding="utf-8")
+    return file_
+
+@pytest.fixture
+def single_file_query_with_unused_fragment(tmp_path_factory, test_query_str, test_unused_fragment_str):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query1_unused_fragment.graphql")
+    file_.write_text(test_query_str + test_unused_fragment_str, encoding="utf-8")
     return file_
 
 
@@ -434,3 +497,36 @@ def test_get_graphql_queries_with_invalid_query_for_schema_raises_invalid_operat
         get_graphql_queries(
             invalid_query_for_schema_file.as_posix(), build_schema(schema_str)
         )
+
+
+def test_get_graphql_queries_with_fragment_returns_schema_definitions(
+    single_file_query_with_fragment, schema_str
+):
+    queries = get_graphql_queries(
+        single_file_query_with_fragment.as_posix(), build_schema(schema_str)
+    )
+
+    assert len(queries) == 3
+
+def test_get_graphql_queries_with_duplicate_fragment_raises_invalid_operation(
+    single_file_query_with_duplicate_fragment, schema_str
+):
+    with pytest.raises(InvalidOperationForSchema):
+        get_graphql_queries(
+            single_file_query_with_duplicate_fragment.as_posix(), build_schema(schema_str)
+        )
+
+def test_get_graphql_queries_with_unused_fragment_and_no_skip_rules_raises_invalid_operation(
+    single_file_query_with_unused_fragment, schema_str
+):
+    with pytest.raises(InvalidOperationForSchema):
+        get_graphql_queries(
+            single_file_query_with_unused_fragment.as_posix(), build_schema(schema_str), []
+        )
+
+def test_get_graphql_queries_with_skip_unique_fragment_names_and_duplicate_fragment_returns_schema_definition(
+    single_file_query_with_duplicate_fragment, schema_str
+):
+    get_graphql_queries(
+        single_file_query_with_duplicate_fragment.as_posix(), build_schema(schema_str), [get_validation_rule(ValidationRuleSkips.NoUnusedFragments),get_validation_rule(ValidationRuleSkips.UniqueFragmentNames)]
+    )

@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Dict, Generator, List, Optional, Tuple, cast
+from typing_extensions import Any, Sequence
 
 import httpx
 from graphql import (
@@ -14,6 +15,7 @@ from graphql import (
     IntrospectionQuery,
     NoUnusedFragmentsRule,
     OperationDefinitionNode,
+    UniqueFragmentNamesRule,
     build_ast_schema,
     build_client_schema,
     get_introspection_query,
@@ -45,7 +47,7 @@ def filter_fragments_definitions(
 
 
 def get_graphql_queries(
-    queries_path: str, schema: GraphQLSchema
+    queries_path: str, schema: GraphQLSchema, skip_rules: Sequence[Any] = (NoUnusedFragmentsRule,)
 ) -> Tuple[DefinitionNode, ...]:
     """Get graphql queries definitions build from provided path."""
     queries_str = load_graphql_files_from_path(Path(queries_path))
@@ -53,7 +55,7 @@ def get_graphql_queries(
     validation_errors = validate(
         schema=schema,
         document_ast=queries_ast,
-        rules=[r for r in specified_rules if r is not NoUnusedFragmentsRule],
+        rules=[r for r in specified_rules if r not in skip_rules],
     )
     if validation_errors:
         raise InvalidOperationForSchema(
