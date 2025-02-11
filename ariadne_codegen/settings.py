@@ -1,5 +1,6 @@
 import enum
 import os
+import re
 from dataclasses import dataclass, field
 from keyword import iskeyword
 from pathlib import Path
@@ -278,16 +279,17 @@ def resolve_headers(headers: Dict) -> Dict:
 
 
 def get_header_value(value: str) -> str:
-    env_var_prefix = "$"
-    if value.startswith(env_var_prefix):
-        env_var_name = value.lstrip(env_var_prefix)
+    replacements = {}
+    for env_var_name in re.findall(r"\$([A-z][A-z0-9_]*)", value):
         var_value = os.environ.get(env_var_name)
         if not var_value:
             raise InvalidConfiguration(
                 f"Environment variable {env_var_name} not found."
             )
-        return var_value
-
+        replacements[f"${env_var_name}"] = var_value
+    if replacements:
+        pattern = re.compile("|".join(map(re.escape, replacements.keys())))
+        return pattern.sub(lambda match: replacements[match.group(0)], value)
     return value
 
 
