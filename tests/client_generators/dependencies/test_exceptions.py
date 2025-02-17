@@ -22,7 +22,7 @@ def test_from_dict_returns_graphql_error_with_parsed_data():
     assert result.locations == error_dict["locations"]
     assert result.path == error_dict["path"]
     assert result.extensions == error_dict["extensions"]
-    assert result.orginal == error_dict
+    assert result.original == error_dict
 
 
 def test_from_errors_dicts_returns_graphql_multi_error_with_parsed_data():
@@ -57,11 +57,11 @@ def test_from_errors_dicts_returns_graphql_multi_error_with_parsed_data():
     assert error0.locations == errors_dicts[0]["locations"]
     assert error0.path == errors_dicts[0]["path"]
     assert error0.extensions == errors_dicts[0]["extensions"]
-    assert error0.orginal == errors_dicts[0]
+    assert error0.original == errors_dicts[0]
 
     assert isinstance(error1, GraphQLClientGraphQLError)
     assert error1.message == errors_dicts[1]["message"]
     assert error1.locations == errors_dicts[1]["locations"]
     assert error1.path == errors_dicts[1]["path"]
     assert error1.extensions == errors_dicts[1]["extensions"]
-    assert error1.orginal == errors_dicts[1]
+    assert error1.original == errors_dicts[1]
