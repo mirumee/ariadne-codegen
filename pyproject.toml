@@ -6,9 +6,11 @@ build-backend = "hatchling.build"
 name = "ariadne-codegen"
 description = "Generate fully typed GraphQL client from schema, queries and mutations!"
 authors = [{ name = "Mirumee Software", email = "hello@mirumee.com" }]
-version = "0.14.0"
+version = "0.14.1"
+requires-python = ">= 3.9"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -19,6 +21,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
@@ -33,18 +36,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
+dev = ["ipdb"]
+test = [
   "ariadne",
+  "freezegun",
   "pytest",
-  "pylint",
-  "mypy",
-  "types-toml",
-  "pytest-mock",
   "pytest-asyncio",
   "pytest-httpx",
-  "freezegun",
+  "pytest-mock",
   "requests-toolbelt",
+  "types-toml",
+  "websockets~=11.0",
+  "opentelemetry-api",
 ]
+types = ["mypy>=1.0.0"]
 subscriptions = ["websockets~=11.0"]
 opentelemetry = ["opentelemetry-api"]
 
@@ -58,27 +63,117 @@ ariadne-codegen = "ariadne_codegen.main:main"
 "Community" = "https://github.com/mirumee/ariadne/discussions"
 "Twitter" = "https://twitter.com/AriadneGraphQL"
 
-[tool.pylint.messages_control]
-max-line-length = 88
-disable = [
-  "missing-docstring",
-  "redefined-outer-name",
-  "too-few-public-methods",
-  "too-many-instance-attributes",
-  "too-many-arguments",
-  "duplicate-code",
-  "no-name-in-module",
-  "too-many-locals",
-  "too-many-lines",
-]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-
-[tool.isort]
-profile = "black"
-combine_as_imports = true
+# Hatch configuration
 
 [tool.hatch.build]
 include = ["ariadne_codegen/**/*.py", "ariadne_codegen/py.typed"]
 exclude = ["tests"]
+
+[tool.hatch.version]
+path = "ariadne_codegen/__about__.py"
+
+[tool.hatch.envs.default]
+features = ["dev", "types"]
+
+[tool.hatch.envs.default.scripts]
+check = [
+    "hatch fmt",
+    "hatch test -a -p",
+    "hatch test --coverage",
+    "hatch run types:check",
+]
+
+## Types environment
+
+[tool.hatch.envs.types.scripts]
+check = [
+    "mypy tests/main/clients/*/expected_client",
+    "mypy tests/main/graphql_schemas/*/expected_schema.py",
+    "mypy ariadne_codegen/client_generators/dependencies",
+]
+
+## Test environments
+
+[tool.hatch.envs.hatch-test]
+features = ["test"]
+extra-args = []
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+## Types configuration
+
+[tool.mypy]
+python_version = "3.9"
+files = ["ariadne_codegen", "tests"]
+check_untyped_defs = true
+# disallow_untyped_defs = true
+ignore_missing_imports = true
+# warn_redundant_casts = true
+# warn_unused_ignores = true
+# disallow_any_generics = true
+no_implicit_reexport = true
+# strict = true
+disable_error_code = ["import-untyped"]
+
+## Coverage configuration
+
+[tool.coverage.run]
+source = ["ariadne_codegen", "tests"]
+
+[tool.coverage.report]
+exclude_also = [
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+omit = ["*/__about__.py", "*/__main__.py", "*/cli/__init__.py"]
+fail_under = 90
+
+## Ruff configuration
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 99
+exclude = [
+    "tests/main/clients/*/expected_client/*"
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "G", "I", "N", "Q", "UP", "C90", "T20", "TID"]
+ignore = ["TID252", "UP006", "UP035"]
+task-tags = ["NOTE", "TODO", "FIXME", "HACK", "XXX"]
+
+[tool.ruff.lint.per-file-ignores]
+# Some rules are ignored in auto-generated files.
+"tests/main/graphql_schemas/*/expected_schema.py" = ["E501"]
+"tests/main/clients/*/expected_client/*" = ["E501", "N801", "F401"]
+
+[tool.ruff.lint.pycodestyle]
+ignore-overlong-task-comments = true
+
+[tool.ruff.lint.mccabe]
+max-complexity = 11
+
+[tool.ruff.lint.isort]
+known-first-party = ["ariadne_codegen"]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+# Pytest configuration
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
