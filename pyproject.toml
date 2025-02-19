@@ -46,11 +46,11 @@ test = [
   "pytest-mock",
   "requests-toolbelt",
   "types-toml",
-  "websockets~=11.0",
+  "websockets>=14.2",
   "opentelemetry-api",
 ]
 types = ["mypy>=1.0.0"]
-subscriptions = ["websockets~=11.0"]
+subscriptions = ["websockets>=14.2"]
 opentelemetry = ["opentelemetry-api"]
 
 [project.scripts]

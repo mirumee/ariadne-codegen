@@ -16,10 +16,10 @@ from .exceptions import (
 )
 
 try:
-    from websockets.client import (  # type: ignore[import-not-found,unused-ignore]
-        WebSocketClientProtocol,
+    from websockets import (  # type: ignore[import-not-found,unused-ignore]
+        ClientConnection,
     )
-    from websockets.client import (
+    from websockets import (
         connect as ws_connect,
     )
     from websockets.typing import (  # type: ignore[import-not-found,unused-ignore]
@@ -35,7 +35,7 @@ except ImportError:
         raise NotImplementedError("Subscriptions require 'websockets' package.")
         yield
 
-    WebSocketClientProtocol = Any  # type: ignore[misc,assignment,unused-ignore]
+    ClientConnection = Any  # type: ignore[misc,assignment,unused-ignore]
     Data = Any  # type: ignore[misc,assignment,unused-ignore]
     Origin = Any  # type: ignore[misc,assignment,unused-ignore]
 
@@ -304,7 +304,7 @@ class AsyncBaseClient:
             **merged_kwargs,
         )
 
-    async def _send_connection_init(self, websocket: WebSocketClientProtocol) -> None:
+    async def _send_connection_init(self, websocket: ClientConnection) -> None:
         payload: Dict[str, Any] = {
             "type": GraphQLTransportWSMessageType.CONNECTION_INIT.value
         }
@@ -314,7 +314,7 @@ class AsyncBaseClient:
 
     async def _send_subscribe(
         self,
-        websocket: WebSocketClientProtocol,
+        websocket: ClientConnection,
         operation_id: str,
         query: str,
         operation_name: Optional[str] = None,
@@ -334,7 +334,7 @@ class AsyncBaseClient:
     async def _handle_ws_message(
         self,
         message: Data,
-        websocket: WebSocketClientProtocol,
+        websocket: ClientConnection,
         expected_type: Optional[GraphQLTransportWSMessageType] = None,
     ) -> Optional[Dict[str, Any]]:
         try:
