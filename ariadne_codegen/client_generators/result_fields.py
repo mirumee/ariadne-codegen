@@ -122,7 +122,6 @@ def generate_typename_annotation(typename_values: List[str]) -> ast.Subscript:
     return generate_subscript(value=generate_name(LITERAL), slice_=slice_)
 
 
-# pylint: disable=too-many-return-statements, too-many-branches
 def parse_operation_field_type(
     type_: CodegenResultFieldType,
     nullable: bool,

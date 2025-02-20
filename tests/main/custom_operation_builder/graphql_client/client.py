@@ -103,5 +103,5 @@ class Client(AsyncBaseClient):
         return await self.execute_custom_operation(
             *fields,
             operation_type=OperationType.MUTATION,
-            operation_name=operation_name
+            operation_name=operation_name,
         )

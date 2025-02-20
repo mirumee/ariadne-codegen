@@ -41,7 +41,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="GetAuthenticatedUser",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetAuthenticatedUser.model_validate(data)
@@ -209,7 +209,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="GetAnimalFragmentWithExtra",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.model_validate(data)
@@ -246,7 +246,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="GetComplexScalar",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetComplexScalar.model_validate(data)
@@ -268,7 +268,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="SubscribeStrings",
             variables=variables,
-            **kwargs
+            **kwargs,
         ):
             yield SubscribeStrings.model_validate(data)
 

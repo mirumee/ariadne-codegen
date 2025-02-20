@@ -135,7 +135,10 @@ class ExtractOperationsPlugin(Plugin):
         variables_assigns = [
             generate_assign(
                 targets=[self._operations_variables[name]],
-                value=[generate_constant(l + "\n") for l in gql.splitlines()],
+                value=[
+                    generate_constant(l + "\n")
+                    for l in gql.splitlines()  # noqa: E741
+                ],
             )
             for name, gql in self._operations_gqls.items()
         ]

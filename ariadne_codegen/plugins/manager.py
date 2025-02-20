@@ -18,7 +18,6 @@ from graphql import (
 from .base import Plugin
 
 
-# pylint: disable=too-many-public-methods
 class PluginManager:
     def __init__(
         self,

@@ -28,11 +28,11 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
     type Query {
       query1(num: Int!): Int!
     }
-    
+
     type Mutation {
         mutation1(num: Int!): Int!
     }
-    
+
     type Subscription {
       subscription1(num: Int!): Int!
     }
@@ -81,7 +81,6 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
     custom_mutation_generator = package_generator.custom_mutation_generator
 
     # client generator
-    # pylint: disable=protected-access
     assert {i.module for i in client_generator._imports} == {
         "typing",
         "valid_file",
@@ -96,7 +95,6 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
         == settings_without_defaults.scalars
     )
     assert client_generator.name == settings_without_defaults.client_name
-    # pylint: disable=protected-access
     assert (
         client_generator._class_def.bases[0].id
         == settings_without_defaults.base_client_name
