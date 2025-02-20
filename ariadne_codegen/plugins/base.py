@@ -16,7 +16,6 @@ from graphql import (
 )
 
 
-# pylint: disable=too-many-public-methods
 class Plugin:
     def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
         self.schema = schema
@@ -28,7 +27,6 @@ class Plugin:
     def generate_init_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
         return import_
 
-    # pylint: disable=unused-argument
     def generate_enum(
         self, class_def: ast.ClassDef, enum_type: GraphQLEnumType
     ) -> ast.ClassDef:
@@ -49,7 +47,6 @@ class Plugin:
     def generate_client_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
         return import_
 
-    # pylint: disable=unused-argument
     def generate_client_method(
         self,
         method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
@@ -57,7 +54,6 @@ class Plugin:
     ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
         return method_def
 
-    # pylint: disable=unused-argument
     def generate_arguments(
         self,
         arguments: ast.arguments,
@@ -65,7 +61,6 @@ class Plugin:
     ) -> ast.arguments:
         return arguments
 
-    # pylint: disable=unused-argument
     def generate_arguments_dict(
         self,
         dict_: ast.Dict,
@@ -76,13 +71,11 @@ class Plugin:
     def generate_inputs_module(self, module: ast.Module) -> ast.Module:
         return module
 
-    # pylint: disable=unused-argument
     def generate_input_class(
         self, class_def: ast.ClassDef, input_type: GraphQLInputObjectType
     ) -> ast.ClassDef:
         return class_def
 
-    # pylint: disable=unused-argument
     def generate_input_field(
         self,
         field_implementation: ast.AnnAssign,
@@ -91,19 +84,16 @@ class Plugin:
     ) -> ast.AnnAssign:
         return field_implementation
 
-    # pylint: disable=unused-argument
     def generate_result_types_module(
         self, module: ast.Module, operation_definition: ExecutableDefinitionNode
     ) -> ast.Module:
         return module
 
-    # pylint: disable=unused-argument
     def generate_operation_str(
         self, operation_str: str, operation_definition: ExecutableDefinitionNode
     ) -> str:
         return operation_str
 
-    # pylint: disable=unused-argument
     def generate_result_class(
         self,
         class_def: ast.ClassDef,
@@ -112,7 +102,6 @@ class Plugin:
     ) -> ast.ClassDef:
         return class_def
 
-    # pylint: disable=unused-argument
     def generate_result_field(
         self,
         field_implementation: ast.AnnAssign,
@@ -139,11 +128,9 @@ class Plugin:
     def generate_init_code(self, generated_code: str) -> str:
         return generated_code
 
-    # pylint: disable=unused-argument
     def process_name(self, name: str, node: Optional[Node] = None) -> str:
         return name
 
-    # pylint: disable=unused-argument
     def generate_fragments_module(
         self,
         module: ast.Module,
@@ -154,7 +141,6 @@ class Plugin:
     def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
         return schema
 
-    # pylint: disable=unused-argument
     def get_file_comment(
         self, comment: str, code: str, source: Optional[str] = None
     ) -> str:

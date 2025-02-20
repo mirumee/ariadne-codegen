@@ -1,4 +1,4 @@
-class CodeGenException(Exception):
+class CodeGenException(Exception):  # noqa: N818
     """Generic graphql sdk gen exception."""
 
 

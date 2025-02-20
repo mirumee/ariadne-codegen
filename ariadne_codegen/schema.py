@@ -31,14 +31,14 @@ from .exceptions import (
 
 
 def filter_operations_definitions(
-    definitions: Tuple[DefinitionNode, ...]
+    definitions: Tuple[DefinitionNode, ...],
 ) -> List[OperationDefinitionNode]:
     """Return list including only operations definitions."""
     return [d for d in definitions if isinstance(d, OperationDefinitionNode)]
 
 
 def filter_fragments_definitions(
-    definitions: Tuple[DefinitionNode, ...]
+    definitions: Tuple[DefinitionNode, ...],
 ) -> List[FragmentDefinitionNode]:
     """Return list including only fragments definitions."""
     return [d for d in definitions if isinstance(d, FragmentDefinitionNode)]
@@ -138,7 +138,7 @@ def walk_graphql_files(path: Path) -> Generator[Path, None, None]:
 
 def read_graphql_file(path: Path) -> str:
     """Return content of file."""
-    with open(path, "r", encoding="utf-8") as graphql_file:
+    with open(path, encoding="utf-8") as graphql_file:
         schema = graphql_file.read()
     try:
         parse(schema)

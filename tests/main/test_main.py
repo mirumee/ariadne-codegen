@@ -253,9 +253,7 @@ def test_main_generates_correct_package(
     ],
     indirect=["project_dir"],
 )
-def test_main_raises_exception(
-    project_dir, expected_exception
-):  # pylint: disable=W0613
+def test_main_raises_exception(project_dir, expected_exception):
     with pytest.raises(expected_exception):
         CliRunner().invoke(main, catch_exceptions=False)
 
@@ -276,7 +274,7 @@ def test_main_raises_exception(
 )
 def test_main_uses_remote_schema_url_and_remote_schema_headers(
     mocker, project_dir, package_name, expected_package_path
-):  # pylint: disable=W0613
+):
     introspection_response_contenct = CLIENTS_PATH.joinpath(
         "remote_schema", "response.json"
     ).read_bytes()

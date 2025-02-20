@@ -46,7 +46,6 @@ from .scalars import ScalarData, generate_input_scalar_annotation
 from .types import Annotation, CodegenInputFieldType
 
 
-# pylint: disable=too-many-return-statements
 def parse_input_field_type(
     type_: CodegenInputFieldType,
     nullable: bool = True,
@@ -115,7 +114,6 @@ def parse_input_field_default_value(
     return None
 
 
-# pylint: disable=too-many-return-statements
 def parse_input_const_value_node(
     node: ConstValueNode,
     field_type: str = "",

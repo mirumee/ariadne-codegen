@@ -51,32 +51,32 @@ def http_client():
 
 
 @pytest.fixture
-def Client(generated_client):  # pylint: disable=invalid-name
+def Client(generated_client):  # noqa: N802, N803
     return generated_client.Client
 
 
 @pytest.fixture
-def CustomScalar(generated_client):  # pylint: disable=invalid-name
+def CustomScalar(generated_client):  # noqa: N802, N803
     return generated_client.custom_scalars.CustomScalar
 
 
 @pytest.fixture
-def GetA(generated_client):  # pylint: disable=invalid-name
+def GetA(generated_client):  # noqa: N802, N803
     return generated_client.GetA
 
 
 @pytest.fixture
-def GetB(generated_client):  # pylint: disable=invalid-name
+def GetB(generated_client):  # noqa: N802, N803
     return generated_client.GetB
 
 
 @pytest.fixture
-def GetC(generated_client):  # pylint: disable=invalid-name
+def GetC(generated_client):  # noqa: N802, N803
     return generated_client.GetC
 
 
 @pytest.fixture
-def CustomInput(generated_client):  # pylint: disable=invalid-name
+def CustomInput(generated_client):  # noqa: N802, N803
     return generated_client.CustomInput
 
 
@@ -96,8 +96,13 @@ def mocked_serialize(generated_client):
 
 @pytest.mark.asyncio
 async def test_get_a_uses_parse(
-    http_client, Client, CustomScalar, GetA, mocked_parse, mocked_serialize
-):  # pylint: disable=invalid-name
+    http_client,
+    Client,  # noqa: N803
+    CustomScalar,  # noqa: N803
+    GetA,  # noqa: N803
+    mocked_parse,
+    mocked_serialize,
+):
     async with Client(url="/graphql/", http_client=http_client) as client:
         result = await client.get_a()
 
@@ -111,8 +116,13 @@ async def test_get_a_uses_parse(
 
 @pytest.mark.asyncio
 async def test_get_b_uses_parse_for_result_and_serialize_for_input(
-    http_client, Client, CustomScalar, GetB, mocked_parse, mocked_serialize
-):  # pylint: disable=invalid-name
+    http_client,
+    Client,  # noqa: N803
+    CustomScalar,  # noqa: N803
+    GetB,  # noqa: N803
+    mocked_parse,
+    mocked_serialize,
+):
     custom_scalar = CustomScalar("test")
     async with Client(url="/graphql/", http_client=http_client) as client:
         result = await client.get_b(custom_scalar)
@@ -128,8 +138,14 @@ async def test_get_b_uses_parse_for_result_and_serialize_for_input(
 
 @pytest.mark.asyncio
 async def test_get_c_uses_parse_for_result_and_serialize_for_input(
-    Client, GetC, CustomInput, CustomScalar, http_client, mocked_parse, mocked_serialize
-):  # pylint: disable=invalid-name
+    http_client,
+    Client,  # noqa: N803
+    GetC,  # noqa: N803
+    CustomInput,  # noqa: N803
+    CustomScalar,  # noqa: N803
+    mocked_parse,
+    mocked_serialize,
+):
     custom_scalar = CustomScalar("abc")
     async with Client(url="/graphql/", http_client=http_client) as client:
         result = await client.get_c(CustomInput(value=custom_scalar))

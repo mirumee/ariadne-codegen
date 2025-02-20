@@ -256,7 +256,7 @@ def test_add_method_generates_correct_async_method_body(async_base_client_import
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
-                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],  # noqa: E741
             ),
         ),
         ast.AnnAssign(
@@ -398,7 +398,7 @@ def test_add_method_generates_correct_method_body(base_client_import):
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
-                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],  # noqa: E741
             ),
         ),
         ast.AnnAssign(
@@ -641,12 +641,12 @@ def test_add_method_generates_correct_method_body_for_shadowed_variables(
     schema_str = """
     schema { query: Query }
     type Query { xyz(query: String!, variables: String!, response: String!, data: String!): String }
-    """
+    """  # noqa: E501
     query_str = """
     query GetXyz($query: String!, $variables: String!, $response: String!, $data: String! ) {
         xyz(query: $query, variables: $variables, response: $response, data: $data)
     }
-    """
+    """  # noqa: E501
     generator = ClientGenerator(
         base_client_import=base_client_import,
         arguments_generator=ArgumentsGenerator(schema=build_schema(schema_str)),
@@ -660,7 +660,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_variables(
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
-                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],  # noqa: E741
             ),
         ),
         ast.AnnAssign(
@@ -743,7 +743,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_query_variable(
     """
     query_str = """
     query GetXyz($query: String, $name: String ) {
-        xyz(query: $query, name: $name) 
+        xyz(query: $query, name: $name)
     }
     """
     generator = ClientGenerator(
@@ -759,7 +759,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_query_variable(
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
-                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],  # noqa: E741
             ),
         ),
         ast.AnnAssign(
@@ -832,7 +832,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_variables_variabl
     """
     query_str = """
     query GetXyz($variables: String, $name: String ) {
-        xyz(variables: $variables, name: $name) 
+        xyz(variables: $variables, name: $name)
     }
     """
     generator = ClientGenerator(
@@ -848,7 +848,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_variables_variabl
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
-                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],  # noqa: E741
             ),
         ),
         ast.AnnAssign(
@@ -921,7 +921,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_response_variable
     """
     query_str = """
     query GetXyz($response: String, $name: String ) {
-        xyz(response: $response, name: $name) 
+        xyz(response: $response, name: $name)
     }
     """
     generator = ClientGenerator(
@@ -937,7 +937,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_response_variable
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
-                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],  # noqa: E741
             ),
         ),
         ast.AnnAssign(
@@ -1010,7 +1010,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_data_variable(
     """
     query_str = """
     query GetXyz($data: String, $name: String ) {
-        xyz(data: $data, name: $name) 
+        xyz(data: $data, name: $name)
     }
     """
     generator = ClientGenerator(
@@ -1026,7 +1026,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_data_variable(
             value=ast.Call(
                 func=ast.Name("gql"),
                 keywords=[],
-                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],
+                args=[[ast.Constant(value=l + "\n") for l in query_str.splitlines()]],  # noqa: E741
             ),
         ),
         ast.AnnAssign(

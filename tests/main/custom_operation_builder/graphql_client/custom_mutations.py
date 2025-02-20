@@ -58,7 +58,7 @@ class Mutation:
         *,
         title: Optional[str] = None,
         content: Optional[str] = None,
-        published_at: Optional[str] = None
+        published_at: Optional[str] = None,
     ) -> PostFields:
         arguments: Dict[str, Dict[str, Any]] = {
             "post_id": {"type": "ID!", "value": post_id},

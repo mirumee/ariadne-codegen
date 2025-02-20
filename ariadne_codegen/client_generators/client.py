@@ -894,7 +894,7 @@ class ClientGenerator:
             value=generate_call(
                 func=generate_name(self._gql_func_name),
                 args=[
-                    [generate_constant(l + "\n") for l in operation_str.splitlines()]
+                    [generate_constant(l + "\n") for l in operation_str.splitlines()]  # noqa: E741
                 ],
             ),
             lineno=lineno,

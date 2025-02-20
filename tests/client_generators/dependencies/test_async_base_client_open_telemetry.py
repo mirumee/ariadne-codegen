@@ -6,7 +6,7 @@ from unittest.mock import ANY
 import httpx
 import pytest
 
-from ariadne_codegen.client_generators.dependencies.async_base_client_open_telemetry import (  # pylint: disable=line-too-long
+from ariadne_codegen.client_generators.dependencies.async_base_client_open_telemetry import (  # noqa: E501
     AsyncBaseClientOpenTelemetry,
 )
 from ariadne_codegen.client_generators.dependencies.base_model import UNSET, BaseModel
