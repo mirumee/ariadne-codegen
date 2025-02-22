@@ -175,7 +175,7 @@ class ClientSettings(BaseSettings):
             Generating package into '{self.target_package_path}'.
             Using '{self.client_name}' as client name.
             Using '{self.base_client_name}' as base client class.
-            Coping base client class from '{self.base_client_file_path}'.
+            Copying base client class from '{self.base_client_file_path}'.
             Generating enums into '{self.enums_module_name}.py'.
             Generating inputs into '{self.input_types_module_name}.py'.
             Generating fragments into '{self.fragments_module_name}.py'.
