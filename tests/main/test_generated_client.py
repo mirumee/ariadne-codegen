@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from ariadne_codegen.main import main
 
@@ -46,7 +46,8 @@ def generated_client(tmp_path_factory):
 
 @pytest.fixture
 def http_client():
-    return AsyncClient(base_url="http://127.0.0.1:8000", app=api_app)
+    transport = ASGITransport(app=api_app)
+    return AsyncClient(base_url="http://127.0.0.1:8000", transport=transport)
 
 
 @pytest.fixture
