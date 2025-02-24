@@ -14,26 +14,39 @@ You can use [GitHub issues](https://github.com/mirumee/ariadne-codegen/issues) t
 
 ## Development setup
 
-Ariadne Code Generator is written to support Python 3.9, 3.10 and 3.11.
+Ariadne Code Generator is written to support Python 3.9, 3.10, 3.11, 3.12 and 3.13.
 
-Codebase is formatted using [black](https://github.com/ambv/black) and [isort](https://github.com/PyCQA/isort), the contents of the `ariadne-codegen` package are annotated with types and validated using [mypy](http://mypy-lang.org/index.html). [Pylint](https://github.com/pylint-dev/pylint) is used to catch errors in code.
+We use [Hatch](https://github.com/pypa/hatch) for project management.
 
-Tests are developed using [pytest](https://pytest.org/).
+The codebase is formatted using [ruff](https://github.com/astral-sh/ruff).
+To format the code, use the following command:
+```bash
+hatch fmt
+```
 
-Dev requirements can be installed using Pip extras. For example, to install all dependencies for doing local development and running the tests, run `pip install -e .[subscriptions,dev]`.
+The contents of the `ariadne-codegen` package are annotated with types and validated using [mypy](http://mypy-lang.org/index.html). To run type checking with mypy, use:
+```bash
+hatch run types:check
+```
+
+
+Tests are developed using [pytest](https://pytest.org/) and are managed with Hatch.
+
+
+To run the tests, use:
+```bash
+hatch test
+```
+
+
+To run all checks (formatting, type checking, and tests), you can use:
+```bash
+hatch run check
+```
 
 We require all changes to be done via pull requests, and to be approved by member-ranked users before merging.
 
-All changes should pass these linter checks:
-
-```bash
-pylint ariadne_codegen tests
-mypy ariadne_codegen --ignore-missing-imports
-mypy --strict tests/main/clients/*/expected_client
-mypy --strict tests/main/graphql_schemas/*/expected_schema.py
-black --check .
-isort . --check-only
-```
+All changes should pass these linter checks.
 
 
 ## Working on issues
