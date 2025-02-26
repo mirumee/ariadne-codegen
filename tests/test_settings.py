@@ -148,6 +148,36 @@ def test_client_settings_resolves_env_variable_for_remote_schema_header_with_pre
 
     assert settings.remote_schema_headers["Authorization"] == "test_value"
 
+def test_client_settings_resolves_env_variable_for_remote_schema_header_with_prefix_inside(
+    tmp_path, mocker
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    mocker.patch.dict(os.environ, {"TEST_VAR": "test_value"})
+
+    settings = ClientSettings(
+        queries_path=queries_path,
+        remote_schema_url="https://test",
+        remote_schema_headers={"Authorization": "Bearer $TEST_VAR"},
+    )
+
+    assert settings.remote_schema_headers["Authorization"] == "Bearer test_value"
+
+def test_client_settings_resolves_env_variable_for_remote_schema_header_with_prefix_multiple(
+    tmp_path, mocker
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    mocker.patch.dict(os.environ, {"TEST_FOO": "test_foo"})
+    mocker.patch.dict(os.environ, {"TEST_BAR": "test_bar"})
+
+    settings = ClientSettings(
+        queries_path=queries_path,
+        remote_schema_url="https://test",
+        remote_schema_headers={"Authorization": "Bearer $TEST_FOO$TEST_BAR suffix"},
+    )
+
+    assert settings.remote_schema_headers["Authorization"] == "Bearer test_footest_bar suffix"
 
 def test_client_settings_doesnt_resolve_remote_schema_header_without_prefix(tmp_path):
     queries_path = tmp_path / "queries.graphql"
