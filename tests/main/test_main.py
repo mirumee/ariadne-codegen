@@ -213,6 +213,36 @@ def test_main_shows_version():
             "example_client",
             CLIENTS_PATH / "custom_sync_query_builder" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "client_forward_refs" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "client_forward_refs" / "queries.graphql",
+                    CLIENTS_PATH / "client_forward_refs" / "schema.graphql",
+                    CLIENTS_PATH / "client_forward_refs" / "custom_scalars.py",
+                ),
+            ),
+            "client_forward_refs",
+            CLIENTS_PATH / "client_forward_refs" / "expected_client",
+        ),
+        (
+            (
+                CLIENTS_PATH / "client_forward_refs_shorter_results" / "pyproject.toml",
+                (
+                    CLIENTS_PATH
+                    / "client_forward_refs_shorter_results"
+                    / "queries.graphql",
+                    CLIENTS_PATH
+                    / "client_forward_refs_shorter_results"
+                    / "schema.graphql",
+                    CLIENTS_PATH
+                    / "client_forward_refs_shorter_results"
+                    / "custom_scalars.py",
+                ),
+            ),
+            "client_forward_refs_shorter_results",
+            CLIENTS_PATH / "client_forward_refs_shorter_results" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
