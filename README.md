@@ -452,6 +452,14 @@ A string with a name for type map variable, must be valid python identifier.
 Defaults to `"type_map"`. Used only if target is a Python file.
 
 
+---
+
+## Versioning policy ##
+`ariadne-codegen` follows a custom versioning scheme where the minor version increases for breaking changes, while the patch version increments for bug fixes, enhancements, and other non-breaking updates.
+
+Since `ariadne-codegen` has not yet reached a stable API, this approach is in place until version 1.0.0. Once the API stabilizes, the project will adopt [Semantic Versioning](https://semver.org/)..
+
+
 ## Contributing
 
 We welcome all contributions to Ariadne! If you've found a bug or issue, feel free to use [GitHub issues](https://github.com/mirumee/ariadne-codegen/issues). If you have any questions or feedback, don't hesitate to catch us on [GitHub discussions](https://github.com/mirumee/ariadne/discussions/).
