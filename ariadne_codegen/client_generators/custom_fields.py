@@ -142,7 +142,7 @@ class CustomFieldsGenerator:
             name=class_name, base_names=base_names, description=description
         )
         lineno = 0
-        for org_name, field in  self._get_combined_fields(definition).items():
+        for org_name, field in self._get_combined_fields(definition).items():
             lineno += 1
             name = process_name(
                 org_name, convert_to_snake_case=self.convert_to_snake_case
@@ -158,11 +158,12 @@ class CustomFieldsGenerator:
                     name, field_name, org_name, field, method_required, lineno
                 )
             )
-            if field.description:
+            if field.description and not method_required:
                 lineno += 1
-                docstring = ast.Expr(value=ast.Constant(field.description), lineno=lineno)
+                docstring = ast.Expr(
+                    value=ast.Constant(field.description), lineno=lineno
+                )
                 class_def.body.append(docstring)
-
 
         class_def.body.append(
             self._generate_fields_method(
@@ -225,7 +226,10 @@ class CustomFieldsGenerator:
         """Handles the generation of field types."""
         if getattr(field, "args") or method_required:
             return self.generate_product_type_method(
-                name, field_name, getattr(field, "args")
+                name,
+                field_name,
+                getattr(field, "args"),
+                description=getattr(field, "description"),
             )
         return generate_ann_assign(
             target=generate_name(name),
@@ -320,7 +324,11 @@ class CustomFieldsGenerator:
         )
 
     def generate_product_type_method(
-        self, name: str, class_name: str, arguments: Optional[Dict[str, Any]] = None
+        self,
+        name: str,
+        class_name: str,
+        arguments: Optional[Dict[str, Any]] = None,
+        description: Optional[str] = None,
     ) -> ast.FunctionDef:
         """Generates a method for a product type."""
         arguments = arguments or {}
@@ -360,6 +368,7 @@ class CustomFieldsGenerator:
             ),
             return_type=generate_name(f'"{class_name}"'),
             decorator_list=[generate_name("classmethod")],
+            description=description,
         )
 
     def _get_suffix(
