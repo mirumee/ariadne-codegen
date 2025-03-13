@@ -157,10 +157,13 @@ class InputTypesGenerator:
         self, definition: GraphQLInputObjectType
     ) -> ast.ClassDef:
         class_def = generate_class_def(
-            name=definition.name, base_names=[BASE_MODEL_CLASS_NAME]
+            name=definition.name,
+            base_names=[BASE_MODEL_CLASS_NAME],
+            description=definition.description,
         )
-
-        for lineno, (org_name, field) in enumerate(definition.fields.items(), start=1):
+        lineno = 0
+        for org_name, field in definition.fields.items():
+            lineno += 1
             name = process_name(
                 org_name,
                 convert_to_snake_case=self.convert_to_snake_case,
@@ -190,6 +193,10 @@ class InputTypesGenerator:
                     field_implementation, input_field=field, field_name=org_name
                 )
             class_def.body.append(field_implementation)
+            if field.description:
+                lineno += 1
+                docstring = ast.Expr(value=ast.Constant(value=field.description))
+                class_def.body.append(docstring)
             self._save_dependencies(root_type=definition.name, field_type=field_type)
 
         if self.plugin_manager:
