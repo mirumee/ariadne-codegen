@@ -141,9 +141,9 @@ class CustomFieldsGenerator:
         class_def = generate_class_def(
             name=class_name, base_names=base_names, description=description
         )
-        for lineno, (org_name, field) in enumerate(
-            self._get_combined_fields(definition).items(), start=1
-        ):
+        lineno = 0
+        for org_name, field in  self._get_combined_fields(definition).items():
+            lineno += 1
             name = process_name(
                 org_name, convert_to_snake_case=self.convert_to_snake_case
             )
@@ -158,6 +158,11 @@ class CustomFieldsGenerator:
                     name, field_name, org_name, field, method_required, lineno
                 )
             )
+            if field.description:
+                lineno += 1
+                docstring = ast.Expr(value=ast.Constant(field.description), lineno=lineno)
+                class_def.body.append(docstring)
+
 
         class_def.body.append(
             self._generate_fields_method(
