@@ -84,6 +84,7 @@ class CustomOperationGenerator:
                 operation_name=name,
                 operation_args=field.args,
                 final_type=final_type,
+                description=field.description,
             )
             method_def.lineno = len(self._class_def.body) + 1
             self._class_def.body.append(method_def)
