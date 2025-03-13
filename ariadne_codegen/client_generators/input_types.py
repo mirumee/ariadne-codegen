@@ -157,7 +157,9 @@ class InputTypesGenerator:
         self, definition: GraphQLInputObjectType
     ) -> ast.ClassDef:
         class_def = generate_class_def(
-            name=definition.name, base_names=[BASE_MODEL_CLASS_NAME]
+            name=definition.name,
+            base_names=[BASE_MODEL_CLASS_NAME],
+            description=definition.description,
         )
 
         for lineno, (org_name, field) in enumerate(definition.fields.items(), start=1):

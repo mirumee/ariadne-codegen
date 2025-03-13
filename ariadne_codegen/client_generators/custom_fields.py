@@ -114,6 +114,7 @@ class CustomFieldsGenerator:
                 class_def = self._generate_class_def_body(
                     definition=graphql_type,
                     class_name=f"{graphql_type.name}{self._get_suffix(graphql_type)}",
+                    description=graphql_type.description,
                 )
                 if isinstance(graphql_type, GraphQLInterfaceType):
                     class_def.body.append(
@@ -129,6 +130,7 @@ class CustomFieldsGenerator:
         self,
         definition: Union[GraphQLObjectType, GraphQLInterfaceType],
         class_name: str,
+        description: Optional[str] = None,
     ) -> ast.ClassDef:
         """
         Generates the body of a class definition for a given GraphQL object
@@ -136,7 +138,9 @@ class CustomFieldsGenerator:
         """
         base_names = [GRAPHQL_BASE_FIELD_CLASS]
         additional_fields_typing = set()
-        class_def = generate_class_def(name=class_name, base_names=base_names)
+        class_def = generate_class_def(
+            name=class_name, base_names=base_names, description=description
+        )
         for lineno, (org_name, field) in enumerate(
             self._get_combined_fields(definition).items(), start=1
         ):

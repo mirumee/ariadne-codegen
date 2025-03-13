@@ -115,6 +115,7 @@ class CustomOperationGenerator:
         operation_name: str,
         operation_args,
         final_type,
+        description: Optional[str] = None,
     ) -> ast.FunctionDef:
         """Generates a method definition for a given operation."""
         (
@@ -141,6 +142,7 @@ class CustomOperationGenerator:
             name=str_to_snake_case(operation_name),
             arguments=method_arguments,
             return_type=generate_name(return_type_name),
+            description=description,
             body=[
                 *arguments_body,
                 generate_return(
