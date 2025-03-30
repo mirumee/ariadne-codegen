@@ -5,6 +5,7 @@ from graphql import (
     GraphQLEnumType,
     GraphQLInputObjectType,
     GraphQLInterfaceType,
+    GraphQLList,
     GraphQLNonNull,
     GraphQLObjectType,
     GraphQLScalarType,
@@ -93,7 +94,7 @@ class ArgumentGenerator:
                 return_arguments_values,
                 arg_name,
                 name,
-                final_type,
+                arg_value.type,
                 used_custom_scalar,
             )
 
@@ -124,7 +125,7 @@ class ArgumentGenerator:
         return_arguments_values: List[ast.expr],
         arg_name: str,
         name: str,
-        final_type: Union[GraphQLObjectType, GraphQLInterfaceType, GraphQLUnionType]
+        complete_type: Union[GraphQLObjectType, GraphQLInterfaceType, GraphQLUnionType],
         used_custom_scalar: Optional[str],
     ) -> None:
         """Accumulates return arguments."""
