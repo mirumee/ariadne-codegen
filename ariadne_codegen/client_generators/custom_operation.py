@@ -35,6 +35,7 @@ from .constants import (
     GRAPHQL_UNION_SUFFIX,
     OPTIONAL,
     TYPING_MODULE,
+    LIST,
 )
 from .custom_generator_utils import get_final_type
 from .scalars import ScalarData
@@ -67,7 +68,7 @@ class CustomOperationGenerator:
 
         self._imports: List[ast.ImportFrom] = []
         self._type_imports: List[ast.ImportFrom] = []
-        self._add_import(generate_import_from([OPTIONAL, ANY, DICT], TYPING_MODULE))
+        self._add_import(generate_import_from([OPTIONAL, ANY, DICT, LIST], TYPING_MODULE))
         self.argument_generator = ArgumentGenerator(
             self.custom_scalars,
             self.convert_to_snake_case,
