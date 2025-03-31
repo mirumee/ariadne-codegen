@@ -42,7 +42,6 @@ from .constants import (
     OPTIONAL,
     TYPING_MODULE,
     UNION,
-    LIST,
 )
 from .custom_generator_utils import TypeCollector, get_final_type
 from .scalars import ScalarData
@@ -71,7 +70,7 @@ class CustomFieldsGenerator:
         ]
         self._add_import(
             generate_import_from(
-                [OPTIONAL, UNION, ANY, DICT, LIST],
+                [OPTIONAL, UNION, ANY, DICT],
                 TYPING_MODULE,
             )
         )

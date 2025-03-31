@@ -1,16 +1,15 @@
 import ast
-import enum
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 from graphql import (
     GraphQLEnumType,
     GraphQLInputObjectType,
     GraphQLInterfaceType,
+    GraphQLList,
     GraphQLNonNull,
     GraphQLObjectType,
     GraphQLScalarType,
     GraphQLUnionType,
-    GraphQLList,
 )
 
 from ..codegen import (
@@ -25,10 +24,10 @@ from ..codegen import (
     generate_dict,
     generate_import_from,
     generate_keyword,
+    generate_list_annotation,
     generate_name,
     generate_subscript,
     generate_tuple,
-    generate_list_annotation,
 )
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
@@ -38,6 +37,8 @@ from .constants import (
     BASE_MODEL_FILE_PATH,
     DICT,
     INPUT_SCALARS_MAP,
+    LIST,
+    TYPING_MODULE,
     UPLOAD_CLASS_NAME,
 )
 from .custom_generator_utils import get_final_type
@@ -128,7 +129,13 @@ class ArgumentGenerator:
         return_arguments_values: List[ast.expr],
         arg_name: str,
         name: str,
-        complete_type: Union[GraphQLObjectType, GraphQLInterfaceType, GraphQLUnionType, GraphQLNonNull, GraphQLList],
+        complete_type: Union[
+            GraphQLObjectType,
+            GraphQLInterfaceType,
+            GraphQLUnionType,
+            GraphQLNonNull,
+            GraphQLList,
+        ],
         used_custom_scalar: Optional[str],
     ) -> None:
         """Accumulates return arguments."""
@@ -148,7 +155,13 @@ class ArgumentGenerator:
 
     def _generate_complete_type_name(
         self,
-        complete_type: Union[GraphQLObjectType, GraphQLInterfaceType, GraphQLUnionType, GraphQLNonNull, GraphQLList]
+        complete_type: Union[
+            GraphQLObjectType,
+            GraphQLInterfaceType,
+            GraphQLUnionType,
+            GraphQLNonNull,
+            GraphQLList,
+        ],
     ) -> str:
         if isinstance(complete_type, GraphQLNonNull):
             if hasattr(complete_type, "of_type"):
@@ -225,8 +238,18 @@ class ArgumentGenerator:
                 self._used_custom_scalars.append(used_custom_scalar)
         else:
             raise ParsingError(f"Incorrect argument type {name}")
-        return generate_annotation_name(name, nullable) if not is_list else generate_list_annotation(
-            generate_annotation_name(name, nullable=False), nullable), used_custom_scalar
+
+        if is_list:
+            self._add_import(generate_import_from(names=[LIST], from_=TYPING_MODULE))
+
+        return (
+            generate_annotation_name(name, nullable)
+            if not is_list
+            else generate_list_annotation(
+                generate_annotation_name(name, nullable=False), nullable
+            ),
+            used_custom_scalar,
+        )
 
     def add_custom_scalar_imports(self) -> None:
         """Adds imports for custom scalars used in the schema."""
