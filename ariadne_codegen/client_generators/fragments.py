@@ -112,7 +112,7 @@ class FragmentsGenerator:
             if name in visited:
                 return
             visited.add(name)
-            for dep in dependencies_dict[name]:
+            for dep in sorted(dependencies_dict.get(name, set())):
                 visit(dep)
             sorted_names.append(name)
 
