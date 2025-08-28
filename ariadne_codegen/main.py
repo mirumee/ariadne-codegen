@@ -27,11 +27,11 @@ from .settings import Strategy
 @click.option("--config", default=None, help="Path to custom configuration file.")
 @click.argument(
     "strategy",
-    default=Strategy.CLIENT,
+    default=Strategy.CLIENT.value,
     type=click.Choice([e.value for e in Strategy]),
     required=False,
 )
-def main(strategy=Strategy.CLIENT, config=None):
+def main(strategy=Strategy.CLIENT.value, config=None):
     config_dict = get_config_dict(config)
     if strategy == Strategy.CLIENT:
         client(config_dict)
