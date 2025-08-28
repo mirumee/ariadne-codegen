@@ -1,10 +1,15 @@
 # CHANGELOG
 
-## 0.14.1 (UNRELEASED)
+## 0.15.2 (2025-08-28)
 
 - Changed code typing to satisfy MyPy 1.11.0 version
 - Added support for `async_client=false` to work with `enable_custom_operations=true`
 - Fix propagating `convert_to_snake_case` to clients during package generation
+- Added ClientForwardRefsPlugin to standard plugins.
+- Re-added model_rebuild calls for input types with forward references.
+- Fixed fragments on interfaces being omitted from generated client.
+- Fixed @include directive result type when using convert_to_snake_case option.
+- Added Custom query builder feature.
 
 ## 0.14.0 (2024-07-17)
 
