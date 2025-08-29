@@ -64,6 +64,7 @@ Optional settings:
 
 - `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer: token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
 - `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies wheter to verify ssl while introspecting remote schema
+- `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
 - `target_package_path` (defaults to cwd) - path where to generate package
 - `client_name` (defaults to `"Client"`) - name of generated client class
@@ -418,7 +419,7 @@ Instead of generating a client, you can generate a file with a copy of a GraphQL
 ariadne-codegen graphqlschema
 ```
 
-`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers`, `remote_schema_verify_ssl` options to retrieve the schema and `plugins` option to load plugins.
+`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers`, `remote_schema_verify_ssl`, `remote_schema_timeout` options to retrieve the schema and `plugins` option to load plugins.
 
 In addition to the above, `graphqlschema` mode also accepts additional settings specific to it:
 
