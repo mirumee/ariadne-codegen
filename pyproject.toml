@@ -79,7 +79,7 @@ features = ["dev", "types"]
 check = [
     "hatch fmt",
     "hatch test -a -p",
-    "hatch test --coverage",
+    "hatch test --cover",
     "hatch run types:check",
 ]
 
