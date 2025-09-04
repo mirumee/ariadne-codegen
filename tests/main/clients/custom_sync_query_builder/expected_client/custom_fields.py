@@ -97,7 +97,7 @@ class MetadataItemFields(GraphQLField):
 class ObjectWithMetadataInterface(GraphQLField):
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
-        return MetadataItemFields("private_metadata")
+        return MetadataItemFields("privateMetadata")
 
     @classmethod
     def private_metafield(cls, key: str) -> "ObjectWithMetadataGraphQLField":
@@ -108,7 +108,7 @@ class ObjectWithMetadataInterface(GraphQLField):
             key: value for key, value in arguments.items() if value["value"] is not None
         }
         return ObjectWithMetadataGraphQLField(
-            "private_metafield", arguments=cleared_arguments
+            "privateMetafield", arguments=cleared_arguments
         )
 
     @classmethod
@@ -166,7 +166,7 @@ class ProductFields(GraphQLField):
 
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
-        return MetadataItemFields("private_metadata")
+        return MetadataItemFields("privateMetadata")
 
     @classmethod
     def private_metafield(cls, key: str) -> "ProductGraphQLField":
@@ -176,7 +176,7 @@ class ProductFields(GraphQLField):
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
-        return ProductGraphQLField("private_metafield", arguments=cleared_arguments)
+        return ProductGraphQLField("privateMetafield", arguments=cleared_arguments)
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
@@ -211,7 +211,7 @@ class ProductCountableConnectionFields(GraphQLField):
 
     @classmethod
     def page_info(cls) -> "PageInfoFields":
-        return PageInfoFields("page_info")
+        return PageInfoFields("pageInfo")
 
     total_count: "ProductCountableConnectionGraphQLField" = (
         ProductCountableConnectionGraphQLField("totalCount")
@@ -290,7 +290,7 @@ class ProductTranslatableContentFields(GraphQLField):
 class ProductTypeCountableConnectionFields(GraphQLField):
     @classmethod
     def page_info(cls) -> "PageInfoFields":
-        return PageInfoFields("page_info")
+        return PageInfoFields("pageInfo")
 
     def fields(
         self,
@@ -308,7 +308,7 @@ class ProductTypeCountableConnectionFields(GraphQLField):
 class TranslatableItemConnectionFields(GraphQLField):
     @classmethod
     def page_info(cls) -> "PageInfoFields":
-        return PageInfoFields("page_info")
+        return PageInfoFields("pageInfo")
 
     @classmethod
     def edges(cls) -> "TranslatableItemEdgeFields":
@@ -357,7 +357,7 @@ class TranslatableItemEdgeFields(GraphQLField):
 class UpdateMetadataFields(GraphQLField):
     @classmethod
     def metadata_errors(cls) -> "MetadataErrorFields":
-        return MetadataErrorFields("metadata_errors")
+        return MetadataErrorFields("metadataErrors")
 
     @classmethod
     def errors(cls) -> "MetadataErrorFields":
