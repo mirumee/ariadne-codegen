@@ -12,15 +12,21 @@ from ..codegen import (
     generate_module,
 )
 from ..plugins.manager import PluginManager
+from ..utils import process_name
 from .constants import ENUM_CLASS, ENUM_MODULE
 
 
 class EnumsGenerator:
     def __init__(
-        self, schema: GraphQLSchema, plugin_manager: Optional[PluginManager] = None
+        self, schema: GraphQLSchema, 
+        convert_to_snake_case: bool = False, 
+        convert_to_upper_snake_case: bool = False, 
+        plugin_manager: Optional[PluginManager] = None
     ) -> None:
         self.schema = schema
         self.plugin_manager = plugin_manager
+        self.convert_to_snake_case = convert_to_snake_case
+        self.convert_to_upper_snake_case = convert_to_upper_snake_case
 
         self._generated_public_names: List[str] = []
         self._imports: List[ast.ImportFrom] = [
@@ -32,14 +38,14 @@ class EnumsGenerator:
 
     def generate(self, types_to_include: Optional[List[str]] = None) -> ast.Module:
         class_defs = self._filter_class_defs(types_to_include)
-        self._generated_public_names = [class_def.name for class_def in class_defs]
+        self._generated_public_names = [class_def.name for class_def in class_defs]        
 
         module = generate_module(
             body=cast(List[ast.stmt], self._imports) + cast(List[ast.stmt], class_defs)
         )
 
         if self.plugin_manager:
-            module = self.plugin_manager.generate_enums_module(module)
+            module = self.plugin_manager.generate_enums_module(module)        
 
         return module
 
@@ -58,7 +64,14 @@ class EnumsGenerator:
         for lineno, (val_name, val_def) in enumerate(
             definition.values.items(), start=1
         ):
-            name = val_name if not iskeyword(val_name) else val_name + "_"
+            name = process_name(
+                val_name,
+                convert_to_snake_case=self.convert_to_snake_case or self.convert_to_upper_snake_case,
+                plugin_manager=self.plugin_manager,
+                node=val_def.ast_node,
+            )  
+            if self.convert_to_upper_snake_case:
+                name = name.upper()
             fields.append(
                 generate_assign([name], generate_constant(val_def.value), lineno)
             )
