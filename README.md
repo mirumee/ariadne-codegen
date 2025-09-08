@@ -62,7 +62,7 @@ One of the following 2 parameters is required, in case of providing both of them
 
 Optional settings:
 
-- `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer: token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
+- `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
 - `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies wheter to verify ssl while introspecting remote schema
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
 - `target_package_path` (defaults to cwd) - path where to generate package
