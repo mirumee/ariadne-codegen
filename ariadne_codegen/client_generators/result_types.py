@@ -85,6 +85,7 @@ class ResultTypesGenerator:
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
+        include_typename: bool = True,
     ) -> None:
         self.schema = schema
         self.operation_definition = operation_definition
@@ -99,6 +100,7 @@ class ResultTypesGenerator:
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.convert_to_snake_case = convert_to_snake_case
         self.plugin_manager = plugin_manager
+        self.include_typename = include_typename
 
         self._imports: List[ast.ImportFrom] = [
             generate_import_from(
@@ -382,6 +384,9 @@ class ResultTypesGenerator:
     def _add_typename_field_to_selections(
         self, resolved_fields: List[FieldNode], selection_set: SelectionSetNode
     ) -> Tuple[List[FieldNode], Tuple[SelectionNode, ...]]:
+        if not self.include_typename:
+            return resolved_fields, selection_set.selections
+            
         field_names = {f.name.value for f in resolved_fields}
         if TYPENAME_FIELD_NAME not in field_names:
             typename_field = FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME))
