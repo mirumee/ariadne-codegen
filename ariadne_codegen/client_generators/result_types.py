@@ -264,6 +264,7 @@ class ResultTypesGenerator:
                 typename_values=typename_values,
                 custom_scalars=self.custom_scalars,
                 fragments_definitions=self.fragments_definitions,
+                include_typename=self.include_typename,
             )
 
             field_implementation = generate_ann_assign(
