@@ -3,13 +3,14 @@
 from graphql import build_schema, parse, OperationDefinitionNode
 
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
-from ariadne_codegen.client_generators.constants import TYPENAME_FIELD_NAME
+from ariadne_codegen.client_generators.constants import TYPENAME_FIELD_NAME, DISCRIMINATOR_KEYWORD
 
 
 SIMPLE_SCHEMA = """
     type Query {
         hello: String
         user: User
+        animal: Animal
     }
     
     type User {
@@ -17,18 +18,20 @@ SIMPLE_SCHEMA = """
         name: String!
     }
     
-    interface Animal {
+    union Animal = Dog | Cat
+    
+    interface Pet {
         id: ID!
         name: String!
     }
     
-    type Dog implements Animal {
+    type Dog implements Pet {
         id: ID!
         name: String!
         breed: String!
     }
     
-    type Cat implements Animal {
+    type Cat implements Pet {
         id: ID!
         name: String!
         lives: Int!
@@ -204,3 +207,70 @@ def test_add_typename_field_to_selections_does_not_duplicate():
     )
     assert typename_count == 1
     assert len(result_fields) == 2  # Original fields only
+
+
+def test_union_discriminator_respects_include_typename():
+    """Test that discriminator fields are not generated when include_typename=False."""
+    import ast
+    
+    schema = build_schema(SIMPLE_SCHEMA)
+    
+    # Test with a union type that should normally get a discriminator
+    query_str = """
+        query GetAnimal {
+            animal {
+                ... on Dog {
+                    name
+                    breed
+                }
+                ... on Cat {
+                    name
+                    lives
+                }
+            }
+        }
+    """
+    
+    document = parse(query_str)
+    operation = document.definitions[0]
+    assert isinstance(operation, OperationDefinitionNode)
+    
+    # Test with include_typename=True (should have discriminator)
+    generator_with_typename = ResultTypesGenerator(
+        schema=schema,
+        operation_definition=operation,
+        enums_module_name="enums",
+        include_typename=True,
+    )
+    
+    module_with_typename = generator_with_typename.generate()
+    
+    # Check that discriminator is present in the generated code
+    has_discriminator_with_typename = False
+    for node in ast.walk(module_with_typename):
+        if (isinstance(node, ast.keyword) and 
+            node.arg == DISCRIMINATOR_KEYWORD):
+            has_discriminator_with_typename = True
+            break
+    
+    # Test with include_typename=False (should NOT have discriminator)
+    generator_without_typename = ResultTypesGenerator(
+        schema=schema,
+        operation_definition=operation,
+        enums_module_name="enums",
+        include_typename=False,
+    )
+    
+    module_without_typename = generator_without_typename.generate()
+    
+    # Check that discriminator is NOT present in the generated code
+    has_discriminator_without_typename = False
+    for node in ast.walk(module_without_typename):
+        if (isinstance(node, ast.keyword) and 
+            node.arg == DISCRIMINATOR_KEYWORD):
+            has_discriminator_without_typename = True
+            break
+    
+    # Assertions
+    assert has_discriminator_with_typename, "Expected discriminator when include_typename=True"
+    assert not has_discriminator_without_typename, "Should not have discriminator when include_typename=False"

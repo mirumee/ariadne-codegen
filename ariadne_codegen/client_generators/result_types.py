@@ -441,7 +441,7 @@ class ResultTypesGenerator:
         ):
             keywords[ALIAS_KEYWORD] = generate_constant(field_schema_name)
 
-        if is_union(field_implementation.annotation):
+        if is_union(field_implementation.annotation) and self.include_typename:
             keywords[DISCRIMINATOR_KEYWORD] = generate_constant(TYPENAME_ALIAS)
 
         if keywords and isinstance(field_implementation.value, ast.Constant):
