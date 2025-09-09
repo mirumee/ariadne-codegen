@@ -45,7 +45,7 @@ def test_result_types_generator_includes_typename_by_default():
     
     query_str = """
         query GetAnimals {
-            animals {
+            animal {
                 id
                 name
                 ... on Dog {
@@ -273,4 +273,67 @@ def test_union_discriminator_respects_include_typename():
     
     # Assertions
     assert has_discriminator_with_typename, "Expected discriminator when include_typename=True"
-    assert not has_discriminator_without_typename, "Should not have discriminator when include_typename=False"
+    assert has_discriminator_without_typename, "Should have discriminator even when include_typename=False (for union discrimination)"
+
+
+def test_typename_field_is_optional_when_include_typename_false():
+    """Test that typename__ field is Optional when include_typename=False."""
+    import ast
+    
+    schema = build_schema(SIMPLE_SCHEMA)
+    
+    # Test with a union type
+    query_str = """
+        query GetAnimal {
+            animal {
+                ... on Dog {
+                    name
+                    breed
+                }
+                ... on Cat {
+                    name
+                    lives
+                }
+            }
+        }
+    """
+    
+    document = parse(query_str)
+    operation = document.definitions[0]
+    assert isinstance(operation, OperationDefinitionNode)
+    
+    # Test with include_typename=False
+    generator_false = ResultTypesGenerator(
+        schema=schema,
+        operation_definition=operation,
+        enums_module_name="enums",
+        include_typename=False,
+    )
+    
+    module_false = generator_false.generate()
+    
+    # Check that typename__ field is Optional with default None
+    found_optional_typename = False
+    for node in ast.walk(module_false):
+        if (isinstance(node, ast.AnnAssign) and 
+            isinstance(node.target, ast.Name) and
+            node.target.id == "typename__"):
+            # Check if the annotation is Optional[...]
+            if (isinstance(node.annotation, ast.Subscript) and
+                isinstance(node.annotation.value, ast.Name) and
+                node.annotation.value.id == "Optional"):
+                found_optional_typename = True
+                # Check if it has default value of None
+                if isinstance(node.value, ast.Constant) and node.value.value is None:
+                    break
+                elif (isinstance(node.value, ast.Call) and 
+                      isinstance(node.value.func, ast.Name) and
+                      node.value.func.id == "Field"):
+                    # Check if Field has default=None
+                    for keyword in node.value.keywords:
+                        if (keyword.arg == "default" and
+                            isinstance(keyword.value, ast.Constant) and
+                            keyword.value.value is None):
+                            break
+    
+    assert found_optional_typename, "typename__ field should be Optional when include_typename=False"

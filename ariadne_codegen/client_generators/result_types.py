@@ -264,6 +264,7 @@ class ResultTypesGenerator:
                 typename_values=typename_values,
                 custom_scalars=self.custom_scalars,
                 fragments_definitions=self.fragments_definitions,
+                include_typename=self.include_typename,
             )
 
             field_implementation = generate_ann_assign(
@@ -384,16 +385,18 @@ class ResultTypesGenerator:
     def _add_typename_field_to_selections(
         self, resolved_fields: List[FieldNode], selection_set: SelectionSetNode
     ) -> Tuple[List[FieldNode], Tuple[SelectionNode, ...]]:
-        if not self.include_typename:
-            return resolved_fields, selection_set.selections
-            
         field_names = {f.name.value for f in resolved_fields}
         if TYPENAME_FIELD_NAME not in field_names:
             typename_field = FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME))
-            return [typename_field, *resolved_fields], (
-                typename_field,
-                *selection_set.selections,
-            )
+            if self.include_typename:
+                # Add to both model and GraphQL query
+                return [typename_field, *resolved_fields], (
+                    typename_field,
+                    *selection_set.selections,
+                )
+            else:
+                # Add to model only (for discriminator), not to GraphQL query
+                return [typename_field, *resolved_fields], selection_set.selections
         return resolved_fields, selection_set.selections
 
     def _get_field_name(self, field: FieldNode) -> str:
@@ -441,7 +444,7 @@ class ResultTypesGenerator:
         ):
             keywords[ALIAS_KEYWORD] = generate_constant(field_schema_name)
 
-        if is_union(field_implementation.annotation) and self.include_typename:
+        if is_union(field_implementation.annotation):
             keywords[DISCRIMINATOR_KEYWORD] = generate_constant(TYPENAME_ALIAS)
 
         if keywords and isinstance(field_implementation.value, ast.Constant):

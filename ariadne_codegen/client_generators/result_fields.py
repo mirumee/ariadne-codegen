@@ -82,6 +82,7 @@ def parse_operation_field(
     typename_values: Optional[List[str]] = None,
     custom_scalars: Optional[Dict[str, ScalarData]] = None,
     fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
+    include_typename: bool = True,
 ) -> Tuple[Annotation, Optional[ast.Constant], FieldContext]:
     default_value: Optional[ast.Constant] = None
     context = FieldContext(
@@ -96,7 +97,15 @@ def parse_operation_field(
     )
 
     if field.name and field.name.value == TYPENAME_FIELD_NAME and typename_values:
-        return generate_typename_annotation(typename_values), default_value, context
+        typename_annotation = generate_typename_annotation(typename_values)
+        if not include_typename:
+            # Make typename optional with None default when include_typename=False
+            typename_annotation = generate_subscript(
+                value=generate_name(OPTIONAL), 
+                slice_=typename_annotation
+            )
+            default_value = ast.Constant(value=None)
+        return typename_annotation, default_value, context
 
     annotation = parse_operation_field_type(
         type_=type_,
