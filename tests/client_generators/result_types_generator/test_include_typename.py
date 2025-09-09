@@ -273,11 +273,11 @@ def test_union_discriminator_respects_include_typename():
     
     # Assertions
     assert has_discriminator_with_typename, "Expected discriminator when include_typename=True"
-    assert has_discriminator_without_typename, "Should have discriminator even when include_typename=False (for union discrimination)"
+    assert not has_discriminator_without_typename, "Should not have discriminator when include_typename=False"
 
 
-def test_typename_field_is_optional_when_include_typename_false():
-    """Test that typename__ field is Optional when include_typename=False."""
+def test_union_types_work_without_discriminator_when_include_typename_false():
+    """Test that union types can still be parsed when include_typename=False (without discriminator)."""
     import ast
     
     schema = build_schema(SIMPLE_SCHEMA)
@@ -312,28 +312,21 @@ def test_typename_field_is_optional_when_include_typename_false():
     
     module_false = generator_false.generate()
     
-    # Check that typename__ field is Optional with default None
-    found_optional_typename = False
+    # Should generate union types without discriminator and without __typename field
+    found_union = False
+    found_typename_field = False
     for node in ast.walk(module_false):
+        # Check for union annotation
+        if (isinstance(node, ast.AnnAssign) and 
+            isinstance(node.annotation, ast.Subscript) and
+            isinstance(node.annotation.value, ast.Name) and
+            node.annotation.value.id == "Union"):
+            found_union = True
+        # Check that no typename__ field exists
         if (isinstance(node, ast.AnnAssign) and 
             isinstance(node.target, ast.Name) and
             node.target.id == "typename__"):
-            # Check if the annotation is Optional[...]
-            if (isinstance(node.annotation, ast.Subscript) and
-                isinstance(node.annotation.value, ast.Name) and
-                node.annotation.value.id == "Optional"):
-                found_optional_typename = True
-                # Check if it has default value of None
-                if isinstance(node.value, ast.Constant) and node.value.value is None:
-                    break
-                elif (isinstance(node.value, ast.Call) and 
-                      isinstance(node.value.func, ast.Name) and
-                      node.value.func.id == "Field"):
-                    # Check if Field has default=None
-                    for keyword in node.value.keywords:
-                        if (keyword.arg == "default" and
-                            isinstance(keyword.value, ast.Constant) and
-                            keyword.value.value is None):
-                            break
+            found_typename_field = True
     
-    assert found_optional_typename, "typename__ field should be Optional when include_typename=False"
+    assert found_union, "Should generate union types when include_typename=False"
+    assert not found_typename_field, "Should not generate typename__ field when include_typename=False"
