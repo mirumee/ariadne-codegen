@@ -172,15 +172,57 @@ def test_parse_input_field_type_returns_annotation_and_type_name_for_enum_type(
     assert type_name == expected_name
 
 
-def test_parse_input_field_type_returns_annotation_for_list():
-    type_ = GraphQLNonNull(
-        GraphQLList(type_=GraphQLNonNull(GraphQLInputObjectType("TestType", fields={})))
-    )
-    expected_annotation = ast.Subscript(
-        value=ast.Name(id=LIST), slice=ast.Name('"TestType"')
-    )
-    expected_type_name = "TestType"
-
+@pytest.mark.parametrize(
+    "type_, expected_annotation, expected_type_name",
+    [
+        (
+            GraphQLNonNull(
+                GraphQLList(type_=GraphQLInputObjectType("TestType", fields={}))
+            ),
+            ast.Subscript(
+                value=ast.Name(id=LIST),
+                slice=ast.Subscript(
+                    value=ast.Name(id=OPTIONAL), slice=ast.Name('"TestType"')
+                ),
+            ),
+            "TestType",
+        ),
+        (
+            GraphQLNonNull(
+                GraphQLList(
+                    type_=GraphQLNonNull(GraphQLInputObjectType("TestType", fields={}))
+                )
+            ),
+            ast.Subscript(value=ast.Name(id=LIST), slice=ast.Name('"TestType"')),
+            "TestType",
+        ),
+        (
+            GraphQLNonNull(
+                GraphQLList(
+                    type_=GraphQLList(
+                        type_=GraphQLNonNull(
+                            GraphQLInputObjectType("TestType", fields={})
+                        )
+                    )
+                )
+            ),
+            ast.Subscript(
+                value=ast.Name(id=LIST),
+                slice=ast.Subscript(
+                    value=ast.Name(id=OPTIONAL),
+                    slice=ast.Subscript(
+                        value=ast.Name(id=LIST),
+                        slice=ast.Name('"TestType"'),
+                    ),
+                ),
+            ),
+            "TestType",
+        ),
+    ],
+)
+def test_parse_input_field_type_returns_annotation_for_list(
+    type_, expected_annotation, expected_type_name
+):
     annotation, type_name = parse_input_field_type(type_=type_)
 
     assert compare_ast(annotation, expected_annotation)
