@@ -6,6 +6,7 @@ from graphql import (
     GraphQLInputObjectType,
     GraphQLInterfaceType,
     GraphQLNonNull,
+    GraphQLList,
     GraphQLObjectType,
     GraphQLScalarType,
     GraphQLUnionType,
@@ -23,6 +24,7 @@ from ..codegen import (
     generate_dict,
     generate_import_from,
     generate_keyword,
+    generate_list_annotation,
     generate_name,
     generate_subscript,
     generate_tuple,
@@ -78,11 +80,12 @@ class ArgumentGenerator:
         for arg_name, arg_value in operation_args.items():
             final_type = get_final_type(arg_value)
             is_required = isinstance(arg_value.type, GraphQLNonNull)
+            is_list = isinstance(arg_value.type, GraphQLList)
             name = process_name(
                 arg_name, convert_to_snake_case=self.convert_to_snake_case
             )
             annotation, used_custom_scalar = self._parse_graphql_type_name(
-                final_type, not is_required
+                final_type, not is_required, is_list,
             )
 
             self._accumulate_method_arguments(
@@ -95,6 +98,7 @@ class ArgumentGenerator:
                 name,
                 final_type,
                 is_required,
+                is_list,
                 used_custom_scalar,
             )
 
@@ -127,10 +131,12 @@ class ArgumentGenerator:
         name: str,
         final_type: Union[GraphQLObjectType, GraphQLInterfaceType, GraphQLUnionType],
         is_required: bool,
+        is_list: bool,
         used_custom_scalar: Optional[str],
     ) -> None:
         """Accumulates return arguments."""
-        constant_value = f"{final_type.name}!" if is_required else final_type.name
+        constant_value = f"[{final_type.name}]" if is_list else final_type.name
+        constant_value = f"{constant_value}!" if is_required else constant_value
         return_arg_dict_value = self._generate_return_arg_value(
             name, used_custom_scalar
         )
@@ -178,8 +184,15 @@ class ArgumentGenerator:
         self,
         type_: Union[GraphQLScalarType, GraphQLInputObjectType, GraphQLEnumType],
         nullable: bool = True,
+        is_list: bool = False,
     ) -> Tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
         """Parses the GraphQL type name and determines if it is a custom scalar."""
+        if is_list:
+            self._parse_graphql_type_name(type_, nullable=nullable)
+            self._add_import(
+                generate_import_from(names=["List"], from_="typing", level=0)
+            )
+            return generate_list_annotation(ast.Name(id=type_.name), nullable), None
         name = type_.name
         used_custom_scalar = None
         if isinstance(type_, GraphQLInputObjectType):
