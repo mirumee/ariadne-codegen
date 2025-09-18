@@ -469,4 +469,4 @@ For guidance and instructions, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 Also make sure you follow [@AriadneGraphQL](https://twitter.com/AriadneGraphQL) on Twitter for latest updates, news and random musings!
 
 
-## **Crafted with ❤️ by [Mirumee Software](http://mirumee.com)** hello@mirumee.com
+## **Crafted with ❤️ by [Mirumee Software](http://mirumee.com)** ariadne@mirumee.com
