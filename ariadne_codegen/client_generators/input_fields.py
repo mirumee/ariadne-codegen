@@ -82,7 +82,7 @@ def parse_input_field_type(
 
     if isinstance(type_, GraphQLList):
         slice_, type_name = parse_input_field_type(
-            type_=type_.of_type, nullable=nullable, custom_scalars=custom_scalars
+            type_=type_.of_type, nullable=True, custom_scalars=custom_scalars
         )
         return generate_list_annotation(slice_=slice_, nullable=nullable), type_name
 
