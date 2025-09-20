@@ -20,6 +20,7 @@ class FragmentsGenerator:
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
+        include_typename: bool = True,
     ) -> None:
         self.schema = schema
         self.enums_module_name = enums_module_name
@@ -28,6 +29,7 @@ class FragmentsGenerator:
         self.convert_to_snake_case = convert_to_snake_case
         self.custom_scalars = custom_scalars
         self.plugin_manager = plugin_manager
+        self.include_typename = include_typename
 
         self._fragments_names = set(self.fragments_definitions.keys())
         self._generated_public_names: List[str] = []
@@ -52,6 +54,7 @@ class FragmentsGenerator:
                 convert_to_snake_case=self.convert_to_snake_case,
                 custom_scalars=self.custom_scalars,
                 plugin_manager=self.plugin_manager,
+                include_typename=self.include_typename,
             )
             imports.extend(generator.get_imports())
             class_defs = generator.get_classes()
