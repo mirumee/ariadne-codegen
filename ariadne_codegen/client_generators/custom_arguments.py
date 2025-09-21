@@ -81,8 +81,16 @@ class ArgumentGenerator:
 
         for arg_name, arg_value in operation_args.items():
             final_type = get_final_type(arg_value)
-            is_list = isinstance(arg_value.type, GraphQLList)
-            is_required = isinstance(arg_value.type, GraphQLNonNull)
+            unwrapped_type = arg_value.type
+            is_required = isinstance(unwrapped_type, GraphQLNonNull)
+
+            if is_required:
+                unwrapped_type = (
+                    unwrapped_type.of_type
+                    if hasattr(unwrapped_type, "of_type")
+                    else unwrapped_type.type
+                )
+            is_list = isinstance(unwrapped_type, GraphQLList)
             name = process_name(
                 arg_name, convert_to_snake_case=self.convert_to_snake_case
             )
