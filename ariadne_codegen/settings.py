@@ -72,6 +72,7 @@ class ClientSettings(BaseSettings):
     opentelemetry_client: bool = False
     files_to_include: List[str] = field(default_factory=list)
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
+    default_optional_fields_to_none: bool = False
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
