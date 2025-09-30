@@ -157,7 +157,7 @@ class ClientSettings(BaseSettings):
         )
         files_to_include_list = ",".join(self.files_to_include)
         files_to_include_msg = (
-            f"Coping following files into package: {files_to_include_list}"
+            f"Copying the following files into the package: {files_to_include_list}"
             if self.files_to_include
             else "No files to copy."
         )
