@@ -158,10 +158,11 @@ class CustomFieldsGenerator:
                     name, field_name, org_name, field, method_required, lineno
                 )
             )
-            if field.description and not method_required:
+            # Add field docstring for class attributes (not methods)
+            if not getattr(field, "args") and field.description and not method_required:
                 lineno += 1
                 docstring = ast.Expr(
-                    value=ast.Constant(field.description), lineno=lineno
+                    value=ast.Constant(field.description)
                 )
                 class_def.body.append(docstring)
 
