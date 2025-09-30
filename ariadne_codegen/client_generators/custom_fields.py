@@ -161,9 +161,7 @@ class CustomFieldsGenerator:
             # Add field docstring for class attributes (not methods)
             if not getattr(field, "args") and field.description and not method_required:
                 lineno += 1
-                docstring = ast.Expr(
-                    value=ast.Constant(field.description)
-                )
+                docstring = ast.Expr(value=ast.Constant(field.description))
                 class_def.body.append(docstring)
 
         class_def.body.append(
@@ -228,7 +226,8 @@ class CustomFieldsGenerator:
         if getattr(field, "args") or method_required:
             return self.generate_product_type_method(
                 name,
-                field_name, org_name,
+                field_name,
+                org_name,
                 getattr(field, "args"),
                 description=getattr(field, "description"),
             )
