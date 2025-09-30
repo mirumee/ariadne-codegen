@@ -305,3 +305,50 @@ def test_graphql_schema_settings_with_invalid_type_map_variable_name_raises_exce
             remote_schema_url="http://testserver/graphq/",
             type_map_variable_name="1type_map",
         )
+
+
+def test_client_settings_include_typename_default_value(tmp_path):
+    """Test that include_typename defaults to True."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.include_typename is True
+
+
+def test_client_settings_include_typename_can_be_set_to_false(tmp_path):
+    """Test that include_typename can be set to False."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        include_typename=False,
+    )
+
+    assert settings.include_typename is False
+
+
+def test_client_settings_include_typename_can_be_set_to_true(tmp_path):
+    """Test that include_typename can be explicitly set to True."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        include_typename=True,
+    )
+
+    assert settings.include_typename is True
