@@ -84,6 +84,7 @@ class PackageGenerator:
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
         enable_custom_operations: bool = False,
+        default_optional_fields_to_none: bool = False,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -133,6 +134,7 @@ class PackageGenerator:
         )
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
+        self.default_optional_fields_to_none = default_optional_fields_to_none
 
         self._result_types_files: Dict[str, ast.Module] = {}
         self._generated_files: List[str] = []
@@ -199,6 +201,7 @@ class PackageGenerator:
             convert_to_snake_case=self.convert_to_snake_case,
             custom_scalars=self.custom_scalars,
             plugin_manager=self.plugin_manager,
+            default_optional_fields_to_none=self.default_optional_fields_to_none,
         )
         self._unpacked_fragments = self._unpacked_fragments.union(
             query_types_generator.get_unpacked_fragments()
@@ -454,6 +457,7 @@ def get_package_generator(
         convert_to_snake_case=settings.convert_to_snake_case,
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
+        default_optional_fields_to_none=settings.default_optional_fields_to_none,
     )
     custom_fields_generator = CustomFieldsGenerator(
         schema=schema,
@@ -533,4 +537,5 @@ def get_package_generator(
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
         enable_custom_operations=settings.enable_custom_operations,
+        default_optional_fields_to_none=settings.default_optional_fields_to_none,
     )
