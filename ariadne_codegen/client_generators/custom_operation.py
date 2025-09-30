@@ -84,6 +84,7 @@ class CustomOperationGenerator:
                 operation_name=name,
                 operation_args=field.args,
                 final_type=final_type,
+                description=field.description,
             )
             method_def.lineno = len(self._class_def.body) + 1
             self._class_def.body.append(method_def)
@@ -115,6 +116,7 @@ class CustomOperationGenerator:
         operation_name: str,
         operation_args,
         final_type,
+        description: Optional[str] = None,
     ) -> ast.FunctionDef:
         """Generates a method definition for a given operation."""
         (
@@ -141,6 +143,7 @@ class CustomOperationGenerator:
             name=str_to_snake_case(operation_name),
             arguments=method_arguments,
             return_type=generate_name(return_type_name),
+            description=description,
             body=[
                 *arguments_body,
                 generate_return(

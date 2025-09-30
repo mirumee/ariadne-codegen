@@ -37,21 +37,27 @@ class CollectionTranslatableContentFields(GraphQLField):
     id: "CollectionTranslatableContentGraphQLField" = (
         CollectionTranslatableContentGraphQLField("id")
     )
+    "The ID of the collection translatable content."
     collection_id: "CollectionTranslatableContentGraphQLField" = (
         CollectionTranslatableContentGraphQLField("collectionId")
     )
+    "The ID of the collection to translate.\n\nAdded in Saleor 3.14."
     seo_title: "CollectionTranslatableContentGraphQLField" = (
         CollectionTranslatableContentGraphQLField("seoTitle")
     )
+    "SEO title to translate."
     seo_description: "CollectionTranslatableContentGraphQLField" = (
         CollectionTranslatableContentGraphQLField("seoDescription")
     )
+    "SEO description to translate."
     name: "CollectionTranslatableContentGraphQLField" = (
         CollectionTranslatableContentGraphQLField("name")
     )
+    "Collection's name to translate."
     description: "CollectionTranslatableContentGraphQLField" = (
         CollectionTranslatableContentGraphQLField("description")
     )
+    "Collection's description to translate.\n\nRich text format. For reference see https://editorjs.io/"
 
     def fields(
         self, *subfields: CollectionTranslatableContentGraphQLField
@@ -67,8 +73,11 @@ class CollectionTranslatableContentFields(GraphQLField):
 
 class MetadataErrorFields(GraphQLField):
     field: "MetadataErrorGraphQLField" = MetadataErrorGraphQLField("field")
+    "Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field."
     message: "MetadataErrorGraphQLField" = MetadataErrorGraphQLField("message")
+    "The error message."
     code: "MetadataErrorGraphQLField" = MetadataErrorGraphQLField("code")
+    "The error code."
 
     def fields(self, *subfields: MetadataErrorGraphQLField) -> "MetadataErrorFields":
         """Subfields should come from the MetadataErrorFields class"""
@@ -82,7 +91,9 @@ class MetadataErrorFields(GraphQLField):
 
 class MetadataItemFields(GraphQLField):
     key: "MetadataItemGraphQLField" = MetadataItemGraphQLField("key")
+    "Key of a metadata item."
     value: "MetadataItemGraphQLField" = MetadataItemGraphQLField("value")
+    "Value of a metadata item."
 
     def fields(self, *subfields: MetadataItemGraphQLField) -> "MetadataItemFields":
         """Subfields should come from the MetadataItemFields class"""
@@ -97,10 +108,14 @@ class MetadataItemFields(GraphQLField):
 class ObjectWithMetadataInterface(GraphQLField):
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
+        """List of private metadata items. Requires staff permissions to access."""
         return MetadataItemFields("privateMetadata")
 
     @classmethod
     def private_metafield(cls, key: str) -> "ObjectWithMetadataGraphQLField":
+        """A single key from private metadata. Requires staff permissions to access.
+
+        Tip: Use GraphQL aliases to fetch multiple keys."""
         arguments: Dict[str, Dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
@@ -113,10 +128,14 @@ class ObjectWithMetadataInterface(GraphQLField):
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
+        """List of public metadata items. Can be accessed without permissions."""
         return MetadataItemFields("metadata")
 
     @classmethod
     def metafield(cls, key: str) -> "ObjectWithMetadataGraphQLField":
+        """A single key from public metadata.
+
+        Tip: Use GraphQL aliases to fetch multiple keys."""
         arguments: Dict[str, Dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
@@ -166,10 +185,14 @@ class ProductFields(GraphQLField):
 
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
+        """List of private metadata items. Requires staff permissions to access."""
         return MetadataItemFields("privateMetadata")
 
     @classmethod
     def private_metafield(cls, key: str) -> "ProductGraphQLField":
+        """A single key from private metadata. Requires staff permissions to access.
+
+        Tip: Use GraphQL aliases to fetch multiple keys."""
         arguments: Dict[str, Dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
@@ -180,10 +203,14 @@ class ProductFields(GraphQLField):
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
+        """List of public metadata items. Can be accessed without permissions."""
         return MetadataItemFields("metadata")
 
     @classmethod
     def metafield(cls, key: str) -> "ProductGraphQLField":
+        """A single key from public metadata.
+
+        Tip: Use GraphQL aliases to fetch multiple keys."""
         arguments: Dict[str, Dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
@@ -259,21 +286,27 @@ class ProductTranslatableContentFields(GraphQLField):
     id: "ProductTranslatableContentGraphQLField" = (
         ProductTranslatableContentGraphQLField("id")
     )
+    "The ID of the product translatable content."
     product_id: "ProductTranslatableContentGraphQLField" = (
         ProductTranslatableContentGraphQLField("productId")
     )
+    "The ID of the product to translate.\n\nAdded in Saleor 3.14."
     seo_title: "ProductTranslatableContentGraphQLField" = (
         ProductTranslatableContentGraphQLField("seoTitle")
     )
+    "SEO title to translate."
     seo_description: "ProductTranslatableContentGraphQLField" = (
         ProductTranslatableContentGraphQLField("seoDescription")
     )
+    "SEO description to translate."
     name: "ProductTranslatableContentGraphQLField" = (
         ProductTranslatableContentGraphQLField("name")
     )
+    "Product's name to translate."
     description: "ProductTranslatableContentGraphQLField" = (
         ProductTranslatableContentGraphQLField("description")
     )
+    "Product's description to translate.\n\nRich text format. For reference see https://editorjs.io/"
 
     def fields(
         self, *subfields: ProductTranslatableContentGraphQLField
@@ -308,6 +341,7 @@ class ProductTypeCountableConnectionFields(GraphQLField):
 class TranslatableItemConnectionFields(GraphQLField):
     @classmethod
     def page_info(cls) -> "PageInfoFields":
+        """Pagination data for this connection."""
         return PageInfoFields("pageInfo")
 
     @classmethod
@@ -317,6 +351,7 @@ class TranslatableItemConnectionFields(GraphQLField):
     total_count: "TranslatableItemConnectionGraphQLField" = (
         TranslatableItemConnectionGraphQLField("totalCount")
     )
+    "A total count of items in the collection."
 
     def fields(
         self,
@@ -337,9 +372,11 @@ class TranslatableItemConnectionFields(GraphQLField):
 
 class TranslatableItemEdgeFields(GraphQLField):
     node: "TranslatableItemUnion" = TranslatableItemUnion("node")
+    "The item at the end of the edge."
     cursor: "TranslatableItemEdgeGraphQLField" = TranslatableItemEdgeGraphQLField(
         "cursor"
     )
+    "A cursor for use in pagination."
 
     def fields(
         self,
