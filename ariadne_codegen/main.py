@@ -27,11 +27,11 @@ from .settings import Strategy
 @click.option("--config", default=None, help="Path to custom configuration file.")
 @click.argument(
     "strategy",
-    default=Strategy.CLIENT,
+    default=Strategy.CLIENT.value,
     type=click.Choice([e.value for e in Strategy]),
     required=False,
 )
-def main(strategy=Strategy.CLIENT, config=None):
+def main(strategy=Strategy.CLIENT.value, config=None):
     config_dict = get_config_dict(config)
     if strategy == Strategy.CLIENT:
         client(config_dict)
@@ -50,6 +50,7 @@ def client(config_dict):
             url=settings.remote_schema_url,
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
+            timeout=settings.remote_schema_timeout,
         )
 
     plugin_manager = PluginManager(
@@ -93,6 +94,7 @@ def graphql_schema(config_dict):
             url=settings.remote_schema_url,
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
+            timeout=settings.remote_schema_timeout,
         )
     )
     plugin_manager = PluginManager(

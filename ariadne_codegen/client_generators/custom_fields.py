@@ -227,7 +227,7 @@ class CustomFieldsGenerator:
         if getattr(field, "args") or method_required:
             return self.generate_product_type_method(
                 name,
-                field_name,
+                field_name, org_name,
                 getattr(field, "args"),
                 description=getattr(field, "description"),
             )
@@ -327,6 +327,7 @@ class CustomFieldsGenerator:
         self,
         name: str,
         class_name: str,
+        org_name: str,
         arguments: Optional[Dict[str, Any]] = None,
         description: Optional[str] = None,
     ) -> ast.FunctionDef:
@@ -360,7 +361,7 @@ class CustomFieldsGenerator:
                     generate_return(
                         value=generate_call(
                             func=field_class_name,
-                            args=[generate_constant(name)],
+                            args=[generate_constant(org_name)],
                             keywords=arguments_keyword,
                         )
                     ),

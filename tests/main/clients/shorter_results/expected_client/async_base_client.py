@@ -19,7 +19,7 @@ try:
     from websockets import (  # type: ignore[import-not-found,unused-ignore]
         ClientConnection,
     )
-    from websockets import (
+    from websockets import (  # type: ignore[import-not-found,unused-ignore]
         connect as ws_connect,
     )
     from websockets.typing import (  # type: ignore[import-not-found,unused-ignore]

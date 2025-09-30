@@ -45,6 +45,7 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
         remote_schema_url="remote_schema_url",
         remote_schema_headers={"header": "header"},
         remote_schema_verify_ssl=False,
+        remote_schema_timeout=5,
         enable_custom_operations=True,
         plugins=["imaplugin"],
         queries_path=schema_path.as_posix(),
