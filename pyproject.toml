@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ariadne-codegen"
 description = "Generate fully typed GraphQL client from schema, queries and mutations!"
-authors = [{ name = "Mirumee Software", email = "hello@mirumee.com" }]
+authors = [{ name = "Mirumee Software", email = "ariadne@mirumee.com" }]
 dynamic = ["version"]
 requires-python = ">= 3.9"
 readme = "README.md"
@@ -79,7 +79,7 @@ features = ["dev", "types"]
 check = [
     "hatch fmt",
     "hatch test -a -p",
-    "hatch test --coverage",
+    "hatch test --cover",
     "hatch run types:check",
 ]
 

@@ -114,6 +114,7 @@ class CustomFieldsGenerator:
                 class_def = self._generate_class_def_body(
                     definition=graphql_type,
                     class_name=f"{graphql_type.name}{self._get_suffix(graphql_type)}",
+                    description=graphql_type.description,
                 )
                 if isinstance(graphql_type, GraphQLInterfaceType):
                     class_def.body.append(
@@ -129,6 +130,7 @@ class CustomFieldsGenerator:
         self,
         definition: Union[GraphQLObjectType, GraphQLInterfaceType],
         class_name: str,
+        description: Optional[str] = None,
     ) -> ast.ClassDef:
         """
         Generates the body of a class definition for a given GraphQL object
@@ -136,10 +138,12 @@ class CustomFieldsGenerator:
         """
         base_names = [GRAPHQL_BASE_FIELD_CLASS]
         additional_fields_typing = set()
-        class_def = generate_class_def(name=class_name, base_names=base_names)
-        for lineno, (org_name, field) in enumerate(
-            self._get_combined_fields(definition).items(), start=1
-        ):
+        class_def = generate_class_def(
+            name=class_name, base_names=base_names, description=description
+        )
+        lineno = 0
+        for org_name, field in self._get_combined_fields(definition).items():
+            lineno += 1
             name = process_name(
                 org_name, convert_to_snake_case=self.convert_to_snake_case
             )
@@ -154,6 +158,11 @@ class CustomFieldsGenerator:
                     name, field_name, org_name, field, method_required, lineno
                 )
             )
+            # Add field docstring for class attributes (not methods)
+            if not getattr(field, "args") and field.description and not method_required:
+                lineno += 1
+                docstring = ast.Expr(value=ast.Constant(field.description))
+                class_def.body.append(docstring)
 
         class_def.body.append(
             self._generate_fields_method(
@@ -216,7 +225,11 @@ class CustomFieldsGenerator:
         """Handles the generation of field types."""
         if getattr(field, "args") or method_required:
             return self.generate_product_type_method(
-                name, field_name, getattr(field, "args")
+                name,
+                field_name,
+                org_name,
+                getattr(field, "args"),
+                description=getattr(field, "description"),
             )
         return generate_ann_assign(
             target=generate_name(name),
@@ -311,7 +324,12 @@ class CustomFieldsGenerator:
         )
 
     def generate_product_type_method(
-        self, name: str, class_name: str, arguments: Optional[Dict[str, Any]] = None
+        self,
+        name: str,
+        class_name: str,
+        org_name: str,
+        arguments: Optional[Dict[str, Any]] = None,
+        description: Optional[str] = None,
     ) -> ast.FunctionDef:
         """Generates a method for a product type."""
         arguments = arguments or {}
@@ -343,7 +361,7 @@ class CustomFieldsGenerator:
                     generate_return(
                         value=generate_call(
                             func=field_class_name,
-                            args=[generate_constant(name)],
+                            args=[generate_constant(org_name)],
                             keywords=arguments_keyword,
                         )
                     ),
@@ -351,6 +369,7 @@ class CustomFieldsGenerator:
             ),
             return_type=generate_name(f'"{class_name}"'),
             decorator_list=[generate_name("classmethod")],
+            description=description,
         )
 
     def _get_suffix(

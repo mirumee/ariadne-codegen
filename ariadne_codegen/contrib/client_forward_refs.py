@@ -183,7 +183,7 @@ class ClientForwardRefsPlugin(Plugin):
             ast.ImportFrom(
                 module=self.imported_classes[import_class_name],
                 names=[import_class],
-                level=1,
+                level=0,
             ),
         )
 
@@ -345,7 +345,7 @@ class ClientForwardRefsPlugin(Plugin):
             module_name = self.imported_classes[cls]
             if module_name not in type_checking_imports:
                 type_checking_imports[module_name] = ast.ImportFrom(
-                    module=module_name, names=[], level=1
+                    module=module_name, names=[], level=0
                 )
 
             type_checking_imports[module_name].names.append(ast.alias(cls))
@@ -364,7 +364,7 @@ class ClientForwardRefsPlugin(Plugin):
             ast.ImportFrom(
                 module=TYPE_CHECKING_MODULE,
                 names=[ast.alias(TYPE_CHECKING_FLAG)],
-                level=1,
+                level=0,
             ),
         )
 
