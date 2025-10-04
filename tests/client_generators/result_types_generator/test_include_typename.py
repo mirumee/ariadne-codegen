@@ -1,10 +1,12 @@
 """Test include_typename functionality in ResultTypesGenerator."""
 
-from graphql import build_schema, parse, OperationDefinitionNode
+from graphql import OperationDefinitionNode, build_schema, parse
 
+from ariadne_codegen.client_generators.constants import (
+    DISCRIMINATOR_KEYWORD,
+    TYPENAME_FIELD_NAME,
+)
 from ariadne_codegen.client_generators.result_types import ResultTypesGenerator
-from ariadne_codegen.client_generators.constants import TYPENAME_FIELD_NAME, DISCRIMINATOR_KEYWORD
-
 
 SIMPLE_SCHEMA = """
     type Query {
@@ -104,6 +106,7 @@ def test_result_types_generator_respects_include_typename_false():
 def test_add_typename_field_to_selections_respects_include_typename_false():
     """Test that _add_typename_field_to_selections respects include_typename=False."""
     from graphql import FieldNode, NameNode, SelectionSetNode
+
     from ariadne_codegen.client_generators.constants import TYPENAME_FIELD_NAME
     
     schema = build_schema(SIMPLE_SCHEMA)
@@ -134,7 +137,10 @@ def test_add_typename_field_to_selections_respects_include_typename_false():
     selection_set = SelectionSetNode(selections=(id_field,))
     
     # Call the method
-    result_fields, result_selections = generator_false._add_typename_field_to_selections(
+    (
+        result_fields,
+        result_selections,
+    ) = generator_false._add_typename_field_to_selections(
         resolved_fields, selection_set
     )
     
@@ -272,12 +278,19 @@ def test_union_discriminator_respects_include_typename():
             break
     
     # Assertions
-    assert has_discriminator_with_typename, "Expected discriminator when include_typename=True"
-    assert not has_discriminator_without_typename, "Should not have discriminator when include_typename=False"
+    assert has_discriminator_with_typename, (
+        "Expected discriminator when include_typename=True"
+    )
+    assert not has_discriminator_without_typename, (
+        "Should not have discriminator when include_typename=False"
+    )
 
 
 def test_union_types_work_without_discriminator_when_include_typename_false():
-    """Test that union types can still be parsed when include_typename=False (without discriminator)."""
+    """Test union types work when include_typename=False.
+    
+    Ensures union types can be parsed without discriminators.
+    """
     import ast
     
     schema = build_schema(SIMPLE_SCHEMA)
@@ -329,4 +342,6 @@ def test_union_types_work_without_discriminator_when_include_typename_false():
             found_typename_field = True
     
     assert found_union, "Should generate union types when include_typename=False"
-    assert not found_typename_field, "Should not generate typename__ field when include_typename=False"
+    assert not found_typename_field, (
+        "Should not generate typename__ field when include_typename=False"
+    )

@@ -364,7 +364,9 @@ def get_fragments_on_subtype(
     return fragments
 
 
-def annotate_nested_unions(annotation: AnnotationSlice, include_typename: bool = True) -> AnnotationSlice:
+def annotate_nested_unions(
+    annotation: AnnotationSlice, include_typename: bool = True
+) -> AnnotationSlice:
     if isinstance(annotation, ast.Tuple):
         return generate_tuple(
             [
@@ -393,7 +395,9 @@ def annotate_nested_unions(annotation: AnnotationSlice, include_typename: bool =
             # When include_typename=False, return the union without discriminator
             return annotation
 
-    annotation.slice = annotate_nested_unions(cast(AnnotationSlice, annotation.slice), include_typename)
+    annotation.slice = annotate_nested_unions(
+        cast(AnnotationSlice, annotation.slice), include_typename
+    )
     return annotation
 
 
