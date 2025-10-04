@@ -73,6 +73,7 @@ class ClientSettings(BaseSettings):
     opentelemetry_client: bool = False
     files_to_include: List[str] = field(default_factory=list)
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
+    include_typename: bool = True
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
@@ -167,6 +168,11 @@ class ClientSettings(BaseSettings):
             if self.plugins
             else "No plugin is being used."
         )
+        include_typename_msg = (
+            "Including __typename fields in generated queries."
+            if self.include_typename
+            else "Not including __typename fields in generated queries."
+        )
         return dedent(
             f"""\
             Selected strategy: {Strategy.CLIENT}
@@ -183,6 +189,7 @@ class ClientSettings(BaseSettings):
             Comments type: {self.include_comments.value}
             {snake_case_msg}
             {async_client_msg}
+            {include_typename_msg}
             {files_to_include_msg}
             {plugins_msg}
             """
