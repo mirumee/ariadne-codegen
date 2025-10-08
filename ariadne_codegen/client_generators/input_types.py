@@ -81,9 +81,9 @@ class InputTypesGenerator:
         class_defs = self._filter_class_defs(types_to_include=types_to_include)
         self._generated_public_names = [class_def.name for class_def in class_defs]
 
-        if self._used_enums:
+        if used_imports := self.get_used_enums():
             self._imports.append(
-                generate_import_from(self.get_used_enums(), self.enums_module, 1)
+                generate_import_from(used_imports, self.enums_module, 1)
             )
 
         for scalar_name in self._used_scalars:
