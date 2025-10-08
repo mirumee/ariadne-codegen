@@ -19,7 +19,7 @@ from .schema import (
     get_graphql_schema_from_path,
     get_graphql_schema_from_url,
 )
-from .settings import Strategy
+from .settings import Strategy, get_validation_rule
 
 
 @click.command()  # type: ignore
@@ -65,7 +65,7 @@ def client(config_dict):
     fragments = []
     queries = []
     if settings.queries_path:
-        definitions = get_graphql_queries(settings.queries_path, schema)
+        definitions = get_graphql_queries(settings.queries_path, schema, [get_validation_rule(e) for e in settings.skip_validation_rules])
         queries = filter_operations_definitions(definitions)
         fragments = filter_fragments_definitions(definitions)
 
