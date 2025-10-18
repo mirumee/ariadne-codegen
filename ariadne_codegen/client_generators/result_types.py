@@ -388,7 +388,7 @@ class ResultTypesGenerator:
         if not self.include_typename:
             # Don't add __typename to fields or selections when include_typename=False
             return resolved_fields, selection_set.selections
-            
+
         field_names = {f.name.value for f in resolved_fields}
         if TYPENAME_FIELD_NAME not in field_names:
             typename_field = FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME))

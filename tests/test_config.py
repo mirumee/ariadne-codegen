@@ -254,7 +254,6 @@ def test_get_graphql_schema_settings_returns_settings_object_ignoring_extra_fiel
     assert settings.schema_path == schema_path.as_posix()
 
 
-
 def test_get_client_settings_with_include_typename_false(tmp_path):
     """Test that include_typename=False is properly parsed from config."""
     schema_path = tmp_path / "schema.graphql"
@@ -315,4 +314,3 @@ def test_get_client_settings_without_include_typename_defaults_to_true(tmp_path)
 
     assert isinstance(settings, ClientSettings)
     assert settings.include_typename is True
-
