@@ -144,11 +144,11 @@ class GraphQLField:
         formatted_variables = self.formatted_variables.copy()
 
         # Collect variables from subfields
-        for subfield in self._subfields:            
+        for subfield in self._subfields:
             formatted_variables.update(subfield.get_formatted_variables())
 
         # Collect variables from inline fragments
         for subfields in self._inline_fragments.values():
-            for subfield in subfields:                
+            for subfield in subfields:
                 formatted_variables.update(subfield.get_formatted_variables())
         return formatted_variables
