@@ -82,6 +82,7 @@ def parse_operation_field(
     typename_values: Optional[List[str]] = None,
     custom_scalars: Optional[Dict[str, ScalarData]] = None,
     fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
+    include_typename: bool = True,
 ) -> Tuple[Annotation, Optional[ast.Constant], FieldContext]:
     default_value: Optional[ast.Constant] = None
     context = FieldContext(
@@ -107,7 +108,7 @@ def parse_operation_field(
     )
     if isinstance(annotation, ast.Subscript):
         annotation.slice = annotate_nested_unions(
-            cast(AnnotationSlice, annotation.slice)
+            cast(AnnotationSlice, annotation.slice), include_typename
         )
     annotation, default_value = parse_directives(
         annotation=annotation, directives=directives if directives else tuple()
@@ -363,11 +364,13 @@ def get_fragments_on_subtype(
     return fragments
 
 
-def annotate_nested_unions(annotation: AnnotationSlice) -> AnnotationSlice:
+def annotate_nested_unions(
+    annotation: AnnotationSlice, include_typename: bool = True
+) -> AnnotationSlice:
     if isinstance(annotation, ast.Tuple):
         return generate_tuple(
             [
-                annotate_nested_unions(cast(AnnotationSlice, elt))
+                annotate_nested_unions(cast(AnnotationSlice, elt), include_typename)
                 for elt in annotation.elts
             ]
         )
@@ -376,19 +379,25 @@ def annotate_nested_unions(annotation: AnnotationSlice) -> AnnotationSlice:
         return annotation
 
     if isinstance(annotation.value, ast.Name) and annotation.value.id == UNION:
-        return generate_subscript(
-            value=generate_name(ANNOTATED),
-            slice_=generate_tuple(
-                [
-                    annotation,
-                    generate_pydantic_field(
-                        {DISCRIMINATOR_KEYWORD: generate_constant(TYPENAME_ALIAS)}
-                    ),
-                ]
-            ),
-        )
+        if include_typename:
+            return generate_subscript(
+                value=generate_name(ANNOTATED),
+                slice_=generate_tuple(
+                    [
+                        annotation,
+                        generate_pydantic_field(
+                            {DISCRIMINATOR_KEYWORD: generate_constant(TYPENAME_ALIAS)}
+                        ),
+                    ]
+                ),
+            )
+        else:
+            # When include_typename=False, return the union without discriminator
+            return annotation
 
-    annotation.slice = annotate_nested_unions(cast(AnnotationSlice, annotation.slice))
+    annotation.slice = annotate_nested_unions(
+        cast(AnnotationSlice, annotation.slice), include_typename
+    )
     return annotation
 
 
