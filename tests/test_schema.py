@@ -184,7 +184,7 @@ def test_read_graphql_file_with_invalid_file_raises_invalid_graphql_syntax_excep
     with pytest.raises(InvalidGraphqlSyntax) as exc:
         read_graphql_file(invalid_syntax_schema_file)
     # Use the actual exception value's message to avoid backslash escaping
-    # that can appear in the ExceptionInfo string on Windows.   
+    # that can appear in the ExceptionInfo string on Windows.
     assert str(invalid_syntax_schema_file) in str(exc.value)
 
 
