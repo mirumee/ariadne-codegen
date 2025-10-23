@@ -86,6 +86,7 @@ class ResultTypesGenerator:
         custom_scalars: Optional[Dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
         default_optional_fields_to_none: bool = False,
+        include_typename: bool = True,
     ) -> None:
         self.schema = schema
         self.operation_definition = operation_definition
@@ -101,6 +102,7 @@ class ResultTypesGenerator:
         self.convert_to_snake_case = convert_to_snake_case
         self.plugin_manager = plugin_manager
         self.default_optional_fields_to_none = default_optional_fields_to_none
+        self.include_typename = include_typename
 
         self._imports: List[ast.ImportFrom] = [
             generate_import_from(
@@ -264,6 +266,7 @@ class ResultTypesGenerator:
                 typename_values=typename_values,
                 custom_scalars=self.custom_scalars,
                 fragments_definitions=self.fragments_definitions,
+                include_typename=self.include_typename,
             )
 
             field_implementation = generate_ann_assign(
@@ -384,6 +387,10 @@ class ResultTypesGenerator:
     def _add_typename_field_to_selections(
         self, resolved_fields: List[FieldNode], selection_set: SelectionSetNode
     ) -> Tuple[List[FieldNode], Tuple[SelectionNode, ...]]:
+        if not self.include_typename:
+            # Don't add __typename to fields or selections when include_typename=False
+            return resolved_fields, selection_set.selections
+
         field_names = {f.name.value for f in resolved_fields}
         if TYPENAME_FIELD_NAME not in field_names:
             typename_field = FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME))
@@ -438,7 +445,7 @@ class ResultTypesGenerator:
         ):
             keywords[ALIAS_KEYWORD] = generate_constant(field_schema_name)
 
-        if is_union(field_implementation.annotation):
+        if is_union(field_implementation.annotation) and self.include_typename:
             keywords[DISCRIMINATOR_KEYWORD] = generate_constant(TYPENAME_ALIAS)
 
         if keywords and isinstance(field_implementation.value, ast.Constant):

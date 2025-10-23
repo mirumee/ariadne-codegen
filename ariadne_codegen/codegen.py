@@ -111,16 +111,21 @@ def generate_class_def(
     name: str,
     base_names: Optional[List[str]] = None,
     body: Optional[List[ast.stmt]] = None,
+    description: str = "",
 ) -> ast.ClassDef:
     """Generate class definition."""
     bases = cast(
         List[ast.expr], [ast.Name(id=name) for name in base_names] if base_names else []
     )
+    body = body if body else []
+    if description:
+        docstring = ast.Expr(value=ast.Constant(value=description))
+        body.insert(0, docstring)
     params: Dict[str, Any] = {
         "name": name,
         "bases": bases,
         "keywords": [],
-        "body": body if body else [],
+        "body": body,
         "decorator_list": [],
     }
     if sys.version_info >= (3, 12):
@@ -354,10 +359,15 @@ def generate_method_definition(
     name: str,
     arguments: ast.arguments,
     return_type: Union[ast.Name, ast.Subscript],
+    description: str = "",
     body: Optional[List[ast.stmt]] = None,
     lineno: int = 1,
     decorator_list: Optional[List[ast.expr]] = None,
 ) -> ast.FunctionDef:
+    body = body if body else [ast.Pass()]
+    if description:
+        docstring = ast.Expr(value=ast.Constant(value=description))
+        body.insert(0, docstring)
     params: Dict[str, Any] = {
         "name": name,
         "args": arguments,

@@ -37,6 +37,7 @@ class BaseSettings:
     remote_schema_url: str = ""
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
+    remote_schema_timeout: float = 5
     enable_custom_operations: bool = False
     plugins: List[str] = field(default_factory=list)
 
@@ -73,6 +74,7 @@ class ClientSettings(BaseSettings):
     files_to_include: List[str] = field(default_factory=list)
     scalars: Dict[str, ScalarData] = field(default_factory=dict)
     default_optional_fields_to_none: bool = False
+    include_typename: bool = True
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
@@ -157,7 +159,7 @@ class ClientSettings(BaseSettings):
         )
         files_to_include_list = ",".join(self.files_to_include)
         files_to_include_msg = (
-            f"Coping following files into package: {files_to_include_list}"
+            f"Copying the following files into the package: {files_to_include_list}"
             if self.files_to_include
             else "No files to copy."
         )
@@ -166,6 +168,11 @@ class ClientSettings(BaseSettings):
             f"Plugins to use: {plugins_list}"
             if self.plugins
             else "No plugin is being used."
+        )
+        include_typename_msg = (
+            "Including __typename fields in generated queries."
+            if self.include_typename
+            else "Not including __typename fields in generated queries."
         )
         return dedent(
             f"""\
@@ -183,6 +190,7 @@ class ClientSettings(BaseSettings):
             Comments type: {self.include_comments.value}
             {snake_case_msg}
             {async_client_msg}
+            {include_typename_msg}
             {files_to_include_msg}
             {plugins_msg}
             """

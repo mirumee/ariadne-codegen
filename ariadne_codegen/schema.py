@@ -63,16 +63,24 @@ def get_graphql_queries(
 
 
 def get_graphql_schema_from_url(
-    url: str, headers: Optional[Dict[str, str]] = None, verify_ssl: bool = True
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    verify_ssl: bool = True,
+    timeout: float = 5,
 ) -> GraphQLSchema:
     return build_client_schema(
-        introspect_remote_schema(url=url, headers=headers, verify_ssl=verify_ssl),
+        introspect_remote_schema(
+            url=url, headers=headers, verify_ssl=verify_ssl, timeout=timeout
+        ),
         assume_valid=True,
     )
 
 
 def introspect_remote_schema(
-    url: str, headers: Optional[Dict[str, str]] = None, verify_ssl: bool = True
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    verify_ssl: bool = True,
+    timeout: float = 5,
 ) -> IntrospectionQuery:
     try:
         response = httpx.post(
@@ -80,6 +88,7 @@ def introspect_remote_schema(
             json={"query": get_introspection_query(descriptions=False)},
             headers=headers,
             verify=verify_ssl,
+            timeout=timeout,
         )
     except httpx.InvalidURL as exc:
         raise IntrospectionError(f"Invalid remote schema url: {url}") from exc

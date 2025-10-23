@@ -252,3 +252,65 @@ def test_get_graphql_schema_settings_returns_settings_object_ignoring_extra_fiel
 
     assert isinstance(settings, GraphQLSchemaSettings)
     assert settings.schema_path == schema_path.as_posix()
+
+
+def test_get_client_settings_with_include_typename_false(tmp_path):
+    """Test that include_typename=False is properly parsed from config."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    config_dict = {
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "queries_path": queries_path.as_posix(),
+                "include_typename": False,
+            }
+        }
+    }
+    settings = get_client_settings(config_dict)
+
+    assert isinstance(settings, ClientSettings)
+    assert settings.include_typename is False
+
+
+def test_get_client_settings_with_include_typename_true(tmp_path):
+    """Test that include_typename=True is properly parsed from config."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    config_dict = {
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "queries_path": queries_path.as_posix(),
+                "include_typename": True,
+            }
+        }
+    }
+    settings = get_client_settings(config_dict)
+
+    assert isinstance(settings, ClientSettings)
+    assert settings.include_typename is True
+
+
+def test_get_client_settings_without_include_typename_defaults_to_true(tmp_path):
+    """Test that include_typename defaults to True when not specified in config."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    config_dict = {
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "queries_path": queries_path.as_posix(),
+            }
+        }
+    }
+    settings = get_client_settings(config_dict)
+
+    assert isinstance(settings, ClientSettings)
+    assert settings.include_typename is True

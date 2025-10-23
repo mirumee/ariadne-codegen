@@ -50,6 +50,7 @@ def client(config_dict):
             url=settings.remote_schema_url,
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
+            timeout=settings.remote_schema_timeout,
         )
 
     plugin_manager = PluginManager(
@@ -93,6 +94,7 @@ def graphql_schema(config_dict):
             url=settings.remote_schema_url,
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
+            timeout=settings.remote_schema_timeout,
         )
     )
     plugin_manager = PluginManager(
