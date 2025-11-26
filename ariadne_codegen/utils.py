@@ -138,3 +138,29 @@ def process_name(
     if set(name) == {"_"} and not processed_name:
         return "underscore_named_field_"
     return processed_name
+
+
+def add_extra_to_base_model(code: str) -> str:
+    "Adds `extra='forbid'` to the ConfigDict in BaseModel if not already present."
+    tree = ast.parse(code)
+    for node in tree.body:
+        if not isinstance(node, ast.ClassDef):
+            continue
+        if node.name != "BaseModel":
+            continue
+        for statement in node.body:
+            if not isinstance(statement, ast.Assign):
+                continue
+            call = statement.value
+            if not isinstance(call, ast.Call):
+                continue
+            if not isinstance(call.func, ast.Name):
+                continue
+            if call.func.id != "ConfigDict":
+                continue
+            if not any(kw.arg == "extra" for kw in call.keywords):
+                call.keywords.append(
+                    ast.keyword(arg="extra", value=ast.Constant("forbid"))
+                )
+    ast.fix_missing_locations(tree)
+    return ast.unparse(tree)

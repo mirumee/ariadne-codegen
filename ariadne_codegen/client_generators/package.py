@@ -13,7 +13,12 @@ from ..codegen import generate_import_from
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..settings import ClientSettings, CommentsStrategy
-from ..utils import ast_to_str, process_name, str_to_pascal_case
+from ..utils import (
+    add_extra_to_base_model,
+    ast_to_str,
+    process_name,
+    str_to_pascal_case,
+)
 from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
 from .comments import get_comment
@@ -85,6 +90,7 @@ class PackageGenerator:
         plugin_manager: Optional[PluginManager] = None,
         enable_custom_operations: bool = False,
         include_typename: bool = True,
+        ignore_extra_fields: bool = True,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -135,6 +141,7 @@ class PackageGenerator:
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
         self.include_typename = include_typename
+        self.ignore_extra_fields = ignore_extra_fields
 
         self._result_types_files: Dict[str, ast.Module] = {}
         self._generated_files: List[str] = []
@@ -355,6 +362,8 @@ class PackageGenerator:
         ]
         for source_path in files_to_copy:
             code = self._add_comments_to_code(source_path.read_text(encoding="utf-8"))
+            if not self.ignore_extra_fields and source_path.name == "base_model.py":
+                code = add_extra_to_base_model(code)
             if self.plugin_manager:
                 code = self.plugin_manager.copy_code(code)
             target_path = self.package_path / source_path.name
@@ -538,4 +547,5 @@ def get_package_generator(
         plugin_manager=plugin_manager,
         enable_custom_operations=settings.enable_custom_operations,
         include_typename=settings.include_typename,
+        ignore_extra_fields=settings.ignore_extra_fields,
     )
