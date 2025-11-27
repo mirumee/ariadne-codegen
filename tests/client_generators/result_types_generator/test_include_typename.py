@@ -313,7 +313,8 @@ def test_get_field_from_schema_handles_typename_correctly():
 
     # __typename is not in the schema's type_map fields, so it should be handled
     # as a special case. This validates the fix where using GraphQLString instead
-    # of GraphQLScalarType(name="String") prevents "Redefinition of reserved type" error.
+    # of GraphQLScalarType(name="String") prevents "Redefinition of reserved type"
+    # error.
     typename_field = generator._get_field_from_schema("User", TYPENAME_FIELD_NAME)
 
     # Verify the field was created correctly using the built-in GraphQLString type
