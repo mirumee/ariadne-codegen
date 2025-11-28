@@ -253,7 +253,7 @@ class PackageGenerator:
         if len(file_names) != len(set(file_names)):
             seen = set()
             duplicated_files = {n for n in file_names if n in seen or seen.add(n)}
-            raise ParsingError(f"Duplicated file names: {',' .join(duplicated_files)}")
+            raise ParsingError(f"Duplicated file names: {','.join(duplicated_files)}")
 
     def _generate_client(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"

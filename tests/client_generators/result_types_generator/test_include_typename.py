@@ -276,9 +276,9 @@ def test_union_discriminator_respects_include_typename():
             break
 
     # Assertions
-    assert (
-        has_discriminator_with_typename
-    ), "Expected discriminator when include_typename=True"
-    assert (
-        not has_discriminator_without_typename
-    ), "Should not have discriminator when include_typename=False"
+    assert has_discriminator_with_typename, (
+        "Expected discriminator when include_typename=True"
+    )
+    assert not has_discriminator_without_typename, (
+        "Should not have discriminator when include_typename=False"
+    )

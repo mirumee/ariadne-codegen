@@ -25,7 +25,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-  "click~=8.1",
+  "click~=8.2",
   "graphql-core>=3.2.0,<3.3",
   "toml~=0.10",
   "httpx~=0.23",
@@ -77,20 +77,23 @@ features = ["dev", "types"]
 
 [tool.hatch.envs.default.scripts]
 check = [
-    "hatch fmt",
-    "hatch test -a -p",
-    "hatch test --cover",
-    "hatch run types:check",
+  "hatch fmt",
+  "hatch test -a -p",
+  "hatch test --cover",
+  "hatch run types:check",
 ]
 
 ## Types environment
 
 [tool.hatch.envs.types.scripts]
 check = [
-    "mypy tests/main/clients/*/expected_client",
-    "mypy tests/main/graphql_schemas/*/expected_schema.py",
-    "mypy ariadne_codegen/client_generators/dependencies",
+  "mypy tests/main/clients/*/expected_client",
+  "mypy tests/main/graphql_schemas/*/expected_schema.py",
+  "mypy ariadne_codegen/client_generators/dependencies",
 ]
+
+[tool.hatch.envs.hatch-static-analysis]
+dependencies = ["ruff>=0.14.0,<0.15.0"]
 
 ## Test environments
 
@@ -123,16 +126,16 @@ source = ["ariadne_codegen", "tests"]
 
 [tool.coverage.report]
 exclude_also = [
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
+  "def __repr__",
+  "if self.debug:",
+  "if settings.DEBUG",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod",
 ]
 omit = ["*/__about__.py", "*/__main__.py", "*/cli/__init__.py"]
 fail_under = 90
@@ -146,9 +149,7 @@ target-version = "py39"
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 99
-exclude = [
-    "tests/main/clients/*/expected_client/*"
-]
+exclude = ["tests/main/clients/*/expected_client/*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "G", "I", "N", "Q", "UP", "C90", "T20", "TID"]
