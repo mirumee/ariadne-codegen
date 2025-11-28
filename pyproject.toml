@@ -25,7 +25,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-  "click~=8.2",
+  "click~=8.1.8",
   "graphql-core>=3.2.0,<3.3",
   "toml~=0.10",
   "httpx~=0.23",
