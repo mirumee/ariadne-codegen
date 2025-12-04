@@ -19,6 +19,7 @@ from ..codegen import (
     generate_method_call,
     generate_module,
     generate_name,
+    generate_pass,
     generate_pydantic_field,
     model_has_forward_refs,
 )
@@ -198,6 +199,9 @@ class InputTypesGenerator:
                 docstring = ast.Expr(value=ast.Constant(value=field.description))
                 class_def.body.append(docstring)
             self._save_dependencies(root_type=definition.name, field_type=field_type)
+
+        if not class_def.body:
+            class_def.body.append(generate_pass())
 
         if self.plugin_manager:
             class_def = self.plugin_manager.generate_input_class(
