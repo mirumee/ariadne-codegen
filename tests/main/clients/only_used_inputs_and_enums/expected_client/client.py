@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .enums import EnumD
@@ -25,7 +25,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"argA": arg_a}
+        variables: dict[str, object] = {"argA": arg_a}
         response = await self.execute(
             query=query, operation_name="getA", variables=variables, **kwargs
         )
@@ -40,7 +40,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"argA": arg_a}
+        variables: dict[str, object] = {"argA": arg_a}
         response = await self.execute(
             query=query, operation_name="getA2", variables=variables, **kwargs
         )
@@ -55,7 +55,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"argAA": arg_aa}
+        variables: dict[str, object] = {"argAA": arg_aa}
         response = await self.execute(
             query=query, operation_name="getB", variables=variables, **kwargs
         )
@@ -70,7 +70,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"enumD": enum_d}
+        variables: dict[str, object] = {"enumD": enum_d}
         response = await self.execute(
             query=query, operation_name="getD", variables=variables, **kwargs
         )
@@ -85,7 +85,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"argE": arg_e}
+        variables: dict[str, object] = {"argE": arg_e}
         response = await self.execute(
             query=query, operation_name="getE", variables=variables, **kwargs
         )
@@ -102,7 +102,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="getF", variables=variables, **kwargs
         )
@@ -123,7 +123,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="getG", variables=variables, **kwargs
         )

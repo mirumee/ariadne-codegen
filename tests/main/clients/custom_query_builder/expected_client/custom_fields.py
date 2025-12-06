@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Union
 
 from .base_operation import GraphQLField
 from .custom_typing_fields import (
@@ -108,7 +108,7 @@ class MetadataItemFields(GraphQLField):
 class ObjectWithMetadataInterface(GraphQLField):
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
-        """List of private metadata items. Requires staff permissions to access."""
+        """list of private metadata items. Requires staff permissions to access."""
         return MetadataItemFields("privateMetadata")
 
     @classmethod
@@ -116,7 +116,7 @@ class ObjectWithMetadataInterface(GraphQLField):
         """A single key from private metadata. Requires staff permissions to access.
 
         Tip: Use GraphQL aliases to fetch multiple keys."""
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -128,7 +128,7 @@ class ObjectWithMetadataInterface(GraphQLField):
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
-        """List of public metadata items. Can be accessed without permissions."""
+        """list of public metadata items. Can be accessed without permissions."""
         return MetadataItemFields("metadata")
 
     @classmethod
@@ -136,7 +136,7 @@ class ObjectWithMetadataInterface(GraphQLField):
         """A single key from public metadata.
 
         Tip: Use GraphQL aliases to fetch multiple keys."""
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -185,7 +185,7 @@ class ProductFields(GraphQLField):
 
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
-        """List of private metadata items. Requires staff permissions to access."""
+        """list of private metadata items. Requires staff permissions to access."""
         return MetadataItemFields("privateMetadata")
 
     @classmethod
@@ -193,7 +193,7 @@ class ProductFields(GraphQLField):
         """A single key from private metadata. Requires staff permissions to access.
 
         Tip: Use GraphQL aliases to fetch multiple keys."""
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -203,7 +203,7 @@ class ProductFields(GraphQLField):
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
-        """List of public metadata items. Can be accessed without permissions."""
+        """list of public metadata items. Can be accessed without permissions."""
         return MetadataItemFields("metadata")
 
     @classmethod
@@ -211,7 +211,7 @@ class ProductFields(GraphQLField):
         """A single key from public metadata.
 
         Tip: Use GraphQL aliases to fetch multiple keys."""
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {

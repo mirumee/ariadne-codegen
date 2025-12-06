@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .my_mutation import MyMutation
@@ -36,7 +36,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"id": id}
+        variables: dict[str, object] = {"id": id}
         response = await self.execute(
             query=query, operation_name="my_mutation", variables=variables, **kwargs
         )

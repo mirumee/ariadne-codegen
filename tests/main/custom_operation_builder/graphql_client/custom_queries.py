@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from .custom_fields import PersonInterfaceInterface, PostFields, UserFields
 from .custom_typing_fields import GraphQLField, SearchResultUnion
@@ -11,7 +11,7 @@ class Query:
 
     @classmethod
     def greeting(cls, *, name: Optional[str] = None) -> GraphQLField:
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "name": {"type": "String", "value": name}
         }
         cleared_arguments = {
@@ -21,7 +21,7 @@ class Query:
 
     @classmethod
     def user(cls, user_id: str) -> UserFields:
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "user_id": {"type": "ID!", "value": user_id}
         }
         cleared_arguments = {
@@ -35,7 +35,7 @@ class Query:
 
     @classmethod
     def search(cls, text: str) -> SearchResultUnion:
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "text": {"type": "String!", "value": text}
         }
         cleared_arguments = {
@@ -49,7 +49,7 @@ class Query:
 
     @classmethod
     def person(cls, person_id: str) -> PersonInterfaceInterface:
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "person_id": {"type": "ID!", "value": person_id}
         }
         cleared_arguments = {

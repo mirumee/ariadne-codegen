@@ -7,7 +7,7 @@ name = "ariadne-codegen"
 description = "Generate fully typed GraphQL client from schema, queries and mutations!"
 authors = [{ name = "Mirumee Software", email = "ariadne@mirumee.com" }]
 dynamic = ["version"]
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 readme = "README.md"
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
@@ -17,22 +17,23 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
 dependencies = [
-  "click~=8.1",
+  "click~=8.3",
   "graphql-core>=3.2.0,<3.3",
   "toml~=0.10",
-  "httpx~=0.23",
+  "httpx~=0.28",
   "pydantic>=2.0.0,<3.0.0",
-  "black",
   "isort",
   "autoflake",
+  "black",
 ]
 
 [project.optional-dependencies]
@@ -49,8 +50,8 @@ test = [
   "websockets>=14.2",
   "opentelemetry-api",
 ]
-types = ["mypy>=1.0.0"]
-subscriptions = ["websockets>=14.2"]
+types = ["mypy>=1.19.0"]
+subscriptions = ["websockets>=15"]
 opentelemetry = ["opentelemetry-api"]
 
 [project.scripts]
@@ -73,24 +74,29 @@ exclude = ["tests"]
 path = "ariadne_codegen/__about__.py"
 
 [tool.hatch.envs.default]
+python = "3.10"
 features = ["dev", "types"]
 
 [tool.hatch.envs.default.scripts]
 check = [
-    "hatch fmt",
-    "hatch test -a -p",
-    "hatch test --cover",
-    "hatch run types:check",
+  "hatch fmt",
+  "hatch test -a -p",
+  "hatch test --cover",
+  "hatch run types:check",
 ]
 
 ## Types environment
 
 [tool.hatch.envs.types.scripts]
 check = [
-    "mypy tests/main/clients/*/expected_client",
-    "mypy tests/main/graphql_schemas/*/expected_schema.py",
-    "mypy ariadne_codegen/client_generators/dependencies",
+  "mypy tests/main/clients/*/expected_client",
+  "mypy tests/main/graphql_schemas/*/expected_schema.py",
+  "mypy ariadne_codegen/client_generators/dependencies",
 ]
+
+[tool.hatch.envs.hatch-static-analysis]
+config-path = "none"
+dependencies = ["ruff>=0.14.0,<0.15.0"]
 
 ## Test environments
 
@@ -99,21 +105,16 @@ features = ["test"]
 extra-args = []
 
 [[tool.hatch.envs.hatch-test.matrix]]
-python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
 ## Types configuration
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 files = ["ariadne_codegen", "tests"]
 check_untyped_defs = true
-# disallow_untyped_defs = true
 ignore_missing_imports = true
-# warn_redundant_casts = true
-# warn_unused_ignores = true
-# disallow_any_generics = true
 no_implicit_reexport = true
-# strict = true
 disable_error_code = ["import-untyped"]
 
 ## Coverage configuration
@@ -123,16 +124,16 @@ source = ["ariadne_codegen", "tests"]
 
 [tool.coverage.report]
 exclude_also = [
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
+  "def __repr__",
+  "if self.debug:",
+  "if settings.DEBUG",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod",
 ]
 omit = ["*/__about__.py", "*/__main__.py", "*/cli/__init__.py"]
 fail_under = 90
@@ -141,18 +142,16 @@ fail_under = 90
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = 99
-exclude = [
-    "tests/main/clients/*/expected_client/*"
-]
+exclude = ["tests/main/clients/*/expected_client/*"]
 
 [tool.ruff.lint]
 select = ["E", "F", "G", "I", "N", "Q", "UP", "C90", "T20", "TID"]
-ignore = ["TID252", "UP006", "UP035"]
+ignore = ["TID252", "UP006", "UP007", "UP045"]
 task-tags = ["NOTE", "TODO", "FIXME", "HACK", "XXX"]
 
 [tool.ruff.lint.per-file-ignores]

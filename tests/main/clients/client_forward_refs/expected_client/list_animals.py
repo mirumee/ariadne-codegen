@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, Literal, Union
 
 from pydantic import Field
 
@@ -6,7 +6,7 @@ from .base_model import BaseModel
 
 
 class ListAnimals(BaseModel):
-    list_animals: List[
+    list_animals: list[
         Annotated[
             Union[
                 "ListAnimalsListAnimalsAnimal",

@@ -207,7 +207,7 @@ async def test_execute_sends_request_with_correct_content_type(httpx_mock):
     await client.execute("query Abc { abc }")
 
     request = httpx_mock.get_request()
-    assert request.headers["Content-Type"] == "application/json"
+    assert request.headers["Content-type"] == "application/json"
 
 
 @pytest.mark.asyncio
@@ -223,7 +223,7 @@ async def test_execute_sends_request_with_extra_headers_and_correct_content_type
 
     request = httpx_mock.get_request()
     assert request.headers["h_key"] == "h_value"
-    assert request.headers["Content-Type"] == "application/json"
+    assert request.headers["Content-type"] == "application/json"
 
 
 @pytest.mark.asyncio
@@ -262,7 +262,7 @@ async def test_execute_sends_json_request_with_headers_from_passed_kwargs(
     )
 
     request = httpx_mock.get_request()
-    assert request.headers["Content-Type"] == "application/json"
+    assert request.headers["Content-type"] == "application/json"
     assert request.headers["Other-Header"] == "other"
     assert request.headers["Client-Header-A"] == "execute_value"
     assert request.headers["Client-Header-b"] == "client_value_b"
@@ -280,7 +280,7 @@ async def test_execute_sends_file_with_multipart_form_data_content_type(
     )
 
     request = httpx_mock.get_request()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
 
 
 @pytest.mark.asyncio
@@ -293,7 +293,7 @@ async def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -309,7 +309,7 @@ async def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
     assert decoded_map == {"0": ["variables.file"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
@@ -324,7 +324,7 @@ async def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -340,7 +340,7 @@ async def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
     assert decoded_map == {"0": ["variables.file"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"in_memory.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"123456"
 
@@ -355,7 +355,7 @@ async def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -371,12 +371,12 @@ async def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
     assert decoded_map == {"0": ["variables.files.0"], "1": ["variables.files.1"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
     assert sent_parts["1"]
-    assert sent_parts["1"].headers[b"Content-Type"] == b"image/png"
+    assert sent_parts["1"].headers[b"Content-type"] == b"image/png"
     assert b"png_file.png" in sent_parts["1"].headers[b"Content-Disposition"]
     assert sent_parts["1"].content == b"image_content"
 
@@ -394,7 +394,7 @@ async def test_execute_sends_nested_file(httpx_mock, txt_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -410,7 +410,7 @@ async def test_execute_sends_nested_file(httpx_mock, txt_file):
     assert decoded_map == {"0": ["variables.input.file_"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
@@ -425,7 +425,7 @@ async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -441,7 +441,7 @@ async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
     assert decoded_map == {"0": ["variables.files.0", "variables.files.1"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 

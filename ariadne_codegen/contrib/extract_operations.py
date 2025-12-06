@@ -1,6 +1,6 @@
 import ast
 from pathlib import Path
-from typing import Dict, List, Union, cast
+from typing import Union, cast
 
 import isort
 from black import Mode, format_str
@@ -27,7 +27,7 @@ from ariadne_codegen.utils import format_multiline_strings, str_to_snake_case
 
 
 class ExtractOperationsPlugin(Plugin):
-    def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
+    def __init__(self, schema: GraphQLSchema, config_dict: dict) -> None:
         super().__init__(schema=schema, config_dict=config_dict)
         self.settings = get_client_settings(config_dict=self.config_dict)
         self.operations_module_name = (
@@ -37,8 +37,8 @@ class ExtractOperationsPlugin(Plugin):
             .get("operations_module_name", "operations")
         )
 
-        self._operations_gqls: Dict[str, str] = {}
-        self._operations_variables: Dict[str, str] = {}
+        self._operations_gqls: dict[str, str] = {}
+        self._operations_variables: dict[str, str] = {}
 
     def generate_init_module(self, module: ast.Module) -> ast.Module:
         if module.body:
@@ -143,7 +143,7 @@ class ExtractOperationsPlugin(Plugin):
             for name, gql in self._operations_gqls.items()
         ]
         return generate_module(
-            body=cast(List[ast.stmt], [all_assign] + variables_assigns)
+            body=cast(list[ast.stmt], [all_assign] + variables_assigns)
         )
 
     def _module_to_str(self, module: ast.Module) -> str:

@@ -1,5 +1,5 @@
 import ast
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 from graphql import (
     GraphQLEnumType,
@@ -37,8 +37,6 @@ from .constants import (
     BASE_MODEL_FILE_PATH,
     DICT,
     INPUT_SCALARS_MAP,
-    LIST,
-    TYPING_MODULE,
     UPLOAD_CLASS_NAME,
 )
 from .custom_generator_utils import get_final_type
@@ -50,15 +48,15 @@ class ArgumentGenerator:
 
     def __init__(
         self,
-        custom_scalars: Dict[str, ScalarData],
+        custom_scalars: dict[str, ScalarData],
         convert_to_snake_case: bool,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.custom_scalars = custom_scalars
         self.convert_to_snake_case = convert_to_snake_case
         self.plugin_manager = plugin_manager
-        self.imports: List[ast.ImportFrom] = []
-        self._used_custom_scalars: List[str] = []
+        self.imports: list[ast.ImportFrom] = []
+        self._used_custom_scalars: list[str] = []
 
     def _add_import(self, import_: Optional[ast.ImportFrom] = None) -> None:
         """Adds an import statement to the list of imports."""
@@ -69,15 +67,15 @@ class ArgumentGenerator:
                 self.imports.append(import_)
 
     def generate_arguments(
-        self, operation_args: Dict[str, Any]
-    ) -> Tuple[ast.arguments, List[ast.expr], List[ast.expr]]:
+        self, operation_args: dict[str, Any]
+    ) -> tuple[ast.arguments, list[ast.expr], list[ast.expr]]:
         """Generates method arguments from operation arguments."""
         cls_arg = generate_arg(name="cls")
-        args: List[ast.arg] = []
-        kw_only_args: List[ast.arg] = []
-        kw_defaults: List[ast.expr] = []
-        return_arguments_keys: List[ast.expr] = []
-        return_arguments_values: List[ast.expr] = []
+        args: list[ast.arg] = []
+        kw_only_args: list[ast.arg] = []
+        kw_defaults: list[ast.expr] = []
+        return_arguments_keys: list[ast.expr] = []
+        return_arguments_values: list[ast.expr] = []
 
         for arg_name, arg_value in operation_args.items():
             final_type = get_final_type(arg_value)
@@ -117,9 +115,9 @@ class ArgumentGenerator:
 
     def _accumulate_method_arguments(
         self,
-        args: List[ast.arg],
-        kw_only_args: List[ast.arg],
-        kw_defaults: List[ast.expr],
+        args: list[ast.arg],
+        kw_only_args: list[ast.arg],
+        kw_defaults: list[ast.expr],
         name: str,
         annotation: Optional[Union[ast.Name, ast.Subscript]],
         is_required: bool,
@@ -133,8 +131,8 @@ class ArgumentGenerator:
 
     def _accumulate_return_arguments(
         self,
-        return_arguments_keys: List[ast.expr],
-        return_arguments_values: List[ast.expr],
+        return_arguments_keys: list[ast.expr],
+        return_arguments_values: list[ast.expr],
         arg_name: str,
         name: str,
         complete_type: Union[
@@ -203,9 +201,9 @@ class ArgumentGenerator:
     def _assemble_method_arguments(
         self,
         cls_arg: ast.arg,
-        args: List[ast.arg],
-        kw_only_args: List[ast.arg],
-        kw_defaults: List[ast.expr],
+        args: list[ast.arg],
+        kw_only_args: list[ast.arg],
+        kw_defaults: list[ast.expr],
     ) -> ast.arguments:
         """Assembles method arguments."""
         return generate_arguments(
@@ -219,7 +217,7 @@ class ArgumentGenerator:
         type_: Union[GraphQLScalarType, GraphQLInputObjectType, GraphQLEnumType],
         nullable: bool = True,
         is_list: bool = False,
-    ) -> Tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
+    ) -> tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
         """Parses the GraphQL type name and determines if it is a custom scalar."""
         name = type_.name
         used_custom_scalar = None
@@ -247,9 +245,6 @@ class ArgumentGenerator:
         else:
             raise ParsingError(f"Incorrect argument type {name}")
 
-        if is_list:
-            self._add_import(generate_import_from(names=[LIST], from_=TYPING_MODULE))
-
         return (
             generate_annotation_name(name, nullable)
             if not is_list
@@ -268,9 +263,9 @@ class ArgumentGenerator:
 
     def generate_clear_arguments_section(
         self,
-        return_arguments_keys: List[ast.expr],
-        return_arguments_values: List[ast.expr],
-    ) -> Tuple[List[ast.stmt], List[ast.keyword]]:
+        return_arguments_keys: list[ast.expr],
+        return_arguments_values: list[ast.expr],
+    ) -> tuple[list[ast.stmt], list[ast.keyword]]:
         arguments_body = [
             generate_ann_assign(
                 generate_name("arguments"),
@@ -306,7 +301,7 @@ class ArgumentGenerator:
                             target="key, value",
                             iter_="arguments.items()",
                             ifs=cast(
-                                List[ast.expr],
+                                list[ast.expr],
                                 [
                                     ast.Compare(
                                         left=generate_subscript(

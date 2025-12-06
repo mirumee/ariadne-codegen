@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .interface_a import InterfaceA
@@ -39,7 +39,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="InterfaceA", variables=variables, **kwargs
         )
@@ -60,7 +60,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="InterfaceB", variables=variables, **kwargs
         )
@@ -78,7 +78,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="InterfaceC", variables=variables, **kwargs
         )
@@ -102,7 +102,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListInterface", variables=variables, **kwargs
         )
@@ -120,7 +120,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="InterfaceWithTypename",
@@ -148,7 +148,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="UnionA", variables=variables, **kwargs
         )
@@ -169,7 +169,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="UnionB", variables=variables, **kwargs
         )
@@ -194,7 +194,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListUnion", variables=variables, **kwargs
         )
@@ -224,7 +224,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnInterface",
@@ -258,7 +258,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnUnion",
@@ -290,7 +290,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnQueryWithInterface",
@@ -323,7 +323,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnQueryWithUnion",

@@ -1,6 +1,6 @@
 import ast
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 from warnings import warn
 
 from ..codegen import (
@@ -31,7 +31,7 @@ class ScalarData:
             self._get_object_name(self.serialize) if self.serialize else None
         )
 
-        self.names_to_import: List[str] = [
+        self.names_to_import: list[str] = [
             name for name in (self.type_, self.serialize, self.parse) if name
         ]
 
@@ -82,7 +82,7 @@ def generate_input_scalar_annotation(data: ScalarData) -> Annotation:
     return name_annotation
 
 
-def generate_scalar_imports(data: ScalarData) -> List[ast.ImportFrom]:
+def generate_scalar_imports(data: ScalarData) -> list[ast.ImportFrom]:
     imports = []
 
     if data.import_:

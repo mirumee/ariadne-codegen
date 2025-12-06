@@ -113,7 +113,7 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                     ast.AnnAssign(
                         target=ast.Name(id="input_field_2"),
                         annotation=ast.Subscript(
-                            value=ast.Name(id="List"), slice=ast.Name(id="int")
+                            value=ast.Name(id="list"), slice=ast.Name(id="int")
                         ),
                         value=ast.Call(
                             func=ast.Name(id=FIELD_CLASS),
