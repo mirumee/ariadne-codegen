@@ -12,7 +12,6 @@ from ariadne_codegen.client_generators.constants import (
     COLLECTIONS_ABC_MODULE,
     DICT,
     KWARGS_NAMES,
-    LIST,
     MODEL_VALIDATE_METHOD,
     OPTIONAL,
     TYPING_MODULE,
