@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .custom_scalars import Code, serialize_code
@@ -33,7 +33,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {
+        variables: dict[str, object] = {
             "date": date,
             "code": serialize_code(code),
             "id": id,

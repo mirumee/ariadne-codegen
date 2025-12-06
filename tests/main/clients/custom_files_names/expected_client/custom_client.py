@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .custom_input_types import inputA
@@ -20,7 +20,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"dataA": data_a}
+        variables: dict[str, object] = {"dataA": data_a}
         response = await self.execute(
             query=query, operation_name="getQueryA", variables=variables, **kwargs
         )

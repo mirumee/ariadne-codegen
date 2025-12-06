@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import Literal
 
 from pydantic import Field
 
@@ -16,7 +16,7 @@ class FragmentWithSingleFieldQueryUnwrapFragment(BaseModel):
 
 
 class ListAnimalsFragment(BaseModel):
-    list_animals: List["ListAnimalsFragmentListAnimals"] = Field(alias="listAnimals")
+    list_animals: list["ListAnimalsFragmentListAnimals"] = Field(alias="listAnimals")
 
 
 class ListAnimalsFragmentListAnimals(BaseModel):

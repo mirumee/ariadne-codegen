@@ -130,7 +130,7 @@ def test_generate_client_method_returns_async_method_with_used_gql_variable(
     variables_assign = ast.AnnAssign(
         target=ast.Name(id="variables"),
         annotation=ast.Subscript(
-            value=ast.Name(id="Dict"),
+            value=ast.Name(id="dict"),
             slice=ast.Tuple(
                 elts=[
                     ast.Name(id="str"),
@@ -266,7 +266,7 @@ def test_generate_client_method_returns_method_with_used_gql_variable(
     variables_assign = ast.AnnAssign(
         target=ast.Name(id="variables"),
         annotation=ast.Subscript(
-            value=ast.Name(id="Dict"),
+            value=ast.Name(id="dict"),
             slice=ast.Tuple(
                 elts=[
                     ast.Name(id="str"),
@@ -396,7 +396,7 @@ def test_generate_client_method_returns_async_generator_with_used_gql_variable(
     variables_assign = ast.AnnAssign(
         target=ast.Name(id="variables"),
         annotation=ast.Subscript(
-            value=ast.Name(id="Dict"),
+            value=ast.Name(id="dict"),
             slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
         ),
         value=ast.Dict(keys=[], values=[]),

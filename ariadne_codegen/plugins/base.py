@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 from graphql import (
     ExecutableDefinitionNode,
@@ -17,7 +17,7 @@ from graphql import (
 
 
 class Plugin:
-    def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
+    def __init__(self, schema: GraphQLSchema, config_dict: dict) -> None:
         self.schema = schema
         self.config_dict = config_dict
 
@@ -57,14 +57,14 @@ class Plugin:
     def generate_arguments(
         self,
         arguments: ast.arguments,
-        variable_definitions: Tuple[VariableDefinitionNode, ...],
+        variable_definitions: tuple[VariableDefinitionNode, ...],
     ) -> ast.arguments:
         return arguments
 
     def generate_arguments_dict(
         self,
         dict_: ast.Dict,
-        variable_definitions: Tuple[VariableDefinitionNode, ...],
+        variable_definitions: tuple[VariableDefinitionNode, ...],
     ) -> ast.Dict:
         return dict_
 
@@ -134,7 +134,7 @@ class Plugin:
     def generate_fragments_module(
         self,
         module: ast.Module,
-        fragments_definitions: Dict[str, FragmentDefinitionNode],
+        fragments_definitions: dict[str, FragmentDefinitionNode],
     ) -> ast.Module:
         return module
 

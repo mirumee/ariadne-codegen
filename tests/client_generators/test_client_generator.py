@@ -1,5 +1,5 @@
 import ast
-from typing import List, cast
+from typing import cast
 
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
@@ -9,6 +9,7 @@ from ariadne_codegen.client_generators.client import ClientGenerator
 from ariadne_codegen.client_generators.constants import (
     ANY,
     ASYNC_ITERATOR,
+    COLLECTIONS_ABC_MODULE,
     DICT,
     KWARGS_NAMES,
     LIST,
@@ -171,12 +172,14 @@ def test_generate_returns_module_with_correct_imports(async_base_client_import):
             module=TYPING_MODULE,
             names=[
                 ast.alias(name=OPTIONAL),
-                ast.alias(name=LIST),
-                ast.alias(name=DICT),
                 ast.alias(name=ANY),
                 ast.alias(name=UNION),
-                ast.alias(name=ASYNC_ITERATOR),
             ],
+            level=0,
+        ),
+        ast.ImportFrom(
+            module=COLLECTIONS_ABC_MODULE,
+            names=[ast.alias(name=ASYNC_ITERATOR)],
             level=0,
         ),
     ]
@@ -486,7 +489,7 @@ def test_add_method_generates_async_generator_for_subscription_definition(
             defaults=[],
         ),
         body=cast(
-            List[ast.stmt],
+            list[ast.stmt],
             [
                 ast.Assign(
                     targets=[ast.Name(id="query")],
@@ -666,7 +669,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_variables(
         ast.AnnAssign(
             target=ast.Name(id="_variables"),
             annotation=ast.Subscript(
-                value=ast.Name(id="Dict"),
+                value=ast.Name(id="dict"),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
@@ -765,7 +768,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_query_variable(
         ast.AnnAssign(
             target=ast.Name(id="variables"),
             annotation=ast.Subscript(
-                value=ast.Name(id="Dict"),
+                value=ast.Name(id="dict"),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
@@ -854,7 +857,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_variables_variabl
         ast.AnnAssign(
             target=ast.Name(id="_variables"),
             annotation=ast.Subscript(
-                value=ast.Name(id="Dict"),
+                value=ast.Name(id="dict"),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
@@ -943,7 +946,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_response_variable
         ast.AnnAssign(
             target=ast.Name(id="variables"),
             annotation=ast.Subscript(
-                value=ast.Name(id="Dict"),
+                value=ast.Name(id="dict"),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
@@ -1032,7 +1035,7 @@ def test_add_method_generates_correct_method_body_for_shadowed_data_variable(
         ast.AnnAssign(
             target=ast.Name(id="variables"),
             annotation=ast.Subscript(
-                value=ast.Name(id="Dict"),
+                value=ast.Name(id="dict"),
                 slice=ast.Tuple(elts=[ast.Name(id="str"), ast.Name(id="object")]),
             ),
             value=ast.Dict(
