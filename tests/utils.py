@@ -2,13 +2,13 @@ import ast
 import re
 from itertools import zip_longest
 from textwrap import dedent
-from typing import List, Optional, Set, Union, cast
+from typing import Optional, Union, cast
 
 from requests_toolbelt.multipart import decoder
 
 
 def compare_ast(
-    node1: Union[ast.AST, List[ast.AST]], node2: Union[ast.AST, List[ast.AST]]
+    node1: Union[ast.AST, list[ast.AST]], node2: Union[ast.AST, list[ast.AST]]
 ) -> bool:
     if type(node1) is not type(node2):
         return False
@@ -41,7 +41,7 @@ def get_class_def(
     return None
 
 
-def get_assignment_target_names(class_def: ast.ClassDef) -> Set[str]:
+def get_assignment_target_names(class_def: ast.ClassDef) -> set[str]:
     return {
         x.target.id
         for x in class_def.body
@@ -49,23 +49,23 @@ def get_assignment_target_names(class_def: ast.ClassDef) -> Set[str]:
     }
 
 
-def filter_ast_objects(module: ast.Module, ast_class) -> List[ast.AST]:
+def filter_ast_objects(module: ast.Module, ast_class) -> list[ast.AST]:
     return [expr for expr in module.body if isinstance(expr, ast_class)]
 
 
-def filter_class_defs(module: ast.Module) -> List[ast.ClassDef]:
-    return cast(List[ast.ClassDef], filter_ast_objects(module, ast.ClassDef))
+def filter_class_defs(module: ast.Module) -> list[ast.ClassDef]:
+    return cast(list[ast.ClassDef], filter_ast_objects(module, ast.ClassDef))
 
 
-def filter_imports(module: ast.Module) -> List[ast.ImportFrom]:
-    return cast(List[ast.ImportFrom], filter_ast_objects(module, ast.ImportFrom))
+def filter_imports(module: ast.Module) -> list[ast.ImportFrom]:
+    return cast(list[ast.ImportFrom], filter_ast_objects(module, ast.ImportFrom))
 
 
 def format_graphql_str(source: str) -> str:
     return dedent(source).replace(4 * " ", 2 * " ").strip()
 
 
-def sorted_imports(imports: List[ast.ImportFrom]) -> List[ast.ImportFrom]:
+def sorted_imports(imports: list[ast.ImportFrom]) -> list[ast.ImportFrom]:
     return sorted(imports, key=lambda import_: import_.module or "")
 
 

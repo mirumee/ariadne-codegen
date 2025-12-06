@@ -73,7 +73,7 @@ type PageInfo {
 
 interface ObjectWithMetadata {
   """
-  List of private metadata items. Requires staff permissions to access.
+  list of private metadata items. Requires staff permissions to access.
   """
   privateMetadata: [MetadataItem!]!
 
@@ -85,7 +85,7 @@ interface ObjectWithMetadata {
   privateMetafield(key: String!): String
 
   """
-  List of public metadata items. Can be accessed without permissions.
+  list of public metadata items. Can be accessed without permissions.
   """
   metadata: [MetadataItem!]!
 

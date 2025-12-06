@@ -105,7 +105,7 @@ Hook executed on generation of client's method, which represents single graphql 
 def generate_arguments(
     self,
     arguments: ast.arguments,
-    variable_definitions: Tuple[VariableDefinitionNode, ...],
+    variable_definitions: tuple[VariableDefinitionNode, ...],
 ) -> ast.arguments:
 ```
 
@@ -117,7 +117,7 @@ Hook executed on generation of arguments for specific client's method.
 def generate_arguments_dict(
     self,
     dict_: ast.Dict,
-    variable_definitions: Tuple[VariableDefinitionNode, ...],
+    variable_definitions: tuple[VariableDefinitionNode, ...],
 ) -> ast.Dict:
 ```
 
@@ -270,7 +270,7 @@ Hook executed on processing of GraphQL field, argument or operation name.
 def generate_fragments_module(
     self,
     module: ast.Module,
-    fragments_definitions: Dict[str, FragmentDefinitionNode],
+    fragments_definitions: dict[str, FragmentDefinitionNode],
 ) -> ast.Module:
 ```
 

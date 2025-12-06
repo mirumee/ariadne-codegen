@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from .base_operation import GraphQLField
 from .custom_typing_fields import (
@@ -19,7 +19,7 @@ class AdminFields(GraphQLField):
 
     @classmethod
     def metafield(cls, key: str) -> "AdminGraphQLField":
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -29,7 +29,7 @@ class AdminFields(GraphQLField):
 
     @classmethod
     def custom_field(cls, *, key: Optional[str] = None) -> "AdminGraphQLField":
-        arguments: Dict[str, Dict[str, Any]] = {"key": {"type": "String", "value": key}}
+        arguments: dict[str, dict[str, Any]] = {"key": {"type": "String", "value": key}}
         cleared_arguments = {
             key: value for key, value in arguments.items() if value["value"] is not None
         }
@@ -54,7 +54,7 @@ class GuestFields(GraphQLField):
 
     @classmethod
     def metafield(cls, key: str) -> "GuestGraphQLField":
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -79,7 +79,7 @@ class PersonInterfaceInterface(GraphQLField):
 
     @classmethod
     def metafield(cls, key: str) -> "PersonInterfaceGraphQLField":
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -142,7 +142,7 @@ class UserFields(GraphQLField):
 
     @classmethod
     def metafield(cls, key: str) -> "UserGraphQLField":
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {

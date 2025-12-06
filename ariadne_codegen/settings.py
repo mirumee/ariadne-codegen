@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List
 
 from .client_generators.constants import (
     DEFAULT_ASYNC_BASE_CLIENT_NAME,
@@ -39,7 +38,7 @@ class BaseSettings:
     remote_schema_verify_ssl: bool = True
     remote_schema_timeout: float = 5
     enable_custom_operations: bool = False
-    plugins: List[str] = field(default_factory=list)
+    plugins: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:
@@ -282,7 +281,7 @@ def assert_string_is_valid_python_identifier(name: str):
         )
 
 
-def resolve_headers(headers: Dict) -> Dict:
+def resolve_headers(headers: dict) -> dict:
     return {key: get_header_value(value) for key, value in headers.items()}
 
 

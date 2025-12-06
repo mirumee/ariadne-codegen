@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Optional, cast
 
 from graphql import (
     BooleanValueNode,
@@ -49,8 +49,8 @@ from .types import Annotation, CodegenInputFieldType
 def parse_input_field_type(
     type_: CodegenInputFieldType,
     nullable: bool = True,
-    custom_scalars: Optional[Dict[str, ScalarData]] = None,
-) -> Tuple[Annotation, str]:
+    custom_scalars: Optional[dict[str, ScalarData]] = None,
+) -> tuple[Annotation, str]:
     if isinstance(type_, GraphQLScalarType):
         if type_.name in INPUT_SCALARS_MAP:
             return (
@@ -141,7 +141,7 @@ def parse_input_const_value_node(
     if isinstance(node, ListValueNode):
         list_ = generate_list(
             cast(
-                List[ast.expr],
+                list[ast.expr],
                 [
                     parse_input_const_value_node(
                         node=v,
@@ -168,7 +168,7 @@ def parse_input_const_value_node(
         dict_ = generate_dict(
             keys=[generate_constant(f.name.value) for f in node.fields],
             values=cast(
-                List[ast.expr],
+                list[ast.expr],
                 [
                     parse_input_const_value_node(
                         node=f.value,

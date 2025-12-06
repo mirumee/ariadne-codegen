@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Set, cast
+from typing import Optional, cast
 
 from graphql import FragmentDefinitionNode, GraphQLSchema
 
@@ -14,11 +14,11 @@ class FragmentsGenerator:
     def __init__(
         self,
         schema: GraphQLSchema,
-        fragments_definitions: Dict[str, FragmentDefinitionNode],
+        fragments_definitions: dict[str, FragmentDefinitionNode],
         enums_module_name: str = "enums",
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         convert_to_snake_case: bool = True,
-        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
         default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
@@ -34,14 +34,14 @@ class FragmentsGenerator:
         self.include_typename = include_typename
 
         self._fragments_names = set(self.fragments_definitions.keys())
-        self._generated_public_names: List[str] = []
-        self._used_enums: List[str] = []
+        self._generated_public_names: list[str] = []
+        self._used_enums: list[str] = []
 
-    def generate(self, exclude_names: Optional[Set[str]] = None) -> ast.Module:
-        class_defs_dict: Dict[str, List[ast.ClassDef]] = {}
-        imports: List[ast.ImportFrom] = []
-        top_level_class_names: List[str] = []
-        dependencies_dict: Dict[str, Set[str]] = {}
+    def generate(self, exclude_names: Optional[set[str]] = None) -> ast.Module:
+        class_defs_dict: dict[str, list[ast.ClassDef]] = {}
+        imports: list[ast.ImportFrom] = []
+        top_level_class_names: list[str] = []
+        dependencies_dict: dict[str, set[str]] = {}
 
         names_to_exclude = exclude_names or set()
         self._fragments_names = self._fragments_names - names_to_exclude
@@ -72,10 +72,10 @@ class FragmentsGenerator:
             class_defs_dict=class_defs_dict, dependencies_dict=dependencies_dict
         )
         module = generate_module(
-            body=cast(List[ast.stmt], imports)
-            + cast(List[ast.stmt], sorted_class_defs)
+            body=cast(list[ast.stmt], imports)
+            + cast(list[ast.stmt], sorted_class_defs)
             + cast(
-                List[ast.stmt],
+                list[ast.stmt],
                 self._get_model_rebuild_calls(
                     top_level_fragments_names=top_level_class_names,
                     class_defs=sorted_class_defs,
@@ -88,18 +88,18 @@ class FragmentsGenerator:
             )
         return module
 
-    def get_generated_public_names(self) -> List[str]:
+    def get_generated_public_names(self) -> list[str]:
         return self._generated_public_names
 
-    def get_used_enums(self) -> List[str]:
+    def get_used_enums(self) -> list[str]:
         return self._used_enums
 
     def _get_sorted_class_defs(
         self,
-        class_defs_dict: Dict[str, List[ast.ClassDef]],
-        dependencies_dict: Dict[str, Set[str]],
-    ) -> List[ast.ClassDef]:
-        sorted_class_defs: List[ast.ClassDef] = []
+        class_defs_dict: dict[str, list[ast.ClassDef]],
+        dependencies_dict: dict[str, set[str]],
+    ) -> list[ast.ClassDef]:
+        sorted_class_defs: list[ast.ClassDef] = []
 
         for name in self._get_sorted_fragments_names(
             fragments_names=self._fragments_names, dependencies_dict=dependencies_dict
@@ -109,10 +109,10 @@ class FragmentsGenerator:
         return sorted_class_defs
 
     def _get_sorted_fragments_names(
-        self, fragments_names: Set[str], dependencies_dict: Dict[str, Set[str]]
-    ) -> List[str]:
-        sorted_names: List[str] = []
-        visited: Set[str] = set()
+        self, fragments_names: set[str], dependencies_dict: dict[str, set[str]]
+    ) -> list[str]:
+        sorted_names: list[str] = []
+        visited: set[str] = set()
 
         def visit(name):
             if name in visited:
@@ -128,8 +128,8 @@ class FragmentsGenerator:
         return sorted_names
 
     def _get_model_rebuild_calls(
-        self, top_level_fragments_names: List[str], class_defs: List[ast.ClassDef]
-    ) -> List[ast.Call]:
+        self, top_level_fragments_names: list[str], class_defs: list[ast.ClassDef]
+    ) -> list[ast.Call]:
         class_names = [c.name for c in class_defs]
         sorted_fragments_names = sorted(
             top_level_fragments_names, key=class_names.index

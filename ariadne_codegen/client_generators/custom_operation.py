@@ -1,11 +1,12 @@
 import ast
-from typing import Dict, List, Optional, cast
+from typing import Optional, cast
 
 from graphql import (
     GraphQLFieldMap,
     GraphQLInterfaceType,
     GraphQLObjectType,
     GraphQLUnionType,
+    is_non_null_type,
 )
 
 from ariadne_codegen.client_generators.custom_arguments import ArgumentGenerator
@@ -28,7 +29,6 @@ from .constants import (
     ANY,
     CUSTOM_FIELDS_FILE_PATH,
     CUSTOM_FIELDS_TYPING_FILE_PATH,
-    DICT,
     GRAPHQL_BASE_FIELD_CLASS,
     GRAPHQL_INTERFACE_SUFFIX,
     GRAPHQL_OBJECT_SUFFIX,
@@ -52,7 +52,7 @@ class CustomOperationGenerator:
         base_name: str,
         arguments_generator: ArgumentsGenerator,
         enums_module_name: str = "enums",
-        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
         convert_to_snake_case: bool = True,
     ) -> None:
@@ -65,9 +65,11 @@ class CustomOperationGenerator:
         self.arguments_generator = arguments_generator
         self.convert_to_snake_case = convert_to_snake_case
 
-        self._imports: List[ast.ImportFrom] = []
-        self._type_imports: List[ast.ImportFrom] = []
-        self._add_import(generate_import_from([OPTIONAL, ANY, DICT], TYPING_MODULE))
+        self._imports: list[ast.ImportFrom] = []
+        self._type_imports: list[ast.ImportFrom] = []
+
+        self._add_import(generate_import_from([ANY], TYPING_MODULE))
+
         self.argument_generator = ArgumentGenerator(
             self.custom_scalars,
             self.convert_to_snake_case,
@@ -97,19 +99,25 @@ class CustomOperationGenerator:
         self._class_def.lineno = len(self._imports) + 3
 
         module = generate_module(
-            body=cast(List[ast.stmt], self._imports)
-            + cast(List[ast.stmt], self._type_imports)
+            body=cast(list[ast.stmt], self._imports)
+            + cast(list[ast.stmt], self._type_imports)
             + [self._class_def],
         )
         return module
 
     def _add_import(self, import_: Optional[ast.ImportFrom] = None):
-        """Adds an import statement to the list of imports."""
+        """Adds an import statement to the list avoiding duplicates."""
         if import_:
             if self.plugin_manager:
                 import_ = self.plugin_manager.generate_client_import(import_)
             if import_.names and import_.module:
-                self._imports.append(import_)
+                exists = any(
+                    existing.module == import_.module
+                    and existing.names[0].name == import_.names[0].name
+                    for existing in self._imports
+                )
+                if not exists:
+                    self._imports.append(import_)
 
     def _generate_method(
         self,
@@ -124,12 +132,20 @@ class CustomOperationGenerator:
             return_arguments_keys,
             return_arguments_values,
         ) = self.argument_generator.generate_arguments(operation_args)
-        self._imports.extend(self.argument_generator.imports)
+
+        for import_ in self.argument_generator.imports:
+            self._add_import(import_)
+
+        if operation_args:
+            for arg in operation_args.values():
+                if not is_non_null_type(arg.type):
+                    self._add_import(generate_import_from([OPTIONAL], TYPING_MODULE))
+                    break
 
         return_type_name = self._get_return_type_and_from(final_type)
 
-        arguments_body: List[ast.stmt] = []
-        arguments_keyword: List[ast.keyword] = []
+        arguments_body: list[ast.stmt] = []
+        arguments_keyword: list[ast.keyword] = []
 
         if operation_args:
             (
@@ -179,6 +195,7 @@ class CustomOperationGenerator:
         else:
             return_type_name = GRAPHQL_BASE_FIELD_CLASS
             from_ = CUSTOM_FIELDS_TYPING_FILE_PATH.stem
+
         self._type_imports.append(
             generate_import_from(
                 from_=from_,

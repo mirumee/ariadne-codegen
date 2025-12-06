@@ -1,5 +1,5 @@
 import ast
-from typing import Tuple, cast
+from typing import cast
 
 import pytest
 from graphql import FragmentDefinitionNode, OperationDefinitionNode, build_schema, parse
@@ -423,7 +423,7 @@ def test_generate_returns_module_with_types_generated_from_query_that_uses_fragm
     }
     """
     operation_definition, fragment_def = cast(
-        Tuple[OperationDefinitionNode, FragmentDefinitionNode],
+        tuple[OperationDefinitionNode, FragmentDefinitionNode],
         parse(query_str).definitions,
     )
     expected_class_def = ast.ClassDef(
@@ -651,7 +651,7 @@ def test_generate_returns_module_with_class_with_union_from_unpacked_fragment():
         ),
     ]
     operation_definition, fragment_def = cast(
-        Tuple[OperationDefinitionNode, FragmentDefinitionNode],
+        tuple[OperationDefinitionNode, FragmentDefinitionNode],
         parse(query_str).definitions,
     )
     generator = ResultTypesGenerator(

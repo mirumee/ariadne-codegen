@@ -332,7 +332,7 @@ class GetB(BaseModel):
 class Client(AsyncBaseClient):
     async def test_mutation(self, value: TypeB) -> TestMutation:
         ...
-        variables: Dict[str, object] = {
+        variables: dict[str, object] = {
             "value": serialize_b(value),
         }
         ...

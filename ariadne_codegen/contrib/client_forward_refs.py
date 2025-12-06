@@ -19,7 +19,7 @@ only be imported when the method is called.
 """
 
 import ast
-from typing import Dict, List, Optional, Set, Union
+from typing import Optional, Union
 
 from graphql import GraphQLSchema
 
@@ -32,20 +32,20 @@ TYPE_CHECKING_FLAG: str = "TYPE_CHECKING"
 class ClientForwardRefsPlugin(Plugin):
     """Only import types when you call an endpoint needing it"""
 
-    def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
+    def __init__(self, schema: GraphQLSchema, config_dict: dict) -> None:
         """Constructor"""
         # Types that should only be imported in a `TYPE_CHECKING` context. This
         # is all the types used as arguments to a method or as a return type,
         # i.e. for type checking.
-        self.input_and_return_types: Set[str] = set()
+        self.input_and_return_types: set[str] = set()
 
         # Imported classes are classes imported from local imports. We keep a
         # map between name and module so we know how to import them in each
         # method.
-        self.imported_classes: Dict[str, str] = {}
+        self.imported_classes: dict[str, str] = {}
 
         # Imported classes in each method definition.
-        self.imported_in_method: Set[str] = set()
+        self.imported_in_method: set[str] = set()
 
         super().__init__(schema, config_dict)
 
@@ -94,7 +94,7 @@ class ClientForwardRefsPlugin(Plugin):
 
         return super().generate_client_module(module)
 
-    def _store_imported_classes(self, module_body: List[ast.stmt]):
+    def _store_imported_classes(self, module_body: list[ast.stmt]):
         """Fetch and store imported classes.
 
         Grab all imported classes with level 1 or starting with `.` because
@@ -290,7 +290,7 @@ class ClientForwardRefsPlugin(Plugin):
 
     def _update_existing_imports(
         self, module: ast.Module, return_types_not_used_as_input: set[str]
-    ) -> List[Union[ast.Import, ast.ImportFrom]]:
+    ) -> list[Union[ast.Import, ast.ImportFrom]]:
         """Update existing imports.
 
         Remove all import or import from statements that would otherwise be
@@ -301,10 +301,10 @@ class ClientForwardRefsPlugin(Plugin):
         only remove the empty `import from` but not other unused imports.
 
         :param module: The ast module to update
-        :param return_types_not_used_as_input: Set of return types not used as
+        :param return_types_not_used_as_input: set of return types not used as
         input
         """
-        non_empty_imports: List[Union[ast.Import, ast.ImportFrom]] = []
+        non_empty_imports: list[Union[ast.Import, ast.ImportFrom]] = []
         last_import_at = 0
         for i, node in enumerate(module.body):
             if isinstance(node, ast.Import):
@@ -333,7 +333,7 @@ class ClientForwardRefsPlugin(Plugin):
     def _add_forward_ref_imports(
         self,
         module: ast.Module,
-        non_empty_imports: List[Union[ast.Import, ast.ImportFrom]],
+        non_empty_imports: list[Union[ast.Import, ast.ImportFrom]],
     ) -> None:
         """Add forward ref imports.
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .query_with_fragment_on_sub_interface import QueryWithFragmentOnSubInterface
@@ -31,7 +31,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnSubInterface",
@@ -62,7 +62,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnSubInterfaceWithInlineFragment",
@@ -90,7 +90,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnUnionMember",

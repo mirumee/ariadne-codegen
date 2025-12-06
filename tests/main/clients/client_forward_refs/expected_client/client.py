@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any, AsyncIterator, Dict
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from .async_base_client import AsyncBaseClient
 
@@ -36,7 +37,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="GetAuthenticatedUser",
@@ -56,7 +57,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListStrings_1", variables=variables, **kwargs
         )
@@ -73,7 +74,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListStrings_2", variables=variables, **kwargs
         )
@@ -90,7 +91,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListStrings_3", variables=variables, **kwargs
         )
@@ -107,7 +108,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListStrings_4", variables=variables, **kwargs
         )
@@ -126,7 +127,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListTypeA", variables=variables, **kwargs
         )
@@ -152,7 +153,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"name": name}
+        variables: dict[str, object] = {"name": name}
         response = await self.execute(
             query=query, operation_name="GetAnimalByName", variables=variables, **kwargs
         )
@@ -178,7 +179,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListAnimals", variables=variables, **kwargs
         )
@@ -204,7 +205,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="GetAnimalFragmentWithExtra",
@@ -224,7 +225,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="GetSimpleScalar", variables=variables, **kwargs
         )
@@ -241,7 +242,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="GetComplexScalar",
@@ -263,7 +264,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         async for data in self.execute_ws(
             query=query,
             operation_name="SubscribeStrings",
@@ -288,7 +289,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="UnwrapFragment", variables=variables, **kwargs
         )

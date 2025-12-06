@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from graphql import (
     DocumentNode,
@@ -24,7 +24,7 @@ def gql(q: str) -> str:
 class Client(BaseClient):
     def execute_custom_operation(
         self, *fields: GraphQLField, operation_type: OperationType, operation_name: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         selections = self._build_selection_set(fields)
         combined_variables = self._combine_variables(fields)
         variable_definitions = self._build_variable_definitions(
@@ -41,8 +41,8 @@ class Client(BaseClient):
         return self.get_data(response)
 
     def _combine_variables(
-        self, fields: Tuple[GraphQLField, ...]
-    ) -> Dict[str, Dict[str, Any]]:
+        self, fields: tuple[GraphQLField, ...]
+    ) -> dict[str, dict[str, Any]]:
         variables_types_combined = {}
         processed_variables_combined = {}
         for field in fields:
@@ -59,8 +59,8 @@ class Client(BaseClient):
         }
 
     def _build_variable_definitions(
-        self, variables_types_combined: Dict[str, str]
-    ) -> List[VariableDefinitionNode]:
+        self, variables_types_combined: dict[str, str]
+    ) -> list[VariableDefinitionNode]:
         return [
             VariableDefinitionNode(
                 variable=VariableNode(name=NameNode(value=var_name)),
@@ -71,10 +71,10 @@ class Client(BaseClient):
 
     def _build_operation_ast(
         self,
-        selections: List[SelectionNode],
+        selections: list[SelectionNode],
         operation_type: OperationType,
         operation_name: str,
-        variable_definitions: List[VariableDefinitionNode],
+        variable_definitions: list[VariableDefinitionNode],
     ) -> DocumentNode:
         return DocumentNode(
             definitions=[
@@ -88,16 +88,16 @@ class Client(BaseClient):
         )
 
     def _build_selection_set(
-        self, fields: Tuple[GraphQLField, ...]
-    ) -> List[SelectionNode]:
+        self, fields: tuple[GraphQLField, ...]
+    ) -> list[SelectionNode]:
         return [field.to_ast(idx) for idx, field in enumerate(fields)]
 
-    def query(self, *fields: GraphQLField, operation_name: str) -> Dict[str, Any]:
+    def query(self, *fields: GraphQLField, operation_name: str) -> dict[str, Any]:
         return self.execute_custom_operation(
             *fields, operation_type=OperationType.QUERY, operation_name=operation_name
         )
 
-    def mutation(self, *fields: GraphQLField, operation_name: str) -> Dict[str, Any]:
+    def mutation(self, *fields: GraphQLField, operation_name: str) -> dict[str, Any]:
         return self.execute_custom_operation(
             *fields,
             operation_type=OperationType.MUTATION,

@@ -1,6 +1,6 @@
 import ast
 from pathlib import Path
-from typing import List, cast
+from typing import cast
 
 from graphql import GraphQLSchema, print_schema
 from graphql.type.schema import TypeMap
@@ -48,7 +48,7 @@ def generate_schema_module(
 ) -> ast.Module:
     return generate_module(
         body=cast(
-            List[ast.stmt],
+            list[ast.stmt],
             [
                 generate_import_from(
                     names=[
@@ -81,7 +81,7 @@ def generate_schema_module(
                     names=["TypeMap"],
                     from_="graphql.type.schema",
                 ),
-                generate_import_from(names=["cast", "List"], from_="typing"),
+                generate_import_from(names=["cast"], from_="typing"),
                 generate_ann_assign(
                     target=generate_name(type_map_name),
                     annotation=generate_name("TypeMap"),

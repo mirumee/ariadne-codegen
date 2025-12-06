@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Optional, Union, cast
 
 from graphql import (
     GraphQLEnumType,
@@ -43,7 +43,7 @@ class ArgumentsGenerator:
         self,
         schema: GraphQLSchema,
         convert_to_snake_case: bool = True,
-        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.schema = schema
@@ -51,17 +51,17 @@ class ArgumentsGenerator:
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
 
-        self.used_types: List[str] = []
-        self._used_enums: List[str] = []
-        self._used_inputs: List[str] = []
-        self._used_custom_scalars: List[str] = []
+        self.used_types: list[str] = []
+        self._used_enums: list[str] = []
+        self._used_inputs: list[str] = []
+        self._used_custom_scalars: list[str] = []
 
     def generate(
-        self, variable_definitions: Tuple[VariableDefinitionNode, ...]
-    ) -> Tuple[ast.arguments, ast.Dict]:
+        self, variable_definitions: tuple[VariableDefinitionNode, ...]
+    ) -> tuple[ast.arguments, ast.Dict]:
         """Generate arguments from given variable definitions."""
-        required_args: List[ast.arg] = [generate_arg("self")]
-        optional_args: List[ast.arg] = []
+        required_args: list[ast.arg] = [generate_arg("self")]
+        optional_args: list[ast.arg] = []
         dict_ = generate_dict()
         for variable_definition in variable_definitions:
             org_name = variable_definition.variable.name.value
@@ -102,20 +102,20 @@ class ArgumentsGenerator:
             )
         return arguments, dict_
 
-    def get_used_enums(self) -> List[str]:
+    def get_used_enums(self) -> list[str]:
         return self._used_enums
 
-    def get_used_inputs(self) -> List[str]:
+    def get_used_inputs(self) -> list[str]:
         return self._used_inputs
 
-    def get_used_custom_scalars(self) -> List[str]:
+    def get_used_custom_scalars(self) -> list[str]:
         return self._used_custom_scalars
 
     def _parse_type_node(
         self,
         node: Union[NamedTypeNode, ListTypeNode, NonNullTypeNode, TypeNode],
         nullable: bool = True,
-    ) -> Tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
+    ) -> tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
         if isinstance(node, NamedTypeNode):
             return self._parse_named_type_node(node, nullable)
 
@@ -135,7 +135,7 @@ class ArgumentsGenerator:
 
     def _parse_named_type_node(
         self, node: NamedTypeNode, nullable: bool = True
-    ) -> Tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
+    ) -> tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
         name = node.name.value
         type_ = self.schema.type_map.get(name)
         if not type_:

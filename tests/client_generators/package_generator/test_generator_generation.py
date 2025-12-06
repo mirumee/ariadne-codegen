@@ -86,6 +86,7 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
         "typing",
         "valid_file",
         "base_model",
+        "collections.abc",
     }
     assert (
         client_generator.arguments_generator.convert_to_snake_case

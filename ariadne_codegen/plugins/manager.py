@@ -1,5 +1,5 @@
 import ast
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Optional, Union
 
 from graphql import (
     ExecutableDefinitionNode,
@@ -22,10 +22,10 @@ class PluginManager:
     def __init__(
         self,
         schema: GraphQLSchema,
-        config_dict: Optional[Dict] = None,
-        plugins_types: Optional[List[Type[Plugin]]] = None,
+        config_dict: Optional[dict] = None,
+        plugins_types: Optional[list[type[Plugin]]] = None,
     ) -> None:
-        self.plugins: List[Plugin] = [
+        self.plugins: list[Plugin] = [
             cls(schema=schema, config_dict=config_dict or {})
             for cls in plugins_types or []
         ]
@@ -81,7 +81,7 @@ class PluginManager:
     def generate_arguments(
         self,
         arguments: ast.arguments,
-        variable_definitions: Tuple[VariableDefinitionNode, ...],
+        variable_definitions: tuple[VariableDefinitionNode, ...],
     ) -> ast.arguments:
         return self._apply_plugins_on_object(
             "generate_arguments", arguments, variable_definitions=variable_definitions
@@ -90,7 +90,7 @@ class PluginManager:
     def generate_arguments_dict(
         self,
         dict_: ast.Dict,
-        variable_definitions: Tuple[VariableDefinitionNode, ...],
+        variable_definitions: tuple[VariableDefinitionNode, ...],
     ) -> ast.Dict:
         return self._apply_plugins_on_object(
             "generate_arguments_dict", dict_, variable_definitions=variable_definitions
@@ -189,7 +189,7 @@ class PluginManager:
     def generate_fragments_module(
         self,
         module: ast.Module,
-        fragments_definitions: Dict[str, FragmentDefinitionNode],
+        fragments_definitions: dict[str, FragmentDefinitionNode],
     ) -> ast.Module:
         return self._apply_plugins_on_object(
             "generate_fragments_module",

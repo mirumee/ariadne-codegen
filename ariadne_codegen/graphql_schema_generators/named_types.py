@@ -1,5 +1,5 @@
 import ast
-from typing import Callable, Dict, Type
+from collections.abc import Callable
 
 from graphql import (
     GraphQLEnumType,
@@ -18,7 +18,7 @@ from .utils import get_list_of_named_types
 
 
 def generate_named_type(type_: GraphQLNamedType, type_map_name: str) -> ast.Call:
-    generate_methods_map: Dict[Type, Callable[..., ast.Call]] = {
+    generate_methods_map: dict[type, Callable[..., ast.Call]] = {
         GraphQLScalarType: generate_scalar_type,
         GraphQLObjectType: generate_object_type,
         GraphQLInterfaceType: generate_interface_type,

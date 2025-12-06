@@ -1,6 +1,6 @@
 import ast
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 from graphql import (
     FragmentDefinitionNode,
@@ -59,7 +59,7 @@ class PackageGenerator:
         custom_fields_typing_generator: Optional[CustomFieldsTypingGenerator] = None,
         custom_query_generator: Optional[CustomOperationGenerator] = None,
         custom_mutation_generator: Optional[CustomOperationGenerator] = None,
-        fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
+        fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
         client_name: str = "Client",
         async_client: bool = True,
         base_client_name: str = "AsyncBaseClient",
@@ -80,8 +80,8 @@ class PackageGenerator:
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         upload_import: ast.ImportFrom = UPLOAD_IMPORT,
         unset_import: ast.ImportFrom = UNSET_IMPORT,
-        files_to_include: Optional[List[str]] = None,
-        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        files_to_include: Optional[list[str]] = None,
+        custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
         enable_custom_operations: bool = False,
         default_optional_fields_to_none: bool = False,
@@ -138,16 +138,16 @@ class PackageGenerator:
         self.default_optional_fields_to_none = default_optional_fields_to_none
         self.include_typename = include_typename
 
-        self._result_types_files: Dict[str, ast.Module] = {}
-        self._generated_files: List[str] = []
-        self._unpacked_fragments: Set[str] = set()
-        self._used_enums: List[str] = []
+        self._result_types_files: dict[str, ast.Module] = {}
+        self._generated_files: list[str] = []
+        self._unpacked_fragments: set[str] = set()
+        self._used_enums: list[str] = []
 
         self.enable_custom_operations = enable_custom_operations
         if self.enable_custom_operations:
             self.files_to_include.append(self.base_schema_root_file_path)
 
-    def generate(self) -> List[str]:
+    def generate(self) -> list[str]:
         """Generate package with graphql client."""
         self._include_exceptions()
         self._validate_unique_file_names()
@@ -256,7 +256,7 @@ class PackageGenerator:
         if len(file_names) != len(set(file_names)):
             seen = set()
             duplicated_files = {n for n in file_names if n in seen or seen.add(n)}
-            raise ParsingError(f"Duplicated file names: {',' .join(duplicated_files)}")
+            raise ParsingError(f"Duplicated file names: {','.join(duplicated_files)}")
 
     def _generate_client(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
@@ -415,7 +415,7 @@ class PackageGenerator:
 
 def get_package_generator(
     schema: GraphQLSchema,
-    fragments: List[FragmentDefinitionNode],
+    fragments: list[FragmentDefinitionNode],
     settings: ClientSettings,
     plugin_manager: PluginManager,
 ) -> PackageGenerator:

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -6,6 +6,6 @@ from .base_model import BaseModel
 
 
 class ListStrings1(BaseModel):
-    optional_list_optional_string: Optional[List[Optional[str]]] = Field(
+    optional_list_optional_string: Optional[list[Optional[str]]] = Field(
         alias="optionalListOptionalString"
     )

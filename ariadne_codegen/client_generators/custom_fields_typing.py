@@ -1,5 +1,5 @@
 import ast
-from typing import List, cast
+from typing import cast
 
 from graphql import (
     GraphQLInterfaceType,
@@ -36,8 +36,8 @@ class CustomFieldsTypingGenerator:
             names=[ast.alias(GRAPHQL_BASE_FIELD_CLASS)],
             level=1,
         )
-        self._public_names: List[str] = []
-        self._class_defs: List[ast.ClassDef] = [
+        self._public_names: list[str] = []
+        self._class_defs: list[ast.ClassDef] = [
             self._generate_field_class(d) for d in self._filter_types()
         ]
 
@@ -46,11 +46,11 @@ class CustomFieldsTypingGenerator:
         Generates an AST module containing the custom fields and required imports.
         """
         return generate_module(
-            body=cast(List[ast.stmt], [self.graphql_field_import])
-            + cast(List[ast.stmt], self._class_defs)
+            body=cast(list[ast.stmt], [self.graphql_field_import])
+            + cast(list[ast.stmt], self._class_defs)
         )
 
-    def _filter_types(self) -> List[ast.ClassDef]:
+    def _filter_types(self) -> list[ast.ClassDef]:
         """
         Filters GraphQL types to include only objects, interfaces, and unions,
         excluding internal and operation types.
@@ -73,7 +73,7 @@ class CustomFieldsTypingGenerator:
         Generates a field class for the given GraphQL type.
         """
         class_name = f"{graphql_type.name}{GRAPHQL_BASE_FIELD_CLASS}"
-        class_body: List[ast.stmt] = []
+        class_body: list[ast.stmt] = []
 
         if isinstance(graphql_type, GraphQLUnionType):
             class_name = f"{graphql_type.name}Union"
@@ -85,7 +85,7 @@ class CustomFieldsTypingGenerator:
         field_class_def = generate_class_def(
             name=class_name,
             base_names=[GRAPHQL_BASE_FIELD_CLASS],
-            body=class_body if class_body else cast(List[ast.stmt], [ast.Pass()]),
+            body=class_body if class_body else cast(list[ast.stmt], [ast.Pass()]),
         )
         return field_class_def
 
@@ -148,7 +148,7 @@ class CustomFieldsTypingGenerator:
             return_type=generate_name(f'"{class_name}"'),
         )
 
-    def get_generated_public_names(self) -> List[str]:
+    def get_generated_public_names(self) -> list[str]:
         """
         Returns the list of generated public names.
         """
