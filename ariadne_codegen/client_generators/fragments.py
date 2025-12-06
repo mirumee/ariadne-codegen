@@ -20,6 +20,7 @@ class FragmentsGenerator:
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
+        default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
     ) -> None:
         self.schema = schema
@@ -29,6 +30,7 @@ class FragmentsGenerator:
         self.convert_to_snake_case = convert_to_snake_case
         self.custom_scalars = custom_scalars
         self.plugin_manager = plugin_manager
+        self.default_optional_fields_to_none = default_optional_fields_to_none
         self.include_typename = include_typename
 
         self._fragments_names = set(self.fragments_definitions.keys())
@@ -54,6 +56,7 @@ class FragmentsGenerator:
                 convert_to_snake_case=self.convert_to_snake_case,
                 custom_scalars=self.custom_scalars,
                 plugin_manager=self.plugin_manager,
+                default_optional_fields_to_none=self.default_optional_fields_to_none,
                 include_typename=self.include_typename,
             )
             imports.extend(generator.get_imports())

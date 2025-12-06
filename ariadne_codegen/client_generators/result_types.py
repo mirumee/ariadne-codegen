@@ -84,6 +84,7 @@ class ResultTypesGenerator:
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
+        default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
     ) -> None:
         self.schema = schema
@@ -99,6 +100,7 @@ class ResultTypesGenerator:
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.convert_to_snake_case = convert_to_snake_case
         self.plugin_manager = plugin_manager
+        self.default_optional_fields_to_none = default_optional_fields_to_none
         self.include_typename = include_typename
 
         self._imports: list[ast.ImportFrom] = [
@@ -447,6 +449,14 @@ class ResultTypesGenerator:
             keywords[DEFAULT_KEYWORD] = generate_constant(
                 field_implementation.value.value
             )
+        elif (
+            self.default_optional_fields_to_none
+            and field_implementation.value is None
+            and isinstance(field_implementation.annotation, ast.Subscript)
+            and isinstance(field_implementation.annotation.value, ast.Name)
+            and field_implementation.annotation.value.id == OPTIONAL
+        ):
+            keywords[DEFAULT_KEYWORD] = generate_constant(None)
 
         if keywords:
             field_implementation.value = generate_pydantic_field(keywords)
