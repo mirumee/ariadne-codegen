@@ -1,6 +1,6 @@
 [![Ariadne](https://ariadnegraphql.org/img/logo-horizontal-sm.png)](https://ariadnegraphql.org)
 
-[![Build Status](https://github.com/mirumee/ariadne-codegen/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/mirumee/ariadne-codegen/actions)
+[![Build Status](https://github.com/mirumee/ariadne-codegen/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/mirumee/ariadne-codegen/actions)
 
 - - - - -
 
