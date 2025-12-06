@@ -394,4 +394,11 @@ def test_main_generates_correct_schema_file(project_dir, file_name, expected_fil
     assert result.exit_code == 0
     schema_path = project_dir / file_name
 
-    assert schema_path.read_text() == expected_file_path.read_text()
+    # normalise texts to account for a spelling change in graphql-core 3.2.5
+    def normalise(schema: str) -> str:
+        return schema.replace(" behaviour ", " behavior ")
+
+    actual = normalise(schema_path.read_text())
+    expected = normalise(expected_file_path.read_text())
+
+    assert actual == expected
