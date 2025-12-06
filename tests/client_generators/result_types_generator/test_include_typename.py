@@ -276,9 +276,57 @@ def test_union_discriminator_respects_include_typename():
             break
 
     # Assertions
-    assert has_discriminator_with_typename, (
-        "Expected discriminator when include_typename=True"
+    assert (
+        has_discriminator_with_typename
+    ), "Expected discriminator when include_typename=True"
+    assert (
+        not has_discriminator_without_typename
+    ), "Should not have discriminator when include_typename=False"
+
+
+def test_get_field_from_schema_handles_typename_correctly():
+    """Test that _get_field_from_schema correctly handles __typename field."""
+    from graphql import GraphQLNonNull, GraphQLString
+
+    from ariadne_codegen.exceptions import ParsingError
+
+    schema = build_schema(SIMPLE_SCHEMA)
+
+    query_str = """
+        query GetUser {
+            user {
+                id
+            }
+        }
+    """
+
+    document = parse(query_str)
+    operation = document.definitions[0]
+    assert isinstance(operation, OperationDefinitionNode)
+
+    generator = ResultTypesGenerator(
+        schema=schema,
+        operation_definition=operation,
+        enums_module_name="enums",
+        include_typename=True,
     )
-    assert not has_discriminator_without_typename, (
-        "Should not have discriminator when include_typename=False"
-    )
+
+    # __typename is not in the schema's type_map fields, so it should be handled
+    # as a special case. This validates the fix where using GraphQLString instead
+    # of GraphQLScalarType(name="String") prevents "Redefinition of reserved type"
+    # error.
+    typename_field = generator._get_field_from_schema("User", TYPENAME_FIELD_NAME)
+
+    # Verify the field was created correctly using the built-in GraphQLString type
+    assert typename_field is not None
+    assert isinstance(typename_field.type, GraphQLNonNull)
+    assert typename_field.type.of_type is GraphQLString
+    assert typename_field.type.of_type.name == "String"
+
+    # Test that requesting a non-existent field (other than __typename) raises an error
+    try:
+        generator._get_field_from_schema("User", "nonExistentField")
+        assert False, "Expected ParsingError for non-existent field"
+    except ParsingError as e:
+        assert "nonExistentField" in str(e)
+        assert "User" in str(e)

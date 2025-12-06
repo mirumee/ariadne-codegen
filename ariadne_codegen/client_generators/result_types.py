@@ -13,8 +13,8 @@ from graphql import (
     GraphQLNamedType,
     GraphQLNonNull,
     GraphQLObjectType,
-    GraphQLScalarType,
     GraphQLSchema,
+    GraphQLString,
     GraphQLUnionType,
     InlineFragmentNode,
     NameNode,
@@ -422,7 +422,7 @@ class ResultTypesGenerator:
         except KeyError as exc:
             if field_name == TYPENAME_FIELD_NAME:
                 return GraphQLField(
-                    type_=GraphQLNonNull(type_=GraphQLScalarType(name="String"))
+                    type_=GraphQLNonNull(type_=GraphQLString)
                 )
             raise ParsingError(
                 f"Field {field_name} not found in type {type_name}."
