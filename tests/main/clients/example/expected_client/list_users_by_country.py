@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -8,7 +8,7 @@ from .fragments import BasicUser, UserPersonalData
 
 
 class ListUsersByCountry(BaseModel):
-    users: List["ListUsersByCountryUsers"]
+    users: list["ListUsersByCountryUsers"]
 
 
 class ListUsersByCountryUsers(BasicUser, UserPersonalData):

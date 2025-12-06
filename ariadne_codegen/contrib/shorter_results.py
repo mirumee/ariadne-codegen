@@ -36,7 +36,7 @@ This plugin can be enabled in the settings:
 
 import ast
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from graphql import (
     ExecutableDefinitionNode,
@@ -66,10 +66,10 @@ class ShorterResultsPlugin(Plugin):
     instead return the inner field.
     """
 
-    def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
-        self.class_dict: Dict[str, ast.ClassDef] = {}
-        self.extended_imports: Dict[str, set] = {}
-        self.imported_types: Dict[str, str] = {}
+    def __init__(self, schema: GraphQLSchema, config_dict: dict) -> None:
+        self.class_dict: dict[str, ast.ClassDef] = {}
+        self.extended_imports: dict[str, set] = {}
+        self.imported_types: dict[str, str] = {}
 
         super().__init__(schema, config_dict)
 
@@ -108,7 +108,7 @@ class ShorterResultsPlugin(Plugin):
     def generate_fragments_module(
         self,
         module: ast.Module,
-        fragments_definitions: Dict[str, FragmentDefinitionNode],
+        fragments_definitions: dict[str, FragmentDefinitionNode],
     ) -> ast.Module:
         """Store a map of all fragment classes and their AST."""
         fragments_module_name = (
@@ -292,7 +292,7 @@ class ShorterResultsPlugin(Plugin):
     def _update_imports(
         self,
         method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
-        single_field_classes: List[str],
+        single_field_classes: list[str],
     ):
         """
         After expanding to the inner type we will end up with one or more
@@ -338,8 +338,8 @@ def _get_yield_value_from_async_for(stmt: ast.stmt) -> Optional[ast.expr]:
 
 
 def _return_or_yield_node_and_class(
-    current_return_class: str, class_dict: Dict[str, ast.ClassDef]
-) -> Optional[tuple[ast.expr, List[str], str]]:
+    current_return_class: str, class_dict: dict[str, ast.ClassDef]
+) -> Optional[tuple[ast.expr, list[str], str]]:
     """
     Given there's only a single field in the return type, return the ast for
     that node, what class(es) that is and the name of the field.
@@ -360,7 +360,7 @@ def _return_or_yield_node_and_class(
 
     # Traverse the type annotation until we find the inner type. This can
     # require several iterations if the return type is something like
-    # Optional[List[Any]]
+    # Optional[list[Any]]
     #
     # We make a deepcopy because we need to keep the quoted annotations for the
     # fields in the query classes but we want to have it unquoted in the client
@@ -371,7 +371,7 @@ def _return_or_yield_node_and_class(
     return return_node, return_classes, single_field.target.id
 
 
-def _update_node(node: ast.expr) -> tuple[ast.expr, List[str]]:
+def _update_node(node: ast.expr) -> tuple[ast.expr, list[str]]:
     """
     Walk down a node to find the inner `ast.Name`. Once found, evaluate the
     potential literal so it gets unquoted and return the inner name.
@@ -418,8 +418,8 @@ def _update_node(node: ast.expr) -> tuple[ast.expr, List[str]]:
 
 
 def _get_all_fields(
-    class_def: ast.ClassDef, class_dict: Dict[str, ast.ClassDef]
-) -> List[ast.AnnAssign]:
+    class_def: ast.ClassDef, class_dict: dict[str, ast.ClassDef]
+) -> list[ast.AnnAssign]:
     """
     Recursively get all fields from all inherited classes to figure out the
     total number of fields.

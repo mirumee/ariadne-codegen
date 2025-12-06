@@ -1,6 +1,6 @@
 import ast
 from collections import defaultdict
-from typing import Dict, List, Optional, cast
+from typing import Optional, cast
 
 from graphql import (
     GraphQLEnumType,
@@ -31,7 +31,6 @@ from .constants import (
     BASE_MODEL_CLASS_NAME,
     BASE_MODEL_IMPORT,
     FIELD_CLASS,
-    LIST,
     MODEL_REBUILD_METHOD,
     OPTIONAL,
     PLAIN_SERIALIZER,
@@ -52,7 +51,7 @@ class InputTypesGenerator:
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         upload_import: ast.ImportFrom = UPLOAD_IMPORT,
         convert_to_snake_case: bool = True,
-        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.schema = schema
@@ -62,22 +61,20 @@ class InputTypesGenerator:
         self.plugin_manager = plugin_manager
 
         self._imports = [
-            generate_import_from(
-                [OPTIONAL, ANY, UNION, LIST, ANNOTATED], TYPING_MODULE
-            ),
+            generate_import_from([OPTIONAL, ANY, UNION, ANNOTATED], TYPING_MODULE),
             generate_import_from([FIELD_CLASS, PLAIN_SERIALIZER], PYDANTIC_MODULE),
             base_model_import,
             upload_import,
         ]
-        self._dependencies: Dict[str, List[str]] = defaultdict(list)
-        self._used_enums: Dict[str, List[str]] = defaultdict(list)
-        self._used_scalars: List[str] = []
-        self._class_defs: List[ast.ClassDef] = [
+        self._dependencies: dict[str, list[str]] = defaultdict(list)
+        self._used_enums: dict[str, list[str]] = defaultdict(list)
+        self._used_scalars: list[str] = []
+        self._class_defs: list[ast.ClassDef] = [
             self._parse_input_definition(d) for d in self._filter_input_types()
         ]
-        self._generated_public_names: List[str] = []
+        self._generated_public_names: list[str] = []
 
-    def generate(self, types_to_include: Optional[List[str]] = None) -> ast.Module:
+    def generate(self, types_to_include: Optional[list[str]] = None) -> ast.Module:
         class_defs = self._filter_class_defs(types_to_include=types_to_include)
         self._generated_public_names = [class_def.name for class_def in class_defs]
 
@@ -97,9 +94,9 @@ class InputTypesGenerator:
         ]
 
         module_body = (
-            cast(List[ast.stmt], self._imports)
-            + cast(List[ast.stmt], class_defs)
-            + cast(List[ast.stmt], model_rebuild_calls)
+            cast(list[ast.stmt], self._imports)
+            + cast(list[ast.stmt], class_defs)
+            + cast(list[ast.stmt], model_rebuild_calls)
         )
         module = generate_module(body=module_body)
 
@@ -107,16 +104,16 @@ class InputTypesGenerator:
             module = self.plugin_manager.generate_inputs_module(module)
         return module
 
-    def get_generated_public_names(self) -> List[str]:
+    def get_generated_public_names(self) -> list[str]:
         return self._generated_public_names
 
-    def get_used_enums(self) -> List[str]:
+    def get_used_enums(self) -> list[str]:
         enums = []
         for input_name in self._generated_public_names:
             enums.extend(self._used_enums[input_name])
         return enums
 
-    def _filter_input_types(self) -> List[GraphQLInputObjectType]:
+    def _filter_input_types(self) -> list[GraphQLInputObjectType]:
         return [
             definition
             for name, definition in self.schema.type_map.items()
@@ -125,8 +122,8 @@ class InputTypesGenerator:
         ]
 
     def _filter_class_defs(
-        self, types_to_include: Optional[List[str]] = None
-    ) -> List[ast.ClassDef]:
+        self, types_to_include: Optional[list[str]] = None
+    ) -> list[ast.ClassDef]:
         if types_to_include is None:
             return self._class_defs
 
@@ -138,7 +135,7 @@ class InputTypesGenerator:
             class_def for class_def in self._class_defs if class_def.name in types_names
         ]
 
-    def _get_dependencies_of_type(self, type_name: str) -> List[str]:
+    def _get_dependencies_of_type(self, type_name: str) -> list[str]:
         visited = set()
         result = []
 

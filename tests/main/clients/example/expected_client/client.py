@@ -1,4 +1,5 @@
-from typing import Any, AsyncIterator, Dict, Optional, Union
+from collections.abc import AsyncIterator
+from typing import Any, Optional, Union
 
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType, Upload
@@ -27,7 +28,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"userData": user_data}
+        variables: dict[str, object] = {"userData": user_data}
         response = await self.execute(
             query=query, operation_name="CreateUser", variables=variables, **kwargs
         )
@@ -50,7 +51,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListAllUsers", variables=variables, **kwargs
         )
@@ -81,7 +82,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"country": country}
+        variables: dict[str, object] = {"country": country}
         response = await self.execute(
             query=query,
             operation_name="ListUsersByCountry",
@@ -99,7 +100,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         async for data in self.execute_ws(
             query=query, operation_name="GetUsersCounter", variables=variables, **kwargs
         ):
@@ -113,7 +114,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"file": file}
+        variables: dict[str, object] = {"file": file}
         response = await self.execute(
             query=query, operation_name="uploadFile", variables=variables, **kwargs
         )

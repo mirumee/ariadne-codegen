@@ -1,13 +1,13 @@
 import importlib
 import importlib.util
 import inspect
-from typing import Any, List, Type
+from typing import Any
 
 from ..exceptions import PluginImportError
 from .base import Plugin
 
 
-def get_plugins_types(plugins_strs: List[str]) -> List[Type[Plugin]]:
+def get_plugins_types(plugins_strs: list[str]) -> list[type[Plugin]]:
     classes = []
     for plugin_str in plugins_strs:
         if is_module_str(plugin_str):
@@ -25,7 +25,7 @@ def is_module_str(plugin_str: str) -> bool:
         return False
 
 
-def get_plugins_types_from_module(module_str: str) -> List[Type[Plugin]]:
+def get_plugins_types_from_module(module_str: str) -> list[type[Plugin]]:
     module = importlib.import_module(module_str)
     return [obj for _, obj in inspect.getmembers(module) if is_plugin_type(obj)]
 
@@ -34,7 +34,7 @@ def is_plugin_type(obj: Any) -> bool:
     return inspect.isclass(obj) and obj is not Plugin and issubclass(obj, Plugin)
 
 
-def get_plugin_type(class_str: str) -> Type[Plugin]:
+def get_plugin_type(class_str: str) -> type[Plugin]:
     last_dot_index = class_str.rfind(".")
     if last_dot_index < 0:
         raise PluginImportError("Incorrect plugin path. Use an absolute import path.")

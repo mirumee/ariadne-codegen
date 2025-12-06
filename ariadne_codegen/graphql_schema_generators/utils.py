@@ -1,5 +1,5 @@
 import ast
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from graphql import GraphQLNamedType
 
@@ -36,7 +36,7 @@ def get_optional_named_type(
 
 
 def get_list_of_named_types(
-    types_names: List[str], type_map_name: str, list_element_annotation: str
+    types_names: list[str], type_map_name: str, list_element_annotation: str
 ) -> Union[ast.Lambda, ast.Constant]:
     if not types_names:
         return generate_constant([])
@@ -46,7 +46,7 @@ def get_list_of_named_types(
             func=generate_name("cast"),
             args=[
                 generate_subscript(
-                    value=generate_name("List"),
+                    value=generate_name("list"),
                     slice_=generate_name(list_element_annotation),
                 ),
                 generate_list(

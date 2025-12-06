@@ -1,5 +1,3 @@
-from typing import Dict, List, Set
-
 from graphql import (
     GraphQLInterfaceType,
     GraphQLObjectType,
@@ -11,17 +9,17 @@ from graphql import (
 class TypeCollector:
     def __init__(self, schema: GraphQLSchema):
         self.schema = schema
-        self.collected_types: Set[str] = set()
-        self.visited_types: Set[str] = set()
+        self.collected_types: set[str] = set()
+        self.visited_types: set[str] = set()
 
-    def collect(self) -> List[str]:
+    def collect(self) -> list[str]:
         if self.schema.query_type:
             self._collect_types(self.schema.query_type.fields)
         if self.schema.mutation_type:
             self._collect_types(self.schema.mutation_type.fields)
         return sorted(self.collected_types)
 
-    def _collect_types(self, fields: Dict[str, GraphQLObjectType]) -> None:
+    def _collect_types(self, fields: dict[str, GraphQLObjectType]) -> None:
         for field in fields.values():
             graphql_type = get_final_type(field)
             self._collect_dependent_types(graphql_type)

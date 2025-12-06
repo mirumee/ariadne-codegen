@@ -1,7 +1,6 @@
 import os
 from importlib.metadata import version
 from pathlib import Path
-from typing import List
 
 import httpx
 import pytest
@@ -32,7 +31,7 @@ def project_dir(request, tmp_path):
     os.chdir(old_cwd)
 
 
-def copy_files(files_to_copy: List[Path], target_dir: Path):
+def copy_files(files_to_copy: list[Path], target_dir: Path):
     for file_ in files_to_copy:
         target_dir.joinpath(file_.name).write_text(file_.read_text())
 
