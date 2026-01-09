@@ -7,6 +7,7 @@ from graphql import (
     GraphQLObjectType,
     GraphQLSchema,
     GraphQLUnionType,
+    is_non_null_type,
 )
 
 from ariadne_codegen.client_generators.custom_arguments import ArgumentGenerator
@@ -38,6 +39,7 @@ from .constants import (
     GRAPHQL_INTERFACE_SUFFIX,
     GRAPHQL_OBJECT_SUFFIX,
     GRAPHQL_UNION_SUFFIX,
+    OPTIONAL,
     TYPING_MODULE,
     UNION,
 )
@@ -338,6 +340,13 @@ class CustomFieldsGenerator:
             return_arguments_values,
         ) = self.argument_generator.generate_arguments(arguments)
         self._imports.extend(self.argument_generator.imports)
+
+        if arguments:
+            for arg in arguments.values():
+                if not is_non_null_type(arg.type):
+                    self._add_import(generate_import_from([OPTIONAL], TYPING_MODULE))
+                    break
+
         arguments_body: list[ast.stmt] = []
         arguments_keyword: list[ast.keyword] = []
 

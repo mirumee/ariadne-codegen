@@ -1,8 +1,9 @@
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from .base_operation import GraphQLField
 from .custom_typing_fields import (
     AppGraphQLField,
+    BookShelfGraphQLField,
     CollectionTranslatableContentGraphQLField,
     MetadataErrorGraphQLField,
     MetadataItemGraphQLField,
@@ -13,6 +14,7 @@ from .custom_typing_fields import (
     ProductGraphQLField,
     ProductTranslatableContentGraphQLField,
     ProductTypeCountableConnectionGraphQLField,
+    StoreGraphQLField,
     TranslatableItemConnectionGraphQLField,
     TranslatableItemEdgeGraphQLField,
     TranslatableItemUnion,
@@ -29,6 +31,19 @@ class AppFields(GraphQLField):
         return self
 
     def alias(self, alias: str) -> "AppFields":
+        self._alias = alias
+        return self
+
+
+class BookShelfFields(GraphQLField):
+    has_books: "BookShelfGraphQLField" = BookShelfGraphQLField("hasBooks")
+
+    def fields(self, *subfields: BookShelfGraphQLField) -> "BookShelfFields":
+        """Subfields should come from the BookShelfFields class"""
+        self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "BookShelfFields":
         self._alias = alias
         return self
 
@@ -334,6 +349,32 @@ class ProductTypeCountableConnectionFields(GraphQLField):
         return self
 
     def alias(self, alias: str) -> "ProductTypeCountableConnectionFields":
+        self._alias = alias
+        return self
+
+
+class StoreFields(GraphQLField):
+    @classmethod
+    def books(
+        cls, *, in_stock: Optional[bool] = None, category: Optional[str] = None
+    ) -> "BookShelfFields":
+        arguments: dict[str, dict[str, Any]] = {
+            "inStock": {"type": "Boolean", "value": in_stock},
+            "category": {"type": "String", "value": category},
+        }
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return BookShelfFields("books", arguments=cleared_arguments)
+
+    def fields(
+        self, *subfields: Union[StoreGraphQLField, "BookShelfFields"]
+    ) -> "StoreFields":
+        """Subfields should come from the StoreFields class"""
+        self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "StoreFields":
         self._alias = alias
         return self
 

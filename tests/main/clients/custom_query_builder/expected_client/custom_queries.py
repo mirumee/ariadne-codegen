@@ -4,6 +4,7 @@ from .custom_fields import (
     AppFields,
     ProductCountableConnectionFields,
     ProductTypeCountableConnectionFields,
+    StoreFields,
     TranslatableItemConnectionFields,
 )
 
@@ -53,3 +54,7 @@ class Query:
         return TranslatableItemConnectionFields(
             field_name="translations", arguments=cleared_arguments
         )
+
+    @classmethod
+    def store(cls) -> StoreFields:
+        return StoreFields(field_name="store")

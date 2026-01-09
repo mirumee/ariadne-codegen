@@ -75,7 +75,8 @@ path = "ariadne_codegen/__about__.py"
 
 [tool.hatch.envs.default]
 python = "3.10"
-features = ["dev", "types"]
+features = ["dev", "types", "test", "subscriptions", "opentelemetry"]
+path = ".venv"
 
 [tool.hatch.envs.default.scripts]
 check = [

@@ -93,3 +93,15 @@ class CollectionTranslatableContentGraphQLField(GraphQLField):
     def alias(self, alias: str) -> "CollectionTranslatableContentGraphQLField":
         self._alias = alias
         return self
+
+
+class StoreGraphQLField(GraphQLField):
+    def alias(self, alias: str) -> "StoreGraphQLField":
+        self._alias = alias
+        return self
+
+
+class BookShelfGraphQLField(GraphQLField):
+    def alias(self, alias: str) -> "BookShelfGraphQLField":
+        self._alias = alias
+        return self
