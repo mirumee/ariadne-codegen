@@ -48,5 +48,15 @@ class NotificationsPreferencesInput(BaseModel):
     title: str
 
 
+class BuiltinsInput(BaseModel):
+    list_: Optional[list[int]] = Field(alias="list", default=None)
+    dict_: Optional[str] = Field(alias="dict", default=None)
+    set_: Optional[bool] = Field(alias="set", default=None)
+    tuple_: Optional[float] = Field(alias="tuple", default=None)
+    int_: Optional[int] = Field(alias="int", default=None)
+    str_: Optional[str] = Field(alias="str", default=None)
+    bool_: Optional[bool] = Field(alias="bool", default=None)
+
+
 UserCreateInput.model_rebuild()
 UserPreferencesInput.model_rebuild()

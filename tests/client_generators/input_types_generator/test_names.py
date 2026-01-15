@@ -197,3 +197,34 @@ def test_generate_returns_module_with_valid_field_names():
         "underscore_named_field_",
         "schema_",
     }
+
+
+def test_generate_returns_module_with_builtin_field_names():
+    schema = """
+    input BuiltinsInput {
+        list: [Int!]
+        dict: String
+        set: Boolean
+        tuple: Float
+        int: Int
+        str: String
+        bool: Boolean
+    }
+    """
+
+    generator = InputTypesGenerator(schema=build_ast_schema(parse(schema)))
+
+    module = generator.generate()
+
+    parsed = ast.parse(ast_to_str(module))
+    class_def = get_class_def(parsed)
+    field_names = get_assignment_target_names(class_def)
+    assert field_names == {
+        "list_",
+        "dict_",
+        "set_",
+        "tuple_",
+        "int_",
+        "str_",
+        "bool_",
+    }

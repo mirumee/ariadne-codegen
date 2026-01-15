@@ -1,4 +1,5 @@
 import ast
+import builtins
 import re
 from keyword import iskeyword
 from textwrap import indent
@@ -15,6 +16,14 @@ from .plugins.manager import PluginManager
 PYDANTIC_RESERVED_FIELD_NAMES = [
     name for name in dir(BaseModel) if not name.startswith("_")
 ]
+
+
+def _is_builtin_type_name(name: str) -> bool:
+    try:
+        value = getattr(builtins, name)
+    except AttributeError:
+        return False
+    return isinstance(value, type)
 
 
 def ast_to_str(
@@ -124,7 +133,7 @@ def process_name(
     processed_name = name
     if convert_to_snake_case:
         processed_name = str_to_snake_case(processed_name)
-    if iskeyword(processed_name):
+    if iskeyword(processed_name) or _is_builtin_type_name(processed_name):
         processed_name += "_"
     if (
         handle_pydantic_resrved_field_names
