@@ -13,6 +13,7 @@ from .exceptions import (
 from .fragments import BasicUser, UserPersonalData
 from .get_users_counter import GetUsersCounter
 from .input_types import (
+    BuiltinsInput,
     LocationInput,
     NotificationsPreferencesInput,
     UserCreateInput,
@@ -26,6 +27,7 @@ __all__ = [
     "AsyncBaseClient",
     "BaseModel",
     "BasicUser",
+    "BuiltinsInput",
     "Client",
     "Color",
     "CreateUser",
