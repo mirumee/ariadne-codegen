@@ -10,13 +10,11 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def test(self, **kwargs: Any) -> Test:
-        query = gql(
-            """
+        query = gql("""
             query test {
               testQuery
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="test", variables=variables, **kwargs

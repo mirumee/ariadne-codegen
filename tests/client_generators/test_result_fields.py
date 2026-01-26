@@ -7,14 +7,19 @@ from graphql import (
     FieldNode,
     FragmentDefinitionNode,
     FragmentSpreadNode,
+    GraphQLBoolean,
     GraphQLEnumType,
     GraphQLEnumValueMap,
+    GraphQLFloat,
+    GraphQLID,
+    GraphQLInt,
     GraphQLInterfaceType,
     GraphQLList,
     GraphQLNonNull,
     GraphQLObjectType,
     GraphQLScalarType,
     GraphQLSchema,
+    GraphQLString,
     GraphQLUnionType,
     InlineFragmentNode,
     NamedTypeNode,
@@ -61,22 +66,22 @@ from ..utils import compare_ast
     [
         (
             INCLUDE_DIRECTIVE_NAME,
-            GraphQLNonNull(GraphQLScalarType("String")),
+            GraphQLNonNull(GraphQLString),
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
         ),
         (
             INCLUDE_DIRECTIVE_NAME,
-            GraphQLScalarType("String"),
+            GraphQLString,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
         ),
         (
             SKIP_DIRECTIVE_NAME,
-            GraphQLNonNull(GraphQLScalarType("String")),
+            GraphQLNonNull(GraphQLString),
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
         ),
         (
             SKIP_DIRECTIVE_NAME,
-            GraphQLScalarType("String"),
+            GraphQLString,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
         ),
     ],
@@ -103,7 +108,7 @@ def test_parse_operation_field_returns_typename_annotation_with_multiple_values(
     annotation, _, _ = parse_operation_field(
         schema=GraphQLSchema(),
         field=FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME)),
-        type_=GraphQLNonNull(GraphQLScalarType("String")),
+        type_=GraphQLNonNull(GraphQLString),
         typename_values=["TypeB", "TypeA"],
     )
 
@@ -118,7 +123,7 @@ def test_parse_operation_field_returns_typename_annotation_with_single_value():
     annotation, _, _ = parse_operation_field(
         schema=GraphQLSchema(),
         field=FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME)),
-        type_=GraphQLNonNull(GraphQLScalarType("String")),
+        type_=GraphQLNonNull(GraphQLString),
         typename_values=["TypeA"],
     )
 
@@ -172,7 +177,7 @@ def test_parse_operation_field_returns_annotation_with_annotated_nested_unions()
 @pytest.mark.parametrize(
     "type_, expected_method_name",
     [
-        (GraphQLScalarType("String"), "parse_scalar_type"),
+        (GraphQLString, "parse_scalar_type"),
         (GraphQLInterfaceType("TestInterface", fields={}), "parse_interface_type"),
         (GraphQLObjectType("TestType", fields={}), "parse_object_type"),
         (
@@ -225,34 +230,34 @@ def test_parse_operation_field_type_calls_correct_method_for_type(
 @pytest.mark.parametrize(
     "type_, nullable, expected_annotation",
     [
-        (GraphQLScalarType("String"), False, ast.Name(id="str")),
-        (GraphQLScalarType("ID"), False, ast.Name(id="str")),
-        (GraphQLScalarType("Int"), False, ast.Name(id="int")),
-        (GraphQLScalarType("Boolean"), False, ast.Name(id="bool")),
-        (GraphQLScalarType("Float"), False, ast.Name(id="float")),
+        (GraphQLString, False, ast.Name(id="str")),
+        (GraphQLID, False, ast.Name(id="str")),
+        (GraphQLInt, False, ast.Name(id="int")),
+        (GraphQLBoolean, False, ast.Name(id="bool")),
+        (GraphQLFloat, False, ast.Name(id="float")),
         (GraphQLScalarType("Other"), False, ast.Name(id="Any")),
         (
-            GraphQLScalarType("String"),
+            GraphQLString,
             True,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
         ),
         (
-            GraphQLScalarType("ID"),
+            GraphQLID,
             True,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
         ),
         (
-            GraphQLScalarType("Int"),
+            GraphQLInt,
             True,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="int")),
         ),
         (
-            GraphQLScalarType("Boolean"),
+            GraphQLBoolean,
             True,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="bool")),
         ),
         (
-            GraphQLScalarType("Float"),
+            GraphQLFloat,
             True,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="float")),
         ),

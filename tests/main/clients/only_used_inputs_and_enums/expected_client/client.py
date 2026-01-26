@@ -18,13 +18,11 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def get_a(self, arg_a: InputA, **kwargs: Any) -> GetA:
-        query = gql(
-            """
+        query = gql("""
             query getA($argA: InputA!) {
               a(argA: $argA)
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {"argA": arg_a}
         response = await self.execute(
             query=query, operation_name="getA", variables=variables, **kwargs
@@ -33,13 +31,11 @@ class Client(AsyncBaseClient):
         return GetA.model_validate(data)
 
     async def get_a_2(self, arg_a: InputA, **kwargs: Any) -> GetA2:
-        query = gql(
-            """
+        query = gql("""
             query getA2($argA: InputA!) {
               a(argA: $argA)
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {"argA": arg_a}
         response = await self.execute(
             query=query, operation_name="getA2", variables=variables, **kwargs
@@ -48,13 +44,11 @@ class Client(AsyncBaseClient):
         return GetA2.model_validate(data)
 
     async def get_b(self, arg_aa: InputAB, **kwargs: Any) -> GetB:
-        query = gql(
-            """
+        query = gql("""
             query getB($argAA: InputAB!) {
               b(argAA: $argAA)
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {"argAA": arg_aa}
         response = await self.execute(
             query=query, operation_name="getB", variables=variables, **kwargs
@@ -63,13 +57,11 @@ class Client(AsyncBaseClient):
         return GetB.model_validate(data)
 
     async def get_d(self, enum_d: EnumD, **kwargs: Any) -> GetD:
-        query = gql(
-            """
+        query = gql("""
             query getD($enumD: EnumD!) {
               d(enumD: $enumD)
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {"enumD": enum_d}
         response = await self.execute(
             query=query, operation_name="getD", variables=variables, **kwargs
@@ -78,13 +70,11 @@ class Client(AsyncBaseClient):
         return GetD.model_validate(data)
 
     async def get_e(self, arg_e: InputE, **kwargs: Any) -> GetE:
-        query = gql(
-            """
+        query = gql("""
             query getE($argE: InputE!) {
               e(argE: $argE)
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {"argE": arg_e}
         response = await self.execute(
             query=query, operation_name="getE", variables=variables, **kwargs
@@ -93,15 +83,13 @@ class Client(AsyncBaseClient):
         return GetE.model_validate(data)
 
     async def get_f(self, **kwargs: Any) -> GetF:
-        query = gql(
-            """
+        query = gql("""
             query getF {
               f {
                 val
               }
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="getF", variables=variables, **kwargs
@@ -110,8 +98,7 @@ class Client(AsyncBaseClient):
         return GetF.model_validate(data)
 
     async def get_g(self, **kwargs: Any) -> GetG:
-        query = gql(
-            """
+        query = gql("""
             query getG {
               g {
                 ...FragmentG
@@ -121,8 +108,7 @@ class Client(AsyncBaseClient):
             fragment FragmentG on TypeG {
               val
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="getG", variables=variables, **kwargs
