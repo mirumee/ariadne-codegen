@@ -1,7 +1,5 @@
 import ast
 from typing import Any
-from graphql.type.definition import GraphQLNamedType
-from graphql.type.definition import GraphQLNamedType
 
 import pytest
 from graphql import (
@@ -22,6 +20,7 @@ from graphql import (
     GraphQLString,
     GraphQLUnionType,
 )
+from graphql.type.definition import GraphQLNamedType
 
 from ariadne_codegen.client_generators.constants import (
     ANY,
