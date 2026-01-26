@@ -21,8 +21,7 @@ class Client(AsyncBaseClient):
         other: Any,
         **kwargs: Any
     ) -> GetA:
-        query = gql(
-            """
+        query = gql("""
             query getA($date: DATETIME!, $code: CODE!, $id: CUSTOMID!, $input: TestInput!, $other: NOTMAPPED!) {
               testQuery(date: $date, code: $code, id: $id, input: $input, other: $other) {
                 date
@@ -31,8 +30,7 @@ class Client(AsyncBaseClient):
                 other
               }
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {
             "date": date,
             "code": serialize_code(code),
