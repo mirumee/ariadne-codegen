@@ -19,15 +19,13 @@ class Client(AsyncBaseClient):
     async def create_user(
         self, user_data: UserCreateInput, **kwargs: Any
     ) -> CreateUser:
-        query = gql(
-            """
+        query = gql("""
             mutation CreateUser($userData: UserCreateInput!) {
               userCreate(userData: $userData) {
                 id
               }
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {"userData": user_data}
         response = await self.execute(
             query=query, operation_name="CreateUser", variables=variables, **kwargs
@@ -36,8 +34,7 @@ class Client(AsyncBaseClient):
         return CreateUser.model_validate(data)
 
     async def list_all_users(self, **kwargs: Any) -> ListAllUsers:
-        query = gql(
-            """
+        query = gql("""
             query ListAllUsers {
               users {
                 id
@@ -49,8 +46,7 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListAllUsers", variables=variables, **kwargs
@@ -61,8 +57,7 @@ class Client(AsyncBaseClient):
     async def list_users_by_country(
         self, country: Union[Optional[str], UnsetType] = UNSET, **kwargs: Any
     ) -> ListUsersByCountry:
-        query = gql(
-            """
+        query = gql("""
             query ListUsersByCountry($country: String) {
               users(country: $country) {
                 ...BasicUser
@@ -80,8 +75,7 @@ class Client(AsyncBaseClient):
               firstName
               lastName
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {"country": country}
         response = await self.execute(
             query=query,
@@ -93,13 +87,11 @@ class Client(AsyncBaseClient):
         return ListUsersByCountry.model_validate(data)
 
     async def get_users_counter(self, **kwargs: Any) -> AsyncIterator[GetUsersCounter]:
-        query = gql(
-            """
+        query = gql("""
             subscription GetUsersCounter {
               usersCounter
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {}
         async for data in self.execute_ws(
             query=query, operation_name="GetUsersCounter", variables=variables, **kwargs
@@ -107,13 +99,11 @@ class Client(AsyncBaseClient):
             yield GetUsersCounter.model_validate(data)
 
     async def upload_file(self, file: Upload, **kwargs: Any) -> UploadFile:
-        query = gql(
-            """
+        query = gql("""
             mutation uploadFile($file: Upload!) {
               fileUpload(file: $file)
             }
-            """
-        )
+            """)
         variables: dict[str, object] = {"file": file}
         response = await self.execute(
             query=query, operation_name="uploadFile", variables=variables, **kwargs

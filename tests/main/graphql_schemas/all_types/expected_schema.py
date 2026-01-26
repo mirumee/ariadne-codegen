@@ -226,6 +226,13 @@ schema: GraphQLSchema = GraphQLSchema(
                 )
             },
         ),
+        GraphQLDirective(
+            name="oneOf",
+            description="Indicates an Input Object is a OneOf Input Object.",
+            is_repeatable=False,
+            locations=(DirectiveLocation.INPUT_OBJECT,),
+            args=None,
+        ),
     ],
     description=None,
 )
