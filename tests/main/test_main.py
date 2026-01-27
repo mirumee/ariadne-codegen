@@ -1,3 +1,4 @@
+import ast
 import os
 from importlib.metadata import version
 from pathlib import Path
@@ -254,6 +255,41 @@ def test_main_generates_correct_package(
     package_path = project_dir / package_name
     assert package_path.is_dir()
     assert_the_same_files_in_directories(package_path, expected_package_path)
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH
+                / "client_forward_refs_custom_operations"
+                / "pyproject.toml",
+                (
+                    CLIENTS_PATH
+                    / "client_forward_refs_custom_operations"
+                    / "schema.graphql",
+                ),
+            ),
+            "example_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_client_forward_refs_with_custom_operations(project_dir, package_name):
+    """ClientForwardRefsPlugin + enable_custom_operations should produce valid client.
+
+    Custom operation methods (execute_custom_operation, query, mutation) return
+    self.* or await self.* - the plugin must not treat 'self' as a generated class.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0, result.output
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+    client_py = package_path / "client.py"
+    assert client_py.exists(), f"Expected {client_py}"
+    ast.parse(client_py.read_text())
 
 
 @pytest.mark.parametrize(
