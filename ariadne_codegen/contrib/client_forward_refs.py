@@ -175,6 +175,12 @@ class ClientForwardRefsPlugin(Plugin):
 
         import_class_name = import_class.name
 
+        # Skip calls like self.something(...) from custom operation methods
+        # (e.g. execute_custom_operation returns self.get_data(response)).
+        # 'self' is not a generated class to import.
+        if import_class_name == "self" or import_class_name not in self.imported_classes:
+            return
+
         # We add the class to our set of imported in methods - these classes
         # don't need to be imported at all in the global scope.
         self.imported_in_method.add(import_class_name)
