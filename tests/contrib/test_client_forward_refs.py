@@ -16,17 +16,17 @@ def test_plugin_skips_self_calls_from_custom_operation_methods():
 
     module = ast.parse(
         """
-        from .async_base_client import AsyncBaseClient
+from .async_base_client import AsyncBaseClient
+from .some_operation import SomeOperation
+
+class Client(AsyncBaseClient):
+    def execute_custom_operation(self):
+        return self.get_data("response")
+
+    async def get_something(self):
         from .some_operation import SomeOperation
-
-        class Client(AsyncBaseClient):
-            def execute_custom_operation(self):
-                return self.get_data("response")
-
-            async def get_something(self):
-                from .some_operation import SomeOperation
-                return SomeOperation.model_validate({})
-        """
+        return SomeOperation.model_validate({})
+"""
     )
 
     schema = build_schema("type Query { x: Int }")
