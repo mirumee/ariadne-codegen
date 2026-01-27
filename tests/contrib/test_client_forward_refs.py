@@ -13,7 +13,7 @@ def test_plugin_skips_self_calls_from_custom_operation_methods():
     await self.execute_custom_operation(...). The plugin must not treat
     'self' as a generated class name (KeyError('self')).
     """
- 
+
     module = ast.parse(
         """
         from .async_base_client import AsyncBaseClient
