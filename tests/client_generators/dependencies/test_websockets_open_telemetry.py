@@ -81,26 +81,26 @@ async def test_execute_ws_creates_websocket_connection_with_correct_headers(
         pass
 
     assert mocked_ws_connect.called
-    assert mocked_ws_connect.call_args.kwargs["extra_headers"] == {
+    assert mocked_ws_connect.call_args.kwargs["additional_headers"] == {
         "test_key": "test_value"
     }
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("tracer", ["tracer name", None])
-async def test_execute_ws_creates_websocket_connection_with_passed_extra_headers(
+async def test_execute_ws_creates_websocket_connection_with_passed_additional_headers(
     mocked_ws_connect, mocked_websocket, tracer
 ):
     async for _ in AsyncBaseClientOpenTelemetry(
         ws_headers={"Client-A": "client_value_a", "Client-B": "client_value_b"},
         tracer=tracer,
     ).execute_ws(
-        "", extra_headers={"Client-A": "execute_value_a", "Execute-Other": "other"}
+        "", additional_headers={"Client-A": "execute_value_a", "Execute-Other": "other"}
     ):
         pass
 
     assert mocked_ws_connect.called
-    assert mocked_ws_connect.call_args.kwargs["extra_headers"] == {
+    assert mocked_ws_connect.call_args.kwargs["additional_headers"] == {
         "Client-A": "execute_value_a",
         "Client-B": "client_value_b",
         "Execute-Other": "other",

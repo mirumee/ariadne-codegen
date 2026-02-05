@@ -153,11 +153,11 @@ class AsyncBaseClient:
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         headers = self.ws_headers.copy()
-        headers.update(kwargs.get("extra_headers", {}))
+        headers.update(kwargs.pop("additional_headers", {}))
 
         merged_kwargs: dict[str, Any] = {"origin": self.ws_origin}
         merged_kwargs.update(kwargs)
-        merged_kwargs["extra_headers"] = headers
+        merged_kwargs["additional_headers"] = headers
 
         operation_id = str(uuid4())
         async with ws_connect(
