@@ -1,6 +1,7 @@
 import ast
 from keyword import iskeyword
 from typing import Optional, cast
+from warnings import warn
 
 from graphql import GraphQLEnumType, GraphQLSchema
 
@@ -58,6 +59,13 @@ class EnumsGenerator:
         for lineno, (val_name, val_def) in enumerate(
             definition.values.items(), start=1
         ):
+            if val_def.deprecation_reason:
+                warn(
+                    f"Enum value '{val_name}' on enum '{definition.name}' is "
+                    f"deprecated: {val_def.deprecation_reason}",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
             name = val_name if not iskeyword(val_name) else val_name + "_"
             fields.append(
                 generate_assign([name], generate_constant(val_def.value), lineno)

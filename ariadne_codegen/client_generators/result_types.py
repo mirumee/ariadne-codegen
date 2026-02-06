@@ -1,6 +1,7 @@
 import ast
 from copy import deepcopy
 from typing import Any, Optional, Union, cast
+from warnings import warn
 
 from graphql import (
     DirectiveNode,
@@ -256,6 +257,13 @@ class ResultTypesGenerator:
             field_name = self._get_field_name(field)
             name = self._process_field_name(field_name, field=field)
             field_definition = self._get_field_from_schema(type_name, field.name.value)
+            if field_definition.deprecation_reason:
+                warn(
+                    f"Field '{field.name.value}' on type '{type_name}' is "
+                    f"deprecated: {field_definition.deprecation_reason}",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
             annotation, default_value, field_context = parse_operation_field(
                 schema=self.schema,
                 field=field,
