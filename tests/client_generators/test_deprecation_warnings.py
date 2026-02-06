@@ -20,7 +20,8 @@ from ..utils import filter_class_defs
 
 
 def test_enum_generator_emits_deprecation_warning_for_deprecated_enum_value():
-    """Generating enums that contain a deprecated value should emit DeprecationWarning."""
+    """Generating enums that contain a deprecated value
+    should emit DeprecationWarning."""
     status_enum = GraphQLEnumType(
         name="Status",
         values={
@@ -61,7 +62,8 @@ def test_enum_generator_emits_no_warning_when_no_deprecated_values():
 
 
 def test_result_types_generator_emits_deprecation_warning_for_deprecated_field():
-    """Generating result types that select a deprecated field should emit DeprecationWarning."""
+    """Generating result types that select a deprecated field
+    should emit DeprecationWarning."""
     query_type = GraphQLObjectType(
         name="Query",
         fields={
