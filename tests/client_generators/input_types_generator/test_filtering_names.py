@@ -30,9 +30,15 @@ from ariadne_codegen.client_generators.input_types import InputTypesGenerator
 )
 def test_generator_returns_module_with_filtered_classes(used_types, expected_classes):
     schema_str = """
+    enum EnumA {
+        VALUE1
+        VALUE2
+    }
+
     input InputA {
         valueAA: InputAA!
         valueAB: InputAB
+        valueEnumA: EnumA
     }
 
     input InputAA {
@@ -46,6 +52,7 @@ def test_generator_returns_module_with_filtered_classes(used_types, expected_cla
     input InputAB {
         val: String!
         valueA: InputA
+        valueEnumA: EnumA
     }
 
     input InputX {
