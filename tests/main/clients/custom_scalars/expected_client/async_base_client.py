@@ -1,3 +1,4 @@
+import asyncio
 import enum
 import json
 from collections.abc import AsyncIterator
@@ -10,6 +11,7 @@ from pydantic_core import to_jsonable_python
 
 from .base_model import UNSET, Upload
 from .exceptions import (
+    GraphQLClientError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQLClientInvalidMessageFormat,
@@ -166,12 +168,17 @@ class AsyncBaseClient:
             **merged_kwargs,
         ) as websocket:
             await self._send_connection_init(websocket)
-            # wait for connection_ack from server
-            await self._handle_ws_message(
-                await websocket.recv(),
-                websocket,
-                expected_type=GraphQLTransportWSMessageType.CONNECTION_ACK,
-            )
+            # Wait for connection_ack; some servers (e.g. Hasura) send ping before
+            # connection_ack, so we loop and handle pings until we get ack.
+            try:
+                await asyncio.wait_for(
+                    self._wait_for_connection_ack(websocket),
+                    timeout=5.0,
+                )
+            except asyncio.TimeoutError as exc:
+                raise GraphQLClientError(
+                    "Connection ack not received within 5 seconds"
+                ) from exc
             await self._send_subscribe(
                 websocket,
                 operation_id=operation_id,
@@ -182,7 +189,7 @@ class AsyncBaseClient:
 
             async for message in websocket:
                 data = await self._handle_ws_message(message, websocket)
-                if data:
+                if data and "connection_ack" not in data:
                     yield data
 
     def _process_variables(
@@ -313,6 +320,13 @@ class AsyncBaseClient:
             payload["payload"] = self.ws_connection_init_payload
         await websocket.send(json.dumps(payload))
 
+    async def _wait_for_connection_ack(self, websocket: ClientConnection) -> None:
+        """Read messages until connection_ack; handle ping/pong in between."""
+        async for message in websocket:
+            data = await self._handle_ws_message(message, websocket)
+            if data is not None and "connection_ack" in data:
+                return
+
     async def _send_subscribe(
         self,
         websocket: ClientConnection,
@@ -369,5 +383,7 @@ class AsyncBaseClient:
             raise GraphQLClientGraphQLMultiError.from_errors_dicts(
                 errors_dicts=payload, data=message_dict
             )
+        elif type_ == GraphQLTransportWSMessageType.CONNECTION_ACK:
+            return {"connection_ack": True}
 
         return None

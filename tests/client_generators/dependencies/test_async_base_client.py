@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime
 from typing import Any, Optional
@@ -10,12 +11,14 @@ from ariadne_codegen.client_generators.dependencies.async_base_client import (
 )
 from ariadne_codegen.client_generators.dependencies.base_model import UNSET, BaseModel
 from ariadne_codegen.client_generators.dependencies.exceptions import (
+    GraphQLClientError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQLClientInvalidResponseError,
 )
 
 from ...utils import decode_multipart_request
+from .conftest import _MockWebSocket, _ws_message
 
 
 @pytest.mark.asyncio
@@ -583,3 +586,117 @@ async def test_base_client_used_as_context_manager_closes_http_client(mocker):
         await base_client.execute("")
 
     assert fake_client.aclose.called
+
+
+@pytest.mark.asyncio
+async def test_execute_ws_waits_for_connection_ack_then_yields_data(mocker):
+    """Server sends connection_ack first (standard behaviour)."""
+    connection_ack = _ws_message("connection_ack")
+    next_data = _ws_message("next", data={"subscription": "result"})
+    complete = _ws_message("complete", id="op-id")
+
+    mock_ws = _MockWebSocket([connection_ack, next_data, complete])
+    mock_ws.close = mocker.AsyncMock()
+
+    def fake_connect(*args: Any, **kwargs: Any) -> Any:
+        class Ctx:
+            async def __aenter__(self: Any) -> _MockWebSocket:
+                return mock_ws
+
+            async def __aexit__(self: Any, *args: Any) -> None:
+                pass
+
+        return Ctx()
+
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.ws_connect",
+        side_effect=fake_connect,
+    )
+
+    client = AsyncBaseClient(url="http://xyz", ws_url="ws://xyz")
+    results = []
+    async for data in client.execute_ws("subscription { x }"):
+        results.append(data)
+
+    assert results == [{"subscription": "result"}]
+    assert len(mock_ws.sent) >= 2  # connection_init, subscribe
+    assert json.loads(mock_ws.sent[0])["type"] == "connection_init"
+    assert json.loads(mock_ws.sent[1])["type"] == "subscribe"
+
+
+@pytest.mark.asyncio
+async def test_execute_ws_handles_ping_before_connection_ack_hasura_quirk(mocker):
+    """Server sends ping before connection_ack (Hasura and some others)."""
+    ping = _ws_message("ping")
+    connection_ack = _ws_message("connection_ack")
+    next_data = _ws_message("next", data={"ok": True})
+    complete = _ws_message("complete", id="op-id")
+
+    mock_ws = _MockWebSocket([ping, connection_ack, next_data, complete])
+
+    def fake_connect(*args: Any, **kwargs: Any) -> Any:
+        class Ctx:
+            async def __aenter__(self: Any) -> _MockWebSocket:
+                return mock_ws
+
+            async def __aexit__(self: Any, *args: Any) -> None:
+                pass
+
+        return Ctx()
+
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.ws_connect",
+        side_effect=fake_connect,
+    )
+
+    client = AsyncBaseClient(url="http://xyz", ws_url="ws://xyz")
+    results = []
+    async for data in client.execute_ws("subscription { x }"):
+        results.append(data)
+
+    assert results == [{"ok": True}]
+    # Client must have sent pong in response to ping, then connection_init, subscribe
+    sent_types = [json.loads(s)["type"] for s in mock_ws.sent]
+    assert "pong" in sent_types
+    assert sent_types.count("connection_init") == 1
+    assert sent_types.count("subscribe") == 1
+
+
+@pytest.mark.asyncio
+async def test_execute_ws_raises_when_connection_ack_not_received_within_timeout(
+    mocker,
+):
+    """If server never sends connection_ack, client raises after 5 seconds."""
+    # Only send pings so connection_ack is never received
+    ping = _ws_message("ping")
+    mock_ws = _MockWebSocket([ping, ping, ping])
+
+    def fake_connect(*args: Any, **kwargs: Any) -> Any:
+        class Ctx:
+            async def __aenter__(self: Any) -> _MockWebSocket:
+                return mock_ws
+
+            async def __aexit__(self: Any, *args: Any) -> None:
+                pass
+
+        return Ctx()
+
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.ws_connect",
+        side_effect=fake_connect,
+    )
+
+    async def fake_wait_for(aw: Any, timeout: Optional[float] = None) -> Any:
+        raise asyncio.TimeoutError("timed out")
+
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.asyncio.wait_for",
+        side_effect=fake_wait_for,
+    )
+
+    client = AsyncBaseClient(url="http://xyz", ws_url="ws://xyz")
+    with pytest.raises(GraphQLClientError) as exc_info:
+        async for _ in client.execute_ws("subscription { x }"):
+            pass
+
+    assert "Connection ack not received" in str(exc_info.value)
