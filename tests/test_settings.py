@@ -352,3 +352,190 @@ def test_client_settings_include_typename_can_be_set_to_true(tmp_path):
     )
 
     assert settings.include_typename is True
+
+
+def test_using_remote_schema_true_when_only_remote_schema_url_is_provided(tmp_path):
+    """
+    Test that using_remote_schema is True when only remote_schema_url is provided.
+    """
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        remote_schema_url="http://testserver/graphql/",
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.using_remote_schema is True
+
+
+def test_using_remote_schema_false_when_only_schema_path_is_provided(tmp_path):
+    """
+    Test that using_remote_schema is False when only schema_path is provided.
+    """
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    base_client_file_content = """
+    class BaseClient:
+        pass
+    """
+    base_client_file_path = tmp_path / "base_client.py"
+    base_client_file_path.write_text(dedent(base_client_file_content))
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        base_client_name="BaseClient",
+        base_client_file_path=base_client_file_path.as_posix(),
+    )
+
+    assert settings.using_remote_schema is False
+
+
+def test_using_remote_schema_false_when_both_provided(tmp_path):
+    """
+    Test that using_remote_schema is False when both schema_path and remote_schema_url
+    are provided.
+    """
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    base_client_file_content = """
+    class BaseClient:
+        pass
+    """
+    base_client_file_path = tmp_path / "base_client.py"
+    base_client_file_path.write_text(dedent(base_client_file_content))
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        remote_schema_url="http://testserver/graphql/",
+        queries_path=queries_path.as_posix(),
+        base_client_name="BaseClient",
+        base_client_file_path=base_client_file_path.as_posix(),
+    )
+
+    assert settings.using_remote_schema is False
+
+
+def test_introspection_settings_defaults(tmp_path):
+    """
+    Test that introspection settings have the correct default values.
+    """
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        remote_schema_url="http://testserver/graphql/",
+        queries_path=queries_path.as_posix(),
+    )
+
+    opts = settings.introspection_settings
+    assert opts.descriptions is False
+    assert opts.input_value_deprecation is False
+    assert opts.specified_by_url is False
+    assert opts.schema_description is False
+    assert opts.directive_is_repeatable is False
+    assert opts.input_object_one_of is False
+
+
+def test_introspection_settings_overrides_are_mapped(tmp_path):
+    """
+    Test that introspection settings overrides are correctly mapped.
+    """
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        remote_schema_url="http://testserver/graphql/",
+        queries_path=queries_path.as_posix(),
+        introspection_descriptions=True,
+        introspection_input_value_deprecation=True,
+        introspection_specified_by_url=True,
+        introspection_schema_description=True,
+        introspection_directive_is_repeatable=True,
+        introspection_input_object_one_of=True,
+    )
+
+    opts = settings.introspection_settings
+    assert opts.descriptions is True
+    assert opts.input_value_deprecation is True
+    assert opts.specified_by_url is True
+    assert opts.schema_description is True
+    assert opts.directive_is_repeatable is True
+    assert opts.input_object_one_of is True
+
+
+def test_client_settings_used_settings_message_includes_introspection(
+    tmp_path,
+):
+    """
+    Test that used_settings_message includes introspection settings when remote schema
+    is used.
+    """
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    remote_settings = ClientSettings(
+        remote_schema_url="http://testserver/graphql/",
+        queries_path=queries_path.as_posix(),
+        introspection_schema_description=True,
+    )
+    assert "Introspection settings:" in remote_settings.used_settings_message
+    assert "schema_description=true" in remote_settings.used_settings_message
+
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+
+    base_client_file_content = """
+    class BaseClient:
+        pass
+    """
+    base_client_file_path = tmp_path / "base_client.py"
+    base_client_file_path.write_text(dedent(base_client_file_content))
+
+    local_settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        base_client_name="BaseClient",
+        base_client_file_path=base_client_file_path.as_posix(),
+        introspection_schema_description=True,
+    )
+    assert "Introspection settings:" not in local_settings.used_settings_message
+
+
+def test_graphql_schema_settings_used_settings_message_includes_introspection(
+    tmp_path,
+):
+    """
+    Test that used_settings_message includes introspection settings when remote schema
+    is used.
+    """
+    remote_settings = GraphQLSchemaSettings(
+        remote_schema_url="http://testserver/graphql/",
+        introspection_specified_by_url=True,
+    )
+    assert "Introspection settings:" in remote_settings.used_settings_message
+    assert "specified_by_url=true" in remote_settings.used_settings_message
+    assert "descriptions=false" in remote_settings.used_settings_message
+
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+
+    local_settings = GraphQLSchemaSettings(
+        schema_path=schema_path.as_posix(),
+        introspection_specified_by_url=True,
+    )
+    assert "Introspection settings:" not in local_settings.used_settings_message
+
+    both_settings = GraphQLSchemaSettings(
+        schema_path=schema_path.as_posix(),
+        remote_schema_url="http://testserver/graphql/",
+        introspection_specified_by_url=True,
+    )
+    assert "Introspection settings:" not in both_settings.used_settings_message
