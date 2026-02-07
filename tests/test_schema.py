@@ -15,6 +15,7 @@ from ariadne_codegen.schema import (
     read_graphql_file,
     walk_graphql_files,
 )
+from ariadne_codegen.settings import IntrospectionSettings
 
 
 @pytest.fixture
@@ -294,8 +295,10 @@ def test_introspect_remote_schema_raises_introspection_error_for_not_dict_respon
         return_value=httpx.Response(status_code=200, content="[]"),
     )
 
-    with pytest.raises(IntrospectionError):
+    with pytest.raises(IntrospectionError) as exc:
         introspect_remote_schema("http://testserver/graphql/")
+
+    assert "Invalid introspection result format." in str(exc.value)
 
 
 def test_introspect_remote_schema_raises_introspection_error_for_json_without_data_key(
@@ -306,8 +309,10 @@ def test_introspect_remote_schema_raises_introspection_error_for_json_without_da
         return_value=httpx.Response(status_code=200, content='{"not_data": null}'),
     )
 
-    with pytest.raises(IntrospectionError):
+    with pytest.raises(IntrospectionError) as exc:
         introspect_remote_schema("http://testserver/graphql/")
+
+    assert "Invalid data key in introspection result." in str(exc.value)
 
 
 def test_introspect_remote_schema_raises_introspection_error_for_graphql_errors(mocker):
@@ -345,8 +350,10 @@ def test_introspect_remote_schema_raises_introspection_error_for_invalid_data_va
         ),
     )
 
-    with pytest.raises(IntrospectionError):
+    with pytest.raises(IntrospectionError) as exc:
         introspect_remote_schema("http://testserver/graphql/")
+
+    assert "Invalid data key in introspection result." in str(exc.value)
 
 
 def test_introspect_remote_schema_returns_introspection_result(mocker):
@@ -436,3 +443,74 @@ def test_get_graphql_queries_with_invalid_query_for_schema_raises_invalid_operat
         get_graphql_queries(
             invalid_query_for_schema_file.as_posix(), build_schema(schema_str)
         )
+
+
+def test_introspect_remote_schema_passes_introspection_settings_to_introspection_query(
+    mocker,
+):
+    """
+    Test that the introspection settings are passed to the get_introspection_query
+    function when introspecting the remote schema.
+    """
+    mocked_get_query = mocker.patch(
+        "ariadne_codegen.schema.get_introspection_query",
+        return_value="query { __schema { queryType { name } } }",
+    )
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(
+            status_code=200, content='{"data": {"__schema": {}}}'
+        ),
+    )
+
+    settings = IntrospectionSettings(
+        descriptions=True,
+        input_value_deprecation=True,
+        specified_by_url=True,
+        schema_description=True,
+        directive_is_repeatable=True,
+        input_object_one_of=True,
+    )
+
+    introspect_remote_schema(
+        "http://testserver/graphql/", introspection_settings=settings
+    )
+
+    mocked_get_query.assert_called_once_with(
+        descriptions=True,
+        specified_by_url=True,
+        directive_is_repeatable=True,
+        schema_description=True,
+        input_value_deprecation=True,
+        input_object_one_of=True,
+    )
+
+
+def test_introspect_remote_schema_uses_default_introspection_settings_when_not_provided(
+    mocker,
+):
+    """
+    Test that when introspection settings are not provided, the default values are used
+    in the get_introspection_query call.
+    """
+    mocked_get_query = mocker.patch(
+        "ariadne_codegen.schema.get_introspection_query",
+        return_value="query { __schema { queryType { name } } }",
+    )
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(
+            status_code=200, content='{"data": {"__schema": {}}}'
+        ),
+    )
+
+    introspect_remote_schema("http://testserver/graphql/")
+
+    mocked_get_query.assert_called_once_with(
+        descriptions=False,
+        specified_by_url=False,
+        directive_is_repeatable=False,
+        schema_description=False,
+        input_value_deprecation=False,
+        input_object_one_of=False,
+    )
