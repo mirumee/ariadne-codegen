@@ -74,6 +74,7 @@ class ClientSettings(BaseSettings):
     scalars: dict[str, ScalarData] = field(default_factory=dict)
     default_optional_fields_to_none: bool = False
     include_typename: bool = True
+    ignore_extra_fields: bool = True
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
