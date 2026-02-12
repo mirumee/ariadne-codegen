@@ -84,10 +84,19 @@ Optional settings:
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
 
+These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`.
+
+- `introspection_descriptions` (defaults to `false`) – include descriptions in the introspection result
+- `introspection_input_value_deprecation` (defaults to `false`) – include deprecation information for input values
+- `introspection_specified_by_url` (defaults to `false`) – include `specifiedByUrl` for custom scalars
+- `introspection_schema_description` (defaults to `false`) – include schema description
+- `introspection_directive_is_repeatable` (defaults to `false`) – include `isRepeatable` information for directives
+- `introspection_input_object_one_of` (defaults to `false`) – include `oneOf` information for input objects
+
 
 ## Custom operation builder
 
-The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way. 
+The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way.
 
 ### Example Code
 
@@ -154,11 +163,11 @@ asyncio.run(get_products())
    3. .alias("aliased_edges") renames the edges field to aliased_edges.
    4. .on("ProductTranslatableContent", ...) specifies the fields to retrieve if the node is of type ProductTranslatableContent: id, product_id, and name.
 3. Executing the Queries:
-   1. The client.query(...) method is called with the built queries and an operation name "get_products".   
+   1. The client.query(...) method is called with the built queries and an operation name "get_products".
    2. This method sends the queries to the server and retrieves the response.
 
 
-### Example pyproject.toml configuration. 
+### Example pyproject.toml configuration.
 
 `Note: queries_path is optional when enable_custom_operations is set to true`
 
@@ -188,7 +197,7 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
     [tool.ariadne-codegen]
     ...
     plugins = ["ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin"]
-    
+
     [tool.ariadne-codegen.extract_operations]
     operations_module_name = "custom_operations_module_name"
     ```
@@ -234,7 +243,7 @@ To handle subscriptions, default `AsyncBaseClient` uses [websockets](https://git
 
 Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary is an instance of `Upload`. If at least one instance is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
 
-Class `Upload` is included in generated client and can be imported from it: 
+Class `Upload` is included in generated client and can be imported from it:
 
 ```py
 from {target_package_name} import Upload
