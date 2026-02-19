@@ -299,7 +299,8 @@ def resolve_env_vars_in_string(value: str) -> str:
     start with a letter or underscore, then alphanumeric/underscore).
     """
     # Two explicit patterns so we never match malformed ${VAR or $VAR}
-    pattern = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)")
+    ident = r"[A-Za-z_][A-Za-z0-9_]*"
+    pattern = re.compile(rf"\$\{{({ident})\}}|\$({ident})")
 
     def replacer(match):
         env_var_name = match.group(1) or match.group(2)
