@@ -14,7 +14,6 @@ def _get_method_names(class_def: ast.ClassDef) -> list[str]:
 
 
 def test_reserved_word_as_operation_name_generates_suffixed_method():
-    """Operation named 'return' (Python keyword) should generate method 'return_' (issue #370)."""
     schema_str = """
     schema { query: Query }
     type Query {
@@ -51,7 +50,6 @@ def test_reserved_word_as_operation_name_generates_suffixed_method():
 
 
 def test_builtin_name_as_operation_name_generates_suffixed_method():
-    """Operation named 'str' (builtin type) should generate method 'str_' (process_name behavior)."""
     schema_str = """
     schema { query: Query }
     type Query {
@@ -87,7 +85,6 @@ def test_builtin_name_as_operation_name_generates_suffixed_method():
 
 
 def test_normal_operation_name_unchanged():
-    """Non-reserved operation names should be generated as-is (snake_cased)."""
     schema_str = """
     schema { query: Query }
     type Query {
@@ -123,7 +120,6 @@ def test_normal_operation_name_unchanged():
 
 
 def test_generated_module_formats_with_black():
-    """Generated code with reserved-word method names must be valid and format with Black."""
     from ariadne_codegen.utils import ast_to_str
 
     schema_str = """
