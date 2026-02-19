@@ -461,6 +461,17 @@ Defaults to `"type_map"`. Used only if target is a Python file.
 Since `ariadne-codegen` has not yet reached a stable API, this approach is in place until version 1.0.0. Once the API stabilizes, the project will adopt [Semantic Versioning](https://semver.org/)..
 
 
+## Development
+
+Local checks use [just](https://github.com/casey/just). From the repo root:
+
+- `just check` – format check, typecheck, and tests (run before a PR)
+- `just test` – tests with coverage (Python 3.10)
+- `just test-all` – tests across all supported Python versions
+
+Run `just --list` to see all recipes.
+
+
 ## Contributing
 
 We welcome all contributions to Ariadne! If you've found a bug or issue, feel free to use [GitHub issues](https://github.com/mirumee/ariadne-codegen/issues). If you have any questions or feedback, don't hesitate to catch us on [GitHub discussions](https://github.com/mirumee/ariadne/discussions/).
