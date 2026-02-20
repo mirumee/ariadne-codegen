@@ -370,7 +370,7 @@ def test_main_can_read_config_from_provided_file(tmp_path):
         CLIENTS_PATH / "custom_config_file" / "queries.graphql",
         CLIENTS_PATH / "custom_config_file" / "schema.graphql",
     )
-    copy_files(files_to_copy, tmp_path)
+    copy_files(list(files_to_copy), tmp_path)
     expected_client_path = CLIENTS_PATH / "custom_config_file" / "expected_client"
     package_name = "custom_config_client"
 

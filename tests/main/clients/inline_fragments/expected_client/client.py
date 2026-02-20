@@ -115,7 +115,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="InterfaceWithTypename",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return InterfaceWithTypename.model_validate(data)
@@ -211,7 +211,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="queryWithFragmentOnInterface",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnInterface.model_validate(data)
@@ -243,7 +243,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="queryWithFragmentOnUnion",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnUnion.model_validate(data)
@@ -273,7 +273,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="queryWithFragmentOnQueryWithInterface",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnQueryWithInterface.model_validate(data)
@@ -304,7 +304,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="queryWithFragmentOnQueryWithUnion",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnQueryWithUnion.model_validate(data)
