@@ -42,6 +42,7 @@ class IntrospectionSettings:
     specified_by_url: bool = False
     schema_description: bool = False
     directive_is_repeatable: bool = False
+    # graphql-core will rename this to one_of in a future version (update when bumping)
     input_object_one_of: bool = False
 
 
