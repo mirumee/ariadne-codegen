@@ -48,7 +48,7 @@ test = [
   "websockets>=14.2",
   "opentelemetry-api",
 ]
-types = ["ty"]
+types = ["ty>=0.0.20,<0.1.0"]
 subscriptions = ["websockets>=15"]
 opentelemetry = ["opentelemetry-api"]
 

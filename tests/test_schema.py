@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import httpx
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema
@@ -183,9 +185,11 @@ def test_read_graphql_file_with_invalid_file_raises_invalid_graphql_syntax_excep
 ):
     with pytest.raises(InvalidGraphqlSyntax) as exc:
         read_graphql_file(invalid_syntax_schema_file)
-    # Use the actual exception value's message to avoid backslash escaping
-    # that can appear in the ExceptionInfo string on Windows.
-    assert str(invalid_syntax_schema_file) in str(exc.value)
+    # Normalize path separators so the assertion passes on Windows (path in
+    # message may use backslashes; we only care that the faulty file is named).
+    path_in_message = Path(invalid_syntax_schema_file).resolve().as_posix()
+    message_normalized = str(exc.value).replace("\\", "/")
+    assert path_in_message in message_normalized
 
 
 def test_walk_graphql_files_returns_graphql_files_from_directory(schemas_directory):
