@@ -65,7 +65,11 @@ def client(config_dict):
     fragments = []
     queries = []
     if settings.queries_path:
-        definitions = get_graphql_queries(settings.queries_path, schema, [get_validation_rule(e) for e in settings.skip_validation_rules])
+        definitions = get_graphql_queries(
+            settings.queries_path,
+            schema,
+            [get_validation_rule(e) for e in settings.skip_validation_rules],
+        )
         queries = filter_operations_definitions(definitions)
         fragments = filter_fragments_definitions(definitions)
 

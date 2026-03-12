@@ -17,7 +17,7 @@ from ariadne_codegen.schema import (
     read_graphql_file,
     walk_graphql_files,
 )
-from ariadne_codegen.settings import ValidationRuleSkips, get_validation_rule
+from ariadne_codegen.settings import get_validation_rule
 
 
 @pytest.fixture
@@ -541,8 +541,9 @@ def test_get_graphql_queries_with_duplicate_fragment_raises_invalid_operation(
         )
 
 
-def test_get_graphql_queries_with_unused_fragment_and_no_skip_rules_raises_invalid_operation(
-    single_file_query_with_unused_fragment, schema_str
+def test_unused_fragment_without_skips_raises_invalid_operation(
+    single_file_query_with_unused_fragment,
+    schema_str,
 ):
     with pytest.raises(InvalidOperationForSchema):
         get_graphql_queries(
@@ -552,14 +553,25 @@ def test_get_graphql_queries_with_unused_fragment_and_no_skip_rules_raises_inval
         )
 
 
-def test_get_graphql_queries_with_skip_unique_fragment_names_and_duplicate_fragment_returns_schema_definition(
-    single_file_query_with_duplicate_fragment, schema_str
+def test_duplicate_fragment_passes_when_skip_rule_enabled(
+    single_file_query_with_duplicate_fragment,
+    schema_str,
 ):
     get_graphql_queries(
         single_file_query_with_duplicate_fragment.as_posix(),
         build_schema(schema_str),
         [
-            get_validation_rule(ValidationRuleSkips.NoUnusedFragments),
-            get_validation_rule(ValidationRuleSkips.UniqueFragmentNames),
+            get_validation_rule("NoUnusedFragments"),
+            get_validation_rule("UniqueFragmentNames"),
         ],
     )
+
+
+def test_get_validation_rule_accepts_all_specified_rule_names():
+    rule = get_validation_rule("NoUnusedVariables")
+    assert rule.__name__ == "NoUnusedVariablesRule"
+
+
+def test_get_validation_rule_with_unknown_rule_raises_value_error():
+    with pytest.raises(ValueError):
+        get_validation_rule("UnknownRule")

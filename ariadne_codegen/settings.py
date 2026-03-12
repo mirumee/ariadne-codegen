@@ -6,7 +6,7 @@ from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
 
-from graphql.validation import UniqueFragmentNamesRule, NoUnusedFragmentsRule
+from graphql.validation import specified_rules
 
 from .client_generators.constants import (
     DEFAULT_ASYNC_BASE_CLIENT_NAME,
@@ -28,18 +28,19 @@ class CommentsStrategy(str, enum.Enum):
     TIMESTAMP = "timestamp"
 
 
-class ValidationRuleSkips(str, enum.Enum):
-    UniqueFragmentNames = "UniqueFragmentNames"
-    NoUnusedFragments = "NoUnusedFragments"
+VALIDATION_RULES_MAP = {
+    rule.__name__.removesuffix("Rule"): rule for rule in specified_rules
+}
 
 
-def get_validation_rule(rule: ValidationRuleSkips):
-    if rule == ValidationRuleSkips.UniqueFragmentNames:
-        return UniqueFragmentNamesRule
-    elif rule == ValidationRuleSkips.NoUnusedFragments:
-        return NoUnusedFragmentsRule
-    else:
-        raise ValueError(f"Unknown validation rule: {rule}")
+def get_validation_rule(rule: str):
+    try:
+        return VALIDATION_RULES_MAP[rule]
+    except KeyError as exc:
+        supported_rules = ", ".join(sorted(VALIDATION_RULES_MAP))
+        raise ValueError(
+            f"Unknown validation rule: {rule}. Supported values are: {supported_rules}"
+        ) from exc
 
 
 class Strategy(str, enum.Enum):
@@ -89,9 +90,9 @@ class ClientSettings(BaseSettings):
     include_all_enums: bool = True
     async_client: bool = True
     opentelemetry_client: bool = False
-    skip_validation_rules: list[ValidationRuleSkips] = field(
+    skip_validation_rules: list[str] = field(
         default_factory=lambda: [
-            ValidationRuleSkips.UniqueFragmentNames,
+            "NoUnusedFragments",
         ]
     )
     files_to_include: list[str] = field(default_factory=list)
