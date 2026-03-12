@@ -1,7 +1,7 @@
 import enum
 import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
@@ -32,6 +32,21 @@ class Strategy(str, enum.Enum):
 
 
 @dataclass
+class IntrospectionSettings:
+    """
+    Introspection settings for schema generation.
+    """
+
+    descriptions: bool = False
+    input_value_deprecation: bool = False
+    specified_by_url: bool = False
+    schema_description: bool = False
+    directive_is_repeatable: bool = False
+    # graphql-core will rename this to one_of in a future version (update when bumping)
+    input_object_one_of: bool = False
+
+
+@dataclass
 class BaseSettings:
     schema_path: str = ""
     remote_schema_url: str = ""
@@ -40,6 +55,12 @@ class BaseSettings:
     remote_schema_timeout: float = 5
     enable_custom_operations: bool = False
     plugins: list[str] = field(default_factory=list)
+    introspection_descriptions: bool = False
+    introspection_input_value_deprecation: bool = False
+    introspection_specified_by_url: bool = False
+    introspection_schema_description: bool = False
+    introspection_directive_is_repeatable: bool = False
+    introspection_input_object_one_of: bool = False
 
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:
@@ -53,6 +74,37 @@ class BaseSettings:
         self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
         if self.remote_schema_url:
             self.remote_schema_url = resolve_env_vars_in_string(self.remote_schema_url)
+
+    @property
+    def using_remote_schema(self) -> bool:
+        """
+        Return true if remote schema is used as source, false otherwise.
+        """
+        return bool(self.remote_schema_url) and not bool(self.schema_path)
+
+    @property
+    def introspection_settings(self) -> IntrospectionSettings:
+        """
+        Return ``IntrospectionSettings`` instance build from provided configuration.
+        """
+        return IntrospectionSettings(
+            descriptions=self.introspection_descriptions,
+            input_value_deprecation=self.introspection_input_value_deprecation,
+            specified_by_url=self.introspection_specified_by_url,
+            schema_description=self.introspection_schema_description,
+            directive_is_repeatable=self.introspection_directive_is_repeatable,
+            input_object_one_of=self.introspection_input_object_one_of,
+        )
+
+    def _introspection_settings_message(self) -> str:
+        """
+        Return human readable message with introspection settings values.
+        """
+        formatted = ", ".join(
+            f"{key}={str(value).lower()}"
+            for key, value in asdict(self.introspection_settings).items()
+        )
+        return f"Introspection settings: {formatted}"
 
 
 @dataclass
@@ -177,10 +229,14 @@ class ClientSettings(BaseSettings):
             if self.include_typename
             else "Not including __typename fields in generated queries."
         )
+        introspection_msg = (
+            self._introspection_settings_message() if self.using_remote_schema else ""
+        )
         return dedent(
             f"""\
             Selected strategy: {Strategy.CLIENT}
             Using schema from '{self.schema_path or self.remote_schema_url}'.
+            {introspection_msg}
             Reading queries from '{self.queries_path}'.
             Using '{self.target_package_name}' as package name.
             Generating package into '{self.target_package_path}'.
@@ -221,12 +277,16 @@ class GraphQLSchemaSettings(BaseSettings):
             if self.plugins
             else "No plugin is being used."
         )
+        introspection_msg = (
+            self._introspection_settings_message() if self.using_remote_schema else ""
+        )
 
         if self.target_file_format == "py":
             return dedent(
                 f"""\
                 Selected strategy: {Strategy.GRAPHQL_SCHEMA}
                 Using schema from {self.schema_path or self.remote_schema_url}
+                {introspection_msg}
                 Saving graphql schema to: {self.target_file_path}
                 Using {self.schema_variable_name} as variable name for schema.
                 Using {self.type_map_variable_name} as variable name for type map.
@@ -238,6 +298,7 @@ class GraphQLSchemaSettings(BaseSettings):
             f"""\
             Selected strategy: {Strategy.GRAPHQL_SCHEMA}
             Using schema from {self.schema_path or self.remote_schema_url}
+            {introspection_msg}
             Saving graphql schema to: {self.target_file_path}
             {plugins_msg}
             """

@@ -79,6 +79,15 @@ Optional settings:
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
 
+These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`.
+
+- `introspection_descriptions` (defaults to `false`) – include descriptions in the introspection result
+- `introspection_input_value_deprecation` (defaults to `false`) – include deprecation information for input values
+- `introspection_specified_by_url` (defaults to `false`) – include `specifiedByUrl` for custom scalars
+- `introspection_schema_description` (defaults to `false`) – include schema description
+- `introspection_directive_is_repeatable` (defaults to `false`) – include `isRepeatable` information for directives
+- `introspection_input_object_one_of` (defaults to `false`) – include `oneOf` information for input objects
+
 ## Custom operation builder
 
 The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way.
@@ -178,7 +187,7 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
     [tool.ariadne-codegen]
     ...
     plugins = ["ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin"]
-    
+
     [tool.ariadne-codegen.extract_operations]
     operations_module_name = "custom_operations_module_name"
     ```

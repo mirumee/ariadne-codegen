@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, cast
 
@@ -29,6 +30,7 @@ from .exceptions import (
     InvalidGraphqlSyntax,
     InvalidOperationForSchema,
 )
+from .settings import IntrospectionSettings
 
 
 def filter_operations_definitions(
@@ -68,10 +70,15 @@ def get_graphql_schema_from_url(
     headers: Optional[dict[str, str]] = None,
     verify_ssl: bool = True,
     timeout: float = 5,
+    introspection_settings: Optional[IntrospectionSettings] = None,
 ) -> GraphQLSchema:
     return build_client_schema(
         introspect_remote_schema(
-            url=url, headers=headers, verify_ssl=verify_ssl, timeout=timeout
+            url=url,
+            headers=headers,
+            verify_ssl=verify_ssl,
+            timeout=timeout,
+            introspection_settings=introspection_settings,
         ),
         assume_valid=True,
     )
@@ -82,11 +89,15 @@ def introspect_remote_schema(
     headers: Optional[dict[str, str]] = None,
     verify_ssl: bool = True,
     timeout: float = 5,
+    introspection_settings: Optional[IntrospectionSettings] = None,
 ) -> IntrospectionQuery:
+    # If introspection settings are not provided, use default values.
+    settings = introspection_settings or IntrospectionSettings()
+    query = get_introspection_query(**asdict(settings))
     try:
         response = httpx.post(
             url,
-            json={"query": get_introspection_query(descriptions=False)},
+            json={"query": query},
             headers=headers,
             verify=verify_ssl,
             timeout=timeout,
@@ -105,14 +116,14 @@ def introspect_remote_schema(
     except ValueError as exc:
         raise IntrospectionError("Introspection result is not a valid json.") from exc
 
-    if (not isinstance(response_json, dict)) or ("data" not in response_json):
+    if not isinstance(response_json, dict):
         raise IntrospectionError("Invalid introspection result format.")
 
     errors = response_json.get("errors")
     if errors:
         raise IntrospectionError(f"Introspection errors: {errors}")
 
-    data = response_json["data"]
+    data = response_json.get("data")
     if not isinstance(data, dict):
         raise IntrospectionError("Invalid data key in introspection result.")
 
