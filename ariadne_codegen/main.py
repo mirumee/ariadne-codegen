@@ -51,6 +51,7 @@ def client(config_dict):
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
             timeout=settings.remote_schema_timeout,
+            introspection_settings=settings.introspection_settings,
         )
 
     plugin_manager = PluginManager(
@@ -99,6 +100,7 @@ def graphql_schema(config_dict):
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
             timeout=settings.remote_schema_timeout,
+            introspection_settings=settings.introspection_settings,
         )
     )
     plugin_manager = PluginManager(
