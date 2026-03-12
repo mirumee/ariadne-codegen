@@ -88,9 +88,7 @@ from ...utils import compare_ast, filter_class_defs
                     bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
                     keywords=[],
                     decorator_list=[],
-                    body=[
-                        ast.Pass()
-                    ],
+                    body=[ast.Pass()],
                     type_params=[],
                 ),
             ],
