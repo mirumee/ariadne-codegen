@@ -156,7 +156,7 @@ class InputTypesGenerator:
         class_def = generate_class_def(
             name=definition.name,
             base_names=[BASE_MODEL_CLASS_NAME],
-            description=definition.description,
+            description=definition.description or "",
         )
         lineno = 0
         for org_name, field in definition.fields.items():

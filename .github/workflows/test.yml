@@ -38,10 +38,7 @@ jobs:
       uses: pypa/hatch@257e27e51a6a5616ed08a39a408a21c35c9931bc
 
     - name: Run static analysis
-      run: hatch fmt --check
-
-    - name: Run type checking
-      run: hatch run types:check
+      run: hatch run lint
 
     - name: Run tests
       run: hatch test -c -py ${{ matrix.python-version }}

@@ -1,3 +1,3 @@
 from . import main
 
-main.main()  # type: ignore
+main.main()

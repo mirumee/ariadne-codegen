@@ -31,9 +31,7 @@ dependencies = [
   "toml~=0.10",
   "httpx~=0.28",
   "pydantic>=2.0.0,<3.0.0",
-  "isort",
-  "autoflake",
-  "black",
+  "ruff>=0.15.0,<0.16.0",
 ]
 
 [project.optional-dependencies]
@@ -50,7 +48,7 @@ test = [
   "websockets>=14.2",
   "opentelemetry-api",
 ]
-types = ["mypy>=1.19.0"]
+types = ["ty"]
 subscriptions = ["websockets>=15"]
 opentelemetry = ["opentelemetry-api"]
 
@@ -79,6 +77,7 @@ features = ["dev", "types", "test", "subscriptions", "opentelemetry"]
 path = ".venv"
 
 [tool.hatch.envs.default.scripts]
+lint = ["hatch fmt --check", "hatch run types:check"]
 check = [
   "hatch fmt",
   "hatch test -a -p",
@@ -89,15 +88,11 @@ check = [
 ## Types environment
 
 [tool.hatch.envs.types.scripts]
-check = [
-  "mypy tests/main/clients/*/expected_client",
-  "mypy tests/main/graphql_schemas/*/expected_schema.py",
-  "mypy ariadne_codegen/client_generators/dependencies",
-]
+check = ["ty check"]
 
 [tool.hatch.envs.hatch-static-analysis]
 config-path = "none"
-dependencies = ["ruff>=0.14.0,<0.15.0"]
+dependencies = ["ruff>=0.15.0,<0.16.0"]
 
 ## Test environments
 
@@ -108,15 +103,41 @@ extra-args = []
 [[tool.hatch.envs.hatch-test.matrix]]
 python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
-## Types configuration
+## Type checker (ty) configuration
 
-[tool.mypy]
-python_version = "3.10"
-files = ["ariadne_codegen", "tests"]
-check_untyped_defs = true
-ignore_missing_imports = true
-no_implicit_reexport = true
-disable_error_code = ["import-untyped"]
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+include = ["ariadne_codegen", "tests"]
+
+[tool.ty.rules]
+# Dependency files contain # type: ignore comments for mypy/pyright compat
+unused-type-ignore-comment = "ignore"
+# Some casts improve readability even when technically redundant for ty
+redundant-cast = "ignore"
+
+# Relax checks in test files (AST stubs are stricter than runtime behaviour;
+# union narrowing and stub limitations produce many false positives in tests)
+[[tool.ty.overrides]]
+include = ["tests/**"]
+[tool.ty.overrides.rules]
+missing-argument = "ignore"
+no-matching-overload = "ignore"
+unresolved-attribute = "ignore"
+invalid-argument-type = "ignore"
+unknown-argument = "ignore"
+not-iterable = "ignore"
+possibly-missing-attribute = "ignore"
+
+# Relax checks in generated expected output (not first-party packages)
+[[tool.ty.overrides]]
+include = [
+  "tests/main/clients/*/expected_client/**",
+  "tests/main/graphql_schemas/*/expected_schema.py",
+]
+[tool.ty.overrides.analysis]
+allowed-unresolved-imports = ["**"]
 
 ## Coverage configuration
 
@@ -151,7 +172,7 @@ docstring-code-line-length = 99
 exclude = ["tests/main/clients/*/expected_client/*"]
 
 [tool.ruff.lint]
-select = ["E", "F", "G", "I", "N", "Q", "UP", "C90", "T20", "TID"]
+select = ["E", "F", "G", "I", "N", "Q", "UP", "B", "C90", "SIM", "T20", "TID"]
 ignore = ["TID252", "UP006", "UP007", "UP045"]
 task-tags = ["NOTE", "TODO", "FIXME", "HACK", "XXX"]
 

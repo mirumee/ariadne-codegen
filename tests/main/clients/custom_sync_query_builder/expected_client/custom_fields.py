@@ -250,7 +250,7 @@ class ProductCountableConnectionFields(GraphQLField):
             ProductCountableConnectionGraphQLField,
             "PageInfoFields",
             "ProductCountableEdgeFields",
-        ]
+        ],
     ) -> "ProductCountableConnectionFields":
         """Subfields should come from the ProductCountableConnectionFields class"""
         self._subfields.extend(subfields)
@@ -327,7 +327,7 @@ class ProductTypeCountableConnectionFields(GraphQLField):
 
     def fields(
         self,
-        *subfields: Union[ProductTypeCountableConnectionGraphQLField, "PageInfoFields"]
+        *subfields: Union[ProductTypeCountableConnectionGraphQLField, "PageInfoFields"],
     ) -> "ProductTypeCountableConnectionFields":
         """Subfields should come from the ProductTypeCountableConnectionFields class"""
         self._subfields.extend(subfields)
@@ -359,7 +359,7 @@ class TranslatableItemConnectionFields(GraphQLField):
             TranslatableItemConnectionGraphQLField,
             "PageInfoFields",
             "TranslatableItemEdgeFields",
-        ]
+        ],
     ) -> "TranslatableItemConnectionFields":
         """Subfields should come from the TranslatableItemConnectionFields class"""
         self._subfields.extend(subfields)
@@ -380,7 +380,7 @@ class TranslatableItemEdgeFields(GraphQLField):
 
     def fields(
         self,
-        *subfields: Union[TranslatableItemEdgeGraphQLField, "TranslatableItemUnion"]
+        *subfields: Union[TranslatableItemEdgeGraphQLField, "TranslatableItemUnion"],
     ) -> "TranslatableItemEdgeFields":
         """Subfields should come from the TranslatableItemEdgeFields class"""
         self._subfields.extend(subfields)
@@ -410,7 +410,7 @@ class UpdateMetadataFields(GraphQLField):
             UpdateMetadataGraphQLField,
             "MetadataErrorFields",
             "ObjectWithMetadataInterface",
-        ]
+        ],
     ) -> "UpdateMetadataFields":
         """Subfields should come from the UpdateMetadataFields class"""
         self._subfields.extend(subfields)

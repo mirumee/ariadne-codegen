@@ -163,7 +163,7 @@ class CustomOperationGenerator:
             ),
             arguments=method_arguments,
             return_type=generate_name(return_type_name),
-            description=description,
+            description=description or "",
             body=[
                 *arguments_body,
                 generate_return(

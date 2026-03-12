@@ -26,7 +26,7 @@ def generate_named_type(type_: GraphQLNamedType, type_map_name: str) -> ast.Call
         GraphQLEnumType: generate_enum_type,
         GraphQLInputObjectType: generate_input_object_type,
     }
-    generate_method = generate_methods_map.get(type(type_), None)
+    generate_method = generate_methods_map.get(type(type_))
     if not generate_method:
         raise NotSupported(f"Unknown type: {type(type_)}")
 
