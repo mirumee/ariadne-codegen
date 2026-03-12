@@ -323,4 +323,4 @@ class ArgumentGenerator:
         arguments_keyword = [
             generate_keyword(arg="arguments", value=generate_name("cleared_arguments"))
         ]
-        return arguments_body, arguments_keyword
+        return (cast(list[ast.stmt], arguments_body), arguments_keyword)
