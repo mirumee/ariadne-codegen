@@ -92,6 +92,7 @@ class PackageGenerator:
         default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
         ignore_extra_fields: bool = True,
+        models_only: bool = False,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -150,13 +151,15 @@ class PackageGenerator:
         self._unpacked_fragments: set[str] = set()
         self._used_enums: list[str] = []
 
+        self.models_only = models_only
         self.enable_custom_operations = enable_custom_operations
         if self.enable_custom_operations:
             self.files_to_include.append(self.base_schema_root_file_path)
 
     def generate(self) -> list[str]:
         """Generate package with graphql client."""
-        self._include_exceptions()
+        if not self.models_only:
+            self._include_exceptions()
         self._validate_unique_file_names()
         if not self.package_path.exists():
             self.package_path.mkdir()
@@ -164,7 +167,7 @@ class PackageGenerator:
         self._generate_result_types()
         self._generate_fragments()
         self._copy_files()
-        if self.enable_custom_operations:
+        if not self.models_only and self.enable_custom_operations:
             self._generate_custom_fields_typing()
             self._generate_custom_fields()
             self.client_generator.add_execute_custom_operation_method(self.async_client)
@@ -179,7 +182,8 @@ class PackageGenerator:
                     "mutation", OperationType.MUTATION.value.upper(), self.async_client
                 )
 
-        self._generate_client()
+        if not self.models_only:
+            self._generate_client()
         self._generate_enums()
         self._generate_init()
 
@@ -223,14 +227,15 @@ class PackageGenerator:
             query_types_generator.get_generated_public_names(), module_name, 1
         )
 
-        self.client_generator.add_method(
-            definition=definition,
-            name=method_name,
-            return_type=return_type_name,
-            return_type_module=module_name,
-            operation_str=operation_str,
-            async_=self.async_client,
-        )
+        if not self.models_only:
+            self.client_generator.add_method(
+                definition=definition,
+                name=method_name,
+                return_type=return_type_name,
+                return_type_module=module_name,
+                operation_str=operation_str,
+                async_=self.async_client,
+            )
 
     def _include_exceptions(self):
         if self.base_client_file_path in (
@@ -247,18 +252,19 @@ class PackageGenerator:
             )
 
     def _validate_unique_file_names(self):
-        file_names = (
-            [
+        file_names = [
+            self.base_model_file_path.name,
+            f"{self.enums_module_name}.py",
+            f"{self.input_types_module_name}.py",
+            f"{self.fragments_module_name}.py",
+        ]
+        if not self.models_only:
+            file_names += [
                 f"{self.client_file_name}.py",
                 self.base_client_file_path.name,
-                self.base_model_file_path.name,
-                f"{self.enums_module_name}.py",
-                f"{self.input_types_module_name}.py",
-                f"{self.fragments_module_name}.py",
             ]
-            + list(self._result_types_files.keys())
-            + [f.name for f in self.files_to_include]
-        )
+        file_names += list(self._result_types_files.keys())
+        file_names += [f.name for f in self.files_to_include]
 
         if len(file_names) != len(set(file_names)):
             seen = set()
@@ -310,7 +316,7 @@ class PackageGenerator:
         )
 
     def _generate_input_types(self):
-        if self.include_all_inputs:
+        if self.include_all_inputs or self.models_only:
             module = self.input_types_generator.generate()
         else:
             used_inputs = self.client_generator.arguments_generator.get_used_inputs()
@@ -359,10 +365,9 @@ class PackageGenerator:
         )
 
     def _copy_files(self):
-        files_to_copy = self.files_to_include + [
-            self.base_client_file_path,
-            self.base_model_file_path,
-        ]
+        files_to_copy = self.files_to_include + [self.base_model_file_path]
+        if not self.models_only:
+            files_to_copy.append(self.base_client_file_path)
         for source_path in files_to_copy:
             code = self._add_comments_to_code(source_path.read_text(encoding="utf-8"))
             if not self.ignore_extra_fields and source_path.name == "base_model.py":
@@ -373,11 +378,12 @@ class PackageGenerator:
             target_path.write_text(code)
             self._generated_files.append(target_path.name)
 
-        self.init_generator.add_import(
-            names=[self.base_client_name],
-            from_=self.base_client_file_path.stem,
-            level=1,
-        )
+        if not self.models_only:
+            self.init_generator.add_import(
+                names=[self.base_client_name],
+                from_=self.base_client_file_path.stem,
+                level=1,
+            )
         self.init_generator.add_import(
             names=[BASE_MODEL_CLASS_NAME, UPLOAD_CLASS_NAME],
             from_=self.base_model_file_path.stem,
@@ -429,20 +435,30 @@ def get_package_generator(
     plugin_manager: PluginManager,
 ) -> PackageGenerator:
     init_generator = InitFileGenerator(plugin_manager=plugin_manager)
-    client_generator = ClientGenerator(
-        base_client_import=generate_import_from(
+    if settings.models_only:
+        base_client_import = generate_import_from(
+            names=["object"], from_="builtins", level=0
+        )
+        client_name = "Client"
+        base_client = "object"
+    else:
+        base_client_import = generate_import_from(
             names=[settings.base_client_name],
             from_=Path(settings.base_client_file_path).stem,
             level=1,
-        ),
+        )
+        client_name = settings.client_name
+        base_client = settings.base_client_name
+    client_generator = ClientGenerator(
+        base_client_import=base_client_import,
         arguments_generator=ArgumentsGenerator(
             schema=schema,
             convert_to_snake_case=settings.convert_to_snake_case,
             custom_scalars=settings.scalars,
             plugin_manager=plugin_manager,
         ),
-        name=settings.client_name,
-        base_client=settings.base_client_name,
+        name=client_name,
+        base_client=base_client,
         enums_module_name=settings.enums_module_name,
         input_types_module_name=settings.input_types_module_name,
         unset_import=UNSET_IMPORT,
@@ -553,4 +569,5 @@ def get_package_generator(
         default_optional_fields_to_none=settings.default_optional_fields_to_none,
         include_typename=settings.include_typename,
         ignore_extra_fields=settings.ignore_extra_fields,
+        models_only=settings.models_only,
     )

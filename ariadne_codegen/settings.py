@@ -78,9 +78,14 @@ class ClientSettings(BaseSettings):
     default_optional_fields_to_none: bool = False
     include_typename: bool = True
     ignore_extra_fields: bool = True
+    models_only: bool = False
 
     def __post_init__(self):
-        if not self.queries_path and not self.enable_custom_operations:
+        if (
+            not self.queries_path
+            and not self.enable_custom_operations
+            and not self.models_only
+        ):
             raise TypeError("__init__ missing 1 required argument: 'queries_path'")
         super().__post_init__()
 
@@ -93,24 +98,27 @@ class ClientSettings(BaseSettings):
                 f"Valid options are: {valid_options}"
             ) from exc
 
-        self._set_default_base_client_data()
+        if not self.models_only:
+            self._set_default_base_client_data()
 
         for name, data in self.scalars.items():
             data.graphql_name = name
 
-        assert_path_exists(self.queries_path)
+        if self.queries_path:
+            assert_path_exists(self.queries_path)
 
         assert_string_is_valid_python_identifier(self.target_package_name)
         assert_path_is_valid_directory(self.target_package_path)
 
-        assert_string_is_valid_python_identifier(self.client_name)
-        assert_string_is_valid_python_identifier(self.client_file_name)
-        assert_string_is_valid_python_identifier(self.base_client_name)
-        assert_path_exists(self.base_client_file_path)
-        assert_path_is_valid_file(self.base_client_file_path)
-        assert_class_is_defined_in_file(
-            Path(self.base_client_file_path), self.base_client_name
-        )
+        if not self.models_only:
+            assert_string_is_valid_python_identifier(self.client_name)
+            assert_string_is_valid_python_identifier(self.client_file_name)
+            assert_string_is_valid_python_identifier(self.base_client_name)
+            assert_path_exists(self.base_client_file_path)
+            assert_path_is_valid_file(self.base_client_file_path)
+            assert_class_is_defined_in_file(
+                Path(self.base_client_file_path), self.base_client_name
+            )
 
         assert_string_is_valid_python_identifier(self.enums_module_name)
         assert_string_is_valid_python_identifier(self.input_types_module_name)
@@ -177,6 +185,23 @@ class ClientSettings(BaseSettings):
             if self.include_typename
             else "Not including __typename fields in generated queries."
         )
+        if self.models_only:
+            return dedent(
+                f"""\
+                Selected strategy: {Strategy.CLIENT}
+                Generating models only.
+                Using schema from '{self.schema_path or self.remote_schema_url}'.
+                Using '{self.target_package_name}' as package name.
+                Generating package into '{self.target_package_path}'.
+                Generating enums into '{self.enums_module_name}.py'.
+                Generating inputs into '{self.input_types_module_name}.py'.
+                Generating fragments into '{self.fragments_module_name}.py'.
+                Comments type: {self.include_comments.value}
+                {snake_case_msg}
+                {files_to_include_msg}
+                {plugins_msg}
+                """
+            )
         return dedent(
             f"""\
             Selected strategy: {Strategy.CLIENT}
