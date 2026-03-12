@@ -6,40 +6,44 @@ We welcome bug reports, questions, pull requests, and general feedback.
 
 We also ask all contributors to familiarize themselves with and follow code of conduct, available in the [CODE_OF_CONDUCT.md](https://github.com/mirumee/ariadne/blob/master/CODE_OF_CONDUCT.md) file kept in the main project's repository.
 
-
-# Reporting bugs, asking for help, offering feedback and ideas
+## Reporting bugs, asking for help, offering feedback and ideas
 
 You can use [GitHub issues](https://github.com/mirumee/ariadne-codegen/issues) to report bugs, ask for help, share your ideas, or simply offer feedback. We are curious what you think of Ariadne!
 
-
 ## Development setup
 
-Ariadne Code Generator is written to support Python 3.9, 3.10, 3.11, 3.12 and 3.13.
+Ariadne Code Generator is written to support Python 3.10, 3.11, 3.12, 3.13 and 3.14.
 
 We use [Hatch](https://github.com/pypa/hatch) for project management.
 
-The codebase is formatted using [ruff](https://github.com/astral-sh/ruff).
-To format the code, use the following command:
+Formatting and linting (including typing-related rules) use [ruff](https://github.com/astral-sh/ruff). To format the code, run:
+
 ```bash
 hatch fmt
 ```
 
-The contents of the `ariadne-codegen` package are annotated with types and validated using [mypy](http://mypy-lang.org/index.html). To run type checking with mypy, use:
+The contents of the `ariadne-codegen` package are annotated with types and validated using [ty](https://github.com/astral-sh/ty). To run type checking, use:
+
 ```bash
 hatch run types:check
 ```
 
-
 Tests are developed using [pytest](https://pytest.org/) and are managed with Hatch.
 
-
 To run the tests, use:
+
 ```bash
 hatch test
 ```
 
+To run linting (formatting check + type checking):
 
-To run all checks (formatting, type checking, and tests), you can use:
+```bash
+hatch run lint
+```
+
+To run all checks (formatting, type checking, and tests):
+
 ```bash
 hatch run check
 ```
@@ -48,13 +52,11 @@ We require all changes to be done via pull requests, and to be approved by membe
 
 All changes should pass these linter checks.
 
-
 ## Working on issues
 
 We consider all issues which are not assigned to anybody as being available for contributors. The **[help wanted](https://github.com/mirumee/ariadne-codegen/labels/help%20wanted)** label is used to single out issues that we consider easier or higher priority on the list of things that we would like to see.
 
 If you've found issue you want to help with, please add your comment to it - this lets other contributors know what issues are being worked on, as well as allowing maintainers to offer guidance and help.
-
 
 ## Pull requests
 

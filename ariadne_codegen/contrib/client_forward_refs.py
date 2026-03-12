@@ -387,10 +387,9 @@ class ClientForwardRefsPlugin(Plugin):
         :param node: The ast node used as return type
         :returns: A modified ast node
         """
-        if isinstance(node, ast.Name):
-            if node.id in self.imported_classes:
-                self.input_and_return_types.add(node.id)
-                return ast.Constant(value=node.id)
+        if isinstance(node, ast.Name) and node.id in self.imported_classes:
+            self.input_and_return_types.add(node.id)
+            return ast.Constant(value=node.id)
 
         if isinstance(node, ast.Subscript):
             node.slice = self._update_name_to_constant(node.slice)

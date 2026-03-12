@@ -23,7 +23,7 @@ from ..codegen import (
     generate_return,
 )
 from ..plugins.manager import PluginManager
-from ..utils import str_to_snake_case
+from ..utils import process_name
 from .arguments import ArgumentsGenerator
 from .constants import (
     ANY,
@@ -156,10 +156,14 @@ class CustomOperationGenerator:
             )
 
         return generate_method_definition(
-            name=str_to_snake_case(operation_name),
+            name=process_name(
+                operation_name,
+                convert_to_snake_case=self.convert_to_snake_case,
+                plugin_manager=self.plugin_manager,
+            ),
             arguments=method_arguments,
             return_type=generate_name(return_type_name),
-            description=description,
+            description=description or "",
             body=[
                 *arguments_body,
                 generate_return(

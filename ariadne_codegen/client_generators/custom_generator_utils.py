@@ -40,6 +40,9 @@ class TypeCollector:
                     subfield_type = get_final_type(subfield)
                     if isinstance(subfield_type, GraphQLObjectType):
                         stack.append(subfield_type)
+                    elif isinstance(subfield_type, GraphQLInterfaceType):
+                        stack.append(subfield_type)
+                        stack.extend(self.schema.get_possible_types(subfield_type))
                     elif isinstance(subfield_type, GraphQLUnionType):
                         stack.extend(subfield_type.types)
                 for interface in current_type.interfaces:

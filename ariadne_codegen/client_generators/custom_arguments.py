@@ -170,15 +170,17 @@ class ArgumentGenerator:
         ],
     ) -> str:
         if isinstance(complete_type, GraphQLNonNull):
-            if hasattr(complete_type, "of_type"):
-                return f"{self._generate_complete_type_name(complete_type.of_type)}!"
-            else:
-                return f"{self._generate_complete_type_name(complete_type.type)}"
+            inner = cast(
+                GraphQLObjectType,
+                getattr(complete_type, "of_type", complete_type),
+            )
+            return f"{self._generate_complete_type_name(inner)}!"
         if isinstance(complete_type, GraphQLList):
-            if hasattr(complete_type, "of_type"):
-                return f"[{self._generate_complete_type_name(complete_type.of_type)}]"
-            else:
-                return f"[{self._generate_complete_type_name(complete_type.type)}]"
+            inner = cast(
+                GraphQLObjectType,
+                getattr(complete_type, "of_type", complete_type),
+            )
+            return f"[{self._generate_complete_type_name(inner)}]"
         return complete_type.name
 
     def _generate_return_arg_value(
@@ -321,4 +323,4 @@ class ArgumentGenerator:
         arguments_keyword = [
             generate_keyword(arg="arguments", value=generate_name("cleared_arguments"))
         ]
-        return arguments_body, arguments_keyword
+        return (cast(list[ast.stmt], arguments_body), arguments_keyword)

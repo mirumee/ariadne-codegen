@@ -29,6 +29,7 @@ def generate_import_from(
     names: list[str], from_: Optional[str] = None, level: int = 0
 ) -> ast.ImportFrom:
     """Generate import from statement."""
+    assert names, "Using ImportFrom with no names would produce invalid Python code"
     return ast.ImportFrom(
         module=from_, names=[ast.alias(n) for n in names], level=level
     )
@@ -392,7 +393,7 @@ def generate_async_for(
     return ast.AsyncFor(
         target=target,
         iter=iter_,
-        body=body or [ast.Pass()],
+        body=cast(list[ast.stmt], body or [ast.Pass()]),
         orelse=orelse or [],
         lineno=lineno,
     )

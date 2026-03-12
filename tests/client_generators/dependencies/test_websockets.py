@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import pytest
@@ -6,6 +7,7 @@ from ariadne_codegen.client_generators.dependencies.async_base_client import (
     AsyncBaseClient,
 )
 from ariadne_codegen.client_generators.dependencies.exceptions import (
+    GraphQLClientError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientInvalidMessageFormat,
 )
@@ -261,12 +263,19 @@ async def test_execute_ws_raises_graphql_multi_error_for_message_with_error_type
 
 @pytest.mark.asyncio
 async def test_execute_ws_raises_invalid_message_format_for_missing_ack_after_init(
-    mocked_faulty_websocket,
+    mocked_faulty_websocket, mocker
 ):
-    mocked_faulty_websocket.recv.return_value = json.dumps(
-        {"type": "next", "payload": {"data": "test_data"}}
+    """Server sends non-ack (e.g. next) instead of connection_ack; we timeout."""
+    mocked_faulty_websocket.__aiter__.return_value = [
+        json.dumps({"type": "next", "payload": {"data": "test_data"}}),
+    ]
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.asyncio.wait_for",
+        side_effect=asyncio.TimeoutError("timed out"),
     )
 
-    with pytest.raises(GraphQLClientInvalidMessageFormat):
+    with pytest.raises(GraphQLClientError) as exc_info:
         async for _ in AsyncBaseClient().execute_ws(""):
             pass
+
+    assert "Connection ack not received" in str(exc_info.value)

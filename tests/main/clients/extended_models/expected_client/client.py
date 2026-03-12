@@ -59,7 +59,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="getQueryAWithFragment",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetQueryAWithFragment.model_validate(data)
@@ -88,7 +88,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="fragmentsWithMixins",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return FragmentsWithMixins.model_validate(data)

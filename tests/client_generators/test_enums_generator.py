@@ -214,3 +214,41 @@ def test_generate_returns_module_with_filtered_classes(types_to_include, public_
     class_names = [c.name for c in filter_class_defs(module)]
     assert sorted(generator.get_generated_public_names()) == sorted(public_names)
     assert sorted(class_names) == sorted(public_names)
+
+
+def test_enum_value_builtin_name_gets_underscore_suffix():
+    """Enum value that is a Python builtin (e.g. 'type') gets trailing underscore."""
+    schema_str = """
+    enum Reserved {
+        type
+        int
+        str
+    }
+    """
+    generator = EnumsGenerator(schema=build_ast_schema(parse(schema_str)))
+    module = generator.generate()
+    class_def = get_class_def(module)
+    names = [
+        t.id for a in class_def.body for t in a.targets if isinstance(a, ast.Assign)
+    ]
+    assert names == ["type_", "int_", "str_"]
+
+
+def test_generate_triggers_process_name_hook_for_every_enum_value(
+    mocked_plugin_manager,
+):
+    """process_name is called for each enum value when plugin_manager is provided."""
+    schema_str = """
+    enum TestEnum {
+        A
+        B
+        C
+    }
+    """
+    generator = EnumsGenerator(
+        schema=build_ast_schema(parse(schema_str)), plugin_manager=mocked_plugin_manager
+    )
+    generator.generate()
+    assert mocked_plugin_manager.process_name.call_count == 3
+    names_passed = [c.args[0] for c in mocked_plugin_manager.process_name.mock_calls]
+    assert names_passed == ["A", "B", "C"]

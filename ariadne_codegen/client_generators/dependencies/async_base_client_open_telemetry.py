@@ -407,15 +407,19 @@ class AsyncBaseClientOpenTelemetry:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
     ) -> None:
+        payload_inner: dict[str, Any] = {
+            "query": query,
+            "operationName": operation_name,
+        }
+        if variables:
+            payload_inner["variables"] = self._convert_dict_to_json_serializable(
+                variables
+            )
         payload: dict[str, Any] = {
             "id": operation_id,
             "type": GraphQLTransportWSMessageType.SUBSCRIBE.value,
-            "payload": {"query": query, "operationName": operation_name},
+            "payload": payload_inner,
         }
-        if variables:
-            payload["payload"]["variables"] = self._convert_dict_to_json_serializable(
-                variables
-            )
         await websocket.send(json.dumps(payload))
 
     async def _handle_ws_message(

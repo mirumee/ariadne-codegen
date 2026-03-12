@@ -39,7 +39,9 @@ def test_init_creates_plugins_instances():
 def test_generate_init_module_calls_plugins_generate_init_module(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_init_module(ast.Module(body=[]))
+    plugin_manager_with_mocked_plugins.generate_init_module(
+        ast.Module(body=[], type_ignores=[])
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_init_module.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_init_module.called
@@ -48,7 +50,9 @@ def test_generate_init_module_calls_plugins_generate_init_module(
 def test_generate_init_import_calls_plugins_generate_init_import(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_init_import(ast.ImportFrom())
+    plugin_manager_with_mocked_plugins.generate_init_import(
+        ast.ImportFrom(module=None, names=[], level=0)
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_init_import.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_init_import.called
@@ -56,7 +60,7 @@ def test_generate_init_import_calls_plugins_generate_init_import(
 
 def test_generate_enum_calls_plugins_generate_enum(plugin_manager_with_mocked_plugins):
     plugin_manager_with_mocked_plugins.generate_enum(
-        ast.ClassDef(),
+        ast.ClassDef(name="", bases=[], keywords=[], body=[], decorator_list=[]),
         enum_type=GraphQLEnumType("TestEnum", values=cast(GraphQLEnumValueMap, {})),
     )
 
@@ -67,7 +71,9 @@ def test_generate_enum_calls_plugins_generate_enum(plugin_manager_with_mocked_pl
 def test_generate_enums_module_calls_plugins_generate_enums_module(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_enums_module(ast.Module())
+    plugin_manager_with_mocked_plugins.generate_enums_module(
+        ast.Module(body=[], type_ignores=[])
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_enums_module.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_enums_module.called
@@ -76,7 +82,9 @@ def test_generate_enums_module_calls_plugins_generate_enums_module(
 def test_generate_client_module_calls_plugins_generate_client_module(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_client_module(ast.Module())
+    plugin_manager_with_mocked_plugins.generate_client_module(
+        ast.Module(body=[], type_ignores=[])
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_client_module.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_client_module.called
@@ -85,7 +93,22 @@ def test_generate_client_module_calls_plugins_generate_client_module(
 def test_generate_gql_function_calls_plugins_generate_gql_function(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_gql_function(ast.FunctionDef())
+    plugin_manager_with_mocked_plugins.generate_gql_function(
+        ast.FunctionDef(
+            name="",
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[],
+                vararg=None,
+                kwonlyargs=[],
+                kw_defaults=[],
+                kwarg=None,
+                defaults=[],
+            ),
+            body=[],
+            decorator_list=[],
+        )
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_gql_function.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_gql_function.called
@@ -94,7 +117,9 @@ def test_generate_gql_function_calls_plugins_generate_gql_function(
 def test_generate_client_class_calls_plugins_generate_client_class(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_client_class(ast.ClassDef())
+    plugin_manager_with_mocked_plugins.generate_client_class(
+        ast.ClassDef(name="", bases=[], keywords=[], body=[], decorator_list=[])
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_client_class.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_client_class.called
@@ -103,7 +128,9 @@ def test_generate_client_class_calls_plugins_generate_client_class(
 def test_generate_client_import_calls_plugins_generate_client_import(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_client_import(ast.ImportFrom())
+    plugin_manager_with_mocked_plugins.generate_client_import(
+        ast.ImportFrom(module=None, names=[], level=0)
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_client_import.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_client_import.called
@@ -113,7 +140,21 @@ def test_generate_client_method_calls_plugins_generate_client_method(
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_client_method(
-        ast.AsyncFunctionDef(), operation_definition=OperationDefinitionNode()
+        ast.AsyncFunctionDef(
+            name="",
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[],
+                vararg=None,
+                kwonlyargs=[],
+                kw_defaults=[],
+                kwarg=None,
+                defaults=[],
+            ),
+            body=[],
+            decorator_list=[],
+        ),
+        operation_definition=OperationDefinitionNode(),
     )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_client_method.called
@@ -124,7 +165,16 @@ def test_generate_arguments_calls_plugins_generate_arguments(
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_arguments(
-        ast.arguments(), variable_definitions=(VariableDefinitionNode(),)
+        ast.arguments(
+            posonlyargs=[],
+            args=[],
+            vararg=None,
+            kwonlyargs=[],
+            kw_defaults=[],
+            kwarg=None,
+            defaults=[],
+        ),
+        variable_definitions=(VariableDefinitionNode(),),
     )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_arguments.called
@@ -135,7 +185,8 @@ def test_generate_arguments_dict_calls_plugins_generate_arguments_dict(
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_arguments_dict(
-        ast.Dict(), variable_definitions=(VariableDefinitionNode(),)
+        ast.Dict(keys=[], values=[]),
+        variable_definitions=(VariableDefinitionNode(),),
     )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_arguments_dict.called
@@ -145,7 +196,9 @@ def test_generate_arguments_dict_calls_plugins_generate_arguments_dict(
 def test_generate_inputs_module_calls_plugins_generate_inputs_module(
     plugin_manager_with_mocked_plugins,
 ):
-    plugin_manager_with_mocked_plugins.generate_inputs_module(ast.Module())
+    plugin_manager_with_mocked_plugins.generate_inputs_module(
+        ast.Module(body=[], type_ignores=[])
+    )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_inputs_module.called
     assert plugin_manager_with_mocked_plugins.plugins[1].generate_inputs_module.called
@@ -155,7 +208,8 @@ def test_generate_input_class_calls_plugins_generate_input_class(
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_input_class(
-        ast.ClassDef(), input_type=GraphQLInputObjectType("TestInput", fields={})
+        ast.ClassDef(name="", bases=[], keywords=[], body=[], decorator_list=[]),
+        input_type=GraphQLInputObjectType("TestInput", fields={}),
     )
 
     assert plugin_manager_with_mocked_plugins.plugins[0].generate_input_class.called
@@ -166,7 +220,11 @@ def test_generate_input_field_calls_plugins_generate_input_field(
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_input_field(
-        ast.AnnAssign(),
+        ast.AnnAssign(
+            target=ast.Name(id=""),
+            annotation=ast.Name(id="Any"),
+            simple=1,
+        ),
         input_field=GraphQLInputField(GraphQLInputObjectType("TestInput", fields={})),
         field_name="fieldA",
     )
@@ -179,7 +237,8 @@ def test_generate_result_types_module_calls_plugins_generate_result_types_module
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_result_types_module(
-        ast.Module(), operation_definition=OperationDefinitionNode()
+        ast.Module(body=[], type_ignores=[]),
+        operation_definition=OperationDefinitionNode(),
     )
 
     assert plugin_manager_with_mocked_plugins.plugins[
@@ -205,7 +264,7 @@ def test_generate_result_class_calls_plugins_generate_result_class(
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_result_class(
-        ast.ClassDef(),
+        ast.ClassDef(name="", bases=[], keywords=[], body=[], decorator_list=[]),
         operation_definition=OperationDefinitionNode(),
         selection_set=SelectionSetNode(),
     )
@@ -218,7 +277,11 @@ def test_generate_result_field_calls_plugins_generate_result_field(
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_result_field(
-        ast.AnnAssign(),
+        ast.AnnAssign(
+            target=ast.Name(id=""),
+            annotation=ast.Name(id="Any"),
+            simple=1,
+        ),
         operation_definition=OperationDefinitionNode(),
         field=FieldNode(),
     )
@@ -294,7 +357,7 @@ def test_generate_fragments_module_calls_plugins_generate_fragments_module(
     plugin_manager_with_mocked_plugins,
 ):
     plugin_manager_with_mocked_plugins.generate_fragments_module(
-        ast.Module(body=[]), {}
+        ast.Module(body=[], type_ignores=[]), {}
     )
 
     plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins

@@ -1,5 +1,5 @@
 import ast
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 from graphql import OperationDefinitionNode, OperationType
 
@@ -117,20 +117,22 @@ class ClientGenerator:
 
     def generate(self) -> ast.Module:
         """Generate module with class definition of graphql client."""
-        self._add_import(
-            generate_import_from(
-                names=self.arguments_generator.get_used_inputs(),
-                from_=self.input_types_module_name,
-                level=1,
+        if used_inputs := self.arguments_generator.get_used_inputs():
+            self._add_import(
+                generate_import_from(
+                    names=used_inputs,
+                    from_=self.input_types_module_name,
+                    level=1,
+                )
             )
-        )
-        self._add_import(
-            generate_import_from(
-                names=self.arguments_generator.get_used_enums(),
-                from_=self.enums_module_name,
-                level=1,
+        if used_enums := self.arguments_generator.get_used_enums():
+            self._add_import(
+                generate_import_from(
+                    names=used_enums,
+                    from_=self.enums_module_name,
+                    level=1,
+                )
             )
-        )
         for custom_scalar_name in self.arguments_generator.get_used_custom_scalars():
             scalar_data = self.custom_scalars[custom_scalar_name]
             for import_ in generate_scalar_imports(scalar_data):
@@ -328,7 +330,7 @@ class ClientGenerator:
         method_def = generate_method_definition(
             name="_combine_variables",
             arguments=args,
-            body=method_body,
+            body=cast(list[ast.stmt], method_body),
             decorator_list=[],
             return_type=returns,
         )
@@ -414,7 +416,7 @@ class ClientGenerator:
                     ),
                 ]
             ),
-            body=method_body,
+            body=cast(list[ast.stmt], method_body),
             return_type=generate_subscript(
                 generate_name("list"), generate_name("VariableDefinitionNode")
             ),
@@ -507,7 +509,7 @@ class ClientGenerator:
                     ),
                 ]
             ),
-            body=method_body,
+            body=cast(list[ast.stmt], method_body),
             return_type=generate_name("DocumentNode"),
         )
 
@@ -605,7 +607,7 @@ class ClientGenerator:
                     generate_arg("operation_name", annotation=generate_name("str")),
                 ]
             ),
-            body=method_body,
+            body=cast(list[ast.stmt], method_body),
             return_type=generate_subscript(
                 generate_name(DICT),
                 generate_tuple([generate_name("str"), generate_name("Any")]),

@@ -1,5 +1,6 @@
 import enum
 import os
+import re
 from dataclasses import asdict, dataclass, field
 from keyword import iskeyword
 from pathlib import Path
@@ -70,6 +71,8 @@ class BaseSettings:
             assert_path_exists(self.schema_path)
 
         self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
+        if self.remote_schema_url:
+            self.remote_schema_url = resolve_env_vars_in_string(self.remote_schema_url)
 
     @property
     def using_remote_schema(self) -> bool:
@@ -125,6 +128,7 @@ class ClientSettings(BaseSettings):
     scalars: dict[str, ScalarData] = field(default_factory=dict)
     default_optional_fields_to_none: bool = False
     include_typename: bool = True
+    ignore_extra_fields: bool = True
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
@@ -346,17 +350,29 @@ def resolve_headers(headers: dict) -> dict:
 
 
 def get_header_value(value: str) -> str:
-    env_var_prefix = "$"
-    if value.startswith(env_var_prefix):
-        env_var_name = value.lstrip(env_var_prefix)
+    return resolve_env_vars_in_string(value)
+
+
+def resolve_env_vars_in_string(value: str) -> str:
+    """Replace $VAR and ${VAR} with values from the environment (any position).
+
+    Only matches well-formed placeholders: ${VAR} or $VAR (variable name must
+    start with a letter or underscore, then alphanumeric/underscore).
+    """
+    # Two explicit patterns so we never match malformed ${VAR or $VAR}
+    ident = r"[A-Za-z_][A-Za-z0-9_]*"
+    pattern = re.compile(rf"\$\{{({ident})\}}|\$({ident})")
+
+    def replacer(match):
+        env_var_name = match.group(1) or match.group(2)
         var_value = os.environ.get(env_var_name)
-        if not var_value:
+        if var_value is None or var_value == "":
             raise InvalidConfiguration(
                 f"Environment variable {env_var_name} not found."
             )
         return var_value
 
-    return value
+    return pattern.sub(replacer, value)
 
 
 def assert_class_is_defined_in_file(file_path: Path, class_name: str):

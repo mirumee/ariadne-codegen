@@ -4,6 +4,7 @@ from textwrap import dedent
 import pytest
 
 from ariadne_codegen.utils import (
+    add_extra_to_base_model,
     ast_to_str,
     convert_to_multiline_string,
     format_multiline_strings,
@@ -201,3 +202,42 @@ def test_process_name_returns_name_returned_from_plugin_for_name_with_only_under
         )
         == "name_from_plugin"
     )
+
+
+def test_adds_extra_to_base_model_if_missing():
+    code = dedent("""
+        class BaseModel:
+            Config = ConfigDict()
+    """)
+    expected = dedent("""
+        class BaseModel:
+            Config = ConfigDict(extra='forbid')
+    """)
+    result = add_extra_to_base_model(code)
+    assert dedent(result).strip() == expected.strip()
+
+
+def test_adds_extra_to_base_model_does_not_overwrite_existing_extra():
+    code = dedent("""
+        class BaseModel:
+            Config = ConfigDict(extra='ignore')
+    """)
+    expected = dedent("""
+        class BaseModel:
+            Config = ConfigDict(extra='ignore')
+    """)
+    result = add_extra_to_base_model(code)
+    assert dedent(result).strip() == expected.strip()
+
+
+def test_adds_extra_to_base_model_leaves_other_classes_untouched():
+    code = dedent("""
+        class NotBaseModel:
+            Config = ConfigDict()
+    """)
+    expected = dedent("""
+        class NotBaseModel:
+            Config = ConfigDict()
+    """)
+    result = add_extra_to_base_model(code)
+    assert dedent(result).strip() == expected.strip()

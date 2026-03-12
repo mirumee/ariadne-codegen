@@ -1,5 +1,4 @@
 import ast
-from keyword import iskeyword
 from typing import Optional, cast
 from warnings import warn
 
@@ -13,6 +12,7 @@ from ..codegen import (
     generate_module,
 )
 from ..plugins.manager import PluginManager
+from ..utils import process_name
 from .constants import ENUM_CLASS, ENUM_MODULE
 
 
@@ -66,7 +66,11 @@ class EnumsGenerator:
                     DeprecationWarning,
                     stacklevel=2,
                 )
-            name = val_name if not iskeyword(val_name) else val_name + "_"
+            name = process_name(
+                val_name,
+                convert_to_snake_case=False,
+                plugin_manager=self.plugin_manager,
+            )
             fields.append(
                 generate_assign([name], generate_constant(val_def.value), lineno)
             )
