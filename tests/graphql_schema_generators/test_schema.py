@@ -117,7 +117,7 @@ def test_generate_schema_module_returns_module_with_necessary_imports():
     assert len(type_map_import.names) == 1
     assert compare_ast(type_map_import.names[0], ast.alias("TypeMap"))
     assert typing_import.module == "typing"
-    assert {alias.name for alias in typing_import.names} == {"cast", "List"}
+    assert {alias.name for alias in typing_import.names} == {"cast"}
 
 
 def test_generate_type_map_returns_ast_dict():

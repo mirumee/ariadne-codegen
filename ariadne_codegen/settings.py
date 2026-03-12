@@ -1,10 +1,10 @@
 import enum
 import os
+import re
 from dataclasses import dataclass, field
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List
 
 from graphql.validation import UniqueFragmentNamesRule, NoUnusedFragmentsRule
 
@@ -27,9 +27,11 @@ class CommentsStrategy(str, enum.Enum):
     STABLE = "stable"
     TIMESTAMP = "timestamp"
 
+
 class ValidationRuleSkips(str, enum.Enum):
     UniqueFragmentNames = "UniqueFragmentNames"
     NoUnusedFragments = "NoUnusedFragments"
+
 
 def get_validation_rule(rule: ValidationRuleSkips):
     if rule == ValidationRuleSkips.UniqueFragmentNames:
@@ -51,8 +53,9 @@ class BaseSettings:
     remote_schema_url: str = ""
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
+    remote_schema_timeout: float = 5
     enable_custom_operations: bool = False
-    plugins: List[str] = field(default_factory=list)
+    plugins: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.schema_path and not self.remote_schema_url:
@@ -64,6 +67,8 @@ class BaseSettings:
             assert_path_exists(self.schema_path)
 
         self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
+        if self.remote_schema_url:
+            self.remote_schema_url = resolve_env_vars_in_string(self.remote_schema_url)
 
 
 @dataclass
@@ -84,9 +89,16 @@ class ClientSettings(BaseSettings):
     include_all_enums: bool = True
     async_client: bool = True
     opentelemetry_client: bool = False
-    skip_validation_rules: List[ValidationRuleSkips] = field(default_factory=lambda: [ValidationRuleSkips.UniqueFragmentNames,])
-    files_to_include: List[str] = field(default_factory=list)
-    scalars: Dict[str, ScalarData] = field(default_factory=dict)
+    skip_validation_rules: list[ValidationRuleSkips] = field(
+        default_factory=lambda: [
+            ValidationRuleSkips.UniqueFragmentNames,
+        ]
+    )
+    files_to_include: list[str] = field(default_factory=list)
+    scalars: dict[str, ScalarData] = field(default_factory=dict)
+    default_optional_fields_to_none: bool = False
+    include_typename: bool = True
+    ignore_extra_fields: bool = True
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
@@ -171,7 +183,7 @@ class ClientSettings(BaseSettings):
         )
         files_to_include_list = ",".join(self.files_to_include)
         files_to_include_msg = (
-            f"Coping following files into package: {files_to_include_list}"
+            f"Copying the following files into the package: {files_to_include_list}"
             if self.files_to_include
             else "No files to copy."
         )
@@ -180,6 +192,11 @@ class ClientSettings(BaseSettings):
             f"Plugins to use: {plugins_list}"
             if self.plugins
             else "No plugin is being used."
+        )
+        include_typename_msg = (
+            "Including __typename fields in generated queries."
+            if self.include_typename
+            else "Not including __typename fields in generated queries."
         )
         return dedent(
             f"""\
@@ -190,13 +207,14 @@ class ClientSettings(BaseSettings):
             Generating package into '{self.target_package_path}'.
             Using '{self.client_name}' as client name.
             Using '{self.base_client_name}' as base client class.
-            Coping base client class from '{self.base_client_file_path}'.
+            Copying base client class from '{self.base_client_file_path}'.
             Generating enums into '{self.enums_module_name}.py'.
             Generating inputs into '{self.input_types_module_name}.py'.
             Generating fragments into '{self.fragments_module_name}.py'.
             Comments type: {self.include_comments.value}
             {snake_case_msg}
             {async_client_msg}
+            {include_typename_msg}
             {files_to_include_msg}
             {plugins_msg}
             """
@@ -288,22 +306,34 @@ def assert_string_is_valid_python_identifier(name: str):
         )
 
 
-def resolve_headers(headers: Dict) -> Dict:
+def resolve_headers(headers: dict) -> dict:
     return {key: get_header_value(value) for key, value in headers.items()}
 
 
 def get_header_value(value: str) -> str:
-    env_var_prefix = "$"
-    if value.startswith(env_var_prefix):
-        env_var_name = value.lstrip(env_var_prefix)
+    return resolve_env_vars_in_string(value)
+
+
+def resolve_env_vars_in_string(value: str) -> str:
+    """Replace $VAR and ${VAR} with values from the environment (any position).
+
+    Only matches well-formed placeholders: ${VAR} or $VAR (variable name must
+    start with a letter or underscore, then alphanumeric/underscore).
+    """
+    # Two explicit patterns so we never match malformed ${VAR or $VAR}
+    ident = r"[A-Za-z_][A-Za-z0-9_]*"
+    pattern = re.compile(rf"\$\{{({ident})\}}|\$({ident})")
+
+    def replacer(match):
+        env_var_name = match.group(1) or match.group(2)
         var_value = os.environ.get(env_var_name)
-        if not var_value:
+        if var_value is None or var_value == "":
             raise InvalidConfiguration(
                 f"Environment variable {env_var_name} not found."
             )
         return var_value
 
-    return value
+    return pattern.sub(replacer, value)
 
 
 def assert_class_is_defined_in_file(file_path: Path, class_name: str):

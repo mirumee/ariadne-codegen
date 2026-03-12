@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable, Optional
+from typing import Optional
 
 from ..settings import CommentsStrategy
 from .constants import (
@@ -11,7 +12,6 @@ from .constants import (
 
 
 def get_comment(strategy: CommentsStrategy, source: Optional[str] = None) -> str:
-    # pylint: disable=unused-argument
     def empty_comment_function(source: Optional[str] = None) -> str:
         return ""
 

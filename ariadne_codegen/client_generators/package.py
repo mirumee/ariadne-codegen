@@ -1,6 +1,6 @@
 import ast
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 from graphql import (
     FragmentDefinitionNode,
@@ -13,7 +13,12 @@ from ..codegen import generate_import_from
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..settings import ClientSettings, CommentsStrategy
-from ..utils import ast_to_str, process_name, str_to_pascal_case
+from ..utils import (
+    add_extra_to_base_model,
+    ast_to_str,
+    process_name,
+    str_to_pascal_case,
+)
 from .arguments import ArgumentsGenerator
 from .client import ClientGenerator
 from .comments import get_comment
@@ -59,7 +64,7 @@ class PackageGenerator:
         custom_fields_typing_generator: Optional[CustomFieldsTypingGenerator] = None,
         custom_query_generator: Optional[CustomOperationGenerator] = None,
         custom_mutation_generator: Optional[CustomOperationGenerator] = None,
-        fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
+        fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
         client_name: str = "Client",
         async_client: bool = True,
         base_client_name: str = "AsyncBaseClient",
@@ -80,10 +85,13 @@ class PackageGenerator:
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         upload_import: ast.ImportFrom = UPLOAD_IMPORT,
         unset_import: ast.ImportFrom = UNSET_IMPORT,
-        files_to_include: Optional[List[str]] = None,
-        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        files_to_include: Optional[list[str]] = None,
+        custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
         enable_custom_operations: bool = False,
+        default_optional_fields_to_none: bool = False,
+        include_typename: bool = True,
+        ignore_extra_fields: bool = True,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -133,17 +141,20 @@ class PackageGenerator:
         )
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
+        self.default_optional_fields_to_none = default_optional_fields_to_none
+        self.include_typename = include_typename
+        self.ignore_extra_fields = ignore_extra_fields
 
-        self._result_types_files: Dict[str, ast.Module] = {}
-        self._generated_files: List[str] = []
-        self._unpacked_fragments: Set[str] = set()
-        self._used_enums: List[str] = []
+        self._result_types_files: dict[str, ast.Module] = {}
+        self._generated_files: list[str] = []
+        self._unpacked_fragments: set[str] = set()
+        self._used_enums: list[str] = []
 
         self.enable_custom_operations = enable_custom_operations
         if self.enable_custom_operations:
             self.files_to_include.append(self.base_schema_root_file_path)
 
-    def generate(self) -> List[str]:
+    def generate(self) -> list[str]:
         """Generate package with graphql client."""
         self._include_exceptions()
         self._validate_unique_file_names()
@@ -199,6 +210,8 @@ class PackageGenerator:
             convert_to_snake_case=self.convert_to_snake_case,
             custom_scalars=self.custom_scalars,
             plugin_manager=self.plugin_manager,
+            default_optional_fields_to_none=self.default_optional_fields_to_none,
+            include_typename=self.include_typename,
         )
         self._unpacked_fragments = self._unpacked_fragments.union(
             query_types_generator.get_unpacked_fragments()
@@ -250,7 +263,7 @@ class PackageGenerator:
         if len(file_names) != len(set(file_names)):
             seen = set()
             duplicated_files = {n for n in file_names if n in seen or seen.add(n)}
-            raise ParsingError(f"Duplicated file names: {',' .join(duplicated_files)}")
+            raise ParsingError(f"Duplicated file names: {','.join(duplicated_files)}")
 
     def _generate_client(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
@@ -352,6 +365,8 @@ class PackageGenerator:
         ]
         for source_path in files_to_copy:
             code = self._add_comments_to_code(source_path.read_text(encoding="utf-8"))
+            if not self.ignore_extra_fields and source_path.name == "base_model.py":
+                code = add_extra_to_base_model(code)
             if self.plugin_manager:
                 code = self.plugin_manager.copy_code(code)
             target_path = self.package_path / source_path.name
@@ -379,6 +394,7 @@ class PackageGenerator:
         self._generated_files.append(init_file_path.name)
 
     def _generate_custom_queries(self):
+        assert self.custom_query_generator is not None
         file_path = self.package_path / "custom_queries.py"
         module = self.custom_query_generator.generate()
         code = self._add_comments_to_code(ast_to_str(module, False))
@@ -386,6 +402,7 @@ class PackageGenerator:
         self._generated_files.append(file_path.name)
 
     def _generate_custom_mutations(self):
+        assert self.custom_mutation_generator is not None
         file_path = self.package_path / "custom_mutations.py"
         module = self.custom_mutation_generator.generate()
         code = self._add_comments_to_code(ast_to_str(module, False))
@@ -393,6 +410,7 @@ class PackageGenerator:
         self._generated_files.append(file_path.name)
 
     def _generate_custom_fields_typing(self):
+        assert self.custom_fields_typing_generator is not None
         file_path = self.package_path / "custom_typing_fields.py"
         module = self.custom_fields_typing_generator.generate()
         code = self._add_comments_to_code(ast_to_str(module, False))
@@ -400,6 +418,7 @@ class PackageGenerator:
         self._generated_files.append(file_path.name)
 
     def _generate_custom_fields(self):
+        assert self.custom_fields_generator is not None
         file_path = self.package_path / "custom_fields.py"
         module = self.custom_fields_generator.generate()
         code = self._add_comments_to_code(ast_to_str(module, False))
@@ -409,7 +428,7 @@ class PackageGenerator:
 
 def get_package_generator(
     schema: GraphQLSchema,
-    fragments: List[FragmentDefinitionNode],
+    fragments: list[FragmentDefinitionNode],
     settings: ClientSettings,
     plugin_manager: PluginManager,
 ) -> PackageGenerator:
@@ -454,6 +473,8 @@ def get_package_generator(
         convert_to_snake_case=settings.convert_to_snake_case,
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
+        default_optional_fields_to_none=settings.default_optional_fields_to_none,
+        include_typename=settings.include_typename,
     )
     custom_fields_generator = CustomFieldsGenerator(
         schema=schema,
@@ -533,4 +554,7 @@ def get_package_generator(
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
         enable_custom_operations=settings.enable_custom_operations,
+        default_optional_fields_to_none=settings.default_optional_fields_to_none,
+        include_typename=settings.include_typename,
+        ignore_extra_fields=settings.ignore_extra_fields,
     )

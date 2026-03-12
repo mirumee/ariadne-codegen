@@ -180,7 +180,8 @@ Generated client class inherits from `AsyncBaseClient` and has async method for 
 ```py
 # graphql_client/client.py
 
-from typing import Any, AsyncIterator, Dict, Optional, Union
+from collections.abc import AsyncIterator
+from typing import Any, Optional, Union
 
 from .async_base_client import AsyncBaseClient
 from .base_model import UNSET, UnsetType, Upload
@@ -209,7 +210,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"userData": user_data}
+        variables: dict[str, object] = {"userData": user_data}
         response = await self.execute(
             query=query, operation_name="CreateUser", variables=variables, **kwargs
         )
@@ -232,7 +233,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListAllUsers", variables=variables, **kwargs
         )
@@ -263,7 +264,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"country": country}
+        variables: dict[str, object] = {"country": country}
         response = await self.execute(
             query=query,
             operation_name="ListUsersByCountry",
@@ -281,7 +282,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {}
+        variables: dict[str, object] = {}
         async for data in self.execute_ws(
             query=query, operation_name="GetUsersCounter", variables=variables, **kwargs
         ):
@@ -295,7 +296,7 @@ class Client(AsyncBaseClient):
             }
             """
         )
-        variables: Dict[str, object] = {"file": file}
+        variables: dict[str, object] = {"file": file}
         response = await self.execute(
             query=query, operation_name="uploadFile", variables=variables, **kwargs
         )
@@ -318,7 +319,7 @@ Models are generated from inputs from provided schema. They are used as argument
 ```py
 # graphql_client/input_types.py
 
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -343,7 +344,7 @@ class UserPreferencesInput(BaseModel):
     lucky_number: Optional[int] = Field(alias="luckyNumber", default=7)
     favourite_word: Optional[str] = Field(alias="favouriteWord", default="word")
     color_opacity: Optional[float] = Field(alias="colorOpacity", default=1.0)
-    excluded_tags: Optional[List[str]] = Field(
+    excluded_tags: Optional[list[str]] = Field(
         alias="excludedTags", default_factory=lambda: ["offtop", "tag123"]
     )
     notifications_preferences: "NotificationsPreferencesInput" = Field(
@@ -412,7 +413,7 @@ class CreateUserUserCreate(BaseModel):
 ```py
 # graphql_client/list_all_users.py
 
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -420,7 +421,7 @@ from .base_model import BaseModel
 
 
 class ListAllUsers(BaseModel):
-    users: List["ListAllUsersUsers"]
+    users: list["ListAllUsersUsers"]
 
 
 class ListAllUsersUsers(BaseModel):
@@ -438,7 +439,7 @@ class ListAllUsersUsersLocation(BaseModel):
 ```py
 # graphql_client/list_users_by_country.py
 
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -448,7 +449,7 @@ from .fragments import BasicUser, UserPersonalData
 
 
 class ListUsersByCountry(BaseModel):
-    users: List["ListUsersByCountryUsers"]
+    users: list["ListUsersByCountryUsers"]
 
 
 class ListUsersByCountryUsers(BasicUser, UserPersonalData):

@@ -133,8 +133,25 @@ def test_client_settings_without_schema_path_or_remote_schema_url_raises_excepti
         ClientSettings(queries_path=queries_path)
 
 
+@pytest.mark.parametrize(
+    "configured_header, expected_header",
+    [
+        ("$TEST_VAR", "test_value"),
+        ("Bearer $TEST_VAR", "Bearer test_value"),
+        ("Bearer: $TEST_VAR", "Bearer: test_value"),
+        ("Bearer: ${TEST_VAR}", "Bearer: test_value"),
+        pytest.param(
+            "$NOT_SET_VAR",
+            "",
+            marks=pytest.mark.xfail(raises=InvalidConfiguration),
+        ),
+    ],
+)
 def test_client_settings_resolves_env_variable_for_remote_schema_header_with_prefix(
-    tmp_path, mocker
+    tmp_path,
+    mocker,
+    configured_header,
+    expected_header,
 ):
     queries_path = tmp_path / "queries.graphql"
     queries_path.touch()
@@ -143,10 +160,120 @@ def test_client_settings_resolves_env_variable_for_remote_schema_header_with_pre
     settings = ClientSettings(
         queries_path=queries_path,
         remote_schema_url="https://test",
-        remote_schema_headers={"Authorization": "$TEST_VAR"},
+        remote_schema_headers={"Authorization": configured_header},
     )
 
-    assert settings.remote_schema_headers["Authorization"] == "test_value"
+    assert settings.remote_schema_headers["Authorization"] == expected_header
+
+
+def test_client_settings_resolves_multiple_embedded_env_vars_in_remote_schema_header(
+    tmp_path, mocker
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    mocker.patch.dict(os.environ, {"TEST_FOO": "foo_val", "TEST_BAR": "bar_val"})
+
+    settings = ClientSettings(
+        queries_path=queries_path,
+        remote_schema_url="https://test",
+        remote_schema_headers={"Authorization": "Bearer $TEST_FOO $TEST_BAR"},
+    )
+
+    assert settings.remote_schema_headers["Authorization"] == "Bearer foo_val bar_val"
+
+
+@pytest.mark.parametrize(
+    "configured_url, expected_url",
+    [
+        ("$TEST_VAR", "test_value"),
+        ("https://${TEST_VAR}/graphql", "https://test_value/graphql"),
+        ("https://$TEST_VAR/graphql", "https://test_value/graphql"),
+        ("https://TEST_VAR/graphql", "https://TEST_VAR/graphql"),
+        pytest.param(
+            "https://${NOT_SET_VAR}/graphql",
+            "",
+            marks=pytest.mark.xfail(raises=InvalidConfiguration),
+        ),
+    ],
+)
+def test_client_settings_resolves_env_variable_for_remote_schema_url(
+    tmp_path,
+    mocker,
+    configured_url,
+    expected_url,
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    mocker.patch.dict(os.environ, {"TEST_VAR": "test_value"})
+
+    settings = ClientSettings(
+        queries_path=queries_path,
+        remote_schema_url=configured_url,
+    )
+
+    assert settings.remote_schema_url == expected_url
+
+
+@pytest.mark.parametrize(
+    "configured_header, expected_header",
+    [
+        # Malformed: only $VAR is replaced, trailing } stays literal
+        ("Bearer $TEST_VAR}", "Bearer test_value}"),
+        # Malformed: no closing brace, so no match - left unchanged
+        ("${TEST_VAR", "${TEST_VAR"),
+        # Variable name must start with letter/underscore: $1WOOT not matched
+        ("$1WOOT", "$1WOOT"),
+        # Leading underscore is allowed
+        ("$_TEST_VAR", "underscore_value"),
+        # Braced form with suffix (shell-like ${VAR}suffix)
+        ("${TEST_VAR}suffix", "test_valuesuffix"),
+    ],
+)
+def test_client_settings_env_var_resolution_edge_cases_in_headers(
+    tmp_path,
+    mocker,
+    configured_header,
+    expected_header,
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    mocker.patch.dict(
+        os.environ,
+        {"TEST_VAR": "test_value", "_TEST_VAR": "underscore_value"},
+    )
+
+    settings = ClientSettings(
+        queries_path=queries_path,
+        remote_schema_url="https://test",
+        remote_schema_headers={"Authorization": configured_header},
+    )
+
+    assert settings.remote_schema_headers["Authorization"] == expected_header
+
+
+@pytest.mark.parametrize(
+    "configured_url, expected_url",
+    [
+        ("https://${TEST_VAR", "https://${TEST_VAR"),
+        ("$TEST_VAR}/path", "test_value}/path"),
+    ],
+)
+def test_client_settings_env_var_resolution_edge_cases_in_url(
+    tmp_path,
+    mocker,
+    configured_url,
+    expected_url,
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    mocker.patch.dict(os.environ, {"TEST_VAR": "test_value"})
+
+    settings = ClientSettings(
+        queries_path=queries_path,
+        remote_schema_url=configured_url,
+    )
+
+    assert settings.remote_schema_url == expected_url
 
 
 def test_client_settings_doesnt_resolve_remote_schema_header_without_prefix(tmp_path):
@@ -305,3 +432,50 @@ def test_graphql_schema_settings_with_invalid_type_map_variable_name_raises_exce
             remote_schema_url="http://testserver/graphq/",
             type_map_variable_name="1type_map",
         )
+
+
+def test_client_settings_include_typename_default_value(tmp_path):
+    """Test that include_typename defaults to True."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.include_typename is True
+
+
+def test_client_settings_include_typename_can_be_set_to_false(tmp_path):
+    """Test that include_typename can be set to False."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        include_typename=False,
+    )
+
+    assert settings.include_typename is False
+
+
+def test_client_settings_include_typename_can_be_set_to_true(tmp_path):
+    """Test that include_typename can be explicitly set to True."""
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        include_typename=True,
+    )
+
+    assert settings.include_typename is True

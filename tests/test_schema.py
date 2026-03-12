@@ -1,4 +1,5 @@
-from ariadne_codegen.settings import get_validation_rule
+from pathlib import Path
+
 import httpx
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema
@@ -16,7 +17,7 @@ from ariadne_codegen.schema import (
     read_graphql_file,
     walk_graphql_files,
 )
-from ariadne_codegen.settings import ValidationRuleSkips
+from ariadne_codegen.settings import ValidationRuleSkips, get_validation_rule
 
 
 @pytest.fixture
@@ -65,6 +66,7 @@ def test_query_2_str():
         }
     """
 
+
 @pytest.fixture
 def test_fragment_str():
     return """
@@ -78,6 +80,7 @@ def test_fragment_str():
             }
         }
     """
+
 
 @pytest.fixture
 def test_duplicate_fragment_str():
@@ -96,6 +99,7 @@ def test_duplicate_fragment_str():
         }
     """
 
+
 @pytest.fixture
 def test_unused_fragment_str():
     return """
@@ -108,6 +112,7 @@ def test_unused_fragment_str():
             }
         }
     """
+
 
 @pytest.fixture
 def single_file_schema(tmp_path_factory, schema_str):
@@ -177,21 +182,34 @@ def single_file_query(tmp_path_factory, test_query_str):
     file_.write_text(test_query_str, encoding="utf-8")
     return file_
 
+
 @pytest.fixture
-def single_file_query_with_fragment(tmp_path_factory, test_query_str, test_fragment_str):
+def single_file_query_with_fragment(
+    tmp_path_factory, test_query_str, test_fragment_str
+):
     file_ = tmp_path_factory.mktemp("queries").joinpath("query1_fragment.graphql")
     file_.write_text(test_query_str + test_fragment_str, encoding="utf-8")
     return file_
 
+
 @pytest.fixture
-def single_file_query_with_duplicate_fragment(tmp_path_factory, test_query_str, test_duplicate_fragment_str):
-    file_ = tmp_path_factory.mktemp("queries").joinpath("query1_duplicate_fragment.graphql")
+def single_file_query_with_duplicate_fragment(
+    tmp_path_factory, test_query_str, test_duplicate_fragment_str
+):
+    file_ = tmp_path_factory.mktemp("queries").joinpath(
+        "query1_duplicate_fragment.graphql"
+    )
     file_.write_text(test_query_str + test_duplicate_fragment_str, encoding="utf-8")
     return file_
 
+
 @pytest.fixture
-def single_file_query_with_unused_fragment(tmp_path_factory, test_query_str, test_unused_fragment_str):
-    file_ = tmp_path_factory.mktemp("queries").joinpath("query1_unused_fragment.graphql")
+def single_file_query_with_unused_fragment(
+    tmp_path_factory, test_query_str, test_unused_fragment_str
+):
+    file_ = tmp_path_factory.mktemp("queries").joinpath(
+        "query1_unused_fragment.graphql"
+    )
     file_.write_text(test_query_str + test_unused_fragment_str, encoding="utf-8")
     return file_
 
@@ -246,7 +264,11 @@ def test_read_graphql_file_with_invalid_file_raises_invalid_graphql_syntax_excep
 ):
     with pytest.raises(InvalidGraphqlSyntax) as exc:
         read_graphql_file(invalid_syntax_schema_file)
-    assert str(invalid_syntax_schema_file) in str(exc)
+    # Normalize path separators so the assertion passes on Windows (path in
+    # message may use backslashes; we only care that the faulty file is named).
+    path_in_message = Path(invalid_syntax_schema_file).resolve().as_posix()
+    message_normalized = str(exc.value).replace("\\", "/")
+    assert path_in_message in message_normalized
 
 
 def test_walk_graphql_files_returns_graphql_files_from_directory(schemas_directory):
@@ -508,25 +530,36 @@ def test_get_graphql_queries_with_fragment_returns_schema_definitions(
 
     assert len(queries) == 3
 
+
 def test_get_graphql_queries_with_duplicate_fragment_raises_invalid_operation(
     single_file_query_with_duplicate_fragment, schema_str
 ):
     with pytest.raises(InvalidOperationForSchema):
         get_graphql_queries(
-            single_file_query_with_duplicate_fragment.as_posix(), build_schema(schema_str)
+            single_file_query_with_duplicate_fragment.as_posix(),
+            build_schema(schema_str),
         )
+
 
 def test_get_graphql_queries_with_unused_fragment_and_no_skip_rules_raises_invalid_operation(
     single_file_query_with_unused_fragment, schema_str
 ):
     with pytest.raises(InvalidOperationForSchema):
         get_graphql_queries(
-            single_file_query_with_unused_fragment.as_posix(), build_schema(schema_str), []
+            single_file_query_with_unused_fragment.as_posix(),
+            build_schema(schema_str),
+            [],
         )
+
 
 def test_get_graphql_queries_with_skip_unique_fragment_names_and_duplicate_fragment_returns_schema_definition(
     single_file_query_with_duplicate_fragment, schema_str
 ):
     get_graphql_queries(
-        single_file_query_with_duplicate_fragment.as_posix(), build_schema(schema_str), [get_validation_rule(ValidationRuleSkips.NoUnusedFragments),get_validation_rule(ValidationRuleSkips.UniqueFragmentNames)]
+        single_file_query_with_duplicate_fragment.as_posix(),
+        build_schema(schema_str),
+        [
+            get_validation_rule(ValidationRuleSkips.NoUnusedFragments),
+            get_validation_rule(ValidationRuleSkips.UniqueFragmentNames),
+        ],
     )

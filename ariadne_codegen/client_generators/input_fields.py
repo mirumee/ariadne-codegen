@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Optional, cast
 
 from graphql import (
     BooleanValueNode,
@@ -46,12 +46,11 @@ from .scalars import ScalarData, generate_input_scalar_annotation
 from .types import Annotation, CodegenInputFieldType
 
 
-# pylint: disable=too-many-return-statements
 def parse_input_field_type(
     type_: CodegenInputFieldType,
     nullable: bool = True,
-    custom_scalars: Optional[Dict[str, ScalarData]] = None,
-) -> Tuple[Annotation, str]:
+    custom_scalars: Optional[dict[str, ScalarData]] = None,
+) -> tuple[Annotation, str]:
     if isinstance(type_, GraphQLScalarType):
         if type_.name in INPUT_SCALARS_MAP:
             return (
@@ -83,7 +82,7 @@ def parse_input_field_type(
 
     if isinstance(type_, GraphQLList):
         slice_, type_name = parse_input_field_type(
-            type_=type_.of_type, nullable=nullable, custom_scalars=custom_scalars
+            type_=type_.of_type, nullable=True, custom_scalars=custom_scalars
         )
         return generate_list_annotation(slice_=slice_, nullable=nullable), type_name
 
@@ -115,7 +114,6 @@ def parse_input_field_default_value(
     return None
 
 
-# pylint: disable=too-many-return-statements
 def parse_input_const_value_node(
     node: ConstValueNode,
     field_type: str = "",
@@ -143,7 +141,7 @@ def parse_input_const_value_node(
     if isinstance(node, ListValueNode):
         list_ = generate_list(
             cast(
-                List[ast.expr],
+                list[ast.expr],
                 [
                     parse_input_const_value_node(
                         node=v,
@@ -170,7 +168,7 @@ def parse_input_const_value_node(
         dict_ = generate_dict(
             keys=[generate_constant(f.name.value) for f in node.fields],
             values=cast(
-                List[ast.expr],
+                list[ast.expr],
                 [
                     parse_input_const_value_node(
                         node=f.value,

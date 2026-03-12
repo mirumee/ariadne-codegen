@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .my_mutation import MyMutation
@@ -10,8 +10,7 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def my_mutation(self, id: str, **kwargs: Any) -> MyMutation:
-        query = gql(
-            """
+        query = gql("""
             mutation my_mutation($id: ID!) {
               change_item(id: $id) {
                 contacts {
@@ -34,9 +33,8 @@ class Client(AsyncBaseClient):
               __typename
               message
             }
-            """
-        )
-        variables: Dict[str, object] = {"id": id}
+            """)
+        variables: dict[str, object] = {"id": id}
         response = await self.execute(
             query=query, operation_name="my_mutation", variables=variables, **kwargs
         )

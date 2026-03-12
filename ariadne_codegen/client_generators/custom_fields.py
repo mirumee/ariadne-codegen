@@ -1,12 +1,14 @@
 import ast
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 from graphql import (
+    GraphQLField,
     GraphQLInterfaceType,
     GraphQLNamedType,
     GraphQLObjectType,
     GraphQLSchema,
     GraphQLUnionType,
+    is_non_null_type,
 )
 
 from ariadne_codegen.client_generators.custom_arguments import ArgumentGenerator
@@ -34,7 +36,6 @@ from .constants import (
     ANY,
     BASE_GRAPHQL_FIELD_CLASS_NAME,
     BASE_OPERATION_FILE_PATH,
-    DICT,
     GRAPHQL_BASE_FIELD_CLASS,
     GRAPHQL_INTERFACE_SUFFIX,
     GRAPHQL_OBJECT_SUFFIX,
@@ -54,14 +55,14 @@ class CustomFieldsGenerator:
         self,
         schema: GraphQLSchema,
         convert_to_snake_case: bool = True,
-        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
         self.plugin_manager = plugin_manager
         self.custom_scalars = custom_scalars if custom_scalars else {}
-        self._imports: List[ast.ImportFrom] = [
+        self._imports: list[ast.ImportFrom] = [
             ast.ImportFrom(
                 module=BASE_OPERATION_FILE_PATH.stem,
                 names=[ast.alias(BASE_GRAPHQL_FIELD_CLASS_NAME)],
@@ -70,7 +71,7 @@ class CustomFieldsGenerator:
         ]
         self._add_import(
             generate_import_from(
-                [OPTIONAL, UNION, ANY, DICT],
+                [UNION, ANY],
                 TYPING_MODULE,
             )
         )
@@ -79,7 +80,7 @@ class CustomFieldsGenerator:
             self.convert_to_snake_case,
             self.plugin_manager,
         )
-        self._class_defs: List[ast.ClassDef] = self._parse_object_type_definitions(
+        self._class_defs: list[ast.ClassDef] = self._parse_object_type_definitions(
             TypeCollector(self.schema).collect()
         )
 
@@ -87,7 +88,7 @@ class CustomFieldsGenerator:
         """Generates an AST module containing the custom fields and required imports."""
         self.argument_generator.add_custom_scalar_imports()
         module = generate_module(
-            body=cast(List[ast.stmt], self._imports + self._class_defs),
+            body=cast(list[ast.stmt], self._imports + self._class_defs),
         )
         return module
 
@@ -100,8 +101,8 @@ class CustomFieldsGenerator:
                 self._imports.append(import_)
 
     def _parse_object_type_definitions(
-        self, type_names: List[str]
-    ) -> List[ast.ClassDef]:
+        self, type_names: list[str]
+    ) -> list[ast.ClassDef]:
         """
         Parses object type definitions from the schema
         and generates AST class definitions.
@@ -114,6 +115,7 @@ class CustomFieldsGenerator:
                 class_def = self._generate_class_def_body(
                     definition=graphql_type,
                     class_name=f"{graphql_type.name}{self._get_suffix(graphql_type)}",
+                    description=graphql_type.description,
                 )
                 if isinstance(graphql_type, GraphQLInterfaceType):
                     class_def.body.append(
@@ -129,6 +131,7 @@ class CustomFieldsGenerator:
         self,
         definition: Union[GraphQLObjectType, GraphQLInterfaceType],
         class_name: str,
+        description: Optional[str] = None,
     ) -> ast.ClassDef:
         """
         Generates the body of a class definition for a given GraphQL object
@@ -136,10 +139,12 @@ class CustomFieldsGenerator:
         """
         base_names = [GRAPHQL_BASE_FIELD_CLASS]
         additional_fields_typing = set()
-        class_def = generate_class_def(name=class_name, base_names=base_names)
-        for lineno, (org_name, field) in enumerate(
-            self._get_combined_fields(definition).items(), start=1
-        ):
+        class_def = generate_class_def(
+            name=class_name, base_names=base_names, description=description or ""
+        )
+        lineno = 0
+        for org_name, field in self._get_combined_fields(definition).items():
+            lineno += 1
             name = process_name(
                 org_name, convert_to_snake_case=self.convert_to_snake_case
             )
@@ -154,6 +159,11 @@ class CustomFieldsGenerator:
                     name, field_name, org_name, field, method_required, lineno
                 )
             )
+            # Add field docstring for class attributes (not methods)
+            if not field.args and field.description and not method_required:
+                lineno += 1
+                docstring = ast.Expr(value=ast.Constant(field.description))
+                class_def.body.append(docstring)
 
         class_def.body.append(
             self._generate_fields_method(
@@ -165,7 +175,7 @@ class CustomFieldsGenerator:
 
     def _get_combined_fields(
         self, definition: Union[GraphQLObjectType, GraphQLInterfaceType]
-    ) -> Dict[str, ast.ClassDef]:
+    ) -> dict[str, GraphQLField]:
         """Combines fields from the definition and its interfaces."""
         fields = dict(definition.fields.items())
         for interface in getattr(definition, "interfaces", []):
@@ -174,7 +184,7 @@ class CustomFieldsGenerator:
 
     def _get_field_name(
         self, final_type: GraphQLNamedType, definition_name: str
-    ) -> Tuple[str, bool]:
+    ) -> tuple[str, bool]:
         """
         Returns the appropriate field name suffix based on the type of GraphQL type.
         """
@@ -209,14 +219,18 @@ class CustomFieldsGenerator:
         name: str,
         field_name: str,
         org_name: str,
-        field: ast.ClassDef,
+        field: GraphQLField,
         method_required: bool,
         lineno: int,
     ) -> ast.stmt:
         """Handles the generation of field types."""
-        if getattr(field, "args") or method_required:
+        if field.args or method_required:
             return self.generate_product_type_method(
-                name, field_name, getattr(field, "args")
+                name,
+                field_name,
+                org_name,
+                field.args,
+                description=field.description,
             )
         return generate_ann_assign(
             target=generate_name(name),
@@ -228,7 +242,7 @@ class CustomFieldsGenerator:
         )
 
     def _generate_fields_method(
-        self, class_name: str, definition_name: str, additional_fields_typing: List[str]
+        self, class_name: str, definition_name: str, additional_fields_typing: list[str]
     ) -> ast.FunctionDef:
         """Generates the `fields` method for a class."""
         field_class_name = generate_name(f"{definition_name}{GRAPHQL_BASE_FIELD_CLASS}")
@@ -289,7 +303,7 @@ class CustomFieldsGenerator:
                 ]
             ),
             body=cast(
-                List[ast.stmt],
+                list[ast.stmt],
                 [
                     ast.Assign(
                         targets=[
@@ -311,7 +325,12 @@ class CustomFieldsGenerator:
         )
 
     def generate_product_type_method(
-        self, name: str, class_name: str, arguments: Optional[Dict[str, Any]] = None
+        self,
+        name: str,
+        class_name: str,
+        org_name: str,
+        arguments: Optional[dict[str, Any]] = None,
+        description: Optional[str] = None,
     ) -> ast.FunctionDef:
         """Generates a method for a product type."""
         arguments = arguments or {}
@@ -322,8 +341,15 @@ class CustomFieldsGenerator:
             return_arguments_values,
         ) = self.argument_generator.generate_arguments(arguments)
         self._imports.extend(self.argument_generator.imports)
-        arguments_body: List[ast.stmt] = []
-        arguments_keyword: List[ast.keyword] = []
+
+        if arguments:
+            for arg in arguments.values():
+                if not is_non_null_type(arg.type):
+                    self._add_import(generate_import_from([OPTIONAL], TYPING_MODULE))
+                    break
+
+        arguments_body: list[ast.stmt] = []
+        arguments_keyword: list[ast.keyword] = []
 
         if arguments:
             (
@@ -337,13 +363,13 @@ class CustomFieldsGenerator:
             name,
             arguments=method_arguments,
             body=cast(
-                List[ast.stmt],
+                list[ast.stmt],
                 [
                     *arguments_body,
                     generate_return(
                         value=generate_call(
                             func=field_class_name,
-                            args=[generate_constant(name)],
+                            args=[generate_constant(org_name)],
                             keywords=arguments_keyword,
                         )
                     ),
@@ -351,6 +377,7 @@ class CustomFieldsGenerator:
             ),
             return_type=generate_name(f'"{class_name}"'),
             decorator_list=[generate_name("classmethod")],
+            description=description or "",
         )
 
     def _get_suffix(

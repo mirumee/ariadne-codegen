@@ -1,10 +1,11 @@
 import ast
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Optional, Union, cast
 
 from graphql import (
     GraphQLEnumType,
     GraphQLInputObjectType,
     GraphQLInterfaceType,
+    GraphQLList,
     GraphQLNonNull,
     GraphQLObjectType,
     GraphQLScalarType,
@@ -23,6 +24,7 @@ from ..codegen import (
     generate_dict,
     generate_import_from,
     generate_keyword,
+    generate_list_annotation,
     generate_name,
     generate_subscript,
     generate_tuple,
@@ -46,15 +48,15 @@ class ArgumentGenerator:
 
     def __init__(
         self,
-        custom_scalars: Dict[str, ScalarData],
+        custom_scalars: dict[str, ScalarData],
         convert_to_snake_case: bool,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.custom_scalars = custom_scalars
         self.convert_to_snake_case = convert_to_snake_case
         self.plugin_manager = plugin_manager
-        self.imports: List[ast.ImportFrom] = []
-        self._used_custom_scalars: List[str] = []
+        self.imports: list[ast.ImportFrom] = []
+        self._used_custom_scalars: list[str] = []
 
     def _add_import(self, import_: Optional[ast.ImportFrom] = None) -> None:
         """Adds an import statement to the list of imports."""
@@ -65,24 +67,33 @@ class ArgumentGenerator:
                 self.imports.append(import_)
 
     def generate_arguments(
-        self, operation_args: Dict[str, Any]
-    ) -> Tuple[ast.arguments, List[ast.expr], List[ast.expr]]:
+        self, operation_args: dict[str, Any]
+    ) -> tuple[ast.arguments, list[ast.expr], list[ast.expr]]:
         """Generates method arguments from operation arguments."""
         cls_arg = generate_arg(name="cls")
-        args: List[ast.arg] = []
-        kw_only_args: List[ast.arg] = []
-        kw_defaults: List[ast.expr] = []
-        return_arguments_keys: List[ast.expr] = []
-        return_arguments_values: List[ast.expr] = []
+        args: list[ast.arg] = []
+        kw_only_args: list[ast.arg] = []
+        kw_defaults: list[ast.expr] = []
+        return_arguments_keys: list[ast.expr] = []
+        return_arguments_values: list[ast.expr] = []
 
         for arg_name, arg_value in operation_args.items():
             final_type = get_final_type(arg_value)
-            is_required = isinstance(arg_value.type, GraphQLNonNull)
+            unwrapped_type = arg_value.type
+            is_required = isinstance(unwrapped_type, GraphQLNonNull)
+
+            if is_required:
+                unwrapped_type = (
+                    unwrapped_type.of_type
+                    if hasattr(unwrapped_type, "of_type")
+                    else unwrapped_type.type
+                )
+            is_list = isinstance(unwrapped_type, GraphQLList)
             name = process_name(
                 arg_name, convert_to_snake_case=self.convert_to_snake_case
             )
             annotation, used_custom_scalar = self._parse_graphql_type_name(
-                final_type, not is_required
+                final_type, not is_required, is_list
             )
 
             self._accumulate_method_arguments(
@@ -93,8 +104,7 @@ class ArgumentGenerator:
                 return_arguments_values,
                 arg_name,
                 name,
-                final_type,
-                is_required,
+                arg_value.type,
                 used_custom_scalar,
             )
 
@@ -105,9 +115,9 @@ class ArgumentGenerator:
 
     def _accumulate_method_arguments(
         self,
-        args: List[ast.arg],
-        kw_only_args: List[ast.arg],
-        kw_defaults: List[ast.expr],
+        args: list[ast.arg],
+        kw_only_args: list[ast.arg],
+        kw_defaults: list[ast.expr],
         name: str,
         annotation: Optional[Union[ast.Name, ast.Subscript]],
         is_required: bool,
@@ -121,16 +131,22 @@ class ArgumentGenerator:
 
     def _accumulate_return_arguments(
         self,
-        return_arguments_keys: List[ast.expr],
-        return_arguments_values: List[ast.expr],
+        return_arguments_keys: list[ast.expr],
+        return_arguments_values: list[ast.expr],
         arg_name: str,
         name: str,
-        final_type: Union[GraphQLObjectType, GraphQLInterfaceType, GraphQLUnionType],
-        is_required: bool,
+        complete_type: Union[
+            GraphQLObjectType,
+            GraphQLInterfaceType,
+            GraphQLUnionType,
+            GraphQLNonNull,
+            GraphQLList,
+        ],
         used_custom_scalar: Optional[str],
     ) -> None:
         """Accumulates return arguments."""
-        constant_value = f"{final_type.name}!" if is_required else final_type.name
+        constant_value = self._generate_complete_type_name(complete_type)
+
         return_arg_dict_value = self._generate_return_arg_value(
             name, used_custom_scalar
         )
@@ -142,6 +158,30 @@ class ArgumentGenerator:
                 values=[generate_constant(constant_value), return_arg_dict_value],
             )
         )
+
+    def _generate_complete_type_name(
+        self,
+        complete_type: Union[
+            GraphQLObjectType,
+            GraphQLInterfaceType,
+            GraphQLUnionType,
+            GraphQLNonNull,
+            GraphQLList,
+        ],
+    ) -> str:
+        if isinstance(complete_type, GraphQLNonNull):
+            inner = cast(
+                GraphQLObjectType,
+                getattr(complete_type, "of_type", complete_type),
+            )
+            return f"{self._generate_complete_type_name(inner)}!"
+        if isinstance(complete_type, GraphQLList):
+            inner = cast(
+                GraphQLObjectType,
+                getattr(complete_type, "of_type", complete_type),
+            )
+            return f"[{self._generate_complete_type_name(inner)}]"
+        return complete_type.name
 
     def _generate_return_arg_value(
         self, name: str, used_custom_scalar: Optional[str]
@@ -163,9 +203,9 @@ class ArgumentGenerator:
     def _assemble_method_arguments(
         self,
         cls_arg: ast.arg,
-        args: List[ast.arg],
-        kw_only_args: List[ast.arg],
-        kw_defaults: List[ast.expr],
+        args: list[ast.arg],
+        kw_only_args: list[ast.arg],
+        kw_defaults: list[ast.expr],
     ) -> ast.arguments:
         """Assembles method arguments."""
         return generate_arguments(
@@ -178,7 +218,8 @@ class ArgumentGenerator:
         self,
         type_: Union[GraphQLScalarType, GraphQLInputObjectType, GraphQLEnumType],
         nullable: bool = True,
-    ) -> Tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
+        is_list: bool = False,
+    ) -> tuple[Union[ast.Name, ast.Subscript], Optional[str]]:
         """Parses the GraphQL type name and determines if it is a custom scalar."""
         name = type_.name
         used_custom_scalar = None
@@ -205,7 +246,15 @@ class ArgumentGenerator:
                 self._used_custom_scalars.append(used_custom_scalar)
         else:
             raise ParsingError(f"Incorrect argument type {name}")
-        return generate_annotation_name(name, nullable), used_custom_scalar
+
+        return (
+            generate_annotation_name(name, nullable)
+            if not is_list
+            else generate_list_annotation(
+                generate_annotation_name(name, nullable=False), nullable
+            ),
+            used_custom_scalar,
+        )
 
     def add_custom_scalar_imports(self) -> None:
         """Adds imports for custom scalars used in the schema."""
@@ -216,9 +265,9 @@ class ArgumentGenerator:
 
     def generate_clear_arguments_section(
         self,
-        return_arguments_keys: List[ast.expr],
-        return_arguments_values: List[ast.expr],
-    ) -> Tuple[List[ast.stmt], List[ast.keyword]]:
+        return_arguments_keys: list[ast.expr],
+        return_arguments_values: list[ast.expr],
+    ) -> tuple[list[ast.stmt], list[ast.keyword]]:
         arguments_body = [
             generate_ann_assign(
                 generate_name("arguments"),
@@ -254,7 +303,7 @@ class ArgumentGenerator:
                             target="key, value",
                             iter_="arguments.items()",
                             ifs=cast(
-                                List[ast.expr],
+                                list[ast.expr],
                                 [
                                     ast.Compare(
                                         left=generate_subscript(
@@ -274,4 +323,4 @@ class ArgumentGenerator:
         arguments_keyword = [
             generate_keyword(arg="arguments", value=generate_name("cleared_arguments"))
         ]
-        return arguments_body, arguments_keyword
+        return (cast(list[ast.stmt], arguments_body), arguments_keyword)

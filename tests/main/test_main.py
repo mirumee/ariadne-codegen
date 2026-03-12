@@ -1,7 +1,7 @@
+import ast
 import os
 from importlib.metadata import version
 from pathlib import Path
-from typing import List
 
 import httpx
 import pytest
@@ -32,7 +32,7 @@ def project_dir(request, tmp_path):
     os.chdir(old_cwd)
 
 
-def copy_files(files_to_copy: List[Path], target_dir: Path):
+def copy_files(files_to_copy: list[Path], target_dir: Path):
     for file_ in files_to_copy:
         target_dir.joinpath(file_.name).write_text(file_.read_text())
 
@@ -213,6 +213,36 @@ def test_main_shows_version():
             "example_client",
             CLIENTS_PATH / "custom_sync_query_builder" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "client_forward_refs" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "client_forward_refs" / "queries.graphql",
+                    CLIENTS_PATH / "client_forward_refs" / "schema.graphql",
+                    CLIENTS_PATH / "client_forward_refs" / "custom_scalars.py",
+                ),
+            ),
+            "client_forward_refs",
+            CLIENTS_PATH / "client_forward_refs" / "expected_client",
+        ),
+        (
+            (
+                CLIENTS_PATH / "client_forward_refs_shorter_results" / "pyproject.toml",
+                (
+                    CLIENTS_PATH
+                    / "client_forward_refs_shorter_results"
+                    / "queries.graphql",
+                    CLIENTS_PATH
+                    / "client_forward_refs_shorter_results"
+                    / "schema.graphql",
+                    CLIENTS_PATH
+                    / "client_forward_refs_shorter_results"
+                    / "custom_scalars.py",
+                ),
+            ),
+            "client_forward_refs_shorter_results",
+            CLIENTS_PATH / "client_forward_refs_shorter_results" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
@@ -225,6 +255,41 @@ def test_main_generates_correct_package(
     package_path = project_dir / package_name
     assert package_path.is_dir()
     assert_the_same_files_in_directories(package_path, expected_package_path)
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH
+                / "client_forward_refs_custom_operations"
+                / "pyproject.toml",
+                (
+                    CLIENTS_PATH
+                    / "client_forward_refs_custom_operations"
+                    / "schema.graphql",
+                ),
+            ),
+            "example_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_client_forward_refs_with_custom_operations(project_dir, package_name):
+    """ClientForwardRefsPlugin + enable_custom_operations should produce valid client.
+
+    Custom operation methods (execute_custom_operation, query, mutation) return
+    self.* or await self.* - the plugin must not treat 'self' as a generated class.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0, result.output
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+    client_py = package_path / "client.py"
+    assert client_py.exists(), f"Expected {client_py}"
+    ast.parse(client_py.read_text())
 
 
 @pytest.mark.parametrize(
@@ -253,9 +318,7 @@ def test_main_generates_correct_package(
     ],
     indirect=["project_dir"],
 )
-def test_main_raises_exception(
-    project_dir, expected_exception
-):  # pylint: disable=W0613
+def test_main_raises_exception(project_dir, expected_exception):
     with pytest.raises(expected_exception):
         CliRunner().invoke(main, catch_exceptions=False)
 
@@ -276,7 +339,7 @@ def test_main_raises_exception(
 )
 def test_main_uses_remote_schema_url_and_remote_schema_headers(
     mocker, project_dir, package_name, expected_package_path
-):  # pylint: disable=W0613
+):
     introspection_response_contenct = CLIENTS_PATH.joinpath(
         "remote_schema", "response.json"
     ).read_bytes()
@@ -307,7 +370,7 @@ def test_main_can_read_config_from_provided_file(tmp_path):
         CLIENTS_PATH / "custom_config_file" / "queries.graphql",
         CLIENTS_PATH / "custom_config_file" / "schema.graphql",
     )
-    copy_files(files_to_copy, tmp_path)
+    copy_files(list(files_to_copy), tmp_path)
     expected_client_path = CLIENTS_PATH / "custom_config_file" / "expected_client"
     package_name = "custom_config_client"
 
@@ -367,4 +430,11 @@ def test_main_generates_correct_schema_file(project_dir, file_name, expected_fil
     assert result.exit_code == 0
     schema_path = project_dir / file_name
 
-    assert schema_path.read_text() == expected_file_path.read_text()
+    # normalise texts to account for a spelling change in graphql-core 3.2.5
+    def normalise(schema: str) -> str:
+        return schema.replace(" behaviour ", " behavior ")
+
+    actual = normalise(schema_path.read_text())
+    expected = normalise(expected_file_path.read_text())
+
+    assert actual == expected

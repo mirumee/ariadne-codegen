@@ -1,6 +1,6 @@
 import ast
 import sys
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Optional, Union, cast
 
 from graphql import (
     GraphQLEnumType,
@@ -26,9 +26,10 @@ from .exceptions import ParsingError
 
 
 def generate_import_from(
-    names: List[str], from_: Optional[str] = None, level: int = 0
+    names: list[str], from_: Optional[str] = None, level: int = 0
 ) -> ast.ImportFrom:
     """Generate import from statement."""
+    assert names, "Using ImportFrom with no names would produce invalid Python code"
     return ast.ImportFrom(
         module=from_, names=[ast.alias(n) for n in names], level=level
     )
@@ -65,12 +66,12 @@ def generate_arg(
 
 
 def generate_arguments(
-    args: Optional[List[ast.arg]] = None,
+    args: Optional[list[ast.arg]] = None,
     vararg: Optional[ast.arg] = None,
     kwonlyargs: Optional[list[ast.arg]] = None,
     kw_defaults: Optional[list[Union[ast.expr, None]]] = None,
     kwarg: Optional[ast.arg] = None,
-    defaults: Optional[List[ast.expr]] = None,
+    defaults: Optional[list[ast.expr]] = None,
 ) -> ast.arguments:
     """Generate arguments."""
     return ast.arguments(
@@ -88,12 +89,12 @@ def generate_async_method_definition(
     name: str,
     arguments: ast.arguments,
     return_type: Union[ast.Name, ast.Subscript],
-    body: Optional[List[ast.stmt]] = None,
+    body: Optional[list[ast.stmt]] = None,
     lineno: int = 1,
-    decorator_list: Optional[List[ast.expr]] = None,
+    decorator_list: Optional[list[ast.expr]] = None,
 ) -> ast.AsyncFunctionDef:
     """Generate async function."""
-    params: Dict[str, Any] = {
+    params: dict[str, Any] = {
         "name": name,
         "args": arguments,
         "body": body if body else [ast.Pass()],
@@ -109,18 +110,23 @@ def generate_async_method_definition(
 
 def generate_class_def(
     name: str,
-    base_names: Optional[List[str]] = None,
-    body: Optional[List[ast.stmt]] = None,
+    base_names: Optional[list[str]] = None,
+    body: Optional[list[ast.stmt]] = None,
+    description: str = "",
 ) -> ast.ClassDef:
     """Generate class definition."""
     bases = cast(
-        List[ast.expr], [ast.Name(id=name) for name in base_names] if base_names else []
+        list[ast.expr], [ast.Name(id=name) for name in base_names] if base_names else []
     )
-    params: Dict[str, Any] = {
+    body = body if body else []
+    if description:
+        docstring = ast.Expr(value=ast.Constant(value=description))
+        body.insert(0, docstring)
+    params: dict[str, Any] = {
         "name": name,
         "bases": bases,
         "keywords": [],
-        "body": body if body else [],
+        "body": body,
         "decorator_list": [],
     }
     if sys.version_info >= (3, 12):
@@ -155,7 +161,7 @@ def generate_formatted_value(
 
 
 def generate_assign(
-    targets: List[str], value: Union[ast.expr, List[ast.expr]], lineno: int = 1
+    targets: list[str], value: Union[ast.expr, list[ast.expr]], lineno: int = 1
 ) -> ast.Assign:
     """Generate assign object."""
     return ast.Assign(
@@ -182,7 +188,7 @@ def generate_ann_assign(
 
 
 def generate_union_annotation(
-    types: List[ast.expr], nullable: bool = True
+    types: list[ast.expr], nullable: bool = True
 ) -> ast.Subscript:
     """Generate union annotation."""
     result = ast.Subscript(value=ast.Name(id=UNION), slice=ast.Tuple(elts=types))
@@ -190,8 +196,8 @@ def generate_union_annotation(
 
 
 def generate_dict(
-    keys: Optional[List[Optional[ast.expr]]] = None,
-    values: Optional[List[ast.expr]] = None,
+    keys: Optional[list[Optional[ast.expr]]] = None,
+    values: Optional[list[ast.expr]] = None,
 ) -> ast.Dict:
     """Generate dict object."""
     return ast.Dict(keys=keys if keys else [], values=values if values else [])
@@ -204,8 +210,8 @@ def generate_await(value: ast.expr) -> ast.Await:
 
 def generate_call(
     func: ast.expr,
-    args: Optional[List[Union[ast.expr, List[ast.expr]]]] = None,
-    keywords: Optional[List[ast.keyword]] = None,
+    args: Optional[list[Union[ast.expr, list[ast.expr]]]] = None,
+    keywords: Optional[list[ast.keyword]] = None,
 ) -> ast.Call:
     """Generate call object."""
     return ast.Call(
@@ -251,7 +257,7 @@ def parse_field_type(
 
     if isinstance(type_, GraphQLUnionType):
         subtypes = cast(
-            List[ast.expr],
+            list[ast.expr],
             [parse_field_type(subtype, False) for subtype in type_.types],
         )
         return generate_union_annotation(subtypes, nullable)
@@ -268,7 +274,7 @@ def parse_field_type(
 
 
 def generate_method_call(
-    object_name: str, method_name: str, args: Optional[List[ast.expr]] = None
+    object_name: str, method_name: str, args: Optional[list[ast.expr]] = None
 ) -> ast.Call:
     """Generate object`s method call."""
     return ast.Call(
@@ -300,7 +306,7 @@ def generate_trivial_lambda(name: str, argument_name: str) -> ast.Assign:
     )
 
 
-def generate_list(elements: List[ast.expr]) -> ast.List:
+def generate_list(elements: list[ast.expr]) -> ast.List:
     """Generate list object."""
     return ast.List(elts=elements)
 
@@ -313,7 +319,7 @@ def generate_list_comp(
 
 
 def generate_comp(
-    target: str, iter_: str, ifs: Optional[List[ast.expr]] = None, is_async: int = 0
+    target: str, iter_: str, ifs: Optional[list[ast.expr]] = None, is_async: int = 0
 ) -> ast.comprehension:
     "Generate comprehension"
     return ast.comprehension(
@@ -329,7 +335,7 @@ def generate_lambda(body: ast.expr, args: Optional[ast.arguments] = None) -> ast
     return ast.Lambda(args=args or generate_arguments(), body=body)
 
 
-def generate_pydantic_field(keywords: Dict[str, ast.expr]) -> ast.Call:
+def generate_pydantic_field(keywords: dict[str, ast.expr]) -> ast.Call:
     return generate_call(
         func=generate_name(FIELD_CLASS),
         keywords=[
@@ -338,7 +344,7 @@ def generate_pydantic_field(keywords: Dict[str, ast.expr]) -> ast.Call:
     )
 
 
-def generate_module(body: List[ast.stmt]) -> ast.Module:
+def generate_module(body: list[ast.stmt]) -> ast.Module:
     return ast.Module(body=body, type_ignores=[])
 
 
@@ -346,7 +352,7 @@ def generate_subscript(value: ast.expr, slice_: ast.expr) -> ast.Subscript:
     return ast.Subscript(value=value, slice=slice_)
 
 
-def generate_tuple(elts: List[ast.expr]) -> ast.Tuple:
+def generate_tuple(elts: list[ast.expr]) -> ast.Tuple:
     return ast.Tuple(elts=elts)
 
 
@@ -354,11 +360,16 @@ def generate_method_definition(
     name: str,
     arguments: ast.arguments,
     return_type: Union[ast.Name, ast.Subscript],
-    body: Optional[List[ast.stmt]] = None,
+    description: str = "",
+    body: Optional[list[ast.stmt]] = None,
     lineno: int = 1,
-    decorator_list: Optional[List[ast.expr]] = None,
+    decorator_list: Optional[list[ast.expr]] = None,
 ) -> ast.FunctionDef:
-    params: Dict[str, Any] = {
+    body = body if body else [ast.Pass()]
+    if description:
+        docstring = ast.Expr(value=ast.Constant(value=description))
+        body.insert(0, docstring)
+    params: dict[str, Any] = {
         "name": name,
         "args": arguments,
         "body": body if body else [ast.Pass()],
@@ -375,14 +386,14 @@ def generate_method_definition(
 def generate_async_for(
     target: ast.expr,
     iter_: ast.expr,
-    body: Optional[List[ast.stmt]] = None,
-    orelse: Optional[List[ast.stmt]] = None,
+    body: Optional[list[ast.stmt]] = None,
+    orelse: Optional[list[ast.stmt]] = None,
     lineno: int = 1,
 ) -> ast.AsyncFor:
     return ast.AsyncFor(
         target=target,
         iter=iter_,
-        body=body or [ast.Pass()],
+        body=cast(list[ast.stmt], body or [ast.Pass()]),
         orelse=orelse or [],
         lineno=lineno,
     )
@@ -406,12 +417,12 @@ class ClassDefNamesVisitor(ast.NodeVisitor):
     def __init__(self):
         self.found_name_with_quote = False
 
-    def visit_Name(self, node):  # pylint: disable=C0103
+    def visit_Name(self, node):  # noqa: N802
         if '"' in node.id:
             self.found_name_with_quote = True
         self.generic_visit(node)
 
-    def visit_Subscript(self, node):  # pylint: disable=C0103
+    def visit_Subscript(self, node):  # noqa: N802
         if isinstance(node.value, ast.Name) and node.value.id == "Literal":
             return
 

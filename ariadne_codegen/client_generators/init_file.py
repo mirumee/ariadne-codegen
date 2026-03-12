@@ -1,5 +1,5 @@
 import ast
-from typing import List, Optional
+from typing import Optional
 
 from ..codegen import generate_import_from
 from ..plugins.manager import PluginManager
@@ -10,11 +10,11 @@ class InitFileGenerator:
         self.imports: list = []
         self.plugin_manager = plugin_manager
 
-    def add_import(self, names: List[str], from_: str, level: int = 0) -> None:
+    def add_import(self, names: list[str], from_: str, level: int = 0) -> None:
         """Add import to be included in init file."""
         if not names:
             return
-        import_ = generate_import_from(names=names, from_=from_, level=level)
+        import_ = generate_import_from(names=sorted(names), from_=from_, level=level)
         if self.plugin_manager:
             import_ = self.plugin_manager.generate_init_import(import_)
         self.imports.append(import_)
@@ -23,7 +23,7 @@ class InitFileGenerator:
         """Generate init with imports and public api of package."""
         module = ast.Module(body=self.imports, type_ignores=[])
         if self.imports:
-            constants_names: List[str] = []
+            constants_names: list[str] = []
             for import_ in self.imports:
                 constants_names.extend([n.name for n in import_.names])
             constants_names.sort()

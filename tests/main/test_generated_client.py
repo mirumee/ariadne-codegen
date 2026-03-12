@@ -1,11 +1,12 @@
 import importlib
+import importlib.util
 import os
 import sys
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from ariadne_codegen.main import main
 
@@ -35,8 +36,10 @@ def generated_client(tmp_path_factory):
     init_path = tmp_cwd / client_name / "__init__.py"
 
     spec = importlib.util.spec_from_file_location(client_name, init_path)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
+    assert spec.loader is not None
     spec.loader.exec_module(module)
 
     yield module
@@ -46,36 +49,37 @@ def generated_client(tmp_path_factory):
 
 @pytest.fixture
 def http_client():
-    return AsyncClient(base_url="http://127.0.0.1:8000", app=api_app)
+    transport = ASGITransport(app=api_app)
+    return AsyncClient(base_url="http://127.0.0.1:8000", transport=transport)
 
 
 @pytest.fixture
-def Client(generated_client):  # pylint: disable=invalid-name
+def Client(generated_client):  # noqa: N802, N803
     return generated_client.Client
 
 
 @pytest.fixture
-def CustomScalar(generated_client):  # pylint: disable=invalid-name
+def CustomScalar(generated_client):  # noqa: N802, N803
     return generated_client.custom_scalars.CustomScalar
 
 
 @pytest.fixture
-def GetA(generated_client):  # pylint: disable=invalid-name
+def GetA(generated_client):  # noqa: N802, N803
     return generated_client.GetA
 
 
 @pytest.fixture
-def GetB(generated_client):  # pylint: disable=invalid-name
+def GetB(generated_client):  # noqa: N802, N803
     return generated_client.GetB
 
 
 @pytest.fixture
-def GetC(generated_client):  # pylint: disable=invalid-name
+def GetC(generated_client):  # noqa: N802, N803
     return generated_client.GetC
 
 
 @pytest.fixture
-def CustomInput(generated_client):  # pylint: disable=invalid-name
+def CustomInput(generated_client):  # noqa: N802, N803
     return generated_client.CustomInput
 
 
@@ -95,8 +99,13 @@ def mocked_serialize(generated_client):
 
 @pytest.mark.asyncio
 async def test_get_a_uses_parse(
-    http_client, Client, CustomScalar, GetA, mocked_parse, mocked_serialize
-):  # pylint: disable=invalid-name
+    http_client,
+    Client,  # noqa: N803
+    CustomScalar,  # noqa: N803
+    GetA,  # noqa: N803
+    mocked_parse,
+    mocked_serialize,
+):
     async with Client(url="/graphql/", http_client=http_client) as client:
         result = await client.get_a()
 
@@ -110,8 +119,13 @@ async def test_get_a_uses_parse(
 
 @pytest.mark.asyncio
 async def test_get_b_uses_parse_for_result_and_serialize_for_input(
-    http_client, Client, CustomScalar, GetB, mocked_parse, mocked_serialize
-):  # pylint: disable=invalid-name
+    http_client,
+    Client,  # noqa: N803
+    CustomScalar,  # noqa: N803
+    GetB,  # noqa: N803
+    mocked_parse,
+    mocked_serialize,
+):
     custom_scalar = CustomScalar("test")
     async with Client(url="/graphql/", http_client=http_client) as client:
         result = await client.get_b(custom_scalar)
@@ -127,8 +141,14 @@ async def test_get_b_uses_parse_for_result_and_serialize_for_input(
 
 @pytest.mark.asyncio
 async def test_get_c_uses_parse_for_result_and_serialize_for_input(
-    Client, GetC, CustomInput, CustomScalar, http_client, mocked_parse, mocked_serialize
-):  # pylint: disable=invalid-name
+    http_client,
+    Client,  # noqa: N803
+    GetC,  # noqa: N803
+    CustomInput,  # noqa: N803
+    CustomScalar,  # noqa: N803
+    mocked_parse,
+    mocked_serialize,
+):
     custom_scalar = CustomScalar("abc")
     async with Client(url="/graphql/", http_client=http_client) as client:
         result = await client.get_c(CustomInput(value=custom_scalar))

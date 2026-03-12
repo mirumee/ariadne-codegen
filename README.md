@@ -1,21 +1,18 @@
+# Ariadne Code Generator
+
 [![Ariadne](https://ariadnegraphql.org/img/logo-horizontal-sm.png)](https://ariadnegraphql.org)
 
-[![Build Status](https://github.com/mirumee/ariadne-codegen/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/mirumee/ariadne-codegen/actions)
-
-- - - - -
-
-# Ariadne Code Generator
+[![Build Status](https://github.com/mirumee/ariadne-codegen/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/mirumee/ariadne-codegen/actions)
 
 Python code generator that takes graphql schema, queries, mutations and subscriptions and generates Python package with fully typed and asynchronous GraphQL client.
 
 It's available as `ariadne-codegen` command and reads configuration from the `pyproject.toml` file:
 
 ```
-$ ariadne-codegen
+ariadne-codegen
 ```
 
 It can also be run as `python -m ariadne_codegen`.
-
 
 ## Features
 
@@ -23,21 +20,19 @@ It can also be run as `python -m ariadne_codegen`.
 - Generate pydantic models for GraphQL results.
 - Generate client package with each GraphQL operation available as async method.
 
-
 ## Installation
 
 Ariadne Code Generator can be installed with pip:
 
 ```
-$ pip install ariadne-codegen
+pip install ariadne-codegen
 ```
 
 To support subscriptions, default base client requires `websockets` package:
 
 ```
-$ pip install ariadne-codegen[subscriptions]
+pip install ariadne-codegen[subscriptions]
 ```
-
 
 ## Configuration
 
@@ -62,8 +57,9 @@ One of the following 2 parameters is required, in case of providing both of them
 
 Optional settings:
 
-- `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer: token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
+- `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
 - `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies wheter to verify ssl while introspecting remote schema
+- `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
 - `target_package_path` (defaults to cwd) - path where to generate package
 - `client_name` (defaults to `"Client"`) - name of generated client class
@@ -83,10 +79,9 @@ Optional settings:
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
 
-
 ## Custom operation builder
 
-The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way. 
+The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way.
 
 ### Example Code
 
@@ -143,7 +138,6 @@ asyncio.run(get_products())
 
 ### Explanation
 
-
 1. Building the Product Query:
    1. The Query.product(id="...", channel="channel-uk") initiates a query for a product with the specified ID and channel.
    2. .fields(ProductFields.id, ProductFields.name) specifies the fields to retrieve for the product: id and name.
@@ -153,11 +147,10 @@ asyncio.run(get_products())
    3. .alias("aliased_edges") renames the edges field to aliased_edges.
    4. .on("ProductTranslatableContent", ...) specifies the fields to retrieve if the node is of type ProductTranslatableContent: id, product_id, and name.
 3. Executing the Queries:
-   1. The client.query(...) method is called with the built queries and an operation name "get_products".   
+   1. The client.query(...) method is called with the built queries and an operation name "get_products".
    2. This method sends the queries to the server and retrieves the response.
 
-
-### Example pyproject.toml configuration. 
+### Example pyproject.toml configuration
 
 `Note: queries_path is optional when enable_custom_operations is set to true`
 
@@ -169,11 +162,9 @@ target_package_name = "example_client"
 enable_custom_operations = true
 ```
 
-
 ## Plugins
 
 Ariadne Codegen implements a plugin system that enables further customization and fine-tuning of generated Python code. It’s documentation is available separately in the [PLUGINS.md](https://github.com/mirumee/ariadne-codegen/blob/main/PLUGINS.md) file.
-
 
 ### Standard plugins
 
@@ -196,15 +187,16 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
 
 - [`ariadne_codegen.contrib.no_reimports.NoReimportsPlugin`](ariadne_codegen/contrib/no_reimports.py) - This plugin removes content of generated `__init__.py`. This is useful in scenarios where generated plugins contain so many Pydantic models that client's eager initialization of entire package on first import is very slow.
 
-
 ## Using generated client
 
 Generated client can be imported from package:
+
 ```py
 from {target_package_name}.{client_file_name} import {client_name}
 ```
 
 Example with default settings:
+
 ```py
 from graphql_client.client import Client
 ```
@@ -212,28 +204,28 @@ from graphql_client.client import Client
 ### Passing headers to client
 
 Client (with default base client), takes passed headers and attaches them to every sent request.
+
 ```py
 client = Client("https://example.com/graphql", {"Authorization": "Bearer token"})
 ```
 
 For more complex scenarios, you can pass your own http client:
+
 ```py
 client = Client(http_client=CustomComplexHttpClient())
 ```
 
 `CustomComplexHttpClient` needs to be an instance of `httpx.AsyncClient` for async client, or `httpx.Client` for sync.
 
-
 ### Websockets
 
 To handle subscriptions, default `AsyncBaseClient` uses [websockets](https://github.com/python-websockets/websockets) and implements [graphql-transport-ws](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md) subprotocol. Arguments `ws_origin` and `ws_headers` are added as headers to the handshake request and `ws_connection_init_payload` is used as payload of [ConnectionInit](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md#connectioninit) message.
-
 
 ### File upload
 
 Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary is an instance of `Upload`. If at least one instance is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
 
-Class `Upload` is included in generated client and can be imported from it: 
+Class `Upload` is included in generated client and can be imported from it:
 
 ```py
 from {target_package_name} import Upload
@@ -246,20 +238,20 @@ By default we use this class to represent graphql scalar `Upload`. For schema wi
 type = "Upload"
 ```
 
-
 ### Open Telemetry
 
 When config option `opentelemetry_client` is set to `true` then default, included base client is replaced with one that implements the opt-in Open Telemetry support. By default this support does nothing but when the `opentelemetry-api` package is installed and the `tracer` argument is provided then the client will create spans with data about performed requests.
 
 Tracing arguments handled by `BaseClientOpenTelemetry`:
+
 - `tracer`: `Optional[Union[str, Tracer]] = None` - tracer object or name which will be passed to the `get_tracer` method
 - `root_context`: `Optional[Context] = None` - optional context added to root span
 - `root_span_name`: `str = "GraphQL Operation"` - name of root span
 
 `AsyncBaseClientOpenTelemetry` supports all arguments which `BaseClientOpenTelemetry` does, but also exposes additional arguments regarding websockets:
+
 - `ws_root_context`: `Optional[Context] = None` - optional context added to root span for websocket connection
 - `ws_root_span_name`: `str = "GraphQL Subscription"` - name of root span for websocket connection
-
 
 ## Custom scalars
 
@@ -276,16 +268,14 @@ parse = "function used to create scalar instance from serialized form"
 For each custom scalar client will use given `type` in all occurrences of `{graphql scalar name}`. If provided, `serialize` and `parse` will be used for serialization and deserialization. In result models `type` will be annotated with `BeforeValidator`, eg. `Annotated[type, BeforeValidator(parse)]`. In inputs annotation will use `PlainSerializer`, eg. `Annotated[type, PlainSerializer(serialize)]`.
 If `type`/`serialize`/`parse` contains at least one `.` then string will be split by it's last occurrence. First part will be used as module to import from, and second part as type/method name. For example, `type = "custom_scalars.a.ScalarA"` will produce `from custom_scalars.a import ScalarA`.
 
-
 ### Example with scalar mapped to built-in type
 
-In this case scalar is mapped to built-in `str` which doesn't require custom `serialize ` and `parse` methods.
+In this case scalar is mapped to built-in `str` which doesn't require custom `serialize` and `parse` methods.
 
 ```toml
 [tool.ariadne-codegen.scalars.SCALARA]
 type = "str"
 ```
-
 
 ### Example with type supported by pydantic
 
@@ -331,12 +321,11 @@ class GetB(BaseModel):
 class Client(AsyncBaseClient):
     async def test_mutation(self, value: TypeB) -> TestMutation:
         ...
-        variables: Dict[str, object] = {
+        variables: dict[str, object] = {
             "value": serialize_b(value),
         }
         ...
 ```
-
 
 ## Extending generated types
 
@@ -344,10 +333,12 @@ class Client(AsyncBaseClient):
 
 `mixin` directive allows to extend class generated for query/mutation field with custom logic.
 `mixin` takes two required arguments:
+
 - `from` - name of a module to import from
 - `import` - name of a parent class
 
 Generated class will use `import` as extra base class, and import will be added to the file.
+
 ```py
 from {from} import {import}
 ...
@@ -357,8 +348,7 @@ class OperationNameField(BaseModel, {import}):
 
 This directive can be used along with `files_to_include` option to extend functionality of generated classes.
 
-
-#### Example of usage of `mixin` and `files_to_include`:
+#### Example of usage of `mixin` and `files_to_include`
 
 Query with `mixin` directive:
 
@@ -371,11 +361,13 @@ query listUsers {
 ```
 
 Part of `pyproject.toml` with `files_to_include` (`mixins.py` contains `UsersMixin` implementation)
+
 ```toml
 files_to_include = [".../mixins.py"]
 ```
 
 Part of generated `list_users.py` file:
+
 ```py
 ...
 from .mixins import UsersMixin
@@ -384,15 +376,14 @@ class ListUsersUsers(BaseModel, UsersMixin):
     ...
 ```
 
-
 ## Multiple clients
 
 To generate multiple different clients you can store config for each in different file, then provide path to config file by `--config` option, eg.
+
 ```
 ariadne-codegen --config clientA.toml
 ariadne-codegen --config clientB.toml
 ```
-
 
 ## Generated code dependencies
 
@@ -404,11 +395,9 @@ Generated code requires:
 
 Both `httpx` and `websockets` dependencies can be avoided by providing another base client class with `base_client_file_path` and `base_client_name` options.
 
-
 ## Example
 
 Example with simple schema and few queries and mutations is available [here](https://github.com/mirumee/ariadne-codegen/blob/main/EXAMPLE.md).
-
 
 ## Generating a copy of GraphSQL schema
 
@@ -418,10 +407,9 @@ Instead of generating a client, you can generate a file with a copy of a GraphQL
 ariadne-codegen graphqlschema
 ```
 
-`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers`, `remote_schema_verify_ssl` options to retrieve the schema and `plugins` option to load plugins.
+`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `remote_schema_url`, `remote_schema_headers`, `remote_schema_verify_ssl`, `remote_schema_timeout` options to retrieve the schema and `plugins` option to load plugins.
 
 In addition to the above, `graphqlschema` mode also accepts additional settings specific to it:
-
 
 ### `target_file_path`
 
@@ -437,13 +425,11 @@ Generated Python file will contain:
 
 Generated GraphQL file will contain a formatted output of the `print_schema` function from the `graphql-core` package.
 
-
 ### `schema_variable_name`
 
 A string with a name for schema variable, must be valid python identifier.
 
 Defaults to `"schema"`. Used only if target is a Python file.
-
 
 ### `type_map_variable_name`
 
@@ -451,6 +437,23 @@ A string with a name for type map variable, must be valid python identifier.
 
 Defaults to `"type_map"`. Used only if target is a Python file.
 
+---
+
+## Versioning policy ##
+
+`ariadne-codegen` follows a custom versioning scheme where the minor version increases for breaking changes, while the patch version increments for bug fixes, enhancements, and other non-breaking updates.
+
+Since `ariadne-codegen` has not yet reached a stable API, this approach is in place until version 1.0.0. Once the API stabilizes, the project will adopt [Semantic Versioning](https://semver.org/)..
+
+## Development
+
+Formatting and linting use [ruff](https://github.com/astral-sh/ruff). We use [Hatch](https://github.com/pypa/hatch) for local tasks:
+
+- `hatch run lint` – lint (formatting check + typecheck)
+- `hatch fmt` – auto-format code
+- `hatch test` – tests with coverage (default Python 3.10)
+- `hatch test -a -p` – tests across all supported Python versions
+- `hatch run check` – full check (format, typecheck, tests)
 
 ## Contributing
 
@@ -460,5 +463,4 @@ For guidance and instructions, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Also make sure you follow [@AriadneGraphQL](https://twitter.com/AriadneGraphQL) on Twitter for latest updates, news and random musings!
 
-
-## **Crafted with ❤️ by [Mirumee Software](http://mirumee.com)** hello@mirumee.com
+## **Crafted with ❤️ by [Mirumee Software](http://mirumee.com)** <ariadne@mirumee.com>

@@ -1,9 +1,7 @@
 import ast
 from pathlib import Path
-from typing import Dict, List, Union, cast
+from typing import Union, cast
 
-import isort
-from black import Mode, format_str
 from graphql import (
     ExecutableDefinitionNode,
     GraphQLSchema,
@@ -23,11 +21,15 @@ from ariadne_codegen.codegen import (
 )
 from ariadne_codegen.config import get_client_settings
 from ariadne_codegen.plugins.base import Plugin
-from ariadne_codegen.utils import format_multiline_strings, str_to_snake_case
+from ariadne_codegen.utils import (
+    _format_code,
+    format_multiline_strings,
+    str_to_snake_case,
+)
 
 
 class ExtractOperationsPlugin(Plugin):
-    def __init__(self, schema: GraphQLSchema, config_dict: Dict) -> None:
+    def __init__(self, schema: GraphQLSchema, config_dict: dict) -> None:
         super().__init__(schema=schema, config_dict=config_dict)
         self.settings = get_client_settings(config_dict=self.config_dict)
         self.operations_module_name = (
@@ -37,8 +39,8 @@ class ExtractOperationsPlugin(Plugin):
             .get("operations_module_name", "operations")
         )
 
-        self._operations_gqls: Dict[str, str] = {}
-        self._operations_variables: Dict[str, str] = {}
+        self._operations_gqls: dict[str, str] = {}
+        self._operations_variables: dict[str, str] = {}
 
     def generate_init_module(self, module: ast.Module) -> ast.Module:
         if module.body:
@@ -135,12 +137,15 @@ class ExtractOperationsPlugin(Plugin):
         variables_assigns = [
             generate_assign(
                 targets=[self._operations_variables[name]],
-                value=[generate_constant(l + "\n") for l in gql.splitlines()],
+                value=[
+                    generate_constant(l + "\n")
+                    for l in gql.splitlines()  # noqa: E741
+                ],
             )
             for name, gql in self._operations_gqls.items()
         ]
         return generate_module(
-            body=cast(List[ast.stmt], [all_assign] + variables_assigns)
+            body=cast(list[ast.stmt], [all_assign] + variables_assigns)
         )
 
     def _module_to_str(self, module: ast.Module) -> str:
@@ -149,8 +154,8 @@ class ExtractOperationsPlugin(Plugin):
         code_with_formatted_strings = format_multiline_strings(
             code_with_break_lines, offset=0
         )
-        formatted_code = format_str(
-            isort.code(code_with_formatted_strings), mode=Mode()
+        formatted_code = _format_code(
+            code_with_formatted_strings, remove_unused_imports=False
         )
         comment = get_comment(
             strategy=self.settings.include_comments, source=self.settings.queries_path

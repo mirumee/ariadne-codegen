@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .custom_scalars import Code, serialize_code
@@ -19,10 +19,9 @@ class Client(AsyncBaseClient):
         id: int,
         input: TestInput,
         other: Any,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> GetA:
-        query = gql(
-            """
+        query = gql("""
             query getA($date: DATETIME!, $code: CODE!, $id: CUSTOMID!, $input: TestInput!, $other: NOTMAPPED!) {
               testQuery(date: $date, code: $code, id: $id, input: $input, other: $other) {
                 date
@@ -31,9 +30,8 @@ class Client(AsyncBaseClient):
                 other
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {
+            """)
+        variables: dict[str, object] = {
             "date": date,
             "code": serialize_code(code),
             "id": id,

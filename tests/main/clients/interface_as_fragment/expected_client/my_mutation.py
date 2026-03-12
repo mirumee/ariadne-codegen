@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import Field
 
@@ -11,9 +11,9 @@ class MyMutation(BaseModel):
 
 
 class MyMutationChangeItem(BaseModel):
-    contacts: Optional[List["MyMutationChangeItemContacts"]]
+    contacts: Optional[list["MyMutationChangeItemContacts"]]
     errors: Optional[
-        List[
+        list[
             Annotated[
                 Union["MyMutationChangeItemErrorsItemServiceInternalError",],
                 Field(discriminator="typename__"),

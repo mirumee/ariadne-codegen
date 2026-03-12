@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .interface_a import InterfaceA
@@ -23,8 +23,7 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def interface_a(self, **kwargs: Any) -> InterfaceA:
-        query = gql(
-            """
+        query = gql("""
             query InterfaceA {
               queryI {
                 __typename
@@ -37,9 +36,8 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="InterfaceA", variables=variables, **kwargs
         )
@@ -47,8 +45,7 @@ class Client(AsyncBaseClient):
         return InterfaceA.model_validate(data)
 
     async def interface_b(self, **kwargs: Any) -> InterfaceB:
-        query = gql(
-            """
+        query = gql("""
             query InterfaceB {
               queryI {
                 __typename
@@ -58,9 +55,8 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="InterfaceB", variables=variables, **kwargs
         )
@@ -68,17 +64,15 @@ class Client(AsyncBaseClient):
         return InterfaceB.model_validate(data)
 
     async def interface_c(self, **kwargs: Any) -> InterfaceC:
-        query = gql(
-            """
+        query = gql("""
             query InterfaceC {
               queryI {
                 __typename
                 id
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="InterfaceC", variables=variables, **kwargs
         )
@@ -86,8 +80,7 @@ class Client(AsyncBaseClient):
         return InterfaceC.model_validate(data)
 
     async def list_interface(self, **kwargs: Any) -> ListInterface:
-        query = gql(
-            """
+        query = gql("""
             query ListInterface {
               queryListI {
                 __typename
@@ -100,9 +93,8 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListInterface", variables=variables, **kwargs
         )
@@ -110,29 +102,26 @@ class Client(AsyncBaseClient):
         return ListInterface.model_validate(data)
 
     async def interface_with_typename(self, **kwargs: Any) -> InterfaceWithTypename:
-        query = gql(
-            """
+        query = gql("""
             query InterfaceWithTypename {
               queryI {
                 __typename
                 id
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="InterfaceWithTypename",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return InterfaceWithTypename.model_validate(data)
 
     async def union_a(self, **kwargs: Any) -> UnionA:
-        query = gql(
-            """
+        query = gql("""
             query UnionA {
               queryU {
                 __typename
@@ -146,9 +135,8 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="UnionA", variables=variables, **kwargs
         )
@@ -156,8 +144,7 @@ class Client(AsyncBaseClient):
         return UnionA.model_validate(data)
 
     async def union_b(self, **kwargs: Any) -> UnionB:
-        query = gql(
-            """
+        query = gql("""
             query UnionB {
               queryU {
                 __typename
@@ -167,9 +154,8 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="UnionB", variables=variables, **kwargs
         )
@@ -177,8 +163,7 @@ class Client(AsyncBaseClient):
         return UnionB.model_validate(data)
 
     async def list_union(self, **kwargs: Any) -> ListUnion:
-        query = gql(
-            """
+        query = gql("""
             query ListUnion {
               queryListU {
                 __typename
@@ -192,9 +177,8 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListUnion", variables=variables, **kwargs
         )
@@ -204,8 +188,7 @@ class Client(AsyncBaseClient):
     async def query_with_fragment_on_interface(
         self, **kwargs: Any
     ) -> QueryWithFragmentOnInterface:
-        query = gql(
-            """
+        query = gql("""
             query queryWithFragmentOnInterface {
               queryI {
                 __typename
@@ -222,14 +205,13 @@ class Client(AsyncBaseClient):
                 fieldB
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnInterface",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnInterface.model_validate(data)
@@ -237,8 +219,7 @@ class Client(AsyncBaseClient):
     async def query_with_fragment_on_union(
         self, **kwargs: Any
     ) -> QueryWithFragmentOnUnion:
-        query = gql(
-            """
+        query = gql("""
             query queryWithFragmentOnUnion {
               queryU {
                 __typename
@@ -256,14 +237,13 @@ class Client(AsyncBaseClient):
                 fieldB
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnUnion",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnUnion.model_validate(data)
@@ -271,8 +251,7 @@ class Client(AsyncBaseClient):
     async def query_with_fragment_on_query_with_interface(
         self, **kwargs: Any
     ) -> QueryWithFragmentOnQueryWithInterface:
-        query = gql(
-            """
+        query = gql("""
             query queryWithFragmentOnQueryWithInterface {
               ...FragmentOnQueryWithInterface
             }
@@ -288,14 +267,13 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnQueryWithInterface",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnQueryWithInterface.model_validate(data)
@@ -303,8 +281,7 @@ class Client(AsyncBaseClient):
     async def query_with_fragment_on_query_with_union(
         self, **kwargs: Any
     ) -> QueryWithFragmentOnQueryWithUnion:
-        query = gql(
-            """
+        query = gql("""
             query queryWithFragmentOnQueryWithUnion {
               ...FragmentOnQueryWithUnion
             }
@@ -321,14 +298,13 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="queryWithFragmentOnQueryWithUnion",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnQueryWithUnion.model_validate(data)

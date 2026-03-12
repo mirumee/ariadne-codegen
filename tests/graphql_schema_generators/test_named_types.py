@@ -104,7 +104,7 @@ def test_generate_object_type_returns_ast_call():
                         func=ast.Name(id="cast"),
                         args=[
                             ast.Subscript(
-                                value=ast.Name(id="List"),
+                                value=ast.Name(id="list"),
                                 slice=ast.Name(id="GraphQLInterfaceType"),
                             ),
                             ast.List(
@@ -233,7 +233,7 @@ def test_generate_interface_type_returns_ast_call():
                         func=ast.Name(id="cast"),
                         args=[
                             ast.Subscript(
-                                value=ast.Name(id="List"),
+                                value=ast.Name(id="list"),
                                 slice=ast.Name(id="GraphQLInterfaceType"),
                             ),
                             ast.List(
@@ -358,7 +358,7 @@ def test_generate_union_type_returns_ast_call():
                         func=ast.Name(id="cast"),
                         args=[
                             ast.Subscript(
-                                value=ast.Name(id="List"),
+                                value=ast.Name(id="list"),
                                 slice=ast.Name(id="GraphQLObjectType"),
                             ),
                             ast.List(

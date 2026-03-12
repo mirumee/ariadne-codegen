@@ -1,9 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from .custom_fields import (
     AppFields,
     ProductCountableConnectionFields,
     ProductTypeCountableConnectionFields,
+    StoreFields,
     TranslatableItemConnectionFields,
 )
 
@@ -13,7 +14,7 @@ class Query:
     def products(
         cls, *, channel: Optional[str] = None, first: Optional[int] = None
     ) -> ProductCountableConnectionFields:
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "channel": {"type": "String", "value": channel},
             "first": {"type": "Int", "value": first},
         }
@@ -39,9 +40,9 @@ class Query:
         before: Optional[str] = None,
         after: Optional[str] = None,
         first: Optional[int] = None,
-        last: Optional[int] = None
+        last: Optional[int] = None,
     ) -> TranslatableItemConnectionFields:
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "before": {"type": "String", "value": before},
             "after": {"type": "String", "value": after},
             "first": {"type": "Int", "value": first},
@@ -53,3 +54,7 @@ class Query:
         return TranslatableItemConnectionFields(
             field_name="translations", arguments=cleared_arguments
         )
+
+    @classmethod
+    def store(cls) -> StoreFields:
+        return StoreFields(field_name="store")

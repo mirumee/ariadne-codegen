@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime
 from typing import Any, Optional
@@ -10,12 +11,14 @@ from ariadne_codegen.client_generators.dependencies.async_base_client import (
 )
 from ariadne_codegen.client_generators.dependencies.base_model import UNSET, BaseModel
 from ariadne_codegen.client_generators.dependencies.exceptions import (
+    GraphQLClientError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQLClientInvalidResponseError,
 )
 
 from ...utils import decode_multipart_request
+from .conftest import _MockWebSocket, _ws_message
 
 
 @pytest.mark.asyncio
@@ -206,7 +209,7 @@ async def test_execute_sends_request_with_correct_content_type(httpx_mock):
     await client.execute("query Abc { abc }")
 
     request = httpx_mock.get_request()
-    assert request.headers["Content-Type"] == "application/json"
+    assert request.headers["Content-type"] == "application/json"
 
 
 @pytest.mark.asyncio
@@ -220,7 +223,7 @@ async def test_execute_sends_request_with_extra_headers_and_correct_content_type
 
     request = httpx_mock.get_request()
     assert request.headers["h_key"] == "h_value"
-    assert request.headers["Content-Type"] == "application/json"
+    assert request.headers["Content-type"] == "application/json"
 
 
 @pytest.mark.asyncio
@@ -254,7 +257,7 @@ async def test_execute_sends_json_request_with_headers_from_passed_kwargs(httpx_
     )
 
     request = httpx_mock.get_request()
-    assert request.headers["Content-Type"] == "application/json"
+    assert request.headers["Content-type"] == "application/json"
     assert request.headers["Other-Header"] == "other"
     assert request.headers["Client-Header-A"] == "execute_value"
     assert request.headers["Client-Header-b"] == "client_value_b"
@@ -272,7 +275,7 @@ async def test_execute_sends_file_with_multipart_form_data_content_type(
     )
 
     request = httpx_mock.get_request()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
 
 
 @pytest.mark.asyncio
@@ -285,7 +288,7 @@ async def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -301,7 +304,7 @@ async def test_execute_sends_file_as_multipart_request(httpx_mock, txt_file):
     assert decoded_map == {"0": ["variables.file"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
@@ -316,7 +319,7 @@ async def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -332,7 +335,7 @@ async def test_execute_sends_file_from_memory(httpx_mock, in_memory_txt_file):
     assert decoded_map == {"0": ["variables.file"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"in_memory.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"123456"
 
@@ -347,7 +350,7 @@ async def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -363,12 +366,12 @@ async def test_execute_sends_multiple_files(httpx_mock, txt_file, png_file):
     assert decoded_map == {"0": ["variables.files.0"], "1": ["variables.files.1"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
     assert sent_parts["1"]
-    assert sent_parts["1"].headers[b"Content-Type"] == b"image/png"
+    assert sent_parts["1"].headers[b"Content-type"] == b"image/png"
     assert b"png_file.png" in sent_parts["1"].headers[b"Content-Disposition"]
     assert sent_parts["1"].content == b"image_content"
 
@@ -386,7 +389,7 @@ async def test_execute_sends_nested_file(httpx_mock, txt_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -402,7 +405,7 @@ async def test_execute_sends_nested_file(httpx_mock, txt_file):
     assert decoded_map == {"0": ["variables.input.file_"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
@@ -417,7 +420,7 @@ async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
 
     request = httpx_mock.get_request()
     request.read()
-    assert "multipart/form-data" in request.headers["Content-Type"]
+    assert "multipart/form-data" in request.headers["Content-type"]
     sent_parts = decode_multipart_request(request)
 
     assert sent_parts["operations"]
@@ -433,7 +436,7 @@ async def test_execute_sends_each_file_only_once(httpx_mock, txt_file):
     assert decoded_map == {"0": ["variables.files.0", "variables.files.1"]}
 
     assert sent_parts["0"]
-    assert sent_parts["0"].headers[b"Content-Type"] == b"text/plain"
+    assert sent_parts["0"].headers[b"Content-type"] == b"text/plain"
     assert b"txt_file.txt" in sent_parts["0"].headers[b"Content-Disposition"]
     assert sent_parts["0"].content == b"abcdefgh"
 
@@ -502,8 +505,8 @@ def test_get_data_raises_graphql_client_http_error(
 
     with pytest.raises(GraphQLClientHttpError) as exc:
         client.get_data(response)
-        assert exc.status_code == status_code
-        assert exc.response == response
+        assert exc.value.status_code == status_code
+        assert exc.value.response == response
 
 
 @pytest.mark.parametrize("response_content", ["invalid_json", {"not_data": ""}, ""])
@@ -515,7 +518,7 @@ def test_get_data_raises_graphql_client_invalid_response_error(
 
     with pytest.raises(GraphQLClientInvalidResponseError) as exc:
         client.get_data(response)
-        assert exc.response == response
+        assert exc.value.response == response
 
 
 @pytest.mark.parametrize(
@@ -583,3 +586,117 @@ async def test_base_client_used_as_context_manager_closes_http_client(mocker):
         await base_client.execute("")
 
     assert fake_client.aclose.called
+
+
+@pytest.mark.asyncio
+async def test_execute_ws_waits_for_connection_ack_then_yields_data(mocker):
+    """Server sends connection_ack first (standard behaviour)."""
+    connection_ack = _ws_message("connection_ack")
+    next_data = _ws_message("next", data={"subscription": "result"})
+    complete = _ws_message("complete", id="op-id")
+
+    mock_ws = _MockWebSocket([connection_ack, next_data, complete])
+    mock_ws.close = mocker.AsyncMock()
+
+    def fake_connect(*args: Any, **kwargs: Any) -> Any:
+        class Ctx:
+            async def __aenter__(self: Any) -> _MockWebSocket:
+                return mock_ws
+
+            async def __aexit__(self: Any, *args: Any) -> None:
+                pass
+
+        return Ctx()
+
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.ws_connect",
+        side_effect=fake_connect,
+    )
+
+    client = AsyncBaseClient(url="http://xyz", ws_url="ws://xyz")
+    results = []
+    async for data in client.execute_ws("subscription { x }"):
+        results.append(data)
+
+    assert results == [{"subscription": "result"}]
+    assert len(mock_ws.sent) >= 2  # connection_init, subscribe
+    assert json.loads(mock_ws.sent[0])["type"] == "connection_init"
+    assert json.loads(mock_ws.sent[1])["type"] == "subscribe"
+
+
+@pytest.mark.asyncio
+async def test_execute_ws_handles_ping_before_connection_ack_hasura_quirk(mocker):
+    """Server sends ping before connection_ack (Hasura and some others)."""
+    ping = _ws_message("ping")
+    connection_ack = _ws_message("connection_ack")
+    next_data = _ws_message("next", data={"ok": True})
+    complete = _ws_message("complete", id="op-id")
+
+    mock_ws = _MockWebSocket([ping, connection_ack, next_data, complete])
+
+    def fake_connect(*args: Any, **kwargs: Any) -> Any:
+        class Ctx:
+            async def __aenter__(self: Any) -> _MockWebSocket:
+                return mock_ws
+
+            async def __aexit__(self: Any, *args: Any) -> None:
+                pass
+
+        return Ctx()
+
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.ws_connect",
+        side_effect=fake_connect,
+    )
+
+    client = AsyncBaseClient(url="http://xyz", ws_url="ws://xyz")
+    results = []
+    async for data in client.execute_ws("subscription { x }"):
+        results.append(data)
+
+    assert results == [{"ok": True}]
+    # Client must have sent pong in response to ping, then connection_init, subscribe
+    sent_types = [json.loads(s)["type"] for s in mock_ws.sent]
+    assert "pong" in sent_types
+    assert sent_types.count("connection_init") == 1
+    assert sent_types.count("subscribe") == 1
+
+
+@pytest.mark.asyncio
+async def test_execute_ws_raises_when_connection_ack_not_received_within_timeout(
+    mocker,
+):
+    """If server never sends connection_ack, client raises after 5 seconds."""
+    # Only send pings so connection_ack is never received
+    ping = _ws_message("ping")
+    mock_ws = _MockWebSocket([ping, ping, ping])
+
+    def fake_connect(*args: Any, **kwargs: Any) -> Any:
+        class Ctx:
+            async def __aenter__(self: Any) -> _MockWebSocket:
+                return mock_ws
+
+            async def __aexit__(self: Any, *args: Any) -> None:
+                pass
+
+        return Ctx()
+
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.ws_connect",
+        side_effect=fake_connect,
+    )
+
+    async def fake_wait_for(aw: Any, timeout: Optional[float] = None) -> Any:
+        raise asyncio.TimeoutError("timed out")
+
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.asyncio.wait_for",
+        side_effect=fake_wait_for,
+    )
+
+    client = AsyncBaseClient(url="http://xyz", ws_url="ws://xyz")
+    with pytest.raises(GraphQLClientError) as exc_info:
+        async for _ in client.execute_ws("subscription { x }"):
+            pass
+
+    assert "Connection ack not received" in str(exc_info.value)

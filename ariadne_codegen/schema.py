@@ -1,6 +1,6 @@
+from collections.abc import Generator, Sequence
 from pathlib import Path
-from typing import Dict, Generator, List, Optional, Tuple, cast
-from typing_extensions import Any, Sequence
+from typing import Optional, cast
 
 import httpx
 from graphql import (
@@ -15,7 +15,6 @@ from graphql import (
     IntrospectionQuery,
     NoUnusedFragmentsRule,
     OperationDefinitionNode,
-    UniqueFragmentNamesRule,
     build_ast_schema,
     build_client_schema,
     get_introspection_query,
@@ -23,6 +22,7 @@ from graphql import (
     specified_rules,
     validate,
 )
+from typing_extensions import Any
 
 from .client_generators.constants import MIXIN_FROM_NAME, MIXIN_IMPORT_NAME, MIXIN_NAME
 from .exceptions import (
@@ -33,22 +33,24 @@ from .exceptions import (
 
 
 def filter_operations_definitions(
-    definitions: Tuple[DefinitionNode, ...]
-) -> List[OperationDefinitionNode]:
+    definitions: tuple[DefinitionNode, ...],
+) -> list[OperationDefinitionNode]:
     """Return list including only operations definitions."""
     return [d for d in definitions if isinstance(d, OperationDefinitionNode)]
 
 
 def filter_fragments_definitions(
-    definitions: Tuple[DefinitionNode, ...]
-) -> List[FragmentDefinitionNode]:
+    definitions: tuple[DefinitionNode, ...],
+) -> list[FragmentDefinitionNode]:
     """Return list including only fragments definitions."""
     return [d for d in definitions if isinstance(d, FragmentDefinitionNode)]
 
 
 def get_graphql_queries(
-    queries_path: str, schema: GraphQLSchema, skip_rules: Sequence[Any] = (NoUnusedFragmentsRule,)
-) -> Tuple[DefinitionNode, ...]:
+    queries_path: str,
+    schema: GraphQLSchema,
+    skip_rules: Sequence[Any] = (NoUnusedFragmentsRule,),
+) -> tuple[DefinitionNode, ...]:
     """Get graphql queries definitions build from provided path."""
     queries_str = load_graphql_files_from_path(Path(queries_path))
     queries_ast = parse(queries_str)
@@ -65,16 +67,24 @@ def get_graphql_queries(
 
 
 def get_graphql_schema_from_url(
-    url: str, headers: Optional[Dict[str, str]] = None, verify_ssl: bool = True
+    url: str,
+    headers: Optional[dict[str, str]] = None,
+    verify_ssl: bool = True,
+    timeout: float = 5,
 ) -> GraphQLSchema:
     return build_client_schema(
-        introspect_remote_schema(url=url, headers=headers, verify_ssl=verify_ssl),
+        introspect_remote_schema(
+            url=url, headers=headers, verify_ssl=verify_ssl, timeout=timeout
+        ),
         assume_valid=True,
     )
 
 
 def introspect_remote_schema(
-    url: str, headers: Optional[Dict[str, str]] = None, verify_ssl: bool = True
+    url: str,
+    headers: Optional[dict[str, str]] = None,
+    verify_ssl: bool = True,
+    timeout: float = 5,
 ) -> IntrospectionQuery:
     try:
         response = httpx.post(
@@ -82,6 +92,7 @@ def introspect_remote_schema(
             json={"query": get_introspection_query(descriptions=False)},
             headers=headers,
             verify=verify_ssl,
+            timeout=timeout,
         )
     except httpx.InvalidURL as exc:
         raise IntrospectionError(f"Invalid remote schema url: {url}") from exc
@@ -140,7 +151,7 @@ def walk_graphql_files(path: Path) -> Generator[Path, None, None]:
 
 def read_graphql_file(path: Path) -> str:
     """Return content of file."""
-    with open(path, "r", encoding="utf-8") as graphql_file:
+    with open(path, encoding="utf-8") as graphql_file:
         schema = graphql_file.read()
     try:
         parse(schema)

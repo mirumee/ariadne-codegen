@@ -1,6 +1,6 @@
 from dataclasses import fields
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 from warnings import simplefilter, warn
 
 import toml
@@ -22,7 +22,7 @@ def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
     return directory.joinpath(file_name).resolve()
 
 
-def get_config_dict(config_file_name: Optional[str] = None) -> Dict:
+def get_config_dict(config_file_name: Optional[str] = None) -> dict:
     """Get config dict."""
     if config_file_name:
         config_file_path = get_config_file_path(config_file_name)
@@ -32,7 +32,7 @@ def get_config_dict(config_file_name: Optional[str] = None) -> Dict:
     return toml.load(config_file_path)
 
 
-def get_client_settings(config_dict: Dict) -> ClientSettings:
+def get_client_settings(config_dict: dict) -> ClientSettings:
     """Parse configuration dict and return ClientSettings instance."""
     section = get_section(config_dict).copy()
     settings_fields_names = {f.name for f in fields(ClientSettings)}
@@ -83,7 +83,7 @@ def get_client_settings(config_dict: Dict) -> ClientSettings:
         ) from exc
 
 
-def get_section(config_dict: Dict) -> Dict:
+def get_section(config_dict: dict) -> dict:
     """Get section from config dict."""
     tool_key = "tool"
     codegen_key = "ariadne-codegen"
@@ -103,7 +103,7 @@ def get_section(config_dict: Dict) -> Dict:
     raise MissingConfiguration(f"Config has no [{tool_key}.{codegen_key}] section.")
 
 
-def get_graphql_schema_settings(config_dict: Dict) -> GraphQLSchemaSettings:
+def get_graphql_schema_settings(config_dict: dict) -> GraphQLSchemaSettings:
     """Parse configuration dict and return GraphQLSchemaSettings instance."""
     section = get_section(config_dict)
     settings_fields_names = {f.name for f in fields(GraphQLSchemaSettings)}

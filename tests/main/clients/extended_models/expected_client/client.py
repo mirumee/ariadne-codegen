@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .fragments_with_mixins import FragmentsWithMixins
@@ -13,16 +13,14 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def get_query_a(self, **kwargs: Any) -> GetQueryA:
-        query = gql(
-            """
+        query = gql("""
             query getQueryA {
               queryA {
                 fieldA
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="getQueryA", variables=variables, **kwargs
         )
@@ -30,16 +28,14 @@ class Client(AsyncBaseClient):
         return GetQueryA.model_validate(data)
 
     async def get_query_b(self, **kwargs: Any) -> GetQueryB:
-        query = gql(
-            """
+        query = gql("""
             query getQueryB {
               queryB {
                 fieldB
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="getQueryB", variables=variables, **kwargs
         )
@@ -47,8 +43,7 @@ class Client(AsyncBaseClient):
         return GetQueryB.model_validate(data)
 
     async def get_query_a_with_fragment(self, **kwargs: Any) -> GetQueryAWithFragment:
-        query = gql(
-            """
+        query = gql("""
             query getQueryAWithFragment {
               ...getQueryAFragment
             }
@@ -58,21 +53,19 @@ class Client(AsyncBaseClient):
                 fieldA
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="getQueryAWithFragment",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetQueryAWithFragment.model_validate(data)
 
     async def fragments_with_mixins(self, **kwargs: Any) -> FragmentsWithMixins:
-        query = gql(
-            """
+        query = gql("""
             query fragmentsWithMixins {
               queryA {
                 ...fragmentA
@@ -89,14 +82,13 @@ class Client(AsyncBaseClient):
             fragment fragmentB on TypeB @mixin(from: ".mixins_b", import: "MixinB") {
               fieldB
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="fragmentsWithMixins",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return FragmentsWithMixins.model_validate(data)
