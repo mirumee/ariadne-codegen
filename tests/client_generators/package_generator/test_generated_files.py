@@ -764,3 +764,52 @@ def test_generate_creates_client_with_custom_scalars_imports(
         f"{generator.client_file_name}.py"
     ).open() as client_file:
         assert "from .abc import ScalarABC" in client_file.read()
+
+
+def test_generate_models_only(tmp_path, schema, async_base_client_import):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
+        models_only=True,
+    )
+    query_str = """
+    query CustomQuery($id: ID!) {
+        query1(id: $id) {
+            field1
+        }
+    }
+    """
+    generator.add_operation(parse(query_str).definitions[0])
+    generated_files = generator.generate()
+
+    package_path = tmp_path / package_name
+    # Model files should exist
+    assert (package_path / "__init__.py").exists()
+    assert (package_path / "base_model.py").exists()
+    assert (package_path / f"{generator.enums_module_name}.py").exists()
+    assert (package_path / f"{generator.input_types_module_name}.py").exists()
+    # Result types from operations should still be generated
+    assert (package_path / "custom_query.py").exists()
+    assert "custom_query.py" in generated_files
+    # Client runtime files should NOT exist
+    assert not (package_path / "client.py").exists()
+    assert not (package_path / generator.base_client_file_path.name).exists()
+    assert not (package_path / EXCEPTIONS_FILE_PATH.name).exists()
+    assert "client.py" not in generated_files
+    assert EXCEPTIONS_FILE_PATH.name not in generated_files
+    # __init__.py should not import client classes
+    init_content = (package_path / "__init__.py").read_text()
+    assert "from .base_model import BaseModel, Upload" in init_content
+    assert "Client" not in init_content
+    assert "AsyncBaseClient" not in init_content
+    assert "GraphQLClientError" not in init_content

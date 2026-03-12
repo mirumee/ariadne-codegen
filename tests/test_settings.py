@@ -479,3 +479,22 @@ def test_client_settings_include_typename_can_be_set_to_true(tmp_path):
     )
 
     assert settings.include_typename is True
+
+
+def test_client_settings_models_only(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        models_only=True,
+    )
+
+    assert settings.models_only is True
+    assert settings.queries_path == ""
+    assert settings.base_client_name == ""
+    assert settings.base_client_file_path == ""
+
+    result = settings.used_settings_message
+    assert "Generating models only." in result
+    assert settings.schema_path in result
