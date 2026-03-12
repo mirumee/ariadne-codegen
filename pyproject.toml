@@ -7,7 +7,7 @@ name = "ariadne-codegen"
 description = "Generate fully typed GraphQL client from schema, queries and mutations!"
 authors = [{ name = "Mirumee Software", email = "ariadne@mirumee.com" }]
 dynamic = ["version"]
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 readme = "README.md"
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
@@ -17,22 +17,21 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
 dependencies = [
-  "click~=8.1.8",
-  "graphql-core>=3.2.0,<3.3",
+  "click~=8.3",
+  "graphql-core>=3.2.7,<3.3",
   "toml~=0.10",
-  "httpx~=0.23",
+  "httpx~=0.28",
   "pydantic>=2.0.0,<3.0.0",
-  "black",
-  "isort",
-  "autoflake",
+  "ruff>=0.15.0,<0.16.0",
 ]
 
 [project.optional-dependencies]
@@ -49,8 +48,8 @@ test = [
   "websockets>=14.2",
   "opentelemetry-api",
 ]
-types = ["mypy>=1.0.0"]
-subscriptions = ["websockets>=14.2"]
+types = ["ty"]
+subscriptions = ["websockets>=15"]
 opentelemetry = ["opentelemetry-api"]
 
 [project.scripts]
@@ -73,9 +72,12 @@ exclude = ["tests"]
 path = "ariadne_codegen/__about__.py"
 
 [tool.hatch.envs.default]
-features = ["dev", "types"]
+python = "3.10"
+features = ["dev", "types", "test", "subscriptions", "opentelemetry"]
+path = ".venv"
 
 [tool.hatch.envs.default.scripts]
+lint = ["hatch fmt --check", "hatch run types:check"]
 check = [
   "hatch fmt",
   "hatch test -a -p",
@@ -86,14 +88,11 @@ check = [
 ## Types environment
 
 [tool.hatch.envs.types.scripts]
-check = [
-  "mypy tests/main/clients/*/expected_client",
-  "mypy tests/main/graphql_schemas/*/expected_schema.py",
-  "mypy ariadne_codegen/client_generators/dependencies",
-]
+check = ["ty check"]
 
 [tool.hatch.envs.hatch-static-analysis]
-dependencies = ["ruff>=0.14.0,<0.15.0"]
+config-path = "none"
+dependencies = ["ruff>=0.15.0,<0.16.0"]
 
 ## Test environments
 
@@ -102,22 +101,43 @@ features = ["test"]
 extra-args = []
 
 [[tool.hatch.envs.hatch-test.matrix]]
-python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
-## Types configuration
+## Type checker (ty) configuration
 
-[tool.mypy]
-python_version = "3.9"
-files = ["ariadne_codegen", "tests"]
-check_untyped_defs = true
-# disallow_untyped_defs = true
-ignore_missing_imports = true
-# warn_redundant_casts = true
-# warn_unused_ignores = true
-# disallow_any_generics = true
-no_implicit_reexport = true
-# strict = true
-disable_error_code = ["import-untyped"]
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+include = ["ariadne_codegen", "tests"]
+
+[tool.ty.rules]
+# Dependency files contain # type: ignore comments for mypy/pyright compat
+unused-type-ignore-comment = "ignore"
+# Some casts improve readability even when technically redundant for ty
+redundant-cast = "ignore"
+
+# Relax checks in test files (AST stubs are stricter than runtime behaviour;
+# union narrowing and stub limitations produce many false positives in tests)
+[[tool.ty.overrides]]
+include = ["tests/**"]
+[tool.ty.overrides.rules]
+missing-argument = "ignore"
+no-matching-overload = "ignore"
+unresolved-attribute = "ignore"
+invalid-argument-type = "ignore"
+unknown-argument = "ignore"
+not-iterable = "ignore"
+possibly-missing-attribute = "ignore"
+
+# Relax checks in generated expected output (not first-party packages)
+[[tool.ty.overrides]]
+include = [
+  "tests/main/clients/*/expected_client/**",
+  "tests/main/graphql_schemas/*/expected_schema.py",
+]
+[tool.ty.overrides.analysis]
+allowed-unresolved-imports = ["**"]
 
 ## Coverage configuration
 
@@ -144,7 +164,7 @@ fail_under = 90
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -152,8 +172,8 @@ docstring-code-line-length = 99
 exclude = ["tests/main/clients/*/expected_client/*"]
 
 [tool.ruff.lint]
-select = ["E", "F", "G", "I", "N", "Q", "UP", "C90", "T20", "TID"]
-ignore = ["TID252", "UP006", "UP035"]
+select = ["E", "F", "G", "I", "N", "Q", "UP", "B", "C90", "SIM", "T20", "TID"]
+ignore = ["TID252", "UP006", "UP007", "UP045"]
 task-tags = ["NOTE", "TODO", "FIXME", "HACK", "XXX"]
 
 [tool.ruff.lint.per-file-ignores]

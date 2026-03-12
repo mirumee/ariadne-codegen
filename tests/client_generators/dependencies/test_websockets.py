@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import pytest
@@ -6,6 +7,7 @@ from ariadne_codegen.client_generators.dependencies.async_base_client import (
     AsyncBaseClient,
 )
 from ariadne_codegen.client_generators.dependencies.exceptions import (
+    GraphQLClientError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientInvalidMessageFormat,
 )
@@ -79,24 +81,24 @@ async def test_execute_ws_creates_websocket_connection_with_correct_headers(
         pass
 
     assert mocked_ws_connect.called
-    assert mocked_ws_connect.call_args.kwargs["extra_headers"] == {
+    assert mocked_ws_connect.call_args.kwargs["additional_headers"] == {
         "test_key": "test_value"
     }
 
 
 @pytest.mark.asyncio
-async def test_execute_ws_creates_websocket_connection_with_passed_extra_headers(
+async def test_execute_ws_creates_websocket_connection_with_passed_additional_headers(
     mocked_ws_connect, mocked_websocket
 ):
     async for _ in AsyncBaseClient(
         ws_headers={"Client-A": "client_value_a", "Client-B": "client_value_b"}
     ).execute_ws(
-        "", extra_headers={"Client-A": "execute_value_a", "Execute-Other": "other"}
+        "", additional_headers={"Client-A": "execute_value_a", "Execute-Other": "other"}
     ):
         pass
 
     assert mocked_ws_connect.called
-    assert mocked_ws_connect.call_args.kwargs["extra_headers"] == {
+    assert mocked_ws_connect.call_args.kwargs["additional_headers"] == {
         "Client-A": "execute_value_a",
         "Client-B": "client_value_b",
         "Execute-Other": "other",
@@ -261,12 +263,19 @@ async def test_execute_ws_raises_graphql_multi_error_for_message_with_error_type
 
 @pytest.mark.asyncio
 async def test_execute_ws_raises_invalid_message_format_for_missing_ack_after_init(
-    mocked_faulty_websocket,
+    mocked_faulty_websocket, mocker
 ):
-    mocked_faulty_websocket.recv.return_value = json.dumps(
-        {"type": "next", "payload": {"data": "test_data"}}
+    """Server sends non-ack (e.g. next) instead of connection_ack; we timeout."""
+    mocked_faulty_websocket.__aiter__.return_value = [
+        json.dumps({"type": "next", "payload": {"data": "test_data"}}),
+    ]
+    mocker.patch(
+        "ariadne_codegen.client_generators.dependencies.async_base_client.asyncio.wait_for",
+        side_effect=asyncio.TimeoutError("timed out"),
     )
 
-    with pytest.raises(GraphQLClientInvalidMessageFormat):
+    with pytest.raises(GraphQLClientError) as exc_info:
         async for _ in AsyncBaseClient().execute_ws(""):
             pass
+
+    assert "Connection ack not received" in str(exc_info.value)

@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import cast
 
 from graphql import (
     DirectiveLocation,
@@ -92,7 +92,7 @@ type_map: TypeMap = {
     "TypeC": GraphQLObjectType(
         name="TypeC",
         description=None,
-        interfaces=lambda: cast(List[GraphQLInterfaceType], [type_map["InterfaceB"]]),
+        interfaces=lambda: cast(list[GraphQLInterfaceType], [type_map["InterfaceB"]]),
         fields=lambda: {
             "id": GraphQLField(
                 GraphQLNonNull(GraphQLID),
@@ -125,7 +125,7 @@ type_map: TypeMap = {
         name="UnionE",
         description=None,
         types=lambda: cast(
-            List[GraphQLObjectType], [type_map["TypeC"], type_map["TypeD"]]
+            list[GraphQLObjectType], [type_map["TypeC"], type_map["TypeD"]]
         ),
     ),
     "EnumF": GraphQLEnumType(
@@ -225,6 +225,13 @@ schema: GraphQLSchema = GraphQLSchema(
                     deprecation_reason=None,
                 )
             },
+        ),
+        GraphQLDirective(
+            name="oneOf",
+            description="Indicates an Input Object is a OneOf Input Object.",
+            is_repeatable=False,
+            locations=(DirectiveLocation.INPUT_OBJECT,),
+            args=None,
         ),
     ],
     description=None,

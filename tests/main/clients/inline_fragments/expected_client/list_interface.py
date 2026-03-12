@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, Literal, Union
 
 from pydantic import Field
 
@@ -6,7 +6,7 @@ from .base_model import BaseModel
 
 
 class ListInterface(BaseModel):
-    query_list_i: List[
+    query_list_i: list[
         Annotated[
             Union[
                 "ListInterfaceQueryListIInterface",

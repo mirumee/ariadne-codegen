@@ -102,7 +102,7 @@ def test_generate_method_definition_with_subscript_return_type():
     """Test generate_method_definition with Subscript return type."""
     name = "test_method"
     arguments = generate_arguments()
-    return_type = ast.Subscript(value=ast.Name(id="List"), slice=ast.Name(id="str"))
+    return_type = ast.Subscript(value=ast.Name(id="list"), slice=ast.Name(id="str"))
 
     result = generate_method_definition(name, arguments, return_type)
 

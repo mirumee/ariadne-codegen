@@ -22,7 +22,7 @@ from .schema import (
 from .settings import Strategy
 
 
-@click.command()  # type: ignore
+@click.command()
 @click.version_option()
 @click.option("--config", default=None, help="Path to custom configuration file.")
 @click.argument(

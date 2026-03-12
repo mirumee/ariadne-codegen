@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -23,7 +23,7 @@ class UserPreferencesInput(BaseModel):
     lucky_number: Optional[int] = Field(alias="luckyNumber", default=7)
     favourite_word: Optional[str] = Field(alias="favouriteWord", default="word")
     color_opacity: Optional[float] = Field(alias="colorOpacity", default=1.0)
-    excluded_tags: Optional[List[str]] = Field(
+    excluded_tags: Optional[list[str]] = Field(
         alias="excludedTags", default_factory=lambda: ["offtop", "tag123"]
     )
     notifications_preferences: "NotificationsPreferencesInput" = Field(
@@ -46,6 +46,16 @@ class NotificationsPreferencesInput(BaseModel):
     receive_push_notifications: bool = Field(alias="receivePushNotifications")
     receive_sms: bool = Field(alias="receiveSms")
     title: str
+
+
+class BuiltinsInput(BaseModel):
+    list_: Optional[list[int]] = Field(alias="list", default=None)
+    dict_: Optional[str] = Field(alias="dict", default=None)
+    set_: Optional[bool] = Field(alias="set", default=None)
+    tuple_: Optional[float] = Field(alias="tuple", default=None)
+    int_: Optional[int] = Field(alias="int", default=None)
+    str_: Optional[str] = Field(alias="str", default=None)
+    bool_: Optional[bool] = Field(alias="bool", default=None)
 
 
 UserCreateInput.model_rebuild()

@@ -113,7 +113,7 @@ from ...utils import compare_ast, get_assignment_target_names, get_class_def
                     ast.AnnAssign(
                         target=ast.Name(id="input_field_2"),
                         annotation=ast.Subscript(
-                            value=ast.Name(id="List"), slice=ast.Name(id="int")
+                            value=ast.Name(id="list"), slice=ast.Name(id="int")
                         ),
                         value=ast.Call(
                             func=ast.Name(id=FIELD_CLASS),
@@ -196,4 +196,35 @@ def test_generate_returns_module_with_valid_field_names():
         "baz",
         "underscore_named_field_",
         "schema_",
+    }
+
+
+def test_generate_returns_module_with_builtin_field_names():
+    schema = """
+    input BuiltinsInput {
+        list: [Int!]
+        dict: String
+        set: Boolean
+        tuple: Float
+        int: Int
+        str: String
+        bool: Boolean
+    }
+    """
+
+    generator = InputTypesGenerator(schema=build_ast_schema(parse(schema)))
+
+    module = generator.generate()
+
+    parsed = ast.parse(ast_to_str(module))
+    class_def = get_class_def(parsed)
+    field_names = get_assignment_target_names(class_def)
+    assert field_names == {
+        "list_",
+        "dict_",
+        "set_",
+        "tuple_",
+        "int_",
+        "str_",
+        "bool_",
     }

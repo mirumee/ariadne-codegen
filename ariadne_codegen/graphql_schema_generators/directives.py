@@ -1,5 +1,5 @@
 import ast
-from typing import Collection
+from collections.abc import Collection
 
 from graphql import DirectiveLocation, GraphQLDirective
 

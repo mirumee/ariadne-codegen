@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Optional, Union
 
 from graphql import (
     ArgumentNode,
@@ -34,19 +34,19 @@ class GraphQLField:
     and inline fragments.
 
     Attributes:
-        formatted_variables (Dict[str, Dict[str, Any]]): The formatted arguments
+        formatted_variables (dict[str, dict[str, Any]]): The formatted arguments
         of the GraphQL field.
     """
 
     def __init__(
-        self, field_name: str, arguments: Optional[Dict[str, Dict[str, Any]]] = None
+        self, field_name: str, arguments: Optional[dict[str, dict[str, Any]]] = None
     ) -> None:
         self._field_name = field_name
         self._variables = arguments or {}
-        self.formatted_variables: Dict[str, Dict[str, Any]] = {}
-        self._subfields: List[GraphQLField] = []
+        self.formatted_variables: dict[str, dict[str, Any]] = {}
+        self._subfields: list[GraphQLField] = []
         self._alias: Optional[str] = None
-        self._inline_fragments: Dict[str, Tuple[GraphQLField, ...]] = {}
+        self._inline_fragments: dict[str, tuple[GraphQLField, ...]] = {}
 
     def alias(self, alias: str) -> "GraphQLField":
         """Sets an alias for the GraphQL field and returns the instance."""
@@ -58,12 +58,12 @@ class GraphQLField:
         return f"{self._alias}: {self._field_name}" if self._alias else self._field_name
 
     def _build_selections(
-        self, idx: int, used_names: Set[str]
-    ) -> List[Union[FieldNode, InlineFragmentNode]]:
+        self, idx: int, used_names: set[str]
+    ) -> list[Union[FieldNode, InlineFragmentNode]]:
         """Builds the selection set for the current GraphQL field,
         including subfields and inline fragments."""
         # Create selections from subfields
-        selections: List[Union[FieldNode, InlineFragmentNode]] = [
+        selections: list[Union[FieldNode, InlineFragmentNode]] = [
             subfield.to_ast(idx, used_names) for subfield in self._subfields
         ]
 
@@ -83,7 +83,7 @@ class GraphQLField:
         return selections
 
     def _format_variable_name(
-        self, idx: int, var_name: str, used_names: Set[str]
+        self, idx: int, var_name: str, used_names: set[str]
     ) -> str:
         """Generates a unique variable name by appending an index and,
         if necessary, an additional counter to avoid duplicates."""
@@ -101,7 +101,7 @@ class GraphQLField:
 
         return unique_name
 
-    def _collect_all_variables(self, idx: int, used_names: Set[str]) -> None:
+    def _collect_all_variables(self, idx: int, used_names: set[str]) -> None:
         """
         Collects and formats all variables for the current GraphQL field,
         ensuring unique names.
@@ -116,7 +116,7 @@ class GraphQLField:
                 "value": v["value"],
             }
 
-    def to_ast(self, idx: int, used_names: Optional[Set[str]] = None) -> FieldNode:
+    def to_ast(self, idx: int, used_names: Optional[set[str]] = None) -> FieldNode:
         """Converts the current GraphQL field to an AST (Abstract Syntax Tree) node."""
         if used_names is None:
             used_names = set()
@@ -136,7 +136,7 @@ class GraphQLField:
             ),
         )
 
-    def get_formatted_variables(self) -> Dict[str, Dict[str, Any]]:
+    def get_formatted_variables(self) -> dict[str, dict[str, Any]]:
         """
         Retrieves all formatted variables for the current GraphQL field,
         including those from subfields and inline fragments.

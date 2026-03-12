@@ -75,3 +75,13 @@ input NotificationsPreferencesInput {
   receiveSms: Boolean!
   title: String!
 }
+
+input BuiltinsInput {
+  list: [Int!]
+  dict: String
+  set: Boolean
+  tuple: Float
+  int: Int
+  str: String
+  bool: Boolean
+}

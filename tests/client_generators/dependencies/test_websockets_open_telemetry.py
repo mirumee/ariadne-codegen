@@ -1,4 +1,5 @@
 import json
+from typing import Any, cast
 from unittest.mock import ANY
 
 import pytest
@@ -81,26 +82,26 @@ async def test_execute_ws_creates_websocket_connection_with_correct_headers(
         pass
 
     assert mocked_ws_connect.called
-    assert mocked_ws_connect.call_args.kwargs["extra_headers"] == {
+    assert mocked_ws_connect.call_args.kwargs["additional_headers"] == {
         "test_key": "test_value"
     }
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("tracer", ["tracer name", None])
-async def test_execute_ws_creates_websocket_connection_with_passed_extra_headers(
+async def test_execute_ws_creates_websocket_connection_with_passed_additional_headers(
     mocked_ws_connect, mocked_websocket, tracer
 ):
     async for _ in AsyncBaseClientOpenTelemetry(
         ws_headers={"Client-A": "client_value_a", "Client-B": "client_value_b"},
         tracer=tracer,
     ).execute_ws(
-        "", extra_headers={"Client-A": "execute_value_a", "Execute-Other": "other"}
+        "", additional_headers={"Client-A": "execute_value_a", "Execute-Other": "other"}
     ):
         pass
 
     assert mocked_ws_connect.called
-    assert mocked_ws_connect.call_args.kwargs["extra_headers"] == {
+    assert mocked_ws_connect.call_args.kwargs["additional_headers"] == {
         "Client-A": "execute_value_a",
         "Client-B": "client_value_b",
         "Execute-Other": "other",
@@ -323,7 +324,9 @@ async def test_execute_ws_creates_root_span_with_custom_context(
     mocked_start_as_current_span, mocked_websocket
 ):
     client = AsyncBaseClientOpenTelemetry(
-        ws_url="ws://test_url", tracer="tracker", ws_root_context={"value": "test"}
+        ws_url="ws://test_url",
+        tracer="tracker",
+        ws_root_context=cast(Any, {"value": "test"}),
     )
 
     async for _ in client.execute_ws(""):

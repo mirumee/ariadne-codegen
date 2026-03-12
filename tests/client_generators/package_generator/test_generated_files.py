@@ -193,7 +193,7 @@ def test_generate_creates_file_with_query_types(
 
 
     class CustomQueryQuery1(BaseModel):
-        field_1: Optional[List[Optional[str]]] = Field(alias="field1")
+        field_1: Optional[list[Optional[str]]] = Field(alias="field1")
         field_2: Optional["CustomQueryQuery1Field2"] = Field(alias="field2")
         field_3: CustomEnum = Field(alias="field3")
 

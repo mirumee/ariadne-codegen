@@ -22,13 +22,13 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
           python-version-file: pyproject.toml
 
       - name: Install Hatch
-        uses: pypa/hatch@257e27e51a6a5616ed08a39a408a21c35c9931bc
+        run: pipx install hatch
 
       - name: Set package version from tag
         run: hatch version $(git describe --tags --always)

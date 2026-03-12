@@ -39,7 +39,9 @@ def test_generate_call_without_optional_arguments_returns_call_without_arguments
 
 
 def test_generate_await_returns_await_object():
-    result = generate_await(ast.Call(func=ast.Name(id="test_function")))
+    result = generate_await(
+        ast.Call(func=ast.Name(id="test_function"), args=[], keywords=[])
+    )
 
     assert isinstance(result, ast.Await)
     assert isinstance(result.value, ast.Call)

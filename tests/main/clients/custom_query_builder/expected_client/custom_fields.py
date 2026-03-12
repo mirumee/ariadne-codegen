@@ -1,8 +1,9 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from .base_operation import GraphQLField
 from .custom_typing_fields import (
     AppGraphQLField,
+    BookShelfGraphQLField,
     CollectionTranslatableContentGraphQLField,
     MetadataErrorGraphQLField,
     MetadataItemGraphQLField,
@@ -13,6 +14,7 @@ from .custom_typing_fields import (
     ProductGraphQLField,
     ProductTranslatableContentGraphQLField,
     ProductTypeCountableConnectionGraphQLField,
+    StoreGraphQLField,
     TranslatableItemConnectionGraphQLField,
     TranslatableItemEdgeGraphQLField,
     TranslatableItemUnion,
@@ -29,6 +31,19 @@ class AppFields(GraphQLField):
         return self
 
     def alias(self, alias: str) -> "AppFields":
+        self._alias = alias
+        return self
+
+
+class BookShelfFields(GraphQLField):
+    has_books: "BookShelfGraphQLField" = BookShelfGraphQLField("hasBooks")
+
+    def fields(self, *subfields: BookShelfGraphQLField) -> "BookShelfFields":
+        """Subfields should come from the BookShelfFields class"""
+        self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "BookShelfFields":
         self._alias = alias
         return self
 
@@ -108,7 +123,7 @@ class MetadataItemFields(GraphQLField):
 class ObjectWithMetadataInterface(GraphQLField):
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
-        """List of private metadata items. Requires staff permissions to access."""
+        """list of private metadata items. Requires staff permissions to access."""
         return MetadataItemFields("privateMetadata")
 
     @classmethod
@@ -116,7 +131,7 @@ class ObjectWithMetadataInterface(GraphQLField):
         """A single key from private metadata. Requires staff permissions to access.
 
         Tip: Use GraphQL aliases to fetch multiple keys."""
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -128,7 +143,7 @@ class ObjectWithMetadataInterface(GraphQLField):
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
-        """List of public metadata items. Can be accessed without permissions."""
+        """list of public metadata items. Can be accessed without permissions."""
         return MetadataItemFields("metadata")
 
     @classmethod
@@ -136,7 +151,7 @@ class ObjectWithMetadataInterface(GraphQLField):
         """A single key from public metadata.
 
         Tip: Use GraphQL aliases to fetch multiple keys."""
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -185,7 +200,7 @@ class ProductFields(GraphQLField):
 
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
-        """List of private metadata items. Requires staff permissions to access."""
+        """list of private metadata items. Requires staff permissions to access."""
         return MetadataItemFields("privateMetadata")
 
     @classmethod
@@ -193,7 +208,7 @@ class ProductFields(GraphQLField):
         """A single key from private metadata. Requires staff permissions to access.
 
         Tip: Use GraphQL aliases to fetch multiple keys."""
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -203,7 +218,7 @@ class ProductFields(GraphQLField):
 
     @classmethod
     def metadata(cls) -> "MetadataItemFields":
-        """List of public metadata items. Can be accessed without permissions."""
+        """list of public metadata items. Can be accessed without permissions."""
         return MetadataItemFields("metadata")
 
     @classmethod
@@ -211,7 +226,7 @@ class ProductFields(GraphQLField):
         """A single key from public metadata.
 
         Tip: Use GraphQL aliases to fetch multiple keys."""
-        arguments: Dict[str, Dict[str, Any]] = {
+        arguments: dict[str, dict[str, Any]] = {
             "key": {"type": "String!", "value": key}
         }
         cleared_arguments = {
@@ -250,7 +265,7 @@ class ProductCountableConnectionFields(GraphQLField):
             ProductCountableConnectionGraphQLField,
             "PageInfoFields",
             "ProductCountableEdgeFields",
-        ]
+        ],
     ) -> "ProductCountableConnectionFields":
         """Subfields should come from the ProductCountableConnectionFields class"""
         self._subfields.extend(subfields)
@@ -327,13 +342,39 @@ class ProductTypeCountableConnectionFields(GraphQLField):
 
     def fields(
         self,
-        *subfields: Union[ProductTypeCountableConnectionGraphQLField, "PageInfoFields"]
+        *subfields: Union[ProductTypeCountableConnectionGraphQLField, "PageInfoFields"],
     ) -> "ProductTypeCountableConnectionFields":
         """Subfields should come from the ProductTypeCountableConnectionFields class"""
         self._subfields.extend(subfields)
         return self
 
     def alias(self, alias: str) -> "ProductTypeCountableConnectionFields":
+        self._alias = alias
+        return self
+
+
+class StoreFields(GraphQLField):
+    @classmethod
+    def books(
+        cls, *, in_stock: Optional[bool] = None, category: Optional[str] = None
+    ) -> "BookShelfFields":
+        arguments: dict[str, dict[str, Any]] = {
+            "inStock": {"type": "Boolean", "value": in_stock},
+            "category": {"type": "String", "value": category},
+        }
+        cleared_arguments = {
+            key: value for key, value in arguments.items() if value["value"] is not None
+        }
+        return BookShelfFields("books", arguments=cleared_arguments)
+
+    def fields(
+        self, *subfields: Union[StoreGraphQLField, "BookShelfFields"]
+    ) -> "StoreFields":
+        """Subfields should come from the StoreFields class"""
+        self._subfields.extend(subfields)
+        return self
+
+    def alias(self, alias: str) -> "StoreFields":
         self._alias = alias
         return self
 
@@ -359,7 +400,7 @@ class TranslatableItemConnectionFields(GraphQLField):
             TranslatableItemConnectionGraphQLField,
             "PageInfoFields",
             "TranslatableItemEdgeFields",
-        ]
+        ],
     ) -> "TranslatableItemConnectionFields":
         """Subfields should come from the TranslatableItemConnectionFields class"""
         self._subfields.extend(subfields)
@@ -380,7 +421,7 @@ class TranslatableItemEdgeFields(GraphQLField):
 
     def fields(
         self,
-        *subfields: Union[TranslatableItemEdgeGraphQLField, "TranslatableItemUnion"]
+        *subfields: Union[TranslatableItemEdgeGraphQLField, "TranslatableItemUnion"],
     ) -> "TranslatableItemEdgeFields":
         """Subfields should come from the TranslatableItemEdgeFields class"""
         self._subfields.extend(subfields)
@@ -410,7 +451,7 @@ class UpdateMetadataFields(GraphQLField):
             UpdateMetadataGraphQLField,
             "MetadataErrorFields",
             "ObjectWithMetadataInterface",
-        ]
+        ],
     ) -> "UpdateMetadataFields":
         """Subfields should come from the UpdateMetadataFields class"""
         self._subfields.extend(subfields)

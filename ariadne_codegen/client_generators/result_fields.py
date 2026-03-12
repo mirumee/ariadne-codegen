@@ -1,6 +1,6 @@
 import ast
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Optional, cast
 
 from graphql import (
     DirectiveNode,
@@ -54,8 +54,8 @@ from .types import Annotation, AnnotationSlice, CodegenResultFieldType
 class Definitions:
     schema: GraphQLSchema
     field_node: FieldNode
-    custom_scalars: Dict[str, ScalarData]
-    fragments_definitions: Dict[str, FragmentDefinitionNode]
+    custom_scalars: dict[str, ScalarData]
+    fragments_definitions: dict[str, FragmentDefinitionNode]
 
 
 @dataclass
@@ -67,9 +67,9 @@ class RelatedClassData:
 @dataclass
 class FieldContext:
     definitions: Definitions
-    enums: List[str] = field(default_factory=list)
-    custom_scalars: List[str] = field(default_factory=list)
-    related_classes: List[RelatedClassData] = field(default_factory=list)
+    enums: list[str] = field(default_factory=list)
+    custom_scalars: list[str] = field(default_factory=list)
+    related_classes: list[RelatedClassData] = field(default_factory=list)
     abstract_type: bool = False
 
 
@@ -77,13 +77,13 @@ def parse_operation_field(
     schema: GraphQLSchema,
     field: FieldNode,
     type_: CodegenResultFieldType,
-    directives: Optional[Tuple[DirectiveNode, ...]] = None,
+    directives: Optional[tuple[DirectiveNode, ...]] = None,
     class_name: str = "",
-    typename_values: Optional[List[str]] = None,
-    custom_scalars: Optional[Dict[str, ScalarData]] = None,
-    fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]] = None,
+    typename_values: Optional[list[str]] = None,
+    custom_scalars: Optional[dict[str, ScalarData]] = None,
+    fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
     include_typename: bool = True,
-) -> Tuple[Annotation, Optional[ast.Constant], FieldContext]:
+) -> tuple[Annotation, Optional[ast.Constant], FieldContext]:
     default_value: Optional[ast.Constant] = None
     context = FieldContext(
         definitions=Definitions(
@@ -117,8 +117,8 @@ def parse_operation_field(
     return annotation, default_value, context
 
 
-def generate_typename_annotation(typename_values: List[str]) -> ast.Subscript:
-    elts: List[ast.expr] = [generate_name(f'"{v}"') for v in sorted(typename_values)]
+def generate_typename_annotation(typename_values: list[str]) -> ast.Subscript:
+    elts: list[ast.expr] = [generate_name(f'"{v}"') for v in sorted(typename_values)]
     slice_ = generate_tuple(elts) if len(elts) > 1 else elts[0]
     return generate_subscript(value=generate_name(LITERAL), slice_=slice_)
 
@@ -216,7 +216,7 @@ def parse_interface_type(
     )
     context.abstract_type = True
     if inline_fragments or fragments_on_subtypes:
-        types: List[ast.expr] = [
+        types: list[ast.expr] = [
             generate_annotation_name('"' + class_name + type_.name + '"', False)
         ]
         context.related_classes.append(
@@ -277,7 +277,7 @@ def parse_union_type(
     class_name: str,
 ) -> Annotation:
     context.abstract_type = True
-    sub_annotations: List[ast.expr] = [
+    sub_annotations: list[ast.expr] = [
         parse_operation_field_type(
             type_=subtype,
             context=context,
@@ -309,13 +309,13 @@ def parse_list_type(
 
 def get_inline_fragments_from_selection_set(
     selection_set: Optional[SelectionSetNode],
-    fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]],
-) -> List[InlineFragmentNode]:
+    fragments_definitions: Optional[dict[str, FragmentDefinitionNode]],
+) -> list[InlineFragmentNode]:
     if not selection_set:
         return []
 
     fragments_definitions = fragments_definitions or {}
-    inline_fragments: List[InlineFragmentNode] = []
+    inline_fragments: list[InlineFragmentNode] = []
 
     for selection in selection_set.selections or []:
         if isinstance(selection, InlineFragmentNode):
@@ -334,9 +334,9 @@ def get_inline_fragments_from_selection_set(
 def get_fragments_on_subtype(
     schema: GraphQLSchema,
     selection_set: Optional[SelectionSetNode],
-    fragments_definitions: Optional[Dict[str, FragmentDefinitionNode]],
+    fragments_definitions: Optional[dict[str, FragmentDefinitionNode]],
     root_type: str,
-) -> List[FragmentDefinitionNode]:
+) -> list[FragmentDefinitionNode]:
     root_type_def = schema.get_type(root_type)
     if (
         not selection_set
@@ -402,8 +402,8 @@ def annotate_nested_unions(
 
 
 def parse_directives(
-    annotation: Annotation, directives: Tuple[DirectiveNode, ...]
-) -> Tuple[Annotation, Optional[ast.Constant]]:
+    annotation: Annotation, directives: tuple[DirectiveNode, ...]
+) -> tuple[Annotation, Optional[ast.Constant]]:
     nullable_directives = (INCLUDE_DIRECTIVE_NAME, SKIP_DIRECTIVE_NAME)
     directives_names = [d.name.value for d in directives]
 

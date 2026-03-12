@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any, AsyncIterator, Dict
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from .async_base_client import AsyncBaseClient
 
@@ -26,22 +27,20 @@ class Client(AsyncBaseClient):
     async def get_authenticated_user(self, **kwargs: Any) -> "GetAuthenticatedUser":
         from .get_authenticated_user import GetAuthenticatedUser
 
-        query = gql(
-            """
+        query = gql("""
             query GetAuthenticatedUser {
               me {
                 id
                 username
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="GetAuthenticatedUser",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetAuthenticatedUser.model_validate(data)
@@ -49,14 +48,12 @@ class Client(AsyncBaseClient):
     async def list_strings_1(self, **kwargs: Any) -> "ListStrings1":
         from .list_strings_1 import ListStrings1
 
-        query = gql(
-            """
+        query = gql("""
             query ListStrings_1 {
               optionalListOptionalString
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListStrings_1", variables=variables, **kwargs
         )
@@ -66,14 +63,12 @@ class Client(AsyncBaseClient):
     async def list_strings_2(self, **kwargs: Any) -> "ListStrings2":
         from .list_strings_2 import ListStrings2
 
-        query = gql(
-            """
+        query = gql("""
             query ListStrings_2 {
               optionalListString
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListStrings_2", variables=variables, **kwargs
         )
@@ -83,14 +78,12 @@ class Client(AsyncBaseClient):
     async def list_strings_3(self, **kwargs: Any) -> "ListStrings3":
         from .list_strings_3 import ListStrings3
 
-        query = gql(
-            """
+        query = gql("""
             query ListStrings_3 {
               listOptionalString
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListStrings_3", variables=variables, **kwargs
         )
@@ -100,14 +93,12 @@ class Client(AsyncBaseClient):
     async def list_strings_4(self, **kwargs: Any) -> "ListStrings4":
         from .list_strings_4 import ListStrings4
 
-        query = gql(
-            """
+        query = gql("""
             query ListStrings_4 {
               listString
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListStrings_4", variables=variables, **kwargs
         )
@@ -117,16 +108,14 @@ class Client(AsyncBaseClient):
     async def list_type_a(self, **kwargs: Any) -> "ListTypeA":
         from .list_type_a import ListTypeA
 
-        query = gql(
-            """
+        query = gql("""
             query ListTypeA {
               listOptionalTypeA {
                 id
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListTypeA", variables=variables, **kwargs
         )
@@ -136,8 +125,7 @@ class Client(AsyncBaseClient):
     async def get_animal_by_name(self, name: str, **kwargs: Any) -> "GetAnimalByName":
         from .get_animal_by_name import GetAnimalByName
 
-        query = gql(
-            """
+        query = gql("""
             query GetAnimalByName($name: String!) {
               animalByName(name: $name) {
                 __typename
@@ -150,9 +138,8 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {"name": name}
+            """)
+        variables: dict[str, object] = {"name": name}
         response = await self.execute(
             query=query, operation_name="GetAnimalByName", variables=variables, **kwargs
         )
@@ -162,8 +149,7 @@ class Client(AsyncBaseClient):
     async def list_animals(self, **kwargs: Any) -> "ListAnimals":
         from .list_animals import ListAnimals
 
-        query = gql(
-            """
+        query = gql("""
             query ListAnimals {
               listAnimals {
                 __typename
@@ -176,9 +162,8 @@ class Client(AsyncBaseClient):
                 }
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="ListAnimals", variables=variables, **kwargs
         )
@@ -190,8 +175,7 @@ class Client(AsyncBaseClient):
     ) -> "GetAnimalFragmentWithExtra":
         from .get_animal_fragment_with_extra import GetAnimalFragmentWithExtra
 
-        query = gql(
-            """
+        query = gql("""
             query GetAnimalFragmentWithExtra {
               ...ListAnimalsFragment
               listString
@@ -202,14 +186,13 @@ class Client(AsyncBaseClient):
                 name
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="GetAnimalFragmentWithExtra",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.model_validate(data)
@@ -217,14 +200,12 @@ class Client(AsyncBaseClient):
     async def get_simple_scalar(self, **kwargs: Any) -> "GetSimpleScalar":
         from .get_simple_scalar import GetSimpleScalar
 
-        query = gql(
-            """
+        query = gql("""
             query GetSimpleScalar {
               justSimpleScalar
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="GetSimpleScalar", variables=variables, **kwargs
         )
@@ -234,19 +215,17 @@ class Client(AsyncBaseClient):
     async def get_complex_scalar(self, **kwargs: Any) -> "GetComplexScalar":
         from .get_complex_scalar import GetComplexScalar
 
-        query = gql(
-            """
+        query = gql("""
             query GetComplexScalar {
               justComplexScalar
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query,
             operation_name="GetComplexScalar",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetComplexScalar.model_validate(data)
@@ -256,27 +235,24 @@ class Client(AsyncBaseClient):
     ) -> AsyncIterator["SubscribeStrings"]:
         from .subscribe_strings import SubscribeStrings
 
-        query = gql(
-            """
+        query = gql("""
             subscription SubscribeStrings {
               optionalListString
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         async for data in self.execute_ws(
             query=query,
             operation_name="SubscribeStrings",
             variables=variables,
-            **kwargs
+            **kwargs,
         ):
             yield SubscribeStrings.model_validate(data)
 
     async def unwrap_fragment(self, **kwargs: Any) -> "UnwrapFragment":
         from .unwrap_fragment import UnwrapFragment
 
-        query = gql(
-            """
+        query = gql("""
             query UnwrapFragment {
               ...FragmentWithSingleField
             }
@@ -286,9 +262,8 @@ class Client(AsyncBaseClient):
                 id
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="UnwrapFragment", variables=variables, **kwargs
         )

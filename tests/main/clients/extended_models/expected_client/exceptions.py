@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import httpx
 
@@ -28,10 +28,10 @@ class GraphQLClientGraphQLError(GraphQLClientError):
     def __init__(
         self,
         message: str,
-        locations: Optional[List[Dict[str, int]]] = None,
-        path: Optional[List[str]] = None,
-        extensions: Optional[Dict[str, object]] = None,
-        original: Optional[Dict[str, object]] = None,
+        locations: Optional[list[dict[str, int]]] = None,
+        path: Optional[list[str]] = None,
+        extensions: Optional[dict[str, object]] = None,
+        original: Optional[dict[str, object]] = None,
     ):
         self.message = message
         self.locations = locations
@@ -43,7 +43,7 @@ class GraphQLClientGraphQLError(GraphQLClientError):
         return self.message
 
     @classmethod
-    def from_dict(cls, error: Dict[str, Any]) -> "GraphQLClientGraphQLError":
+    def from_dict(cls, error: dict[str, Any]) -> "GraphQLClientGraphQLError":
         return cls(
             message=error["message"],
             locations=error.get("locations"),
@@ -56,8 +56,8 @@ class GraphQLClientGraphQLError(GraphQLClientError):
 class GraphQLClientGraphQLMultiError(GraphQLClientError):
     def __init__(
         self,
-        errors: List[GraphQLClientGraphQLError],
-        data: Optional[Dict[str, Any]] = None,
+        errors: list[GraphQLClientGraphQLError],
+        data: Optional[dict[str, Any]] = None,
     ):
         self.errors = errors
         self.data = data
@@ -67,7 +67,7 @@ class GraphQLClientGraphQLMultiError(GraphQLClientError):
 
     @classmethod
     def from_errors_dicts(
-        cls, errors_dicts: List[Dict[str, Any]], data: Optional[Dict[str, Any]] = None
+        cls, errors_dicts: list[dict[str, Any]], data: Optional[dict[str, Any]] = None
     ) -> "GraphQLClientGraphQLMultiError":
         return cls(
             errors=[GraphQLClientGraphQLError.from_dict(e) for e in errors_dicts],

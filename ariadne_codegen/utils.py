@@ -1,20 +1,104 @@
 import ast
+import builtins
 import re
+import subprocess
+import sys
+import tempfile
 from keyword import iskeyword
+from pathlib import Path
 from textwrap import indent
-from typing import List, Optional
+from typing import Optional
 
-import isort
-from autoflake import fix_code  # type: ignore
-from black import Mode, format_str
 from graphql import Node
 from pydantic import BaseModel
 
 from .plugins.manager import PluginManager
 
+_LINE_LENGTH = 88
+_TARGET_VERSION = "py310"
+_SUBPROCESS_TIMEOUT = 30
+
+
+def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
+    """Format generated code with ruff: sort imports, remove unused imports, and format.
+
+    Uses ``--isolated`` so the output is deterministic regardless of the
+    user's ruff configuration.
+    """
+    select_rules = ["I"]
+    if remove_unused_imports:
+        select_rules.append("F401")
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".py",
+        delete=False,
+        encoding="utf-8",
+    ) as f:
+        f.write(code)
+        tmp_path = f.name
+    try:
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "ruff",
+                "check",
+                "--fix",
+                "--isolated",
+                "--select",
+                ",".join(select_rules),
+                "--target-version",
+                _TARGET_VERSION,
+                "--line-length",
+                str(_LINE_LENGTH),
+                tmp_path,
+            ],
+            check=False,
+            capture_output=True,
+            timeout=_SUBPROCESS_TIMEOUT,
+        )
+        code = Path(tmp_path).read_text(encoding="utf-8")
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "ruff",
+            "format",
+            "--isolated",
+            "--target-version",
+            _TARGET_VERSION,
+            "--line-length",
+            str(_LINE_LENGTH),
+            "-",
+        ],
+        input=code,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=_SUBPROCESS_TIMEOUT,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"ruff format failed (exit code {result.returncode}): {result.stderr}"
+        )
+    return result.stdout
+
+
 PYDANTIC_RESERVED_FIELD_NAMES = [
     name for name in dir(BaseModel) if not name.startswith("_")
 ]
+
+
+def _is_builtin_type_name(name: str) -> bool:
+    try:
+        value = getattr(builtins, name)
+    except AttributeError:
+        return False
+    return isinstance(value, type)
 
 
 def ast_to_str(
@@ -26,11 +110,9 @@ def ast_to_str(
     """Convert ast object into string."""
     code = ast.unparse(ast_obj)
     code = remove_blank_line_between_class_and_content(code)
-    if remove_unused_imports:
-        code = fix_code(code, remove_all_unused_imports=True)
     if multiline_strings:
         code = format_multiline_strings(code, offset=multiline_strings_offset)
-    return format_str(isort.code(code), mode=Mode())
+    return _format_code(code, remove_unused_imports=remove_unused_imports)
 
 
 def remove_blank_line_between_class_and_content(code: str) -> str:
@@ -38,7 +120,7 @@ def remove_blank_line_between_class_and_content(code: str) -> str:
 
     We are doing this for code style consistency and backwards compatibility.
     """
-    code_lines: List[str] = []
+    code_lines: list[str] = []
     skip_blank_lines = False
     for line in code.splitlines():
         if skip_blank_lines and line:
@@ -124,7 +206,7 @@ def process_name(
     processed_name = name
     if convert_to_snake_case:
         processed_name = str_to_snake_case(processed_name)
-    if iskeyword(processed_name):
+    if iskeyword(processed_name) or _is_builtin_type_name(processed_name):
         processed_name += "_"
     if (
         handle_pydantic_resrved_field_names
@@ -138,3 +220,29 @@ def process_name(
     if set(name) == {"_"} and not processed_name:
         return "underscore_named_field_"
     return processed_name
+
+
+def add_extra_to_base_model(code: str) -> str:
+    "Adds `extra='forbid'` to the ConfigDict in BaseModel if not already present."
+    tree = ast.parse(code)
+    for node in tree.body:
+        if not isinstance(node, ast.ClassDef):
+            continue
+        if node.name != "BaseModel":
+            continue
+        for statement in node.body:
+            if not isinstance(statement, ast.Assign):
+                continue
+            call = statement.value
+            if not isinstance(call, ast.Call):
+                continue
+            if not isinstance(call.func, ast.Name):
+                continue
+            if call.func.id != "ConfigDict":
+                continue
+            if not any(kw.arg == "extra" for kw in call.keywords):
+                call.keywords.append(
+                    ast.keyword(arg="extra", value=ast.Constant("forbid"))
+                )
+    ast.fix_missing_locations(tree)
+    return ast.unparse(tree)

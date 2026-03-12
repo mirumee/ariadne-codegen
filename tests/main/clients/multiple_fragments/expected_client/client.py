@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from .async_base_client import AsyncBaseClient
 from .example_query_1 import ExampleQuery1
@@ -12,8 +12,7 @@ def gql(q: str) -> str:
 
 class Client(AsyncBaseClient):
     async def example_query_1(self, **kwargs: Any) -> ExampleQuery1:
-        query = gql(
-            """
+        query = gql("""
             query exampleQuery1 {
               exampleQuery {
                 value
@@ -31,9 +30,8 @@ class Client(AsyncBaseClient):
             fragment MinimalB on TypeB {
               id
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="exampleQuery1", variables=variables, **kwargs
         )
@@ -41,8 +39,7 @@ class Client(AsyncBaseClient):
         return ExampleQuery1.model_validate(data)
 
     async def example_query_2(self, **kwargs: Any) -> ExampleQuery2:
-        query = gql(
-            """
+        query = gql("""
             query exampleQuery2 {
               exampleQuery {
                 ...FullA
@@ -61,9 +58,8 @@ class Client(AsyncBaseClient):
               id
               value
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="exampleQuery2", variables=variables, **kwargs
         )
@@ -71,8 +67,7 @@ class Client(AsyncBaseClient):
         return ExampleQuery2.model_validate(data)
 
     async def example_query_3(self, **kwargs: Any) -> ExampleQuery3:
-        query = gql(
-            """
+        query = gql("""
             query exampleQuery3 {
               exampleQuery {
                 ...CompleteA
@@ -87,9 +82,8 @@ class Client(AsyncBaseClient):
                 value
               }
             }
-            """
-        )
-        variables: Dict[str, object] = {}
+            """)
+        variables: dict[str, object] = {}
         response = await self.execute(
             query=query, operation_name="exampleQuery3", variables=variables, **kwargs
         )

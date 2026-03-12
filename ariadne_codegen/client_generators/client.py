@@ -1,5 +1,5 @@
 import ast
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from graphql import OperationDefinitionNode, OperationType
 
@@ -38,6 +38,7 @@ from .constants import (
     ASYNC_ITERATOR,
     BASE_GRAPHQL_FIELD_CLASS_NAME,
     BASE_OPERATION_FILE_PATH,
+    COLLECTIONS_ABC_MODULE,
     DICT,
     DOCUMENT_NODE,
     GRAPHQL_MODULE,
@@ -74,7 +75,7 @@ class ClientGenerator:
         input_types_module_name: str = "input_types",
         unset_import: ast.ImportFrom = UNSET_IMPORT,
         upload_import: ast.ImportFrom = UPLOAD_IMPORT,
-        custom_scalars: Optional[Dict[str, ScalarData]] = None,
+        custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
     ) -> None:
         self.name = name
@@ -84,19 +85,24 @@ class ClientGenerator:
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.arguments_generator = arguments_generator
 
-        self._imports: List[Union[ast.ImportFrom, ast.Import]] = []
+        self._imports: list[Union[ast.ImportFrom, ast.Import]] = []
         self._add_import(
             generate_import_from(
                 [
                     OPTIONAL,
-                    LIST,
-                    DICT,
                     ANY,
                     UNION,
-                    ASYNC_ITERATOR,
                 ],
                 TYPING_MODULE,
             )
+        )
+        self._add_import(
+            generate_import_from(
+                [
+                    ASYNC_ITERATOR,
+                ],
+                COLLECTIONS_ABC_MODULE,
+            ),
         )
         self._add_import(base_client_import)
         self._add_import(unset_import)
@@ -111,20 +117,22 @@ class ClientGenerator:
 
     def generate(self) -> ast.Module:
         """Generate module with class definition of graphql client."""
-        self._add_import(
-            generate_import_from(
-                names=self.arguments_generator.get_used_inputs(),
-                from_=self.input_types_module_name,
-                level=1,
+        if used_inputs := self.arguments_generator.get_used_inputs():
+            self._add_import(
+                generate_import_from(
+                    names=used_inputs,
+                    from_=self.input_types_module_name,
+                    level=1,
+                )
             )
-        )
-        self._add_import(
-            generate_import_from(
-                names=self.arguments_generator.get_used_enums(),
-                from_=self.enums_module_name,
-                level=1,
+        if used_enums := self.arguments_generator.get_used_enums():
+            self._add_import(
+                generate_import_from(
+                    names=used_enums,
+                    from_=self.enums_module_name,
+                    level=1,
+                )
             )
-        )
         for custom_scalar_name in self.arguments_generator.get_used_custom_scalars():
             scalar_data = self.custom_scalars[custom_scalar_name]
             for import_ in generate_scalar_imports(scalar_data):
@@ -410,7 +418,7 @@ class ClientGenerator:
             ),
             body=method_body,
             return_type=generate_subscript(
-                generate_name("List"), generate_name("VariableDefinitionNode")
+                generate_name("list"), generate_name("VariableDefinitionNode")
             ),
         )
 
@@ -495,7 +503,7 @@ class ClientGenerator:
                     generate_arg(
                         "variable_definitions",
                         annotation=generate_subscript(
-                            generate_name("List"),
+                            generate_name("list"),
                             generate_name("VariableDefinitionNode"),
                         ),
                     ),
@@ -615,7 +623,7 @@ class ClientGenerator:
                     generate_arg(
                         "fields",
                         annotation=generate_subscript(
-                            generate_name("Tuple"),
+                            generate_name("tuple"),
                             generate_tuple(
                                 [
                                     generate_name("GraphQLField"),
@@ -675,7 +683,7 @@ class ClientGenerator:
                 [BASE_GRAPHQL_FIELD_CLASS_NAME], BASE_OPERATION_FILE_PATH.stem, level=1
             )
         )
-        self._add_import(generate_import_from([DICT, TUPLE, LIST, ANY], "typing"))
+        self._add_import(generate_import_from([ANY], "typing"))
 
         self._class_def.body.append(
             self.create_execute_custom_operation_method(async_client)
@@ -790,7 +798,7 @@ class ClientGenerator:
         )
         return async_def_query
 
-    def get_variable_names(self, arguments: ast.arguments) -> Dict[str, str]:
+    def get_variable_names(self, arguments: ast.arguments) -> dict[str, str]:
         mapped_variable_names = [
             self._operation_str_variable,
             self._variables_dict_variable,
@@ -823,7 +831,7 @@ class ClientGenerator:
         arguments: ast.arguments,
         arguments_dict: ast.Dict,
         operation_str: str,
-        variable_names: Dict[str, str],
+        variable_names: dict[str, str],
     ) -> ast.AsyncFunctionDef:
         return generate_async_method_definition(
             name=name,
@@ -848,7 +856,7 @@ class ClientGenerator:
         arguments_dict: ast.Dict,
         operation_str: str,
         operation_name: str,
-        variable_names: Dict[str, str],
+        variable_names: dict[str, str],
     ) -> ast.AsyncFunctionDef:
         return generate_async_method_definition(
             name=name,
@@ -871,7 +879,7 @@ class ClientGenerator:
         arguments_dict: ast.Dict,
         operation_str: str,
         operation_name: str,
-        variable_names: Dict[str, str],
+        variable_names: dict[str, str],
     ) -> ast.FunctionDef:
         return generate_method_definition(
             name=name,
@@ -887,7 +895,7 @@ class ClientGenerator:
         )
 
     def _generate_operation_str_assign(
-        self, variable_names: Dict[str, str], operation_str: str, lineno: int = 1
+        self, variable_names: dict[str, str], operation_str: str, lineno: int = 1
     ) -> ast.Assign:
         return generate_assign(
             targets=[variable_names[self._operation_str_variable]],
@@ -901,7 +909,7 @@ class ClientGenerator:
         )
 
     def _generate_variables_assign(
-        self, variable_names: Dict[str, str], arguments_dict: ast.Dict, lineno: int = 1
+        self, variable_names: dict[str, str], arguments_dict: ast.Dict, lineno: int = 1
     ) -> ast.AnnAssign:
         return generate_ann_assign(
             target=generate_name(variable_names[self._variables_dict_variable]),
@@ -914,7 +922,7 @@ class ClientGenerator:
         )
 
     def _generate_async_response_assign(
-        self, variable_names: Dict[str, str], operation_name: str, lineno: int = 1
+        self, variable_names: dict[str, str], operation_name: str, lineno: int = 1
     ) -> ast.Assign:
         return generate_assign(
             targets=[variable_names[self._response_variable]],
@@ -926,7 +934,7 @@ class ClientGenerator:
 
     def _generate_response_assign(
         self,
-        variable_names: Dict[str, str],
+        variable_names: dict[str, str],
         operation_name: str,
         lineno: int = 1,
     ) -> ast.Assign:
@@ -937,7 +945,7 @@ class ClientGenerator:
         )
 
     def _generate_execute_call(
-        self, variable_names: Dict[str, str], operation_name: str
+        self, variable_names: dict[str, str], operation_name: str
     ) -> ast.Call:
         return generate_call(
             func=generate_attribute(generate_name("self"), "execute"),
@@ -957,7 +965,7 @@ class ClientGenerator:
             ],
         )
 
-    def _generate_data_retrieval(self, variable_names: Dict[str, str]) -> ast.Assign:
+    def _generate_data_retrieval(self, variable_names: dict[str, str]) -> ast.Assign:
         return generate_assign(
             targets=[variable_names[self._data_variable]],
             value=generate_call(
@@ -967,7 +975,7 @@ class ClientGenerator:
         )
 
     def _generate_return_parsed_obj(
-        self, variable_names: Dict[str, str], return_type: str
+        self, variable_names: dict[str, str], return_type: str
     ) -> ast.Return:
         return generate_return(
             generate_call(
@@ -980,7 +988,7 @@ class ClientGenerator:
 
     def _generate_async_generator_loop(
         self,
-        variable_names: Dict[str, str],
+        variable_names: dict[str, str],
         operation_name: str,
         return_type: str,
         lineno: int = 1,
@@ -1013,7 +1021,7 @@ class ClientGenerator:
         )
 
     def _generate_yield_parsed_obj(
-        self, variable_names: Dict[str, str], return_type: str
+        self, variable_names: dict[str, str], return_type: str
     ) -> ast.Expr:
         return generate_expr(
             generate_yield(
