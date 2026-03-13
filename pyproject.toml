@@ -84,6 +84,9 @@ check = [
   "hatch test --cover",
   "hatch run types:check",
 ]
+changelog-preview = "git cliff --unreleased --strip all"
+changelog-update = "git cliff --unreleased -o CHANGELOG.md"
+release-notes = "git cliff --latest --strip all"
 
 ## Types environment
 
