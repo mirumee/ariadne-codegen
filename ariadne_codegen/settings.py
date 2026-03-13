@@ -6,6 +6,8 @@ from keyword import iskeyword
 from pathlib import Path
 from textwrap import dedent
 
+from graphql.validation import specified_rules
+
 from .client_generators.constants import (
     DEFAULT_ASYNC_BASE_CLIENT_NAME,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
@@ -24,6 +26,21 @@ class CommentsStrategy(str, enum.Enum):
     NONE = "none"
     STABLE = "stable"
     TIMESTAMP = "timestamp"
+
+
+VALIDATION_RULES_MAP = {
+    rule.__name__.removesuffix("Rule"): rule for rule in specified_rules
+}
+
+
+def get_validation_rule(rule: str):
+    try:
+        return VALIDATION_RULES_MAP[rule]
+    except KeyError as exc:
+        supported_rules = ", ".join(sorted(VALIDATION_RULES_MAP))
+        raise ValueError(
+            f"Unknown validation rule: {rule}. Supported values are: {supported_rules}"
+        ) from exc
 
 
 class Strategy(str, enum.Enum):
@@ -125,6 +142,11 @@ class ClientSettings(BaseSettings):
     include_all_enums: bool = True
     async_client: bool = True
     opentelemetry_client: bool = False
+    skip_validation_rules: list[str] = field(
+        default_factory=lambda: [
+            "NoUnusedFragments",
+        ]
+    )
     files_to_include: list[str] = field(default_factory=list)
     scalars: dict[str, ScalarData] = field(default_factory=dict)
     default_optional_fields_to_none: bool = False

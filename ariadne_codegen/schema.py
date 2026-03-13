@@ -1,4 +1,4 @@
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, cast
@@ -23,6 +23,7 @@ from graphql import (
     specified_rules,
     validate,
 )
+from typing_extensions import Any
 
 from .client_generators.constants import MIXIN_FROM_NAME, MIXIN_IMPORT_NAME, MIXIN_NAME
 from .exceptions import (
@@ -48,7 +49,9 @@ def filter_fragments_definitions(
 
 
 def get_graphql_queries(
-    queries_path: str, schema: GraphQLSchema
+    queries_path: str,
+    schema: GraphQLSchema,
+    skip_rules: Sequence[Any] = (NoUnusedFragmentsRule,),
 ) -> tuple[DefinitionNode, ...]:
     """Get graphql queries definitions build from provided path."""
     queries_str = load_graphql_files_from_path(Path(queries_path))
@@ -56,7 +59,7 @@ def get_graphql_queries(
     validation_errors = validate(
         schema=schema,
         document_ast=queries_ast,
-        rules=[r for r in specified_rules if r is not NoUnusedFragmentsRule],
+        rules=[r for r in specified_rules if r not in skip_rules],
     )
     if validation_errors:
         raise InvalidOperationForSchema(

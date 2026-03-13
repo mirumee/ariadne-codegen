@@ -17,7 +17,7 @@ from ariadne_codegen.schema import (
     read_graphql_file,
     walk_graphql_files,
 )
-from ariadne_codegen.settings import IntrospectionSettings
+from ariadne_codegen.settings import IntrospectionSettings, get_validation_rule
 
 
 @pytest.fixture
@@ -61,6 +61,53 @@ def test_query_2_str():
         query testQuery2 {
             test {
                 node
+                default
+            }
+        }
+    """
+
+
+@pytest.fixture
+def test_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
+                default
+                ...fragmentA
+            }
+        }
+    """
+
+
+@pytest.fixture
+def test_duplicate_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
+                default
+                ...fragmentA
+            }
+        }
+    """
+
+
+@pytest.fixture
+def test_unused_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
                 default
             }
         }
@@ -133,6 +180,37 @@ def path_fixture(request):
 def single_file_query(tmp_path_factory, test_query_str):
     file_ = tmp_path_factory.mktemp("queries").joinpath("query1.graphql")
     file_.write_text(test_query_str, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def single_file_query_with_fragment(
+    tmp_path_factory, test_query_str, test_fragment_str
+):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query1_fragment.graphql")
+    file_.write_text(test_query_str + test_fragment_str, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def single_file_query_with_duplicate_fragment(
+    tmp_path_factory, test_query_str, test_duplicate_fragment_str
+):
+    file_ = tmp_path_factory.mktemp("queries").joinpath(
+        "query1_duplicate_fragment.graphql"
+    )
+    file_.write_text(test_query_str + test_duplicate_fragment_str, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def single_file_query_with_unused_fragment(
+    tmp_path_factory, test_query_str, test_unused_fragment_str
+):
+    file_ = tmp_path_factory.mktemp("queries").joinpath(
+        "query1_unused_fragment.graphql"
+    )
+    file_.write_text(test_query_str + test_unused_fragment_str, encoding="utf-8")
     return file_
 
 
@@ -447,6 +525,62 @@ def test_get_graphql_queries_with_invalid_query_for_schema_raises_invalid_operat
         get_graphql_queries(
             invalid_query_for_schema_file.as_posix(), build_schema(schema_str)
         )
+
+
+def test_get_graphql_queries_with_fragment_returns_schema_definitions(
+    single_file_query_with_fragment, schema_str
+):
+    queries = get_graphql_queries(
+        single_file_query_with_fragment.as_posix(), build_schema(schema_str)
+    )
+
+    assert len(queries) == 3
+
+
+def test_get_graphql_queries_with_duplicate_fragment_raises_invalid_operation(
+    single_file_query_with_duplicate_fragment, schema_str
+):
+    with pytest.raises(InvalidOperationForSchema):
+        get_graphql_queries(
+            single_file_query_with_duplicate_fragment.as_posix(),
+            build_schema(schema_str),
+        )
+
+
+def test_unused_fragment_without_skips_raises_invalid_operation(
+    single_file_query_with_unused_fragment,
+    schema_str,
+):
+    with pytest.raises(InvalidOperationForSchema):
+        get_graphql_queries(
+            single_file_query_with_unused_fragment.as_posix(),
+            build_schema(schema_str),
+            [],
+        )
+
+
+def test_duplicate_fragment_passes_when_skip_rule_enabled(
+    single_file_query_with_duplicate_fragment,
+    schema_str,
+):
+    get_graphql_queries(
+        single_file_query_with_duplicate_fragment.as_posix(),
+        build_schema(schema_str),
+        [
+            get_validation_rule("NoUnusedFragments"),
+            get_validation_rule("UniqueFragmentNames"),
+        ],
+    )
+
+
+def test_get_validation_rule_accepts_all_specified_rule_names():
+    rule = get_validation_rule("NoUnusedVariables")
+    assert rule.__name__ == "NoUnusedVariablesRule"
+
+
+def test_get_validation_rule_with_unknown_rule_raises_value_error():
+    with pytest.raises(ValueError):
+        get_validation_rule("UnknownRule")
 
 
 def test_introspect_remote_schema_passes_introspection_settings_to_introspection_query(
