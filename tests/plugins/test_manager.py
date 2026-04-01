@@ -412,6 +412,7 @@ def test_get_file_comment_calls_plugins_get_file_comment(
     assert plugin1.get_file_comment.called
     assert plugin2.get_file_comment.called
 
+
 def test_generate_custom_module_calls_plugins_generate_custom_module(
     plugin_manager_with_mocked_plugins,
 ):
@@ -422,6 +423,7 @@ def test_generate_custom_module_calls_plugins_generate_custom_module(
     plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
     assert plugin1.generate_custom_module.called
     assert plugin2.generate_custom_module.called
+
 
 def test_generate_custom_method_calls_plugins_generate_custom_method(
     plugin_manager_with_mocked_plugins,
