@@ -411,3 +411,38 @@ def test_get_file_comment_calls_plugins_get_file_comment(
     plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
     assert plugin1.get_file_comment.called
     assert plugin2.get_file_comment.called
+
+def test_generate_custom_module_calls_plugins_generate_custom_module(
+    plugin_manager_with_mocked_plugins,
+):
+    plugin_manager_with_mocked_plugins.generate_custom_module(
+        ast.Module(body=[], type_ignores=[]),
+    )
+
+    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
+    assert plugin1.generate_custom_module.called
+    assert plugin2.generate_custom_module.called
+
+def test_generate_custom_method_calls_plugins_generate_custom_method(
+    plugin_manager_with_mocked_plugins,
+):
+    plugin_manager_with_mocked_plugins.generate_custom_method(
+        ast.FunctionDef(
+            name="",
+            args=ast.arguments(
+                posonlyargs=[],
+                args=[],
+                vararg=None,
+                kwonlyargs=[],
+                kw_defaults=[],
+                kwarg=None,
+                defaults=[],
+            ),
+            body=[],
+            decorator_list=[],
+        )
+    )
+
+    plugin1, plugin2 = plugin_manager_with_mocked_plugins.plugins
+    assert plugin1.generate_custom_method.called
+    assert plugin2.generate_custom_method.called

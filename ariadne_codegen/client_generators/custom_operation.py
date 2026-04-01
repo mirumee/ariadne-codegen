@@ -103,7 +103,9 @@ class CustomOperationGenerator:
             + cast(list[ast.stmt], self._type_imports)
             + [self._class_def],
         )
-        return self.plugin_manager.generate_custom_module(module)
+        if self.plugin_manager:
+            return self.plugin_manager.generate_custom_module(module)
+        return module
 
     def _add_import(self, import_: Optional[ast.ImportFrom] = None):
         """Adds an import statement to the list avoiding duplicates."""
@@ -182,8 +184,10 @@ class CustomOperationGenerator:
             ],
             decorator_list=[generate_name("classmethod")],
         )
-        
-        return self.plugin_manager.generate_custom_method(method)
+
+        if self.plugin_manager:
+            return self.plugin_manager.generate_custom_method(method)
+        return method
 
     def _get_return_type_and_from(self, final_type):
         """
