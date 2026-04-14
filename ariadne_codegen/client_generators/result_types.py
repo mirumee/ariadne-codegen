@@ -433,7 +433,7 @@ class ResultTypesGenerator:
             if field_name == TYPENAME_FIELD_NAME:
                 return GraphQLField(
                     type_=GraphQLNonNull(
-                        type_=GraphQLString,  # type: ignore[ty:invalid-argument-type]
+                        type_=GraphQLString,  # ty: ignore[invalid-argument-type]
                     ),
                 )
             raise ParsingError(
