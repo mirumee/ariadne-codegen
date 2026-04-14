@@ -215,13 +215,7 @@ class PluginManager:
         )
 
     def generate_custom_module(self, module: ast.Module) -> ast.Module:
-        return self._apply_plugins_on_object(
-            "generate_custom_module",
-            module
-        )
+        return self._apply_plugins_on_object("generate_custom_module", module)
 
     def generate_custom_method(self, method_def: ast.FunctionDef) -> ast.FunctionDef:
-        return self._apply_plugins_on_object(
-            "generate_custom_method",
-            method_def
-        )
+        return self._apply_plugins_on_object("generate_custom_method", method_def)

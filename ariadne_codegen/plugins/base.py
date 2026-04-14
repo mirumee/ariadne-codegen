@@ -146,9 +146,7 @@ class Plugin:
     ) -> str:
         return comment
 
-    def generate_custom_module(
-        self, module
-    ) -> ast.Module:
+    def generate_custom_module(self, module) -> ast.Module:
         return module
 
     def generate_custom_method(self, method_def: ast.FunctionDef) -> ast.FunctionDef:
