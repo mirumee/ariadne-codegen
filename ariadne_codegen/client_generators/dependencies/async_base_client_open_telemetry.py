@@ -62,9 +62,9 @@ try:
         set_span_in_context,
     )
 except ImportError:
-    Context = Any  # type: ignore[misc,assignment,unused-ignore,ty:invalid-assignment]
-    Span = Any  # type: ignore[misc,assignment,unused-ignore,ty:invalid-assignment]
-    Tracer = Any  # type: ignore[misc,assignment,unused-ignore,ty:invalid-assignment]
+    Context = Any  # ty: ignore[invalid-assignment]
+    Span = Any  # ty: ignore[invalid-assignment]
+    Tracer = Any  # ty: ignore[invalid-assignment]
 
     def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
