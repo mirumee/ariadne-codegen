@@ -228,7 +228,7 @@ class ArgumentGenerator:
                 generate_import_from(names=[name], from_="input_types", level=1)
             )
         elif isinstance(type_, GraphQLEnumType):
-            self._add_import(generate_import_from(names=[name], level=1))
+            self._add_import(generate_import_from(names=[name], from_="enums", level=1))
         elif isinstance(type_, GraphQLScalarType):
             if name not in self.custom_scalars:
                 name = INPUT_SCALARS_MAP.get(name, ANY)
