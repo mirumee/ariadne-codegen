@@ -36,9 +36,9 @@ except ImportError:
         raise NotImplementedError("Subscriptions require 'websockets' package.")
         yield
 
-    ClientConnection = Any  # type: ignore[misc,assignment,unused-ignore]
-    Data = Any  # type: ignore[misc,assignment,unused-ignore]
-    Origin = Any  # type: ignore[misc,assignment,unused-ignore]
+    ClientConnection = Any  # ty: ignore[invalid-assignment]
+    Data = Any  # ty: ignore[invalid-assignment]
+    Origin = Any  # ty: ignore[invalid-assignment]
 
     def Subprotocol(*args, **kwargs):  # type: ignore # noqa: N802, N803
         raise NotImplementedError("Subscriptions require 'websockets' package.")
