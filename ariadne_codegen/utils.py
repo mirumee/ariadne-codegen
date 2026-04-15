@@ -78,6 +78,7 @@ def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
         input=code,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=False,
         timeout=_SUBPROCESS_TIMEOUT,
     )

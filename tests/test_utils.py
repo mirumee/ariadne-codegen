@@ -1,9 +1,11 @@
 import ast
+import subprocess
 from textwrap import dedent
 
 import pytest
 
 from ariadne_codegen.utils import (
+    _format_code,
     add_extra_to_base_model,
     ast_to_str,
     convert_to_multiline_string,
@@ -76,6 +78,79 @@ def test_ast_to_str_removes_unused_imports():
 
     assert generated_code == expected_generated_code
     assert not_used_imported_class not in generated_code
+
+
+def _patch_subprocess_run(mocker, real_run=subprocess.run):
+    """Force a Windows-like default for ruff format when encoding is omitted."""
+
+    def wrapped(*args, **kwargs):
+        argv = args[0] if args else ()
+        is_ruff_format = isinstance(argv, (list, tuple)) and tuple(argv[2:4]) == (
+            "ruff",
+            "format",
+        )
+        if (
+            is_ruff_format
+            and kwargs.get("text")
+            and kwargs.get("input") is not None
+            and kwargs.get("encoding") is None
+        ):
+            kwargs = {**kwargs, "encoding": "cp1252"}
+        return real_run(*args, **kwargs)
+
+    return mocker.patch("ariadne_codegen.utils.subprocess.run", side_effect=wrapped)
+
+
+def test_ast_to_str_non_ascii_unicode_round_trip_issue_422(mocker):
+    """Regression for mirumee/ariadne-codegen#422 (Windows cp1252 / ruff stdin).
+
+    Large schemas (e.g. Shopify) embed non-ASCII in descriptions; formatting must
+    pass explicit UTF-8 to ruff format. Without it, default locale encoding can raise
+    UnicodeEncodeError (reproduced here by simulating cp1252 when encoding is omitted).
+    """
+    _patch_subprocess_run(mocker)
+
+    description = "商店 line: émoji 🛍️ — characters outside cp1252"
+    module = ast.Module(
+        body=[
+            ast.ClassDef(
+                name="ModelWithDescription",
+                bases=[],
+                keywords=[],
+                body=[
+                    ast.Expr(value=ast.Constant(value=description)),
+                    ast.Pass(),
+                ],
+                decorator_list=[],
+            ),
+        ],
+        type_ignores=[],
+    )
+    ast.fix_missing_locations(module)
+
+    generated = ast_to_str(module, remove_unused_imports=False)
+
+    assert description in generated
+    ast.parse(generated)
+    generated.encode("utf-8")
+
+
+def test_format_code_ruff_format_uses_utf8_encoding_issue_422(mocker):
+    """Ensure ruff format stdin/stdout use UTF-8 (mirumee/ariadne-codegen#422)."""
+    spy = mocker.patch("ariadne_codegen.utils.subprocess.run", wraps=subprocess.run)
+
+    _format_code("x = 1\n")
+
+    format_calls = [
+        call
+        for call in spy.call_args_list
+        if len(call[0][0]) >= 4
+        and call[0][0][2] == "ruff"
+        and call[0][0][3] == "format"
+    ]
+    assert format_calls, "expected a ruff format subprocess.run"
+    _args, kwargs = format_calls[-1]
+    assert kwargs.get("encoding") == "utf-8"
 
 
 @pytest.mark.parametrize(
