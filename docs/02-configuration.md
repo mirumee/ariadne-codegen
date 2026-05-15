@@ -20,7 +20,7 @@ queries_path = "queries.graphql"
 
 One of the following 2 parameters is required, in case of providing both of them `schema_path` is prioritized:
 
-- `schema_path` - path to file/directory with graphql schema
+- `schema_path` - path to file/directory with graphql schema, or a list of paths whose contents will be concatenated
 - `remote_schema_url` - url to graphql server, where introspection query can be perfomed
 
 ## Optional settings:

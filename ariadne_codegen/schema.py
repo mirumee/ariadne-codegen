@@ -133,9 +133,14 @@ def introspect_remote_schema(
     return cast(IntrospectionQuery, data)
 
 
-def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
-    """Get graphql schema build from provided path."""
-    schema_str = load_graphql_files_from_path(Path(schema_path))
+def get_graphql_schema_from_path(schema_path: str | list[str]) -> GraphQLSchema:
+    """Get graphql schema build from the provided path or list of paths."""
+    if isinstance(schema_path, list):
+        schema_str = "\n".join(
+            load_graphql_files_from_path(Path(p)) for p in schema_path
+        )
+    else:
+        schema_str = load_graphql_files_from_path(Path(schema_path))
     graphql_ast = parse(schema_str)
     schema: GraphQLSchema = build_ast_schema(graphql_ast, assume_valid=True)
     return schema

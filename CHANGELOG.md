@@ -6,6 +6,8 @@ For released versions, see the [Releases](https://github.com/mirumee/ariadne-cod
 
 ## Unreleased
 
+- Allow `schema_path` to accept a list of file/directory paths in addition to a single path string.
+
 ### ⚠️ Breaking Changes
 
 ### 📚 Documentation

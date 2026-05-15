@@ -133,6 +133,48 @@ def test_client_settings_without_schema_path_or_remote_schema_url_raises_excepti
         ClientSettings(queries_path=queries_path)
 
 
+def test_client_settings_accepts_list_for_schema_path(tmp_path):
+    schema_path_a = tmp_path / "schema_a.graphql"
+    schema_path_a.touch()
+    schema_path_b = tmp_path / "schema_b.graphql"
+    schema_path_b.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=[schema_path_a.as_posix(), schema_path_b.as_posix()],
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.schema_path == [
+        schema_path_a.as_posix(),
+        schema_path_b.as_posix(),
+    ]
+
+
+def test_client_settings_raises_invalid_configuration_for_nonexistent_path_in_list(
+    tmp_path,
+):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    with pytest.raises(InvalidConfiguration):
+        ClientSettings(
+            schema_path=[schema_path.as_posix(), (tmp_path / "missing.graphql").as_posix()],
+            queries_path=queries_path.as_posix(),
+        )
+
+
+def test_client_settings_with_empty_list_schema_path_and_no_remote_url_raises(tmp_path):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    with pytest.raises(InvalidConfiguration):
+        ClientSettings(schema_path=[], queries_path=queries_path.as_posix())
+
+
 @pytest.mark.parametrize(
     "configured_header, expected_header",
     [
@@ -548,6 +590,30 @@ def test_using_remote_schema_false_when_both_provided(tmp_path):
     )
 
     assert settings.using_remote_schema is False
+
+
+def test_using_remote_schema_false_when_schema_path_is_non_empty_list(tmp_path):
+    """
+    Test that using_remote_schema is False when schema_path is a non-empty list,
+    even if remote_schema_url is also provided.
+    """
+    schema_path_a = tmp_path / "schema_a.graphql"
+    schema_path_a.touch()
+    schema_path_b = tmp_path / "schema_b.graphql"
+    schema_path_b.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=[schema_path_a.as_posix(), schema_path_b.as_posix()],
+        remote_schema_url="http://testserver/graphql/",
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.using_remote_schema is False
+    assert settings.schema_source == ", ".join(
+        [schema_path_a.as_posix(), schema_path_b.as_posix()]
+    )
 
 
 def test_introspection_settings_defaults(tmp_path):

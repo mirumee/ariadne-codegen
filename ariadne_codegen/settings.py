@@ -65,7 +65,7 @@ class IntrospectionSettings:
 
 @dataclass
 class BaseSettings:
-    schema_path: str = ""
+    schema_path: str | list[str] = ""
     remote_schema_url: str = ""
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
@@ -86,7 +86,11 @@ class BaseSettings:
             )
 
         if self.schema_path:
-            assert_path_exists(self.schema_path)
+            if isinstance(self.schema_path, list):
+                for path in self.schema_path:
+                    assert_path_exists(path)
+            else:
+                assert_path_exists(self.schema_path)
 
         self.remote_schema_headers = resolve_headers(self.remote_schema_headers)
         if self.remote_schema_url:
@@ -98,6 +102,16 @@ class BaseSettings:
         Return true if remote schema is used as source, false otherwise.
         """
         return bool(self.remote_schema_url) and not bool(self.schema_path)
+
+    @property
+    def schema_source(self) -> str:
+        if isinstance(self.schema_path, list):
+            return (
+                ", ".join(self.schema_path)
+                if self.schema_path
+                else self.remote_schema_url
+            )
+        return self.schema_path if self.schema_path else self.remote_schema_url
 
     @property
     def introspection_settings(self) -> IntrospectionSettings:
@@ -219,10 +233,6 @@ class ClientSettings(BaseSettings):
             self.base_client_file_path = path.as_posix()
 
     @property
-    def schema_source(self) -> str:
-        return self.schema_path if self.schema_path else self.remote_schema_url
-
-    @property
     def used_settings_message(self) -> str:
         snake_case_msg = (
             "Converting fields and arguments name to snake case."
@@ -257,7 +267,7 @@ class ClientSettings(BaseSettings):
         return dedent(
             f"""\
             Selected strategy: {Strategy.CLIENT}
-            Using schema from '{self.schema_path or self.remote_schema_url}'.
+            Using schema from '{self.schema_source}'.
             {introspection_msg}
             Reading queries from '{self.queries_path}'.
             Using '{self.target_package_name}' as package name.
@@ -307,7 +317,7 @@ class GraphQLSchemaSettings(BaseSettings):
             return dedent(
                 f"""\
                 Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-                Using schema from {self.schema_path or self.remote_schema_url}
+                Using schema from {self.schema_source}
                 {introspection_msg}
                 Saving graphql schema to: {self.target_file_path}
                 Using {self.schema_variable_name} as variable name for schema.
@@ -319,7 +329,7 @@ class GraphQLSchemaSettings(BaseSettings):
         return dedent(
             f"""\
             Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-            Using schema from {self.schema_path or self.remote_schema_url}
+            Using schema from {self.schema_source}
             {introspection_msg}
             Saving graphql schema to: {self.target_file_path}
             {plugins_msg}
