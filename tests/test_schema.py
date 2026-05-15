@@ -332,6 +332,28 @@ def test_get_graphql_schema_from_path_with_invalid_syntax_raises_invalid_graphql
         get_graphql_schema_from_path(invalid_syntax_schema_file.as_posix())
 
 
+def test_get_graphql_schema_from_path_accepts_list_of_paths(
+    single_file_schema, schemas_directory, schema_str, extra_type_str
+):
+    schema = get_graphql_schema_from_path(
+        [single_file_schema.as_posix(), schemas_directory.as_posix()]
+    )
+
+    assert isinstance(schema, GraphQLSchema)
+    assert schema.get_type("Custom") is not None
+    assert schema.get_type("User") is not None
+
+
+def test_get_graphql_schema_from_path_with_single_element_list_matches_single_path(
+    single_file_schema,
+):
+    list_schema = get_graphql_schema_from_path([single_file_schema.as_posix()])
+    str_schema = get_graphql_schema_from_path(single_file_schema.as_posix())
+
+    assert isinstance(list_schema, GraphQLSchema)
+    assert list_schema.type_map.keys() == str_schema.type_map.keys()
+
+
 def test_introspect_remote_schema_called_with_invalid_url_raises_introspection_error(
     mocker,
 ):
