@@ -335,6 +335,50 @@ def test_generate_creates_client_with_valid_method_names(
         assert function.name == "from_"
 
 
+def test_generate_respects_convert_to_snake_case_false_for_operation_names(
+    tmp_path, schema, async_base_client_import
+):
+    package_name = "test_graphql_client"
+    generator = PackageGenerator(
+        package_name=package_name,
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(
+                schema=schema, convert_to_snake_case=False
+            ),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
+        async_client=False,
+        convert_to_snake_case=False,
+    )
+    query_str = """
+    query getTokenDetails($id: ID!) {
+        query1(id: $id) {
+            field1
+        }
+    }
+    """
+
+    generator.add_operation(parse(query_str).definitions[0])
+    generator.generate()
+
+    client_file_path = tmp_path / package_name / "client.py"
+    with client_file_path.open() as client_file:
+        client_content = client_file.read()
+        parsed = ast.parse(client_content)
+        class_def = get_class_def(parsed)
+        function = [x for x in class_def.body if isinstance(x, ast.FunctionDef)][0]
+        assert function.name == "getTokenDetails"
+
+    query_types_file_path = tmp_path / package_name / "getTokenDetails.py"
+    assert query_types_file_path.exists()
+
+
 def test_generate_with_conflicting_query_name_raises_parsing_error(
     tmp_path, schema, async_base_client_import
 ):

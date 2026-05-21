@@ -193,7 +193,7 @@ class PackageGenerator:
         return_type_name = str_to_pascal_case(name.value)
         method_name = process_name(
             name.value,
-            convert_to_snake_case=True,
+            convert_to_snake_case=self.convert_to_snake_case,
             plugin_manager=self.plugin_manager,
             node=definition,
         )
