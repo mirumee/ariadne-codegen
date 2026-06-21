@@ -1,0 +1,15 @@
+mutation CreateUser($userData: UserCreateInput!) {
+  userCreate(userData: $userData) {
+    id
+    email
+  }
+}
+
+query ListUsers {
+  users {
+    id
+    firstName
+    email
+    favouriteColor
+  }
+}

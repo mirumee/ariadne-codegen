@@ -16,6 +16,7 @@ from ariadne_codegen.main import main
 
 CLIENTS_PATH = Path(__file__).parent / "clients"
 GRAPHQL_SCHEMAS_PATH = Path(__file__).parent / "graphql_schemas"
+MODELS_ONLY_PATH = Path(__file__).parent / "models_only"
 
 
 @pytest.fixture(scope="function")
@@ -438,3 +439,34 @@ def test_main_generates_correct_schema_file(project_dir, file_name, expected_fil
     expected = normalise(expected_file_path.read_text())
 
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name, expected_package_path",
+    [
+        (
+            (
+                MODELS_ONLY_PATH / "example" / "pyproject.toml",
+                (
+                    MODELS_ONLY_PATH / "example" / "schema.graphql",
+                    MODELS_ONLY_PATH / "example" / "queries.graphql",
+                ),
+            ),
+            "example_client",
+            MODELS_ONLY_PATH / "example" / "expected_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_generates_correct_models_only_package(
+    project_dir, package_name, expected_package_path
+):
+    result = CliRunner().invoke(main, "models_only")
+
+    assert result.exit_code == 0
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+    assert_the_same_files_in_directories(package_path, expected_package_path)
+    assert not (package_path / "client.py").exists()
+    assert not (package_path / "async_base_client.py").exists()
+    assert not (package_path / "exceptions.py").exists()
