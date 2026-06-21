@@ -29,6 +29,7 @@ class CommentsStrategy(str, enum.Enum):
 class Strategy(str, enum.Enum):
     CLIENT = "client"
     GRAPHQL_SCHEMA = "graphqlschema"
+    MODELS_ONLY = "models_only"
 
 
 @dataclass
@@ -194,6 +195,98 @@ class ClientSettings(BaseSettings):
             {snake_case_msg}
             {async_client_msg}
             {include_typename_msg}
+            {files_to_include_msg}
+            {plugins_msg}
+            """
+        )
+
+
+@dataclass
+class ModelsOnlySettings(BaseSettings):
+    queries_path: str = ""
+    target_package_name: str = "graphql_client"
+    target_package_path: str = field(default_factory=lambda: Path.cwd().as_posix())
+    enums_module_name: str = "enums"
+    input_types_module_name: str = "input_types"
+    fragments_module_name: str = "fragments"
+    include_comments: CommentsStrategy = field(default=CommentsStrategy.STABLE)
+    convert_to_snake_case: bool = True
+    include_all_inputs: bool = True
+    include_all_enums: bool = True
+    files_to_include: list[str] = field(default_factory=list)
+    scalars: dict[str, ScalarData] = field(default_factory=dict)
+    default_optional_fields_to_none: bool = False
+    include_typename: bool = True
+    ignore_extra_fields: bool = True
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        try:
+            self.include_comments = CommentsStrategy(self.include_comments)
+        except ValueError as exc:
+            valid_options = ", ".join(strategy.value for strategy in CommentsStrategy)
+            raise InvalidConfiguration(
+                f"'{self.include_comments}' is not a valid choice. "
+                f"Valid options are: {valid_options}"
+            ) from exc
+
+        for name, data in self.scalars.items():
+            data.graphql_name = name
+
+        if self.queries_path:
+            assert_path_exists(self.queries_path)
+
+        assert_string_is_valid_python_identifier(self.target_package_name)
+        assert_path_is_valid_directory(self.target_package_path)
+
+        assert_string_is_valid_python_identifier(self.enums_module_name)
+        assert_string_is_valid_python_identifier(self.input_types_module_name)
+        assert_string_is_valid_python_identifier(self.fragments_module_name)
+
+        for file_path in self.files_to_include:
+            assert_path_is_valid_file(file_path)
+
+    @property
+    def schema_source(self) -> str:
+        return self.schema_path if self.schema_path else self.remote_schema_url
+
+    @property
+    def used_settings_message(self) -> str:
+        snake_case_msg = (
+            "Converting fields and arguments name to snake case."
+            if self.convert_to_snake_case
+            else "Not converting fields and arguments name to snake case."
+        )
+        files_to_include_list = ",".join(self.files_to_include)
+        files_to_include_msg = (
+            f"Copying the following files into the package: {files_to_include_list}"
+            if self.files_to_include
+            else "No files to copy."
+        )
+        plugins_list = ",".join(self.plugins)
+        plugins_msg = (
+            f"Plugins to use: {plugins_list}"
+            if self.plugins
+            else "No plugin is being used."
+        )
+        queries_msg = (
+            f"Reading queries from '{self.queries_path}'."
+            if self.queries_path
+            else "No queries path provided, generating models only."
+        )
+        return dedent(
+            f"""\
+            Selected strategy: {Strategy.MODELS_ONLY}
+            Using schema from '{self.schema_source}'.
+            {queries_msg}
+            Using '{self.target_package_name}' as package name.
+            Generating package into '{self.target_package_path}'.
+            Generating enums into '{self.enums_module_name}.py'.
+            Generating inputs into '{self.input_types_module_name}.py'.
+            Generating fragments into '{self.fragments_module_name}.py'.
+            Comments type: {self.include_comments.value}
+            {snake_case_msg}
             {files_to_include_msg}
             {plugins_msg}
             """
