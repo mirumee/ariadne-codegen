@@ -35,6 +35,7 @@ This plugin can be enabled in the settings:
 """
 
 import ast
+from contextlib import suppress
 from copy import deepcopy
 from typing import Optional, Union
 
@@ -377,11 +378,8 @@ def _update_node(node: ast.expr) -> tuple[ast.expr, list[str]]:
     potential literal so it gets unquoted and return the inner name.
     """
     if isinstance(node, ast.Name):
-        try:
+        with suppress(ValueError):
             node.id = ast.literal_eval(node.id)
-        except ValueError:
-            # Not a literal
-            pass
 
         return node, [node.id]
 

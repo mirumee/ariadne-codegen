@@ -393,7 +393,7 @@ def generate_async_for(
     return ast.AsyncFor(
         target=target,
         iter=iter_,
-        body=body or [ast.Pass()],
+        body=cast(list[ast.stmt], body or [ast.Pass()]),
         orelse=orelse or [],
         lineno=lineno,
     )

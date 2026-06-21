@@ -21,6 +21,8 @@ class Client:
     }
 
     updated = plugin.generate_client_module(module)
-    alias_names = [x.name for x in updated.body[0].names]
+    first_stmt = updated.body[0]
+    assert isinstance(first_stmt, ast.ImportFrom)
+    alias_names = [x.name for x in first_stmt.names]
 
     assert "baz" in alias_names

@@ -24,10 +24,10 @@ from .schema import (
     get_graphql_schema_from_path,
     get_graphql_schema_from_url,
 )
-from .settings import Strategy
+from .settings import Strategy, get_validation_rule
 
 
-@click.command()  # type: ignore
+@click.command()
 @click.version_option()
 @click.option("--config", default=None, help="Path to custom configuration file.")
 @click.argument(
@@ -59,6 +59,7 @@ def client(config_dict):
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
             timeout=settings.remote_schema_timeout,
+            introspection_settings=settings.introspection_settings,
         )
 
     plugin_manager = PluginManager(
@@ -73,7 +74,11 @@ def client(config_dict):
     fragments = []
     queries = []
     if settings.queries_path:
-        definitions = get_graphql_queries(settings.queries_path, schema)
+        definitions = get_graphql_queries(
+            settings.queries_path,
+            schema,
+            [get_validation_rule(e) for e in settings.skip_validation_rules],
+        )
         queries = filter_operations_definitions(definitions)
         fragments = filter_fragments_definitions(definitions)
 
@@ -148,6 +153,7 @@ def graphql_schema(config_dict):
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
             timeout=settings.remote_schema_timeout,
+            introspection_settings=settings.introspection_settings,
         )
     )
     plugin_manager = PluginManager(

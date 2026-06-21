@@ -1,4 +1,5 @@
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
+from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, cast
 
@@ -22,6 +23,7 @@ from graphql import (
     specified_rules,
     validate,
 )
+from typing_extensions import Any
 
 from .client_generators.constants import MIXIN_FROM_NAME, MIXIN_IMPORT_NAME, MIXIN_NAME
 from .exceptions import (
@@ -29,6 +31,7 @@ from .exceptions import (
     InvalidGraphqlSyntax,
     InvalidOperationForSchema,
 )
+from .settings import IntrospectionSettings
 
 
 def filter_operations_definitions(
@@ -46,7 +49,9 @@ def filter_fragments_definitions(
 
 
 def get_graphql_queries(
-    queries_path: str, schema: GraphQLSchema
+    queries_path: str,
+    schema: GraphQLSchema,
+    skip_rules: Sequence[Any] = (NoUnusedFragmentsRule,),
 ) -> tuple[DefinitionNode, ...]:
     """Get graphql queries definitions build from provided path."""
     queries_str = load_graphql_files_from_path(Path(queries_path))
@@ -54,7 +59,7 @@ def get_graphql_queries(
     validation_errors = validate(
         schema=schema,
         document_ast=queries_ast,
-        rules=[r for r in specified_rules if r is not NoUnusedFragmentsRule],
+        rules=[r for r in specified_rules if r not in skip_rules],
     )
     if validation_errors:
         raise InvalidOperationForSchema(
@@ -68,10 +73,15 @@ def get_graphql_schema_from_url(
     headers: Optional[dict[str, str]] = None,
     verify_ssl: bool = True,
     timeout: float = 5,
+    introspection_settings: Optional[IntrospectionSettings] = None,
 ) -> GraphQLSchema:
     return build_client_schema(
         introspect_remote_schema(
-            url=url, headers=headers, verify_ssl=verify_ssl, timeout=timeout
+            url=url,
+            headers=headers,
+            verify_ssl=verify_ssl,
+            timeout=timeout,
+            introspection_settings=introspection_settings,
         ),
         assume_valid=True,
     )
@@ -82,11 +92,15 @@ def introspect_remote_schema(
     headers: Optional[dict[str, str]] = None,
     verify_ssl: bool = True,
     timeout: float = 5,
+    introspection_settings: Optional[IntrospectionSettings] = None,
 ) -> IntrospectionQuery:
+    # If introspection settings are not provided, use default values.
+    settings = introspection_settings or IntrospectionSettings()
+    query = get_introspection_query(**asdict(settings))
     try:
         response = httpx.post(
             url,
-            json={"query": get_introspection_query(descriptions=False)},
+            json={"query": query},
             headers=headers,
             verify=verify_ssl,
             timeout=timeout,
@@ -105,14 +119,14 @@ def introspect_remote_schema(
     except ValueError as exc:
         raise IntrospectionError("Introspection result is not a valid json.") from exc
 
-    if (not isinstance(response_json, dict)) or ("data" not in response_json):
+    if not isinstance(response_json, dict):
         raise IntrospectionError("Invalid introspection result format.")
 
     errors = response_json.get("errors")
     if errors:
         raise IntrospectionError(f"Introspection errors: {errors}")
 
-    data = response_json["data"]
+    data = response_json.get("data")
     if not isinstance(data, dict):
         raise IntrospectionError("Invalid data key in introspection result.")
 
@@ -166,8 +180,12 @@ def add_mixin_directive_to_schema(schema: GraphQLSchema) -> GraphQLSchema:
             name=MIXIN_NAME,
             locations=[DirectiveLocation.FIELD, DirectiveLocation.FRAGMENT_DEFINITION],
             args={
-                MIXIN_IMPORT_NAME: GraphQLArgument(type_=GraphQLString),
-                MIXIN_FROM_NAME: GraphQLArgument(type_=GraphQLString),
+                MIXIN_IMPORT_NAME: GraphQLArgument(
+                    type_=GraphQLString,  # ty: ignore[invalid-argument-type]
+                ),
+                MIXIN_FROM_NAME: GraphQLArgument(
+                    type_=GraphQLString,  # ty: ignore[invalid-argument-type]
+                ),
             },
             is_repeatable=True,
         ),

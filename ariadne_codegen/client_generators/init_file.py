@@ -14,7 +14,7 @@ class InitFileGenerator:
         """Add import to be included in init file."""
         if not names:
             return
-        import_ = generate_import_from(names=names, from_=from_, level=level)
+        import_ = generate_import_from(names=sorted(names), from_=from_, level=level)
         if self.plugin_manager:
             import_ = self.plugin_manager.generate_init_import(import_)
         self.imports.append(import_)

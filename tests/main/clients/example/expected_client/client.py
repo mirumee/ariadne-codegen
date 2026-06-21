@@ -81,7 +81,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="ListUsersByCountry",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return ListUsersByCountry.model_validate(data)

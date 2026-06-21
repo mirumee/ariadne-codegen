@@ -19,7 +19,7 @@ class Client(AsyncBaseClient):
         id: int,
         input: TestInput,
         other: Any,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> GetA:
         query = gql("""
             query getA($date: DATETIME!, $code: CODE!, $id: CUSTOMID!, $input: TestInput!, $other: NOTMAPPED!) {

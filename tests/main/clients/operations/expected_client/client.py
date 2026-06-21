@@ -39,7 +39,7 @@ class Client(AsyncBaseClient):
             query=C_MUTATION_GQL,
             operation_name="cMutation",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return CMutation.model_validate(data)
@@ -50,7 +50,7 @@ class Client(AsyncBaseClient):
             query=C_SUBSCRIPTION_GQL,
             operation_name="cSubscription",
             variables=variables,
-            **kwargs
+            **kwargs,
         ):
             yield CSubscription.model_validate(data)
 
@@ -68,7 +68,7 @@ class Client(AsyncBaseClient):
             query=GET_A_WITH_FRAGMENT_GQL,
             operation_name="getAWithFragment",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetAWithFragment.model_validate(data)

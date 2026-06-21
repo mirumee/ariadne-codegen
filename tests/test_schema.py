@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import httpx
 import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema
@@ -15,6 +17,7 @@ from ariadne_codegen.schema import (
     read_graphql_file,
     walk_graphql_files,
 )
+from ariadne_codegen.settings import IntrospectionSettings, get_validation_rule
 
 
 @pytest.fixture
@@ -58,6 +61,53 @@ def test_query_2_str():
         query testQuery2 {
             test {
                 node
+                default
+            }
+        }
+    """
+
+
+@pytest.fixture
+def test_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
+                default
+                ...fragmentA
+            }
+        }
+    """
+
+
+@pytest.fixture
+def test_duplicate_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
+                default
+                ...fragmentA
+            }
+        }
+    """
+
+
+@pytest.fixture
+def test_unused_fragment_str():
+    return """
+        fragment fragmentA on Custom {
+            node
+        }
+        query testQuery2 {
+            test {
                 default
             }
         }
@@ -134,6 +184,37 @@ def single_file_query(tmp_path_factory, test_query_str):
 
 
 @pytest.fixture
+def single_file_query_with_fragment(
+    tmp_path_factory, test_query_str, test_fragment_str
+):
+    file_ = tmp_path_factory.mktemp("queries").joinpath("query1_fragment.graphql")
+    file_.write_text(test_query_str + test_fragment_str, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def single_file_query_with_duplicate_fragment(
+    tmp_path_factory, test_query_str, test_duplicate_fragment_str
+):
+    file_ = tmp_path_factory.mktemp("queries").joinpath(
+        "query1_duplicate_fragment.graphql"
+    )
+    file_.write_text(test_query_str + test_duplicate_fragment_str, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
+def single_file_query_with_unused_fragment(
+    tmp_path_factory, test_query_str, test_unused_fragment_str
+):
+    file_ = tmp_path_factory.mktemp("queries").joinpath(
+        "query1_unused_fragment.graphql"
+    )
+    file_.write_text(test_query_str + test_unused_fragment_str, encoding="utf-8")
+    return file_
+
+
+@pytest.fixture
 def invalid_syntax_query_file(tmp_path_factory):
     file_ = tmp_path_factory.mktemp("queries").joinpath("query.graphql")
     query_str = """
@@ -183,9 +264,11 @@ def test_read_graphql_file_with_invalid_file_raises_invalid_graphql_syntax_excep
 ):
     with pytest.raises(InvalidGraphqlSyntax) as exc:
         read_graphql_file(invalid_syntax_schema_file)
-    # Use the actual exception value's message to avoid backslash escaping
-    # that can appear in the ExceptionInfo string on Windows.
-    assert str(invalid_syntax_schema_file) in str(exc.value)
+    # Normalize path separators so the assertion passes on Windows (path in
+    # message may use backslashes; we only care that the faulty file is named).
+    path_in_message = Path(invalid_syntax_schema_file).resolve().as_posix()
+    message_normalized = str(exc.value).replace("\\", "/")
+    assert path_in_message in message_normalized
 
 
 def test_walk_graphql_files_returns_graphql_files_from_directory(schemas_directory):
@@ -294,8 +377,10 @@ def test_introspect_remote_schema_raises_introspection_error_for_not_dict_respon
         return_value=httpx.Response(status_code=200, content="[]"),
     )
 
-    with pytest.raises(IntrospectionError):
+    with pytest.raises(IntrospectionError) as exc:
         introspect_remote_schema("http://testserver/graphql/")
+
+    assert "Invalid introspection result format." in str(exc.value)
 
 
 def test_introspect_remote_schema_raises_introspection_error_for_json_without_data_key(
@@ -306,8 +391,10 @@ def test_introspect_remote_schema_raises_introspection_error_for_json_without_da
         return_value=httpx.Response(status_code=200, content='{"not_data": null}'),
     )
 
-    with pytest.raises(IntrospectionError):
+    with pytest.raises(IntrospectionError) as exc:
         introspect_remote_schema("http://testserver/graphql/")
+
+    assert "Invalid data key in introspection result." in str(exc.value)
 
 
 def test_introspect_remote_schema_raises_introspection_error_for_graphql_errors(mocker):
@@ -345,8 +432,10 @@ def test_introspect_remote_schema_raises_introspection_error_for_invalid_data_va
         ),
     )
 
-    with pytest.raises(IntrospectionError):
+    with pytest.raises(IntrospectionError) as exc:
         introspect_remote_schema("http://testserver/graphql/")
+
+    assert "Invalid data key in introspection result." in str(exc.value)
 
 
 def test_introspect_remote_schema_returns_introspection_result(mocker):
@@ -436,3 +525,130 @@ def test_get_graphql_queries_with_invalid_query_for_schema_raises_invalid_operat
         get_graphql_queries(
             invalid_query_for_schema_file.as_posix(), build_schema(schema_str)
         )
+
+
+def test_get_graphql_queries_with_fragment_returns_schema_definitions(
+    single_file_query_with_fragment, schema_str
+):
+    queries = get_graphql_queries(
+        single_file_query_with_fragment.as_posix(), build_schema(schema_str)
+    )
+
+    assert len(queries) == 3
+
+
+def test_get_graphql_queries_with_duplicate_fragment_raises_invalid_operation(
+    single_file_query_with_duplicate_fragment, schema_str
+):
+    with pytest.raises(InvalidOperationForSchema):
+        get_graphql_queries(
+            single_file_query_with_duplicate_fragment.as_posix(),
+            build_schema(schema_str),
+        )
+
+
+def test_unused_fragment_without_skips_raises_invalid_operation(
+    single_file_query_with_unused_fragment,
+    schema_str,
+):
+    with pytest.raises(InvalidOperationForSchema):
+        get_graphql_queries(
+            single_file_query_with_unused_fragment.as_posix(),
+            build_schema(schema_str),
+            [],
+        )
+
+
+def test_duplicate_fragment_passes_when_skip_rule_enabled(
+    single_file_query_with_duplicate_fragment,
+    schema_str,
+):
+    get_graphql_queries(
+        single_file_query_with_duplicate_fragment.as_posix(),
+        build_schema(schema_str),
+        [
+            get_validation_rule("NoUnusedFragments"),
+            get_validation_rule("UniqueFragmentNames"),
+        ],
+    )
+
+
+def test_get_validation_rule_accepts_all_specified_rule_names():
+    rule = get_validation_rule("NoUnusedVariables")
+    assert rule.__name__ == "NoUnusedVariablesRule"
+
+
+def test_get_validation_rule_with_unknown_rule_raises_value_error():
+    with pytest.raises(ValueError):
+        get_validation_rule("UnknownRule")
+
+
+def test_introspect_remote_schema_passes_introspection_settings_to_introspection_query(
+    mocker,
+):
+    """
+    Test that the introspection settings are passed to the get_introspection_query
+    function when introspecting the remote schema.
+    """
+    mocked_get_query = mocker.patch(
+        "ariadne_codegen.schema.get_introspection_query",
+        return_value="query { __schema { queryType { name } } }",
+    )
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(
+            status_code=200, content='{"data": {"__schema": {}}}'
+        ),
+    )
+
+    settings = IntrospectionSettings(
+        descriptions=True,
+        input_value_deprecation=True,
+        specified_by_url=True,
+        schema_description=True,
+        directive_is_repeatable=True,
+        input_object_one_of=True,
+    )
+
+    introspect_remote_schema(
+        "http://testserver/graphql/", introspection_settings=settings
+    )
+
+    mocked_get_query.assert_called_once_with(
+        descriptions=True,
+        specified_by_url=True,
+        directive_is_repeatable=True,
+        schema_description=True,
+        input_value_deprecation=True,
+        input_object_one_of=True,
+    )
+
+
+def test_introspect_remote_schema_uses_default_introspection_settings_when_not_provided(
+    mocker,
+):
+    """
+    Test that when introspection settings are not provided, the default values are used
+    in the get_introspection_query call.
+    """
+    mocked_get_query = mocker.patch(
+        "ariadne_codegen.schema.get_introspection_query",
+        return_value="query { __schema { queryType { name } } }",
+    )
+    mocker.patch(
+        "ariadne_codegen.schema.httpx.post",
+        return_value=httpx.Response(
+            status_code=200, content='{"data": {"__schema": {}}}'
+        ),
+    )
+
+    introspect_remote_schema("http://testserver/graphql/")
+
+    mocked_get_query.assert_called_once_with(
+        descriptions=False,
+        specified_by_url=False,
+        directive_is_repeatable=False,
+        schema_description=False,
+        input_value_deprecation=False,
+        input_object_one_of=False,
+    )

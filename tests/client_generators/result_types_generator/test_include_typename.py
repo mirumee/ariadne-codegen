@@ -326,7 +326,7 @@ def test_get_field_from_schema_handles_typename_correctly():
     # Test that requesting a non-existent field (other than __typename) raises an error
     try:
         generator._get_field_from_schema("User", "nonExistentField")
-        assert False, "Expected ParsingError for non-existent field"
+        raise AssertionError("Expected ParsingError for non-existent field")
     except ParsingError as e:
         assert "nonExistentField" in str(e)
         assert "User" in str(e)

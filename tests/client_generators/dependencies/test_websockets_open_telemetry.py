@@ -1,4 +1,5 @@
 import json
+from typing import Any, cast
 from unittest.mock import ANY
 
 import pytest
@@ -323,7 +324,9 @@ async def test_execute_ws_creates_root_span_with_custom_context(
     mocked_start_as_current_span, mocked_websocket
 ):
     client = AsyncBaseClientOpenTelemetry(
-        ws_url="ws://test_url", tracer="tracker", ws_root_context={"value": "test"}
+        ws_url="ws://test_url",
+        tracer="tracker",
+        ws_root_context=cast(Any, {"value": "test"}),
     )
 
     async for _ in client.execute_ws(""):

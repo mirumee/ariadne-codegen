@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -35,8 +36,10 @@ def generated_client(tmp_path_factory):
     init_path = tmp_cwd / client_name / "__init__.py"
 
     spec = importlib.util.spec_from_file_location(client_name, init_path)
+    assert spec is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
+    assert spec.loader is not None
     spec.loader.exec_module(module)
 
     yield module

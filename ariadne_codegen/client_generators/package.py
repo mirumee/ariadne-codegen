@@ -400,6 +400,7 @@ class PackageGenerator:
         self._generated_files.append(init_file_path.name)
 
     def _generate_custom_queries(self):
+        assert self.custom_query_generator is not None
         file_path = self.package_path / "custom_queries.py"
         module = self.custom_query_generator.generate()
         code = self._add_comments_to_code(ast_to_str(module, False))
@@ -407,6 +408,7 @@ class PackageGenerator:
         self._generated_files.append(file_path.name)
 
     def _generate_custom_mutations(self):
+        assert self.custom_mutation_generator is not None
         file_path = self.package_path / "custom_mutations.py"
         module = self.custom_mutation_generator.generate()
         code = self._add_comments_to_code(ast_to_str(module, False))
@@ -414,6 +416,7 @@ class PackageGenerator:
         self._generated_files.append(file_path.name)
 
     def _generate_custom_fields_typing(self):
+        assert self.custom_fields_typing_generator is not None
         file_path = self.package_path / "custom_typing_fields.py"
         module = self.custom_fields_typing_generator.generate()
         code = self._add_comments_to_code(ast_to_str(module, False))
@@ -421,6 +424,7 @@ class PackageGenerator:
         self._generated_files.append(file_path.name)
 
     def _generate_custom_fields(self):
+        assert self.custom_fields_generator is not None
         file_path = self.package_path / "custom_fields.py"
         module = self.custom_fields_generator.generate()
         code = self._add_comments_to_code(ast_to_str(module, False))

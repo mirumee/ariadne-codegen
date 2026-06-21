@@ -44,7 +44,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="GetAuthenticatedUser",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetAuthenticatedUser.model_validate(data).me
@@ -128,7 +128,9 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return ListTypeA.model_validate(data).list_optional_type_a
 
-    async def get_animal_by_name(self, name: str, **kwargs: Any) -> Union[
+    async def get_animal_by_name(
+        self, name: str, **kwargs: Any
+    ) -> Union[
         "GetAnimalByNameAnimalByNameAnimal",
         "GetAnimalByNameAnimalByNameCat",
         "GetAnimalByNameAnimalByNameDog",
@@ -156,7 +158,9 @@ class Client(AsyncBaseClient):
         data = self.get_data(response)
         return GetAnimalByName.model_validate(data).animal_by_name
 
-    async def list_animals(self, **kwargs: Any) -> list[
+    async def list_animals(
+        self, **kwargs: Any
+    ) -> list[
         Union[
             "ListAnimalsListAnimalsAnimal",
             "ListAnimalsListAnimalsCat",
@@ -208,7 +212,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="GetAnimalFragmentWithExtra",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetAnimalFragmentWithExtra.model_validate(data)
@@ -241,7 +245,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="GetComplexScalar",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return GetComplexScalar.model_validate(data).just_complex_scalar
@@ -261,7 +265,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="SubscribeStrings",
             variables=variables,
-            **kwargs
+            **kwargs,
         ):
             yield SubscribeStrings.model_validate(data).optional_list_string
 

@@ -5,11 +5,11 @@
 Plugin is a class extending `ariadne_codegen.plugins.base.Plugin`.
 
 Plugins are instantiated once, at the beginning of `ariadne-codegen` command, with following arguments:
+
 - `schema: GraphQLSchema`: parsed graphql schema
 - `config_dict: dict`: parsed `pyproject.toml` file represented as a dictionary
 
 To handle specific events custom plugins need to override [hook methods](#hooks) from default `Plugin`. Default hook methods from `Plugin` don't implement any logic on their own.
-
 
 ## Enabling plugins
 
@@ -19,7 +19,6 @@ Every element of the list can enable plugins in 2 ways:
 1. Providing full import path to class, eg. `my_package.my_plugins.MyPlugin`.
 
 2. Providing only package name, eg. `my_package`. In this case all plugins from selected package will be used. For class to be accessible this way, it needs to be in package's public api. Plugin has to be importable from package, eg. `from my_package import MyPlugin` has to work.
-
 
 ## Hooks
 
@@ -99,6 +98,7 @@ def generate_client_method(
 
 Hook executed on generation of client's method, which represents single graphql operation. Depends on the configuration method can be either async or not.
 `
+
 ### generate_arguments
 
 ```py
@@ -185,8 +185,7 @@ def generate_result_class(
 ) -> ast.ClassDef:
 ```
 
-Hook executed on generation of single model, part of result of given query or mutation. 
-
+Hook executed on generation of single model, part of result of given query or mutation.
 
 ### generate_result_field
 
@@ -200,7 +199,6 @@ def generate_result_field(
 ```
 
 Hook executed on generation of single model field.
-
 
 ### generate_client_code
 
@@ -228,7 +226,7 @@ Hook executed on generation of input models code. Result is used as content of `
 
 ### generate_result_types_code
 
-```py    
+```py
 def generate_result_types_code(self, generated_code: str) -> str:
 ```
 
@@ -242,11 +240,11 @@ def copy_code(self, copied_code: str) -> str:
 
 Hook executed on coping file's content to result package.
 Files hook is called for:
+
 - `base_client.py` or `async_base_client.py` or custom base client `base_client_file_path`
 - `base_model.py`
 - `exceptions.py`
 - all files from config's `files_to_include`
-
 
 ### generate_init_code
 
@@ -276,7 +274,6 @@ def generate_fragments_module(
 
 Hook executed on generation of fragments module. Module has classes representing all fragments from provided queries. Later this module will be saved as `{fragments_module_name}.py`, `fragments_module_name` is taken from config.
 
-
 ### process_schema
 
 ```py
@@ -284,8 +281,7 @@ def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
 ```
 
 Hook executed on creating `GraphQLSchema` object from path or url provided in settings. During parsing `assume_valid` is set to `True`. Then this hook is called, and only after that `graphql.assert_valid_schema` is used to validate schema.
-To ensure all plugins have current version of schema, result of this hook is propagated to all plugins, updating their `schema` field. 
-
+To ensure all plugins have current version of schema, result of this hook is propagated to all plugins, updating their `schema` field.
 
 ### get_file_comment
 
@@ -296,7 +292,6 @@ def get_file_comment(
 ```
 
 Hook executed on generating comment included at the beginning of a generated code.
-
 
 ## Example
 

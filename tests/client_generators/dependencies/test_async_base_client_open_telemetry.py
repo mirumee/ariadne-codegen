@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, cast
 from unittest.mock import ANY
 
 import httpx
@@ -517,8 +517,8 @@ def test_get_data_raises_graphql_client_http_error(
 
     with pytest.raises(GraphQLClientHttpError) as exc:
         client.get_data(response)
-        assert exc.status_code == status_code
-        assert exc.response == response
+        assert exc.value.status_code == status_code
+        assert exc.value.response == response
 
 
 @pytest.mark.parametrize("response_content", ["invalid_json", {"not_data": ""}, ""])
@@ -532,7 +532,7 @@ def test_get_data_raises_graphql_client_invalid_response_error(
 
     with pytest.raises(GraphQLClientInvalidResponseError) as exc:
         client.get_data(response)
-        assert exc.response == response
+        assert exc.value.response == response
 
 
 @pytest.mark.parametrize(
@@ -662,7 +662,9 @@ async def test_execute_creates_root_span_with_custom_context(
 ):
     httpx_mock.add_response()
     client = AsyncBaseClientOpenTelemetry(
-        url="http://base_url", tracer="tracker", root_context={"abc": 123}
+        url="http://base_url",
+        tracer="tracker",
+        root_context=cast(Any, {"abc": 123}),
     )
 
     await client.execute("query GetHello { hello }")

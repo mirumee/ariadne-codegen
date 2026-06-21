@@ -2,6 +2,7 @@ import ast
 from typing import Any, Optional, Union, cast
 
 from graphql import (
+    GraphQLField,
     GraphQLInterfaceType,
     GraphQLNamedType,
     GraphQLObjectType,
@@ -139,7 +140,7 @@ class CustomFieldsGenerator:
         base_names = [GRAPHQL_BASE_FIELD_CLASS]
         additional_fields_typing = set()
         class_def = generate_class_def(
-            name=class_name, base_names=base_names, description=description
+            name=class_name, base_names=base_names, description=description or ""
         )
         lineno = 0
         for org_name, field in self._get_combined_fields(definition).items():
@@ -159,7 +160,7 @@ class CustomFieldsGenerator:
                 )
             )
             # Add field docstring for class attributes (not methods)
-            if not getattr(field, "args") and field.description and not method_required:
+            if not field.args and field.description and not method_required:
                 lineno += 1
                 docstring = ast.Expr(value=ast.Constant(field.description))
                 class_def.body.append(docstring)
@@ -174,7 +175,7 @@ class CustomFieldsGenerator:
 
     def _get_combined_fields(
         self, definition: Union[GraphQLObjectType, GraphQLInterfaceType]
-    ) -> dict[str, ast.ClassDef]:
+    ) -> dict[str, GraphQLField]:
         """Combines fields from the definition and its interfaces."""
         fields = dict(definition.fields.items())
         for interface in getattr(definition, "interfaces", []):
@@ -218,18 +219,18 @@ class CustomFieldsGenerator:
         name: str,
         field_name: str,
         org_name: str,
-        field: ast.ClassDef,
+        field: GraphQLField,
         method_required: bool,
         lineno: int,
     ) -> ast.stmt:
         """Handles the generation of field types."""
-        if getattr(field, "args") or method_required:
+        if field.args or method_required:
             return self.generate_product_type_method(
                 name,
                 field_name,
                 org_name,
-                getattr(field, "args"),
-                description=getattr(field, "description"),
+                field.args,
+                description=field.description,
             )
         return generate_ann_assign(
             target=generate_name(name),
@@ -376,7 +377,7 @@ class CustomFieldsGenerator:
             ),
             return_type=generate_name(f'"{class_name}"'),
             decorator_list=[generate_name("classmethod")],
-            description=description,
+            description=description or "",
         )
 
     def _get_suffix(

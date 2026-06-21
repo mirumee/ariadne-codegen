@@ -213,3 +213,9 @@ class PluginManager:
         return self._apply_plugins_on_object(
             "get_file_comment", comment, code=code, source=source
         )
+
+    def generate_custom_module(self, module: ast.Module) -> ast.Module:
+        return self._apply_plugins_on_object("generate_custom_module", module)
+
+    def generate_custom_method(self, method_def: ast.FunctionDef) -> ast.FunctionDef:
+        return self._apply_plugins_on_object("generate_custom_method", method_def)

@@ -2,8 +2,6 @@ import ast
 from pathlib import Path
 from typing import Union, cast
 
-import isort
-from black import Mode, format_str
 from graphql import (
     ExecutableDefinitionNode,
     GraphQLSchema,
@@ -23,7 +21,11 @@ from ariadne_codegen.codegen import (
 )
 from ariadne_codegen.config import get_client_settings
 from ariadne_codegen.plugins.base import Plugin
-from ariadne_codegen.utils import format_multiline_strings, str_to_snake_case
+from ariadne_codegen.utils import (
+    _format_code,
+    format_multiline_strings,
+    str_to_snake_case,
+)
 
 
 class ExtractOperationsPlugin(Plugin):
@@ -152,8 +154,8 @@ class ExtractOperationsPlugin(Plugin):
         code_with_formatted_strings = format_multiline_strings(
             code_with_break_lines, offset=0
         )
-        formatted_code = format_str(
-            isort.code(code_with_formatted_strings), mode=Mode()
+        formatted_code = _format_code(
+            code_with_formatted_strings, remove_unused_imports=False
         )
         comment = get_comment(
             strategy=self.settings.include_comments, source=self.settings.queries_path

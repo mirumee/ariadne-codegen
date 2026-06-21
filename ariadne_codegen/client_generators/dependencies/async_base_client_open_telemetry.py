@@ -43,9 +43,9 @@ except ImportError:
         raise NotImplementedError("Subscriptions require 'websockets' package.")
         yield
 
-    ClientConnection = Any  # type: ignore[misc,assignment,unused-ignore]
-    Data = Any  # type: ignore[misc,assignment,unused-ignore]
-    Origin = Any  # type: ignore[misc,assignment,unused-ignore]
+    ClientConnection = Any  # ty: ignore[invalid-assignment]
+    Data = Any  # ty: ignore[invalid-assignment]
+    Origin = Any  # ty: ignore[invalid-assignment]
 
     def Subprotocol(*args, **kwargs):  # type: ignore # noqa: N802, N803
         raise NotImplementedError("Subscriptions require 'websockets' package.")
@@ -62,9 +62,9 @@ try:
         set_span_in_context,
     )
 except ImportError:
-    Context = Any  # type: ignore[misc,assignment,unused-ignore]
-    Span = Any  # type: ignore[misc,assignment,unused-ignore]
-    Tracer = Any  # type: ignore[misc,assignment,unused-ignore]
+    Context = Any  # ty: ignore[invalid-assignment]
+    Span = Any  # ty: ignore[invalid-assignment]
+    Tracer = Any  # ty: ignore[invalid-assignment]
 
     def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
@@ -407,15 +407,19 @@ class AsyncBaseClientOpenTelemetry:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
     ) -> None:
+        payload_inner: dict[str, Any] = {
+            "query": query,
+            "operationName": operation_name,
+        }
+        if variables:
+            payload_inner["variables"] = self._convert_dict_to_json_serializable(
+                variables
+            )
         payload: dict[str, Any] = {
             "id": operation_id,
             "type": GraphQLTransportWSMessageType.SUBSCRIBE.value,
-            "payload": {"query": query, "operationName": operation_name},
+            "payload": payload_inner,
         }
-        if variables:
-            payload["payload"]["variables"] = self._convert_dict_to_json_serializable(
-                variables
-            )
         await websocket.send(json.dumps(payload))
 
     async def _handle_ws_message(

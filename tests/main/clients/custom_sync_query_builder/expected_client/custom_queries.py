@@ -39,7 +39,7 @@ class Query:
         before: Optional[str] = None,
         after: Optional[str] = None,
         first: Optional[int] = None,
-        last: Optional[int] = None
+        last: Optional[int] = None,
     ) -> TranslatableItemConnectionFields:
         arguments: dict[str, dict[str, Any]] = {
             "before": {"type": "String", "value": before},

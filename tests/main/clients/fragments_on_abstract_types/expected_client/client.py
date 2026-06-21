@@ -34,7 +34,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="queryWithFragmentOnSubInterface",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnSubInterface.model_validate(data)
@@ -63,7 +63,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="queryWithFragmentOnSubInterfaceWithInlineFragment",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnSubInterfaceWithInlineFragment.model_validate(data)
@@ -89,7 +89,7 @@ class Client(AsyncBaseClient):
             query=query,
             operation_name="queryWithFragmentOnUnionMember",
             variables=variables,
-            **kwargs
+            **kwargs,
         )
         data = self.get_data(response)
         return QueryWithFragmentOnUnionMember.model_validate(data)

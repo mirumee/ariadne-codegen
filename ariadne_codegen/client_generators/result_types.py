@@ -431,7 +431,11 @@ class ResultTypesGenerator:
             ]
         except KeyError as exc:
             if field_name == TYPENAME_FIELD_NAME:
-                return GraphQLField(type_=GraphQLNonNull(type_=GraphQLString))
+                return GraphQLField(
+                    type_=GraphQLNonNull(
+                        type_=GraphQLString,  # ty: ignore[invalid-argument-type]
+                    ),
+                )
             raise ParsingError(
                 f"Field {field_name} not found in type {type_name}."
             ) from exc
@@ -577,7 +581,10 @@ class ResultTypesGenerator:
         ):
             self._imports.append(
                 generate_import_from(
-                    [str_to_pascal_case(f) for f in self._fragments_used_as_mixins],
+                    [
+                        str_to_pascal_case(f)
+                        for f in sorted(self._fragments_used_as_mixins)
+                    ],
                     self.fragments_module_name,
                     1,
                 )

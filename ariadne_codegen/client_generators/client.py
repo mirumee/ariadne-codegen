@@ -1,5 +1,5 @@
 import ast
-from typing import Optional, Union
+from typing import Optional, Union, cast
 
 from graphql import OperationDefinitionNode, OperationType
 
@@ -330,7 +330,7 @@ class ClientGenerator:
         method_def = generate_method_definition(
             name="_combine_variables",
             arguments=args,
-            body=method_body,
+            body=cast(list[ast.stmt], method_body),
             decorator_list=[],
             return_type=returns,
         )
@@ -416,7 +416,7 @@ class ClientGenerator:
                     ),
                 ]
             ),
-            body=method_body,
+            body=cast(list[ast.stmt], method_body),
             return_type=generate_subscript(
                 generate_name("list"), generate_name("VariableDefinitionNode")
             ),
@@ -509,7 +509,7 @@ class ClientGenerator:
                     ),
                 ]
             ),
-            body=method_body,
+            body=cast(list[ast.stmt], method_body),
             return_type=generate_name("DocumentNode"),
         )
 
@@ -607,7 +607,7 @@ class ClientGenerator:
                     generate_arg("operation_name", annotation=generate_name("str")),
                 ]
             ),
-            body=method_body,
+            body=cast(list[ast.stmt], method_body),
             return_type=generate_subscript(
                 generate_name(DICT),
                 generate_tuple([generate_name("str"), generate_name("Any")]),

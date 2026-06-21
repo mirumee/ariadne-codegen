@@ -26,6 +26,8 @@ from ...utils import compare_ast, filter_class_defs
             input CustomInput2 {
                 field: Int!
             }
+
+            input CustomInput3
             """,
             [
                 ast.ClassDef(
@@ -79,6 +81,14 @@ from ...utils import compare_ast, filter_class_defs
                             simple=1,
                         )
                     ],
+                    type_params=[],
+                ),
+                ast.ClassDef(
+                    name="CustomInput3",
+                    bases=[ast.Name(id=BASE_MODEL_CLASS_NAME)],
+                    keywords=[],
+                    decorator_list=[],
+                    body=[ast.Pass()],
                     type_params=[],
                 ),
             ],

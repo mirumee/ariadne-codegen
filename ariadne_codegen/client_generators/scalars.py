@@ -91,6 +91,7 @@ def generate_scalar_imports(data: ScalarData) -> list[ast.ImportFrom]:
             "and will be dropped in future release. "
             "Instead provide module in type/serialize/parse string.",
             DeprecationWarning,
+            stacklevel=2,
         )
         if data.names_to_import:
             imports.append(
