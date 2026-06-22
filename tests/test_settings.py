@@ -103,8 +103,22 @@ def test_client_settings_with_invalid_base_client_name_raises_configuration_exce
             async_base_client_open_telemetry_no_upload.__file__,
             "async_base_client_open_telemetry",
         ),
-        (True, False, True, "AsyncBaseClient", async_base_client.__file__, "async_base_client"),
-        (True, False, False, "AsyncBaseClient", async_base_client_no_upload.__file__, "async_base_client"),
+        (
+            True,
+            False,
+            True,
+            "AsyncBaseClient",
+            async_base_client.__file__,
+            "async_base_client",
+        ),
+        (
+            True,
+            False,
+            False,
+            "AsyncBaseClient",
+            async_base_client_no_upload.__file__,
+            "async_base_client",
+        ),
         (
             False,
             True,
@@ -122,7 +136,14 @@ def test_client_settings_with_invalid_base_client_name_raises_configuration_exce
             "base_client_open_telemetry",
         ),
         (False, False, True, "BaseClient", base_client.__file__, "base_client"),
-        (False, False, False, "BaseClient", base_client_no_upload.__file__, "base_client"),
+        (
+            False,
+            False,
+            False,
+            "BaseClient",
+            base_client_no_upload.__file__,
+            "base_client",
+        ),
     ],
 )
 def test_client_settings_sets_correct_default_values_for_base_client_name_and_path(

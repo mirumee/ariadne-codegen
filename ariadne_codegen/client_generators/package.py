@@ -459,7 +459,9 @@ def get_package_generator(
 ) -> PackageGenerator:
     upload_import = UPLOAD_IMPORT if settings.multipart_uploads else None
     base_model_path = (
-        BASE_MODEL_FILE_PATH if settings.multipart_uploads else BASE_MODEL_NO_UPLOAD_FILE_PATH
+        BASE_MODEL_FILE_PATH
+        if settings.multipart_uploads
+        else BASE_MODEL_NO_UPLOAD_FILE_PATH
     )
 
     init_generator = InitFileGenerator(plugin_manager=plugin_manager)
