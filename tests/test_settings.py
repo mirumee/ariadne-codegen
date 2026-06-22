@@ -6,9 +6,13 @@ import pytest
 
 from ariadne_codegen.client_generators.dependencies import (
     async_base_client,
+    async_base_client_no_upload,
     async_base_client_open_telemetry,
+    async_base_client_open_telemetry_no_upload,
     base_client,
+    base_client_no_upload,
     base_client_open_telemetry,
+    base_client_open_telemetry_no_upload,
 )
 from ariadne_codegen.config import ClientSettings, GraphQLSchemaSettings
 from ariadne_codegen.exceptions import InvalidConfiguration
@@ -80,21 +84,55 @@ def test_client_settings_with_invalid_base_client_name_raises_configuration_exce
 
 
 @pytest.mark.parametrize(
-    "async_client, opentelemetry_client, expected_name, expected_path",
+    "async_client, opentelemetry_client, multipart_uploads,"
+    " expected_name, expected_path, expected_module_name",
     [
         (
             True,
             True,
+            True,
             "AsyncBaseClientOpenTelemetry",
             async_base_client_open_telemetry.__file__,
+            "async_base_client_open_telemetry",
         ),
-        (True, False, "AsyncBaseClient", async_base_client.__file__),
-        (False, True, "BaseClientOpenTelemetry", base_client_open_telemetry.__file__),
-        (False, False, "BaseClient", base_client.__file__),
+        (
+            True,
+            True,
+            False,
+            "AsyncBaseClientOpenTelemetry",
+            async_base_client_open_telemetry_no_upload.__file__,
+            "async_base_client_open_telemetry",
+        ),
+        (True, False, True, "AsyncBaseClient", async_base_client.__file__, "async_base_client"),
+        (True, False, False, "AsyncBaseClient", async_base_client_no_upload.__file__, "async_base_client"),
+        (
+            False,
+            True,
+            True,
+            "BaseClientOpenTelemetry",
+            base_client_open_telemetry.__file__,
+            "base_client_open_telemetry",
+        ),
+        (
+            False,
+            True,
+            False,
+            "BaseClientOpenTelemetry",
+            base_client_open_telemetry_no_upload.__file__,
+            "base_client_open_telemetry",
+        ),
+        (False, False, True, "BaseClient", base_client.__file__, "base_client"),
+        (False, False, False, "BaseClient", base_client_no_upload.__file__, "base_client"),
     ],
 )
 def test_client_settings_sets_correct_default_values_for_base_client_name_and_path(
-    tmp_path, async_client, opentelemetry_client, expected_name, expected_path
+    tmp_path,
+    async_client,
+    opentelemetry_client,
+    multipart_uploads,
+    expected_name,
+    expected_path,
+    expected_module_name,
 ):
     schema_path = tmp_path / "schema.graphql"
     schema_path.touch()
@@ -106,10 +144,12 @@ def test_client_settings_sets_correct_default_values_for_base_client_name_and_pa
         queries_path=queries_path,
         async_client=async_client,
         opentelemetry_client=opentelemetry_client,
+        multipart_uploads=multipart_uploads,
     )
 
     assert settings.base_client_name == expected_name
     assert settings.base_client_file_path == Path(expected_path).as_posix()
+    assert settings.base_client_module_name == expected_module_name
 
 
 def test_client_settings_without_schema_path_with_remote_schema_url_is_valid(tmp_path):

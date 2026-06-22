@@ -10,11 +10,15 @@ from graphql.validation import specified_rules
 
 from .client_generators.constants import (
     DEFAULT_ASYNC_BASE_CLIENT_NAME,
+    DEFAULT_ASYNC_BASE_CLIENT_NO_UPLOAD_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+    DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
     DEFAULT_BASE_CLIENT_NAME,
+    DEFAULT_BASE_CLIENT_NO_UPLOAD_PATH,
     DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+    DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
     DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_BASE_CLIENT_PATH,
 )
@@ -133,6 +137,7 @@ class ClientSettings(BaseSettings):
     client_file_name: str = "client"
     base_client_name: str = ""
     base_client_file_path: str = ""
+    base_client_module_name: str = ""
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     fragments_module_name: str = "fragments"
@@ -142,6 +147,7 @@ class ClientSettings(BaseSettings):
     include_all_enums: bool = True
     async_client: bool = True
     opentelemetry_client: bool = False
+    multipart_uploads: bool = True
     skip_validation_rules: list[str] = field(
         default_factory=lambda: [
             "NoUnusedFragments",
@@ -194,29 +200,54 @@ class ClientSettings(BaseSettings):
 
     def _set_default_base_client_data(self):
         default_clients_map = {
-            (True, True): (
+            (True, True, True): (
                 DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
                 DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH.stem,
             ),
-            (True, False): (
+            (True, True, False): (
+                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
+                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH.stem,
+            ),
+            (True, False, True): (
                 DEFAULT_ASYNC_BASE_CLIENT_PATH,
                 DEFAULT_ASYNC_BASE_CLIENT_NAME,
+                DEFAULT_ASYNC_BASE_CLIENT_PATH.stem,
             ),
-            (False, True): (
+            (True, False, False): (
+                DEFAULT_ASYNC_BASE_CLIENT_NO_UPLOAD_PATH,
+                DEFAULT_ASYNC_BASE_CLIENT_NAME,
+                DEFAULT_ASYNC_BASE_CLIENT_PATH.stem,
+            ),
+            (False, True, True): (
                 DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
                 DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH.stem,
             ),
-            (False, False): (
+            (False, True, False): (
+                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
+                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH.stem,
+            ),
+            (False, False, True): (
                 DEFAULT_BASE_CLIENT_PATH,
                 DEFAULT_BASE_CLIENT_NAME,
+                DEFAULT_BASE_CLIENT_PATH.stem,
+            ),
+            (False, False, False): (
+                DEFAULT_BASE_CLIENT_NO_UPLOAD_PATH,
+                DEFAULT_BASE_CLIENT_NAME,
+                DEFAULT_BASE_CLIENT_PATH.stem,
             ),
         }
         if not self.base_client_name and not self.base_client_file_path:
-            path, name = default_clients_map[
-                (self.async_client, self.opentelemetry_client)
+            path, name, module_name = default_clients_map[
+                (self.async_client, self.opentelemetry_client, self.multipart_uploads)
             ]
             self.base_client_name = name
             self.base_client_file_path = path.as_posix()
+            self.base_client_module_name = module_name
 
     @property
     def schema_source(self) -> str:

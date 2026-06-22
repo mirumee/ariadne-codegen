@@ -27,6 +27,7 @@ from .constants import (
     BASE_MODEL_CLASS_NAME,
     BASE_MODEL_FILE_PATH,
     BASE_MODEL_IMPORT,
+    BASE_MODEL_NO_UPLOAD_FILE_PATH,
     BASE_OPERATION_FILE_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
@@ -69,6 +70,7 @@ class PackageGenerator:
         async_client: bool = True,
         base_client_name: str = "AsyncBaseClient",
         base_client_file_path: str = DEFAULT_ASYNC_BASE_CLIENT_PATH.as_posix(),
+        base_client_module_name: str = "",
         client_file_name: str = "client",
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
@@ -83,8 +85,9 @@ class PackageGenerator:
         base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
         base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
-        upload_import: ast.ImportFrom = UPLOAD_IMPORT,
+        upload_import: Optional[ast.ImportFrom] = UPLOAD_IMPORT,
         unset_import: ast.ImportFrom = UNSET_IMPORT,
+        multipart_uploads: bool = True,
         files_to_include: Optional[list[str]] = None,
         custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
@@ -115,6 +118,7 @@ class PackageGenerator:
         self.async_client = async_client
         self.base_client_name = base_client_name
         self.base_client_file_path = Path(base_client_file_path)
+        self.base_client_module_name = base_client_module_name
 
         self.client_file_name = client_file_name
         self.enums_module_name = enums_module_name
@@ -133,6 +137,7 @@ class PackageGenerator:
         self.base_model_import = base_model_import
         self.upload_import = upload_import
         self.unset_import = unset_import
+        self.multipart_uploads = multipart_uploads
 
         self.base_schema_root_file_path = Path(base_schema_root_file_path)
 
@@ -359,28 +364,48 @@ class PackageGenerator:
         )
 
     def _copy_files(self):
-        files_to_copy = self.files_to_include + [
-            self.base_client_file_path,
-            self.base_model_file_path,
-        ]
-        for source_path in files_to_copy:
+        for source_path in self.files_to_include:
             code = self._add_comments_to_code(source_path.read_text(encoding="utf-8"))
-            if not self.ignore_extra_fields and source_path.name == "base_model.py":
-                code = add_extra_to_base_model(code)
             if self.plugin_manager:
                 code = self.plugin_manager.copy_code(code)
             target_path = self.package_path / source_path.name
             target_path.write_text(code)
             self._generated_files.append(target_path.name)
 
+        base_client_target_stem = (
+            self.base_client_module_name or self.base_client_file_path.stem
+        )
+        code = self._add_comments_to_code(
+            self.base_client_file_path.read_text(encoding="utf-8")
+        )
+        if self.plugin_manager:
+            code = self.plugin_manager.copy_code(code)
+        base_client_target = self.package_path / f"{base_client_target_stem}.py"
+        base_client_target.write_text(code)
+        self._generated_files.append(base_client_target.name)
+
+        code = self._add_comments_to_code(
+            self.base_model_file_path.read_text(encoding="utf-8")
+        )
+        if not self.ignore_extra_fields:
+            code = add_extra_to_base_model(code)
+        if self.plugin_manager:
+            code = self.plugin_manager.copy_code(code)
+        base_model_target = self.package_path / "base_model.py"
+        base_model_target.write_text(code)
+        self._generated_files.append(base_model_target.name)
+
         self.init_generator.add_import(
             names=[self.base_client_name],
-            from_=self.base_client_file_path.stem,
+            from_=base_client_target_stem,
             level=1,
         )
+        base_model_names = [BASE_MODEL_CLASS_NAME]
+        if self.multipart_uploads:
+            base_model_names.append(UPLOAD_CLASS_NAME)
         self.init_generator.add_import(
-            names=[BASE_MODEL_CLASS_NAME, UPLOAD_CLASS_NAME],
-            from_=self.base_model_file_path.stem,
+            names=base_model_names,
+            from_="base_model",
             level=1,
         )
 
@@ -432,6 +457,11 @@ def get_package_generator(
     settings: ClientSettings,
     plugin_manager: PluginManager,
 ) -> PackageGenerator:
+    upload_import = UPLOAD_IMPORT if settings.multipart_uploads else None
+    base_model_path = (
+        BASE_MODEL_FILE_PATH if settings.multipart_uploads else BASE_MODEL_NO_UPLOAD_FILE_PATH
+    )
+
     init_generator = InitFileGenerator(plugin_manager=plugin_manager)
     client_generator = ClientGenerator(
         base_client_import=generate_import_from(
@@ -450,7 +480,7 @@ def get_package_generator(
         enums_module_name=settings.enums_module_name,
         input_types_module_name=settings.input_types_module_name,
         unset_import=UNSET_IMPORT,
-        upload_import=UPLOAD_IMPORT,
+        upload_import=upload_import,
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
     )
@@ -459,7 +489,7 @@ def get_package_generator(
         schema=schema,
         enums_module=settings.enums_module_name,
         base_model_import=BASE_MODEL_IMPORT,
-        upload_import=UPLOAD_IMPORT,
+        upload_import=upload_import,
         convert_to_snake_case=settings.convert_to_snake_case,
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
@@ -546,10 +576,12 @@ def get_package_generator(
         convert_to_snake_case=settings.convert_to_snake_case,
         include_all_inputs=settings.include_all_inputs,
         include_all_enums=settings.include_all_enums,
-        base_model_file_path=BASE_MODEL_FILE_PATH.as_posix(),
+        base_client_module_name=settings.base_client_module_name,
+        base_model_file_path=base_model_path.as_posix(),
         base_model_import=BASE_MODEL_IMPORT,
-        upload_import=UPLOAD_IMPORT,
+        upload_import=upload_import,
         unset_import=UNSET_IMPORT,
+        multipart_uploads=settings.multipart_uploads,
         files_to_include=settings.files_to_include,
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,

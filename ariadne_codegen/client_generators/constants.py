@@ -50,6 +50,9 @@ CUSTOM_FIELDS_FILE_PATH = Path(__file__).parent / "custom_fields.py"
 CUSTOM_FIELDS_TYPING_FILE_PATH = Path(__file__).parent / "custom_typing_fields.py"
 
 BASE_MODEL_FILE_PATH = Path(__file__).parent / "dependencies" / "base_model.py"
+BASE_MODEL_NO_UPLOAD_FILE_PATH = (
+    Path(__file__).parent / "dependencies" / "base_model_no_upload.py"
+)
 BASE_MODEL_CLASS_NAME = "BaseModel"
 BASE_MODEL_IMPORT = ast.ImportFrom(
     module=BASE_MODEL_FILE_PATH.stem, names=[ast.alias(BASE_MODEL_CLASS_NAME)], level=1
@@ -112,6 +115,21 @@ DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH = (
     Path(__file__).parent / "dependencies" / "base_client_open_telemetry.py"
 )
 DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME = "BaseClientOpenTelemetry"
+
+DEFAULT_ASYNC_BASE_CLIENT_NO_UPLOAD_PATH = (
+    Path(__file__).parent / "dependencies" / "async_base_client_no_upload.py"
+)
+DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH = (
+    Path(__file__).parent
+    / "dependencies"
+    / "async_base_client_open_telemetry_no_upload.py"
+)
+DEFAULT_BASE_CLIENT_NO_UPLOAD_PATH = (
+    Path(__file__).parent / "dependencies" / "base_client_no_upload.py"
+)
+DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH = (
+    Path(__file__).parent / "dependencies" / "base_client_open_telemetry_no_upload.py"
+)
 
 
 GRAPHQL_CLIENT_EXCEPTIONS_NAMES = [
