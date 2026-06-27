@@ -12,9 +12,11 @@ from ariadne_codegen.exceptions import (
 from ariadne_codegen.schema import (
     get_graphql_queries,
     get_graphql_schema_from_path,
+    get_graphql_schema_from_paths,
     introspect_remote_schema,
     load_graphql_files_from_path,
     read_graphql_file,
+    resolve_schema_paths,
     walk_graphql_files,
 )
 from ariadne_codegen.settings import IntrospectionSettings, get_validation_rule
@@ -652,3 +654,158 @@ def test_introspect_remote_schema_uses_default_introspection_settings_when_not_p
         input_value_deprecation=False,
         input_object_one_of=False,
     )
+
+
+def test_resolve_schema_paths_with_single_file(tmp_path, schema_str):
+    schema_file = tmp_path / "schema.graphql"
+    schema_file.write_text(schema_str, encoding="utf-8")
+
+    result = resolve_schema_paths([schema_file.as_posix()])
+
+    assert result == [schema_file]
+
+
+def test_resolve_schema_paths_with_directory(schemas_directory):
+    result = resolve_schema_paths([schemas_directory.as_posix()])
+
+    names = {p.name for p in result}
+    assert "schema.graphql" in names
+    assert "user.graphql" in names
+
+
+def test_resolve_schema_paths_with_multiple_local_sources(
+    tmp_path, schema_str, extra_type_str
+):
+    file1 = tmp_path / "schema.graphql"
+    file1.write_text(schema_str, encoding="utf-8")
+    file2 = tmp_path / "user.graphql"
+    file2.write_text(extra_type_str, encoding="utf-8")
+
+    result = resolve_schema_paths([file1.as_posix(), file2.as_posix()])
+
+    assert file1 in result
+    assert file2 in result
+    assert len(result) == 2
+
+
+def test_resolve_schema_paths_with_callable_python_attribute(
+    tmp_path, schema_str, mocker
+):
+    schema_file = tmp_path / "schema.graphql"
+    schema_file.write_text(schema_str, encoding="utf-8")
+
+    mock_callable = mocker.Mock(return_value=[schema_file.as_posix()])
+    mock_module = mocker.Mock()
+    mock_module.get_files = mock_callable
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    result = resolve_schema_paths(["some_pkg.get_files"])
+
+    assert result == [Path(schema_file.as_posix())]
+    mock_callable.assert_called_once()
+
+
+def test_resolve_schema_paths_with_path_attribute_pointing_to_directory(
+    schemas_directory, mocker
+):
+    mock_module = mocker.Mock()
+    mock_module.SCHEMA_DIR = schemas_directory.as_posix()
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    result = resolve_schema_paths(["some_pkg.SCHEMA_DIR"])
+
+    names = {p.name for p in result}
+    assert "schema.graphql" in names
+    assert "user.graphql" in names
+
+
+def test_resolve_schema_paths_falls_back_to_local_path_on_import_error(mocker):
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module",
+        side_effect=ImportError("module not found"),
+    )
+
+    result = resolve_schema_paths(["nonexistent_pkg.attr"])
+
+    assert result == [Path("nonexistent_pkg.attr")]
+
+
+def test_resolve_schema_paths_with_slash_skips_importlib(tmp_path, schema_str, mocker):
+    schema_file = tmp_path / "schema.graphql"
+    schema_file.write_text(schema_str, encoding="utf-8")
+    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+
+    resolve_schema_paths([schema_file.as_posix()])
+
+    mock_import.assert_not_called()
+
+
+def test_resolve_schema_paths_with_graphql_extension_skips_importlib(
+    tmp_path, schema_str, mocker
+):
+    schema_file = tmp_path / "schema.graphql"
+    schema_file.write_text(schema_str, encoding="utf-8")
+    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+
+    resolve_schema_paths(["schema.graphql"])
+
+    mock_import.assert_not_called()
+
+
+def test_resolve_schema_paths_with_graphqls_extension_skips_importlib(mocker):
+    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+
+    resolve_schema_paths(["types.graphqls"])
+
+    mock_import.assert_not_called()
+
+
+def test_get_graphql_schema_from_paths_returns_graphql_schema(
+    tmp_path, schema_str, extra_type_str
+):
+    file1 = tmp_path / "schema.graphql"
+    file1.write_text(schema_str, encoding="utf-8")
+    file2 = tmp_path / "user.graphql"
+    file2.write_text(extra_type_str, encoding="utf-8")
+
+    result = get_graphql_schema_from_paths([file1.as_posix(), file2.as_posix()])
+
+    assert isinstance(result, GraphQLSchema)
+    assert "Custom" in result.type_map
+    assert "User" in result.type_map
+
+
+def test_get_graphql_schema_from_paths_with_directory_source(schemas_directory):
+    result = get_graphql_schema_from_paths([schemas_directory.as_posix()])
+
+    assert isinstance(result, GraphQLSchema)
+    assert "Custom" in result.type_map
+    assert "User" in result.type_map
+
+
+def test_get_graphql_schema_from_paths_merges_types_from_all_sources(
+    tmp_path, schema_str, extra_type_str
+):
+    dir1 = tmp_path / "base"
+    dir1.mkdir()
+    (dir1 / "schema.graphql").write_text(schema_str, encoding="utf-8")
+
+    dir2 = tmp_path / "extra"
+    dir2.mkdir()
+    (dir2 / "user.graphql").write_text(extra_type_str, encoding="utf-8")
+
+    result = get_graphql_schema_from_paths([dir1.as_posix(), dir2.as_posix()])
+
+    assert "Custom" in result.type_map
+    assert "User" in result.type_map
+
+
+def test_get_graphql_schema_from_paths_with_invalid_syntax_raises_invalid_graphql_syntax(
+    invalid_syntax_schema_file,
+):
+    with pytest.raises(InvalidGraphqlSyntax):
+        get_graphql_schema_from_paths([invalid_syntax_schema_file.as_posix()])

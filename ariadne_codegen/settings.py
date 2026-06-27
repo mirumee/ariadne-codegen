@@ -70,6 +70,7 @@ class IntrospectionSettings:
 @dataclass
 class BaseSettings:
     schema_path: str = ""
+    schema_paths: list[str] = field(default_factory=list)
     remote_schema_url: str = ""
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
@@ -84,9 +85,25 @@ class BaseSettings:
     introspection_input_object_one_of: bool = False
 
     def __post_init__(self):
-        if not self.schema_path and not self.remote_schema_url:
+        provided_sources = [
+            name
+            for name, value in (
+                ("schema_path", self.schema_path),
+                ("schema_paths", self.schema_paths),
+                ("remote_schema_url", self.remote_schema_url),
+            )
+            if value
+        ]
+        if not provided_sources:
             raise InvalidConfiguration(
-                "Schema source not provided. Use schema_path or remote_schema_url"
+                "Schema source not provided. Use one of: schema_path, schema_paths,"
+                " or remote_schema_url."
+            )
+        if len(provided_sources) > 1:
+            raise InvalidConfiguration(
+                "Cannot use more than one schema source at the same time. "
+                f"Provided: {', '.join(provided_sources)}. Use only one of: "
+                "schema_path, schema_paths, or remote_schema_url."
             )
 
         if self.schema_path:
@@ -101,7 +118,7 @@ class BaseSettings:
         """
         Return true if remote schema is used as source, false otherwise.
         """
-        return bool(self.remote_schema_url) and not bool(self.schema_path)
+        return bool(self.remote_schema_url)
 
     @property
     def introspection_settings(self) -> IntrospectionSettings:
@@ -251,7 +268,11 @@ class ClientSettings(BaseSettings):
 
     @property
     def schema_source(self) -> str:
-        return self.schema_path if self.schema_path else self.remote_schema_url
+        if self.schema_path:
+            return self.schema_path
+        if self.schema_paths:
+            return ", ".join(self.schema_paths)
+        return self.remote_schema_url
 
     @property
     def used_settings_message(self) -> str:
@@ -288,7 +309,7 @@ class ClientSettings(BaseSettings):
         return dedent(
             f"""\
             Selected strategy: {Strategy.CLIENT}
-            Using schema from '{self.schema_path or self.remote_schema_url}'.
+            Using schema from '{self.schema_source}'.
             {introspection_msg}
             Reading queries from '{self.queries_path}'.
             Using '{self.target_package_name}' as package name.
@@ -334,11 +355,16 @@ class GraphQLSchemaSettings(BaseSettings):
             self._introspection_settings_message() if self.using_remote_schema else ""
         )
 
+        schema_source = self.schema_path or (
+            ", ".join(self.schema_paths)
+            if self.schema_paths
+            else self.remote_schema_url
+        )
         if self.target_file_format == "py":
             return dedent(
                 f"""\
                 Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-                Using schema from {self.schema_path or self.remote_schema_url}
+                Using schema from {schema_source}
                 {introspection_msg}
                 Saving graphql schema to: {self.target_file_path}
                 Using {self.schema_variable_name} as variable name for schema.
@@ -350,7 +376,7 @@ class GraphQLSchemaSettings(BaseSettings):
         return dedent(
             f"""\
             Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-            Using schema from {self.schema_path or self.remote_schema_url}
+            Using schema from {schema_source}
             {introspection_msg}
             Saving graphql schema to: {self.target_file_path}
             {plugins_msg}

@@ -1,3 +1,4 @@
+import importlib
 from collections.abc import Generator, Sequence
 from dataclasses import asdict
 from pathlib import Path
@@ -136,6 +137,51 @@ def introspect_remote_schema(
 def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
     """Get graphql schema build from provided path."""
     schema_str = load_graphql_files_from_path(Path(schema_path))
+    graphql_ast = parse(schema_str)
+    schema: GraphQLSchema = build_ast_schema(graphql_ast, assume_valid=True)
+    return schema
+
+
+def resolve_schema_paths(sources: list[str]) -> list[Path]:
+    """Resolve a list of schema sources to concrete file paths.
+
+    Each entry is tried as a dotted Python import path first (e.g.
+    ``pkg.SCHEMA_DIR`` or ``pkg.get_schema_files``). If the import fails the
+    entry is treated as a local filesystem path instead.
+    """
+    result: list[Path] = []
+    for source in sources:
+        if "." in source and "/" not in source and not source.endswith(
+            (".graphql", ".graphqls", ".gql")
+        ):
+            try:
+                module_path, attr = source.rsplit(".", 1)
+                module = importlib.import_module(module_path)
+                obj = getattr(module, attr)
+                if callable(obj):
+                    result.extend(Path(f) for f in obj())
+                elif isinstance(obj, (str, Path)):
+                    dir_path = Path(obj)
+                    if dir_path.is_dir():
+                        result.extend(sorted(walk_graphql_files(dir_path)))
+                    else:
+                        result.append(dir_path)
+                continue
+            except (ImportError, ModuleNotFoundError):
+                pass
+
+        local_path = Path(source)
+        if local_path.is_dir():
+            result.extend(sorted(walk_graphql_files(local_path)))
+        else:
+            result.append(local_path)
+    return result
+
+
+def get_graphql_schema_from_paths(schema_paths: list[str]) -> GraphQLSchema:
+    """Get graphql schema built from multiple path sources."""
+    resolved = resolve_schema_paths(schema_paths)
+    schema_str = "\n".join(read_graphql_file(p) for p in resolved)
     graphql_ast = parse(schema_str)
     schema: GraphQLSchema = build_ast_schema(graphql_ast, assume_valid=True)
     return schema
