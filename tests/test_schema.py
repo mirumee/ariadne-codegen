@@ -804,7 +804,7 @@ def test_get_graphql_schema_from_paths_merges_types_from_all_sources(
     assert "User" in result.type_map
 
 
-def test_get_graphql_schema_from_paths_with_invalid_syntax_raises_invalid_graphql_syntax(
+def test_get_graphql_schema_from_paths_invalid_syntax_raises_invalid_graphql_syntax(
     invalid_syntax_schema_file,
 ):
     with pytest.raises(InvalidGraphqlSyntax):

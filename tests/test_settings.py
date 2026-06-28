@@ -583,7 +583,7 @@ def test_using_remote_schema_false_when_only_schema_path_is_provided(tmp_path):
     assert settings.using_remote_schema is False
 
 
-def test_client_settings_with_schema_path_and_remote_schema_url_raises_invalid_configuration(
+def test_client_settings_schema_path_and_remote_url_raises_invalid_configuration(
     tmp_path,
 ):
     """
@@ -748,7 +748,7 @@ def test_client_settings_with_schema_path_and_schema_paths_raises_invalid_config
         )
 
 
-def test_graphql_schema_settings_with_schema_path_and_schema_paths_raises_invalid_configuration(
+def test_graphql_schema_settings_schema_path_and_paths_raises_invalid_configuration(
     tmp_path,
 ):
     schema_path = tmp_path / "schema.graphql"
@@ -761,7 +761,7 @@ def test_graphql_schema_settings_with_schema_path_and_schema_paths_raises_invali
         )
 
 
-def test_client_settings_with_schema_paths_and_remote_schema_url_raises_invalid_configuration(
+def test_client_settings_schema_paths_and_remote_url_raises_invalid_configuration(
     tmp_path,
 ):
     queries_path = tmp_path / "queries.graphql"
@@ -785,7 +785,7 @@ def test_client_settings_without_any_schema_source_raises_invalid_configuration(
         ClientSettings(queries_path=queries_path.as_posix())
 
 
-def test_graphql_schema_settings_without_any_schema_source_raises_invalid_configuration():
+def test_graphql_schema_settings_without_schema_source_raises_invalid_configuration():
     with pytest.raises(InvalidConfiguration):
         GraphQLSchemaSettings()
 

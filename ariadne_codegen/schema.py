@@ -151,8 +151,10 @@ def resolve_schema_paths(sources: list[str]) -> list[Path]:
     """
     result: list[Path] = []
     for source in sources:
-        if "." in source and "/" not in source and not source.endswith(
-            (".graphql", ".graphqls", ".gql")
+        if (
+            "." in source
+            and "/" not in source
+            and not source.endswith((".graphql", ".graphqls", ".gql"))
         ):
             try:
                 module_path, attr = source.rsplit(".", 1)
