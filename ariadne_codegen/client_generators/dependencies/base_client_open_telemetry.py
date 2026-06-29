@@ -1,5 +1,5 @@
 import json
-from typing import IO, Any, Optional, TypeVar, Union, cast
+from typing import IO, Any, Optional, Protocol, TypeVar, Union, cast
 
 import httpx
 from pydantic import BaseModel
@@ -34,6 +34,26 @@ except ImportError:
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
 
+class Response(Protocol):
+    status_code: int
+
+    def json(self, **kwargs: Any) -> Any: ...
+
+
+class HttpClient(Protocol):
+    def post(
+        self,
+        url: Any | str,
+        json: Any | None = None,
+        data: Any | None = None,
+        files: Any | None = None,
+        headers: Any | None = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+    def close(self) -> None: ...
+
+
 Self = TypeVar("Self", bound="BaseClientOpenTelemetry")
 
 
@@ -42,7 +62,7 @@ class BaseClientOpenTelemetry:
         self,
         url: str = "",
         headers: Optional[dict[str, str]] = None,
-        http_client: Optional[httpx.Client] = None,
+        http_client: Optional[HttpClient] = None,
         tracer: Optional[Union[str, Tracer]] = None,
         root_context: Optional[Context] = None,
         root_span_name: Optional[str] = None,
@@ -75,7 +95,7 @@ class BaseClientOpenTelemetry:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         if self.tracer:
             return self._execute_with_telemetry(
                 query=query,
@@ -87,8 +107,8 @@ class BaseClientOpenTelemetry:
             query=query, operation_name=operation_name, variables=variables, **kwargs
         )
 
-    def get_data(self, response: httpx.Response) -> dict[str, Any]:
-        if not response.is_success:
+    def get_data(self, response: Response) -> dict[str, Any]:
+        if not (200 <= response.status_code <= 299):
             raise GraphQLClientHttpError(
                 status_code=response.status_code, response=response
             )
@@ -119,7 +139,7 @@ class BaseClientOpenTelemetry:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         processed_variables, files, files_map = self._process_variables(variables)
 
         if files and files_map:
@@ -216,7 +236,7 @@ class BaseClientOpenTelemetry:
         files: dict[str, tuple[str, IO[bytes], str]],
         files_map: dict[str, list[str]],
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         data = {
             "operations": json.dumps(
                 {
@@ -237,24 +257,17 @@ class BaseClientOpenTelemetry:
         operation_name: Optional[str],
         variables: dict[str, Any],
         **kwargs: Any,
-    ) -> httpx.Response:
-        headers: dict[str, str] = {"Content-type": "application/json"}
-        headers.update(kwargs.get("headers", {}))
-
-        merged_kwargs: dict[str, Any] = kwargs.copy()
-        merged_kwargs["headers"] = headers
-
+    ) -> Response:
         return self.http_client.post(
             url=self.url,
-            content=json.dumps(
+            json=to_jsonable_python(
                 {
                     "query": query,
                     "operationName": operation_name,
                     "variables": variables,
-                },
-                default=to_jsonable_python,
+                }
             ),
-            **merged_kwargs,
+            **kwargs,
         )
 
     def _execute_with_telemetry(
@@ -263,7 +276,7 @@ class BaseClientOpenTelemetry:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         with self.tracer.start_as_current_span(  # type: ignore
             self.root_span_name, context=self.root_context
         ) as root_span:
@@ -299,7 +312,7 @@ class BaseClientOpenTelemetry:
         files: dict[str, tuple[str, IO[bytes], str]],
         files_map: dict[str, list[str]],
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         with self.tracer.start_as_current_span(  # type: ignore
             "multipart request", context=set_span_in_context(root_span)
         ) as span:
@@ -329,7 +342,7 @@ class BaseClientOpenTelemetry:
         operation_name: Optional[str],
         variables: dict[str, Any],
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         with self.tracer.start_as_current_span(  # type: ignore
             "json request", context=set_span_in_context(root_span)
         ) as span:

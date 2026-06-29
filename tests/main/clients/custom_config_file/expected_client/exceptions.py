@@ -1,6 +1,8 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional, Protocol, Union
 
-import httpx
+
+class Response(Protocol):
+    status_code: int
 
 
 class GraphQLClientError(Exception):
@@ -8,7 +10,7 @@ class GraphQLClientError(Exception):
 
 
 class GraphQLClientHttpError(GraphQLClientError):
-    def __init__(self, status_code: int, response: httpx.Response) -> None:
+    def __init__(self, status_code: int, response: Response) -> None:
         self.status_code = status_code
         self.response = response
 
@@ -17,7 +19,7 @@ class GraphQLClientHttpError(GraphQLClientError):
 
 
 class GraphQLClientInvalidResponseError(GraphQLClientError):
-    def __init__(self, response: httpx.Response) -> None:
+    def __init__(self, response: Response) -> None:
         self.response = response
 
     def __str__(self) -> str:
