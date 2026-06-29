@@ -29,8 +29,12 @@ from .constants import (
     BASE_MODEL_IMPORT,
     BASE_MODEL_NO_UPLOAD_FILE_PATH,
     BASE_OPERATION_FILE_PATH,
+    DEFAULT_ASYNC_BASE_CLIENT_NO_UPLOAD_PATH,
+    DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
+    DEFAULT_BASE_CLIENT_NO_UPLOAD_PATH,
+    DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
     DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_BASE_CLIENT_PATH,
     EXCEPTIONS_FILE_PATH,
@@ -118,7 +122,9 @@ class PackageGenerator:
         self.async_client = async_client
         self.base_client_name = base_client_name
         self.base_client_file_path = Path(base_client_file_path)
-        self.base_client_module_name = base_client_module_name
+        self.base_client_module_name = (
+            base_client_module_name or self.base_client_file_path.stem
+        )
 
         self.client_file_name = client_file_name
         self.enums_module_name = enums_module_name
@@ -240,9 +246,13 @@ class PackageGenerator:
     def _include_exceptions(self):
         if self.base_client_file_path in (
             DEFAULT_ASYNC_BASE_CLIENT_PATH,
-            DEFAULT_BASE_CLIENT_PATH,
+            DEFAULT_ASYNC_BASE_CLIENT_NO_UPLOAD_PATH,
             DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
+            DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
+            DEFAULT_BASE_CLIENT_PATH,
+            DEFAULT_BASE_CLIENT_NO_UPLOAD_PATH,
             DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
+            DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
         ):
             self.files_to_include.append(EXCEPTIONS_FILE_PATH)
             self.init_generator.add_import(
@@ -255,8 +265,8 @@ class PackageGenerator:
         file_names = (
             [
                 f"{self.client_file_name}.py",
-                self.base_client_file_path.name,
-                self.base_model_file_path.name,
+                f"{self.base_client_module_name}.py",
+                "base_model.py",
                 f"{self.enums_module_name}.py",
                 f"{self.input_types_module_name}.py",
                 f"{self.fragments_module_name}.py",
@@ -364,40 +374,25 @@ class PackageGenerator:
         )
 
     def _copy_files(self):
-        for source_path in self.files_to_include:
+        files_to_copy = {
+            **{source_path: source_path.name for source_path in self.files_to_include},
+            self.base_client_file_path: f"{self.base_client_module_name}.py",
+            self.base_model_file_path: "base_model.py",
+        }
+        for source_path, target_name in files_to_copy.items():
             code = self._add_comments_to_code(source_path.read_text(encoding="utf-8"))
+            is_base_model = source_path == self.base_model_file_path
+            if is_base_model and not self.ignore_extra_fields:
+                code = add_extra_to_base_model(code)
             if self.plugin_manager:
                 code = self.plugin_manager.copy_code(code)
-            target_path = self.package_path / source_path.name
+            target_path = self.package_path / target_name
             target_path.write_text(code)
             self._generated_files.append(target_path.name)
 
-        base_client_target_stem = (
-            self.base_client_module_name or self.base_client_file_path.stem
-        )
-        code = self._add_comments_to_code(
-            self.base_client_file_path.read_text(encoding="utf-8")
-        )
-        if self.plugin_manager:
-            code = self.plugin_manager.copy_code(code)
-        base_client_target = self.package_path / f"{base_client_target_stem}.py"
-        base_client_target.write_text(code)
-        self._generated_files.append(base_client_target.name)
-
-        code = self._add_comments_to_code(
-            self.base_model_file_path.read_text(encoding="utf-8")
-        )
-        if not self.ignore_extra_fields:
-            code = add_extra_to_base_model(code)
-        if self.plugin_manager:
-            code = self.plugin_manager.copy_code(code)
-        base_model_target = self.package_path / "base_model.py"
-        base_model_target.write_text(code)
-        self._generated_files.append(base_model_target.name)
-
         self.init_generator.add_import(
             names=[self.base_client_name],
-            from_=base_client_target_stem,
+            from_=self.base_client_module_name,
             level=1,
         )
         base_model_names = [BASE_MODEL_CLASS_NAME]
@@ -468,7 +463,10 @@ def get_package_generator(
     client_generator = ClientGenerator(
         base_client_import=generate_import_from(
             names=[settings.base_client_name],
-            from_=Path(settings.base_client_file_path).stem,
+            from_=(
+                settings.base_client_module_name
+                or Path(settings.base_client_file_path).stem
+            ),
             level=1,
         ),
         arguments_generator=ArgumentsGenerator(

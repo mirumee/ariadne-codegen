@@ -3,7 +3,7 @@
 
 from typing import Any
 
-from .async_base_client_no_upload import AsyncBaseClient
+from .async_base_client import AsyncBaseClient
 from .create_user import CreateUser
 from .get_user import GetUser
 from .input_types import CreateUserInput

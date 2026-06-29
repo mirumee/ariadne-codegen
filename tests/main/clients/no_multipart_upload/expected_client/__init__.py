@@ -4,6 +4,13 @@ from .async_base_client import AsyncBaseClient
 from .base_model import BaseModel
 from .client import Client
 from .create_user import CreateUser, CreateUserCreateUser
+from .exceptions import (
+    GraphQLClientError,
+    GraphQLClientGraphQLError,
+    GraphQLClientGraphQLMultiError,
+    GraphQLClientHttpError,
+    GraphQLClientInvalidResponseError,
+)
 from .get_user import GetUser, GetUserUser
 from .input_types import CreateUserInput
 
@@ -16,4 +23,9 @@ __all__ = [
     "CreateUserInput",
     "GetUser",
     "GetUserUser",
+    "GraphQLClientError",
+    "GraphQLClientGraphQLError",
+    "GraphQLClientGraphQLMultiError",
+    "GraphQLClientHttpError",
+    "GraphQLClientInvalidResponseError",
 ]
