@@ -56,3 +56,35 @@ These options control which fields are included in the GraphQL introspection que
 - `introspection_schema_description` (defaults to `false`) – include schema description
 - `introspection_directive_is_repeatable` (defaults to `false`) – include `isRepeatable` information for directives
 - `introspection_input_object_one_of` (defaults to `false`) – include `oneOf` information for input objects
+
+## Base Client customization
+
+The `base_client_file_path` and `base_client_name` can be used to provide a custom base client implementation. It should implement the following protocol for async client:
+
+```py
+class AsyncBaseClient(Protocol):
+    async def execute(
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+    def get_data(self, response: Response) -> dict[str, Any]: ...
+```
+
+Protocol for sync client:
+
+```py
+class BaseClient(Protocol):
+    def execute(
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+    def get_data(self, response: Response) -> dict[str, Any]: ...
+```
