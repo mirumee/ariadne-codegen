@@ -27,6 +27,7 @@ One of the following 2 parameters is required, in case of providing both of them
 
 - `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer: token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
 - `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies wheter to verify ssl while introspecting remote schema
+- `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
 - `target_package_path` (defaults to cwd) - path where to generate package
 - `client_name` (defaults to `"Client"`) - name of generated client class
@@ -46,3 +47,12 @@ One of the following 2 parameters is required, in case of providing both of them
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
+
+These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`.
+
+- `introspection_descriptions` (defaults to `false`) – include descriptions in the introspection result
+- `introspection_input_value_deprecation` (defaults to `false`) – include deprecation information for input values
+- `introspection_specified_by_url` (defaults to `false`) – include `specifiedByUrl` for custom scalars
+- `introspection_schema_description` (defaults to `false`) – include schema description
+- `introspection_directive_is_repeatable` (defaults to `false`) – include `isRepeatable` information for directives
+- `introspection_input_object_one_of` (defaults to `false`) – include `oneOf` information for input objects
