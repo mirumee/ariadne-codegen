@@ -87,6 +87,7 @@ class ResultTypesGenerator:
         plugin_manager: Optional[PluginManager] = None,
         default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
+        defer_model_build: bool = False,
     ) -> None:
         self.schema = schema
         self.operation_definition = operation_definition
@@ -103,6 +104,7 @@ class ResultTypesGenerator:
         self.plugin_manager = plugin_manager
         self.default_optional_fields_to_none = default_optional_fields_to_none
         self.include_typename = include_typename
+        self.defer_model_build = defer_model_build
 
         self._imports: list[ast.ImportFrom] = [
             generate_import_from(
@@ -162,11 +164,17 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
-        model_rebuild_calls = [
-            generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
-            for class_def in self._class_defs
-            if model_has_forward_refs(class_def)
-        ]
+        model_rebuild_calls = (
+            []
+            if self.defer_model_build
+            else [
+                generate_expr(
+                    generate_method_call(class_def.name, MODEL_REBUILD_METHOD)
+                )
+                for class_def in self._class_defs
+                if model_has_forward_refs(class_def)
+            ]
+        )
 
         module_body = (
             cast(list[ast.stmt], self._imports)

@@ -54,12 +54,14 @@ class InputTypesGenerator:
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
+        defer_model_build: bool = False,
     ) -> None:
         self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
         self.enums_module = enums_module
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
+        self.defer_model_build = defer_model_build
 
         self._imports = [
             generate_import_from([OPTIONAL, ANY, UNION, ANNOTATED], TYPING_MODULE),
@@ -88,11 +90,17 @@ class InputTypesGenerator:
             scalar_data = self.custom_scalars[scalar_name]
             self._imports.extend(generate_scalar_imports(scalar_data))
 
-        model_rebuild_calls = [
-            generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
-            for class_def in class_defs
-            if model_has_forward_refs(class_def)
-        ]
+        model_rebuild_calls = (
+            []
+            if self.defer_model_build
+            else [
+                generate_expr(
+                    generate_method_call(class_def.name, MODEL_REBUILD_METHOD)
+                )
+                for class_def in class_defs
+                if model_has_forward_refs(class_def)
+            ]
+        )
 
         module_body = (
             cast(list[ast.stmt], self._imports)

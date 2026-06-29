@@ -254,6 +254,17 @@ def test_main_shows_version():
             "expected_client",
             CLIENTS_PATH / "no_multipart_upload" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "defer_model_build" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "defer_model_build" / "queries.graphql",
+                    CLIENTS_PATH / "defer_model_build" / "schema.graphql",
+                ),
+            ),
+            "defer_model_build_client",
+            CLIENTS_PATH / "defer_model_build" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
@@ -266,6 +277,50 @@ def test_main_generates_correct_package(
     package_path = project_dir / package_name
     assert package_path.is_dir()
     assert_the_same_files_in_directories(package_path, expected_package_path)
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH / "defer_model_build" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "defer_model_build" / "queries.graphql",
+                    CLIENTS_PATH / "defer_model_build" / "schema.graphql",
+                ),
+            ),
+            "defer_model_build_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_with_defer_model_build_omits_model_rebuild_calls(
+    project_dir, package_name
+):
+    """With ``defer_model_build = true`` the generated package must not contain
+    any eager ``model_rebuild()`` calls, and ``BaseModel`` must enable
+    ``defer_build`` so Pydantic builds each model schema lazily on first use.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+
+    for module_path in package_path.glob("*.py"):
+        assert (
+            "model_rebuild()" not in module_path.read_text()
+        ), f"unexpected model_rebuild() in {module_path.name}"
+
+    base_model_code = (package_path / "base_model.py").read_text()
+    assert "defer_build=True" in base_model_code
+
+    # Forward references must still be generated (otherwise there would be
+    # nothing to defer). This guards against accidentally dropping them.
+    assert 'Optional["UserFilterInput"]' in (
+        package_path / "input_types.py"
+    ).read_text()
 
 
 @pytest.mark.parametrize(

@@ -223,8 +223,12 @@ def process_name(
     return processed_name
 
 
-def add_extra_to_base_model(code: str) -> str:
-    "Adds `extra='forbid'` to the ConfigDict in BaseModel if not already present."
+def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
+    """Set a keyword argument on the ``ConfigDict`` call in ``BaseModel``.
+
+    Does nothing if the keyword is already present, so explicit user values are
+    never overwritten.
+    """
     tree = ast.parse(code)
     for node in tree.body:
         if not isinstance(node, ast.ClassDef):
@@ -241,9 +245,17 @@ def add_extra_to_base_model(code: str) -> str:
                 continue
             if call.func.id != "ConfigDict":
                 continue
-            if not any(kw.arg == "extra" for kw in call.keywords):
-                call.keywords.append(
-                    ast.keyword(arg="extra", value=ast.Constant("forbid"))
-                )
+            if not any(kw.arg == arg for kw in call.keywords):
+                call.keywords.append(ast.keyword(arg=arg, value=value))
     ast.fix_missing_locations(tree)
     return ast.unparse(tree)
+
+
+def add_extra_to_base_model(code: str) -> str:
+    "Adds `extra='forbid'` to the ConfigDict in BaseModel if not already present."
+    return _set_base_model_config_kwarg(code, "extra", ast.Constant("forbid"))
+
+
+def add_defer_build_to_base_model(code: str) -> str:
+    "Adds `defer_build=True` to the ConfigDict in BaseModel if not already present."
+    return _set_base_model_config_kwarg(code, "defer_build", ast.Constant(True))

@@ -6,6 +6,7 @@ import pytest
 
 from ariadne_codegen.utils import (
     _format_code,
+    add_defer_build_to_base_model,
     add_extra_to_base_model,
     ast_to_str,
     convert_to_multiline_string,
@@ -265,4 +266,43 @@ def test_adds_extra_to_base_model_leaves_other_classes_untouched():
             Config = ConfigDict()
     """)
     result = add_extra_to_base_model(code)
+    assert dedent(result).strip() == expected.strip()
+
+
+def test_adds_defer_build_to_base_model_if_missing():
+    code = dedent("""
+        class BaseModel:
+            model_config = ConfigDict(populate_by_name=True)
+    """)
+    expected = dedent("""
+        class BaseModel:
+            model_config = ConfigDict(populate_by_name=True, defer_build=True)
+    """)
+    result = add_defer_build_to_base_model(code)
+    assert dedent(result).strip() == expected.strip()
+
+
+def test_adds_defer_build_to_base_model_does_not_overwrite_existing_value():
+    code = dedent("""
+        class BaseModel:
+            model_config = ConfigDict(defer_build=False)
+    """)
+    expected = dedent("""
+        class BaseModel:
+            model_config = ConfigDict(defer_build=False)
+    """)
+    result = add_defer_build_to_base_model(code)
+    assert dedent(result).strip() == expected.strip()
+
+
+def test_adds_defer_build_to_base_model_leaves_other_classes_untouched():
+    code = dedent("""
+        class NotBaseModel:
+            model_config = ConfigDict()
+    """)
+    expected = dedent("""
+        class NotBaseModel:
+            model_config = ConfigDict()
+    """)
+    result = add_defer_build_to_base_model(code)
     assert dedent(result).strip() == expected.strip()
