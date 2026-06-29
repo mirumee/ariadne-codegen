@@ -75,7 +75,7 @@ Optional settings:
 - `include_all_enums` (defaults to `true`) - a flag specifying whether to include all enums defined in the schema, or only those used in supplied operations
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
 - `opentelemetry_client` (defaults to `false`) - default base clients don't support any performance tracing. Change this option to `true` to use the base client with Open Telemetry support.
-- `multipart_uploads` (defaults to `true`) - when set to `false`, a lighter base client variant is generated that omits multipart file upload support. Useful when the schema doesn't use file uploads and you want to avoid the dependency on multipart handling.
+- `multipart_uploads` (defaults to `true`) - when set to `false`, a lighter base client variant is generated that omits multipart file upload support.
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
