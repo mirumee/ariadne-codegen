@@ -75,6 +75,7 @@ Optional settings:
 - `include_all_enums` (defaults to `true`) - a flag specifying whether to include all enums defined in the schema, or only those used in supplied operations
 - `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
 - `opentelemetry_client` (defaults to `false`) - default base clients don't support any performance tracing. Change this option to `true` to use the base client with Open Telemetry support.
+- `multipart_uploads` (defaults to `true`) - when set to `false`, a lighter base client variant is generated that omits multipart file upload support.
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
@@ -245,6 +246,13 @@ By default we use this class to represent graphql scalar `Upload`. For schema wi
 ```toml
 [tool.ariadne-codegen.scalars.OTHERSCALAR]
 type = "Upload"
+```
+
+If your schema does not use file uploads, you can set `multipart_uploads = false` in your config to generate a lighter client that omits multipart handling entirely:
+
+```toml
+[tool.ariadne-codegen]
+multipart_uploads = false
 ```
 
 ### Open Telemetry

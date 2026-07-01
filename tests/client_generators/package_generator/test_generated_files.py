@@ -366,6 +366,41 @@ def test_generate_with_conflicting_query_name_raises_parsing_error(
         generator.generate()
 
 
+def test_generate_validates_generated_base_client_name_not_source_file_name(
+    tmp_path, schema, async_base_client_import
+):
+    """Uniqueness check must use the generated base client module name, not the
+    source file name - they differ (e.g. in no-upload mode where the source is
+    ``*_no_upload.py`` but the output is ``async_base_client.py``)."""
+    base_client_file_content = """
+    class TestBaseClient:
+        pass
+    """
+    base_client_file_path = tmp_path / "source_base_client.py"
+    base_client_file_path.write_text(dedent(base_client_file_content))
+    generator = PackageGenerator(
+        package_name="test_graphql_client",
+        target_path=tmp_path.as_posix(),
+        schema=schema,
+        init_generator=InitFileGenerator(),
+        client_generator=ClientGenerator(
+            base_client_import=async_base_client_import,
+            arguments_generator=ArgumentsGenerator(schema=schema),
+        ),
+        enums_generator=EnumsGenerator(schema=schema),
+        input_types_generator=InputTypesGenerator(schema=schema),
+        fragments_generator=FragmentsGenerator(schema=schema, fragments_definitions={}),
+        base_client_name="TestBaseClient",
+        base_client_file_path=base_client_file_path.as_posix(),
+        base_client_module_name="custom_base_client",
+        # collides with the *generated* base client file name, not the source one
+        client_file_name="custom_base_client",
+    )
+
+    with pytest.raises(ParsingError):
+        generator.generate()
+
+
 def test_generate_with_enum_as_query_argument_generates_client_with_correct_method(
     tmp_path, schema, async_base_client_import
 ):

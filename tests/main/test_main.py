@@ -243,6 +243,17 @@ def test_main_shows_version():
             "client_forward_refs_shorter_results",
             CLIENTS_PATH / "client_forward_refs_shorter_results" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "no_multipart_upload" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "no_multipart_upload" / "queries.graphql",
+                    CLIENTS_PATH / "no_multipart_upload" / "schema.graphql",
+                ),
+            ),
+            "expected_client",
+            CLIENTS_PATH / "no_multipart_upload" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
