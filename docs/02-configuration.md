@@ -24,14 +24,17 @@ Exactly one of the following 3 parameters is required. They are mutually exclusi
 - `schema_paths` - list of schema sources resolved at codegen time; each entry may be a local path (file or directory) or a dotted Python attribute path (`pkg.ATTR` or `pkg.callable`). See details below.
 - `remote_schema_url` - url to graphql server, where introspection query can be perfomed
 
-### `schema_paths` resolution
+### `schema_paths` entries
 
-Each entry is resolved in order:
+Each entry in `schema_paths` can be any of the following:
 
-1. **Dotted Python attribute** (no `/` in the string, not ending with a graphql extension) — the attribute is imported via `importlib`:
-   - **callable** → called, expected to return a list of file paths
-   - **string / `Path`** → treated as a directory and searched recursively for `.graphql`, `.graphqls`, `.gql` files
-2. **Local path** (fallback when import fails, or when the entry contains `/` or has a graphql extension) — a file or directory searched recursively.
+- **an absolute import path to a callable** that returns a `list[str]` of file paths, eg. `some_pkg.get_schema_files`
+- **an absolute import path to a variable** holding the path to a single schema file, eg. `some_pkg.SCHEMA_FILE`
+- **an absolute import path to a variable** holding the path to a directory - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_pkg.SCHEMA_DIR`
+- **a path to a directory** - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `./schemas/`
+- **a path to a specific file** to be used, eg. `./foo/bar.graphql`
+
+An import path that cannot be resolved (missing package, or the attribute no longer exists) raises a configuration error rather than being silently skipped.
 
 ```toml
 [tool.ariadne-codegen]

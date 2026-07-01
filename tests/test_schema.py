@@ -6,6 +6,7 @@ from graphql import GraphQLSchema, OperationDefinitionNode, build_schema
 
 from ariadne_codegen.exceptions import (
     IntrospectionError,
+    InvalidConfiguration,
     InvalidGraphqlSyntax,
     InvalidOperationForSchema,
 )
@@ -723,18 +724,57 @@ def test_resolve_schema_paths_with_path_attribute_pointing_to_directory(
     assert "user.graphql" in names
 
 
-def test_resolve_schema_paths_falls_back_to_local_path_on_import_error(mocker):
+def test_resolve_schema_paths_raises_invalid_configuration_on_import_error(mocker):
     mocker.patch(
         "ariadne_codegen.schema.importlib.import_module",
         side_effect=ImportError("module not found"),
     )
 
-    result = resolve_schema_paths(["nonexistent_pkg.attr"])
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths(["nonexistent_pkg.attr"])
 
-    assert result == [Path("nonexistent_pkg.attr")]
+
+def test_resolve_schema_paths_raises_invalid_configuration_on_missing_attribute(mocker):
+    mock_module = mocker.Mock(spec=[])
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths(["some_pkg.MISSING_ATTR"])
 
 
-def test_resolve_schema_paths_with_slash_skips_importlib(tmp_path, schema_str, mocker):
+def test_resolve_schema_paths_raises_when_callable_returns_missing_file(
+    tmp_path, mocker
+):
+    missing = tmp_path / "missing.graphql"  # never created
+    mock_module = mocker.Mock()
+    mock_module.get_files = mocker.Mock(return_value=[missing.as_posix()])
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths(["some_pkg.get_files"])
+
+
+def test_resolve_schema_paths_raises_when_variable_points_to_missing_file(
+    tmp_path, mocker
+):
+    missing = tmp_path / "missing.graphql"  # never created
+    mock_module = mocker.Mock()
+    mock_module.SCHEMA_FILE = missing.as_posix()
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths(["some_pkg.SCHEMA_FILE"])
+
+
+def test_resolve_schema_paths_existing_file_skips_importlib(
+    tmp_path, schema_str, mocker
+):
     schema_file = tmp_path / "schema.graphql"
     schema_file.write_text(schema_str, encoding="utf-8")
     mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
@@ -744,24 +784,79 @@ def test_resolve_schema_paths_with_slash_skips_importlib(tmp_path, schema_str, m
     mock_import.assert_not_called()
 
 
-def test_resolve_schema_paths_with_graphql_extension_skips_importlib(
+def test_resolve_schema_paths_accepts_file_with_any_extension(tmp_path, schema_str):
+    schema_file = tmp_path / "my_schema_file.any"
+    schema_file.write_text(schema_str, encoding="utf-8")
+
+    result = resolve_schema_paths([schema_file.as_posix()])
+
+    assert result == [schema_file]
+
+
+def test_resolve_schema_paths_accepts_local_file_with_dots_in_name(
+    tmp_path, schema_str, mocker
+):
+    # a dotted filename must be treated as a local file, not an import path
+    schema_file = tmp_path / "my.schema.graphql"
+    schema_file.write_text(schema_str, encoding="utf-8")
+    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+
+    result = resolve_schema_paths([schema_file.as_posix()])
+
+    assert result == [schema_file]
+    mock_import.assert_not_called()
+
+
+def test_resolve_schema_paths_accepts_local_dir_with_dots_in_name(
+    tmp_path, schema_str, extra_type_str, mocker
+):
+    # a dotted directory path must be treated as a local dir, not an import path
+    schemas_dir = tmp_path / "my.schemas.dir"
+    schemas_dir.mkdir()
+    (schemas_dir / "schema.graphql").write_text(schema_str, encoding="utf-8")
+    (schemas_dir / "user.graphql").write_text(extra_type_str, encoding="utf-8")
+    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+
+    result = resolve_schema_paths([schemas_dir.as_posix()])
+
+    assert {p.name for p in result} == {"schema.graphql", "user.graphql"}
+    mock_import.assert_not_called()
+
+
+def test_resolve_schema_paths_with_path_attribute_pointing_to_file(
     tmp_path, schema_str, mocker
 ):
     schema_file = tmp_path / "schema.graphql"
     schema_file.write_text(schema_str, encoding="utf-8")
-    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+    mock_module = mocker.Mock()
+    mock_module.SCHEMA_FILE = schema_file.as_posix()
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
 
-    resolve_schema_paths(["schema.graphql"])
+    result = resolve_schema_paths(["some_pkg.SCHEMA_FILE"])
 
-    mock_import.assert_not_called()
+    assert result == [schema_file]
 
 
-def test_resolve_schema_paths_with_graphqls_extension_skips_importlib(mocker):
-    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+def test_resolve_schema_paths_raises_invalid_configuration_for_source_without_dot(
+    tmp_path,
+):
+    missing = tmp_path / "does_not_exist"  # neither a file/dir nor a dotted path
 
-    resolve_schema_paths(["types.graphqls"])
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths([missing.name])
 
-    mock_import.assert_not_called()
+
+def test_resolve_schema_paths_raises_invalid_configuration_for_unexpected_type(mocker):
+    mock_module = mocker.Mock()
+    mock_module.NOT_A_PATH = 123  # not callable, not str/Path
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths(["some_pkg.NOT_A_PATH"])
 
 
 def test_get_graphql_schema_from_paths_returns_graphql_schema(

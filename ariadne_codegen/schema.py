@@ -29,10 +29,11 @@ from typing_extensions import Any
 from .client_generators.constants import MIXIN_FROM_NAME, MIXIN_IMPORT_NAME, MIXIN_NAME
 from .exceptions import (
     IntrospectionError,
+    InvalidConfiguration,
     InvalidGraphqlSyntax,
     InvalidOperationForSchema,
 )
-from .settings import IntrospectionSettings
+from .settings import IntrospectionSettings, assert_path_exists
 
 
 def filter_operations_definitions(
@@ -145,39 +146,54 @@ def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
 def resolve_schema_paths(sources: list[str]) -> list[Path]:
     """Resolve a list of schema sources to concrete file paths.
 
-    Each entry is tried as a dotted Python import path first (e.g.
-    ``pkg.SCHEMA_DIR`` or ``pkg.get_schema_files``). If the import fails the
-    entry is treated as a local filesystem path instead.
+    Each entry is first tried as a local filesystem path - a directory (searched
+    recursively for graphql files) or a file. If it points to neither, it is
+    treated as a dotted Python import path (e.g. ``pkg.SCHEMA_DIR`` or
+    ``pkg.get_schema_files``); an import path that cannot be resolved raises
+    ``InvalidConfiguration``.
     """
     result: list[Path] = []
     for source in sources:
-        if (
-            "." in source
-            and "/" not in source
-            and not source.endswith((".graphql", ".graphqls", ".gql"))
-        ):
-            try:
-                module_path, attr = source.rsplit(".", 1)
-                module = importlib.import_module(module_path)
-                obj = getattr(module, attr)
-                if callable(obj):
-                    result.extend(Path(f) for f in obj())
-                elif isinstance(obj, (str, Path)):
-                    dir_path = Path(obj)
-                    if dir_path.is_dir():
-                        result.extend(sorted(walk_graphql_files(dir_path)))
-                    else:
-                        result.append(dir_path)
-                continue
-            except (ImportError, ModuleNotFoundError):
-                pass
-
-        local_path = Path(source)
-        if local_path.is_dir():
-            result.extend(sorted(walk_graphql_files(local_path)))
+        path = Path(source)
+        if path.is_dir():
+            result.extend(sorted(walk_graphql_files(path)))
+        elif path.is_file():
+            result.append(path)
         else:
-            result.append(local_path)
+            resolved = _resolve_import_source(source)
+            for resolved_path in resolved:
+                assert_path_exists(resolved_path.as_posix())
+            result.extend(resolved)
     return result
+
+
+def _resolve_import_source(source: str) -> list[Path]:
+    """Resolve a dotted Python import path to schema file paths.
+
+    The imported object may be a callable returning a list of paths, or a string
+    / ``Path`` pointing to a file or a directory.
+    """
+    try:
+        module_path, attr = source.rsplit(".", 1)
+        module = importlib.import_module(module_path)
+        obj = getattr(module, attr)
+    except (ImportError, AttributeError, ValueError) as exc:
+        raise InvalidConfiguration(
+            f"Could not resolve schema source '{source}'. It is neither an "
+            f"existing file/directory nor an importable attribute: {exc}."
+        ) from exc
+
+    if callable(obj):
+        return [Path(f) for f in obj()]
+    if isinstance(obj, (str, Path)):
+        obj_path = Path(obj)
+        if obj_path.is_dir():
+            return sorted(walk_graphql_files(obj_path))
+        return [obj_path]
+    raise InvalidConfiguration(
+        f"Schema source '{source}' resolved to {type(obj).__name__}; expected a "
+        "path string, a Path, or a callable returning a list of paths."
+    )
 
 
 def get_graphql_schema_from_paths(schema_paths: list[str]) -> GraphQLSchema:

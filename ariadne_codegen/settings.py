@@ -121,6 +121,15 @@ class BaseSettings:
         return bool(self.remote_schema_url)
 
     @property
+    def schema_source(self) -> str:
+        """Return a human-readable description of the configured schema source."""
+        if self.schema_path:
+            return self.schema_path
+        if self.schema_paths:
+            return ", ".join(self.schema_paths)
+        return self.remote_schema_url
+
+    @property
     def introspection_settings(self) -> IntrospectionSettings:
         """
         Return ``IntrospectionSettings`` instance build from provided configuration.
@@ -267,14 +276,6 @@ class ClientSettings(BaseSettings):
             self.base_client_module_name = module_name
 
     @property
-    def schema_source(self) -> str:
-        if self.schema_path:
-            return self.schema_path
-        if self.schema_paths:
-            return ", ".join(self.schema_paths)
-        return self.remote_schema_url
-
-    @property
     def used_settings_message(self) -> str:
         snake_case_msg = (
             "Converting fields and arguments name to snake case."
@@ -355,16 +356,11 @@ class GraphQLSchemaSettings(BaseSettings):
             self._introspection_settings_message() if self.using_remote_schema else ""
         )
 
-        schema_source = self.schema_path or (
-            ", ".join(self.schema_paths)
-            if self.schema_paths
-            else self.remote_schema_url
-        )
         if self.target_file_format == "py":
             return dedent(
                 f"""\
                 Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-                Using schema from {schema_source}
+                Using schema from {self.schema_source}
                 {introspection_msg}
                 Saving graphql schema to: {self.target_file_path}
                 Using {self.schema_variable_name} as variable name for schema.
@@ -376,7 +372,7 @@ class GraphQLSchemaSettings(BaseSettings):
         return dedent(
             f"""\
             Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-            Using schema from {schema_source}
+            Using schema from {self.schema_source}
             {introspection_msg}
             Saving graphql schema to: {self.target_file_path}
             {plugins_msg}

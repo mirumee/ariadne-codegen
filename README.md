@@ -94,18 +94,21 @@ These options control which fields are included in the GraphQL introspection que
 
 `schema_paths` lets you pull type definitions from installed Python packages alongside your local schema files, so codegen can resolve types that live in a shared library without copying them manually.
 
-Each entry in `schema_paths` is resolved in order and can be one of:
+Each entry in `schema_paths` can be any of the following:
 
-- **Local path** — a file (`./shared/types.graphql`) or a directory (`./my_schemas/`). Directories are searched recursively for `.graphql`, `.graphqls`, and `.gql` files.
-- **Dotted Python attribute** — `some_package.SCHEMA_DIR` or `some_package.get_schema_files`. The attribute is looked up via `importlib` at codegen time:
-  - If it is **callable**, it is called and expected to return a list of file paths.
-  - If it is a **string or `Path`**, it is treated as a directory and searched recursively.
+- **an absolute import path to a callable** that returns a `list[str]` of file paths, eg. `some_package.get_schema_files`
+- **an absolute import path to a variable** holding the path to a single schema file, eg. `some_package.SCHEMA_FILE`
+- **an absolute import path to a variable** holding the path to a directory — all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_package.SCHEMA_DIR`
+- **a path to a directory** — all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `./my_schemas/`
+- **a path to a specific file** to be used, eg. `./shared/types.graphql`
+
+An import path that cannot be resolved (missing package, or the attribute no longer exists) raises a configuration error rather than being silently skipped.
 
 ```toml
 [tool.ariadne-codegen]
 schema_paths = [
   "some_gql_commontypes.get_schema_files",   # callable → returns list of paths
-  "other_pkg.SCHEMA_DIR",                     # Path attribute → directory
+  "other_pkg.SCHEMA_DIR",                     # variable → directory
   "./my_other_packages/",                     # local directory
   "./foo/bar.graphql",                        # local file
 ]
