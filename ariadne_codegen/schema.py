@@ -135,12 +135,21 @@ def introspect_remote_schema(
     return cast(IntrospectionQuery, data)
 
 
-def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
-    """Get graphql schema build from provided path."""
-    schema_str = load_graphql_files_from_path(Path(schema_path))
+def _read_graphql_files(paths: list[Path]) -> str:
+    """Read and concatenate the contents of the given graphql files."""
+    return "\n".join(read_graphql_file(path) for path in paths)
+
+
+def _build_schema_from_str(schema_str: str) -> GraphQLSchema:
+    """Build a GraphQLSchema from concatenated schema source."""
     graphql_ast = parse(schema_str)
     schema: GraphQLSchema = build_ast_schema(graphql_ast, assume_valid=True)
     return schema
+
+
+def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
+    """Get graphql schema built from a single file or directory path."""
+    return _build_schema_from_str(load_graphql_files_from_path(Path(schema_path)))
 
 
 def resolve_schema_paths(sources: list[str]) -> list[Path]:
@@ -197,12 +206,9 @@ def _resolve_import_source(source: str) -> list[Path]:
 
 
 def get_graphql_schema_from_paths(schema_paths: list[str]) -> GraphQLSchema:
-    """Get graphql schema built from multiple path sources."""
+    """Get graphql schema built from multiple sources (paths or import paths)."""
     resolved = resolve_schema_paths(schema_paths)
-    schema_str = "\n".join(read_graphql_file(p) for p in resolved)
-    graphql_ast = parse(schema_str)
-    schema: GraphQLSchema = build_ast_schema(graphql_ast, assume_valid=True)
-    return schema
+    return _build_schema_from_str(_read_graphql_files(resolved))
 
 
 def load_graphql_files_from_path(path: Path) -> str:
@@ -211,8 +217,7 @@ def load_graphql_files_from_path(path: Path) -> str:
     If path is a directory, collect schemas from multiple files.
     """
     if path.is_dir():
-        schema_list = [read_graphql_file(f) for f in sorted(walk_graphql_files(path))]
-        return "\n".join(schema_list)
+        return _read_graphql_files(sorted(walk_graphql_files(path)))
     return read_graphql_file(path.resolve())
 
 
