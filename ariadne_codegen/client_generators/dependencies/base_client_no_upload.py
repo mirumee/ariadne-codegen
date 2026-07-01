@@ -1,5 +1,4 @@
-import json
-from typing import Any, Optional, TypeVar, cast
+from typing import Any, Optional, Protocol, TypeVar, cast
 
 import httpx
 from pydantic import BaseModel
@@ -12,6 +11,27 @@ from .exceptions import (
     GraphQLClientInvalidResponseError,
 )
 
+
+class Response(Protocol):
+    status_code: int
+
+    def json(self, **kwargs: Any) -> Any: ...
+
+
+class HttpClient(Protocol):
+    def post(
+        self,
+        url: Any | str,
+        json: Any | None = None,
+        data: Any | None = None,
+        files: Any | None = None,
+        headers: Any | None = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+    def close(self) -> None: ...
+
+
 Self = TypeVar("Self", bound="BaseClient")
 
 
@@ -20,7 +40,7 @@ class BaseClient:
         self,
         url: str = "",
         headers: Optional[dict[str, str]] = None,
-        http_client: Optional[httpx.Client] = None,
+        http_client: Optional[HttpClient] = None,
     ) -> None:
         self.url = url
         self.headers = headers
@@ -44,7 +64,7 @@ class BaseClient:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         processed_variables = (
             self._convert_dict_to_json_serializable(variables) if variables else {}
         )
@@ -55,8 +75,8 @@ class BaseClient:
             **kwargs,
         )
 
-    def get_data(self, response: httpx.Response) -> dict[str, Any]:
-        if not response.is_success:
+    def get_data(self, response: Response) -> dict[str, Any]:
+        if not (200 <= response.status_code <= 299):
             raise GraphQLClientHttpError(
                 status_code=response.status_code, response=response
             )
@@ -103,22 +123,15 @@ class BaseClient:
         operation_name: Optional[str],
         variables: dict[str, Any],
         **kwargs: Any,
-    ) -> httpx.Response:
-        headers: dict[str, str] = {"Content-type": "application/json"}
-        headers.update(kwargs.get("headers", {}))
-
-        merged_kwargs: dict[str, Any] = kwargs.copy()
-        merged_kwargs["headers"] = headers
-
+    ) -> Response:
         return self.http_client.post(
             url=self.url,
-            content=json.dumps(
+            json=to_jsonable_python(
                 {
                     "query": query,
                     "operationName": operation_name,
                     "variables": variables,
-                },
-                default=to_jsonable_python,
+                }
             ),
-            **merged_kwargs,
+            **kwargs,
         )
