@@ -1,7 +1,8 @@
+import asyncio
 import enum
 import json
 from collections.abc import AsyncIterator
-from typing import IO, Any, Optional, TypeVar, cast
+from typing import IO, Any, Optional, Protocol, TypeVar, cast
 from uuid import uuid4
 
 import httpx
@@ -10,6 +11,7 @@ from pydantic_core import to_jsonable_python
 
 from .base_model import UNSET, Upload
 from .exceptions import (
+    GraphQLClientError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQLClientInvalidMessageFormat,
@@ -44,6 +46,26 @@ except ImportError:
         raise NotImplementedError("Subscriptions require 'websockets' package.")
 
 
+class Response(Protocol):
+    status_code: int
+
+    def json(self, **kwargs: Any) -> Any: ...
+
+
+class HttpClient(Protocol):
+    async def post(
+        self,
+        url: Any | str,
+        json: Any | None = None,
+        data: Any | None = None,
+        files: Any | None = None,
+        headers: Any | None = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+    async def aclose(self) -> None: ...
+
+
 Self = TypeVar("Self", bound="AsyncBaseClient")
 
 GRAPHQL_TRANSPORT_WS = "graphql-transport-ws"
@@ -65,7 +87,7 @@ class AsyncBaseClient:
         self,
         url: str = "",
         headers: Optional[dict[str, str]] = None,
-        http_client: Optional[httpx.AsyncClient] = None,
+        http_client: Optional[HttpClient] = None,
         ws_url: str = "",
         ws_headers: Optional[dict[str, Any]] = None,
         ws_origin: Optional[str] = None,
@@ -99,7 +121,7 @@ class AsyncBaseClient:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         processed_variables, files, files_map = self._process_variables(variables)
 
         if files and files_map:
@@ -119,8 +141,8 @@ class AsyncBaseClient:
             **kwargs,
         )
 
-    def get_data(self, response: httpx.Response) -> dict[str, Any]:
-        if not response.is_success:
+    def get_data(self, response: Response) -> dict[str, Any]:
+        if not (200 <= response.status_code <= 299):
             raise GraphQLClientHttpError(
                 status_code=response.status_code, response=response
             )
@@ -153,7 +175,7 @@ class AsyncBaseClient:
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         headers = self.ws_headers.copy()
-        headers.update(kwargs.get("additional_headers", {}))
+        headers.update(kwargs.pop("additional_headers", {}))
 
         merged_kwargs: dict[str, Any] = {"origin": self.ws_origin}
         merged_kwargs.update(kwargs)
@@ -166,12 +188,17 @@ class AsyncBaseClient:
             **merged_kwargs,
         ) as websocket:
             await self._send_connection_init(websocket)
-            # wait for connection_ack from server
-            await self._handle_ws_message(
-                await websocket.recv(),
-                websocket,
-                expected_type=GraphQLTransportWSMessageType.CONNECTION_ACK,
-            )
+            # Wait for connection_ack; some servers (e.g. Hasura) send ping before
+            # connection_ack, so we loop and handle pings until we get ack.
+            try:
+                await asyncio.wait_for(
+                    self._wait_for_connection_ack(websocket),
+                    timeout=5.0,
+                )
+            except asyncio.TimeoutError as exc:
+                raise GraphQLClientError(
+                    "Connection ack not received within 5 seconds"
+                ) from exc
             await self._send_subscribe(
                 websocket,
                 operation_id=operation_id,
@@ -182,7 +209,7 @@ class AsyncBaseClient:
 
             async for message in websocket:
                 data = await self._handle_ws_message(message, websocket)
-                if data:
+                if data and "connection_ack" not in data:
                     yield data
 
     def _process_variables(
@@ -262,7 +289,7 @@ class AsyncBaseClient:
         files: dict[str, tuple[str, IO[bytes], str]],
         files_map: dict[str, list[str]],
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         data = {
             "operations": json.dumps(
                 {
@@ -285,24 +312,17 @@ class AsyncBaseClient:
         operation_name: Optional[str],
         variables: dict[str, Any],
         **kwargs: Any,
-    ) -> httpx.Response:
-        headers: dict[str, str] = {"Content-type": "application/json"}
-        headers.update(kwargs.get("headers", {}))
-
-        merged_kwargs: dict[str, Any] = kwargs.copy()
-        merged_kwargs["headers"] = headers
-
+    ) -> Response:
         return await self.http_client.post(
             url=self.url,
-            content=json.dumps(
+            json=to_jsonable_python(
                 {
                     "query": query,
                     "operationName": operation_name,
                     "variables": variables,
-                },
-                default=to_jsonable_python,
+                }
             ),
-            **merged_kwargs,
+            **kwargs,
         )
 
     async def _send_connection_init(self, websocket: ClientConnection) -> None:
@@ -312,6 +332,13 @@ class AsyncBaseClient:
         if self.ws_connection_init_payload:
             payload["payload"] = self.ws_connection_init_payload
         await websocket.send(json.dumps(payload))
+
+    async def _wait_for_connection_ack(self, websocket: ClientConnection) -> None:
+        """Read messages until connection_ack; handle ping/pong in between."""
+        async for message in websocket:
+            data = await self._handle_ws_message(message, websocket)
+            if data is not None and "connection_ack" in data:
+                return
 
     async def _send_subscribe(
         self,
@@ -373,5 +400,7 @@ class AsyncBaseClient:
             raise GraphQLClientGraphQLMultiError.from_errors_dicts(
                 errors_dicts=payload, data=message_dict
             )
+        elif type_ == GraphQLTransportWSMessageType.CONNECTION_ACK:
+            return {"connection_ack": True}
 
         return None

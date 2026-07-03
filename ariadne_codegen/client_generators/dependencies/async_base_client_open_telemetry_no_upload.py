@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from typing import (
     Any,
     Optional,
+    Protocol,
     TypeVar,
     Union,
     cast,
@@ -72,6 +73,26 @@ except ImportError:
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
 
+class Response(Protocol):
+    status_code: int
+
+    def json(self, **kwargs: Any) -> Any: ...
+
+
+class HttpClient(Protocol):
+    async def post(
+        self,
+        url: Any | str,
+        json: Any | None = None,
+        data: Any | None = None,
+        files: Any | None = None,
+        headers: Any | None = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+    async def aclose(self) -> None: ...
+
+
 Self = TypeVar("Self", bound="AsyncBaseClientOpenTelemetry")
 
 GRAPHQL_TRANSPORT_WS = "graphql-transport-ws"
@@ -93,7 +114,7 @@ class AsyncBaseClientOpenTelemetry:
         self,
         url: str = "",
         headers: Optional[dict[str, str]] = None,
-        http_client: Optional[httpx.AsyncClient] = None,
+        http_client: Optional[HttpClient] = None,
         ws_url: str = "",
         ws_headers: Optional[dict[str, Any]] = None,
         ws_origin: Optional[str] = None,
@@ -140,7 +161,7 @@ class AsyncBaseClientOpenTelemetry:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         if self.tracer:
             return await self._execute_with_telemetry(
                 query=query,
@@ -153,8 +174,8 @@ class AsyncBaseClientOpenTelemetry:
             query=query, operation_name=operation_name, variables=variables, **kwargs
         )
 
-    def get_data(self, response: httpx.Response) -> dict[str, Any]:
-        if not response.is_success:
+    def get_data(self, response: Response) -> dict[str, Any]:
+        if not (200 <= response.status_code <= 299):
             raise GraphQLClientHttpError(
                 status_code=response.status_code, response=response
             )
@@ -210,7 +231,7 @@ class AsyncBaseClientOpenTelemetry:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         processed_variables = (
             self._convert_dict_to_json_serializable(variables) if variables else {}
         )
@@ -243,24 +264,17 @@ class AsyncBaseClientOpenTelemetry:
         operation_name: Optional[str],
         variables: dict[str, Any],
         **kwargs: Any,
-    ) -> httpx.Response:
-        headers: dict[str, str] = {"Content-type": "application/json"}
-        headers.update(kwargs.get("headers", {}))
-
-        merged_kwargs: dict[str, Any] = kwargs.copy()
-        merged_kwargs["headers"] = headers
-
+    ) -> Response:
         return await self.http_client.post(
             url=self.url,
-            content=json.dumps(
+            json=to_jsonable_python(
                 {
                     "query": query,
                     "operationName": operation_name,
                     "variables": variables,
-                },
-                default=to_jsonable_python,
+                }
             ),
-            **merged_kwargs,
+            **kwargs,
         )
 
     async def _execute_ws(
@@ -380,7 +394,7 @@ class AsyncBaseClientOpenTelemetry:
         operation_name: Optional[str] = None,
         variables: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         with self.tracer.start_as_current_span(  # type: ignore
             self.root_span_name, context=self.root_context
         ) as root_span:
@@ -405,7 +419,7 @@ class AsyncBaseClientOpenTelemetry:
         operation_name: Optional[str],
         variables: dict[str, Any],
         **kwargs: Any,
-    ) -> httpx.Response:
+    ) -> Response:
         with self.tracer.start_as_current_span(  # type: ignore
             "json request", context=set_span_in_context(root_span)
         ) as span:
