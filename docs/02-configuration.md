@@ -26,15 +26,13 @@ Exactly one of the following 3 parameters is required. They are mutually exclusi
 
 ### `schema_paths` entries
 
-Each entry in `schema_paths` can be any of the following:
+Each entry in `schema_paths` must be one of the following:
 
 - **an absolute import path to a callable** that returns a `list[str]` of file paths, eg. `some_pkg.get_schema_files`
 - **an absolute import path to a variable** holding the path to a single schema file, eg. `some_pkg.SCHEMA_FILE`
 - **an absolute import path to a variable** holding the path to a directory - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_pkg.SCHEMA_DIR`
 - **a path to a directory** - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `./schemas/`
 - **a path to a specific file** to be used, eg. `./foo/bar.graphql`
-
-An import path that cannot be resolved (missing package, or the attribute no longer exists) raises a configuration error rather than being silently skipped.
 
 ```toml
 [tool.ariadne-codegen]

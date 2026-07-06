@@ -94,15 +94,13 @@ These options control which fields are included in the GraphQL introspection que
 
 `schema_paths` lets you pull type definitions from installed Python packages alongside your local schema files, so codegen can resolve types that live in a shared library without copying them manually.
 
-Each entry in `schema_paths` can be any of the following:
+Each entry in `schema_paths` must be one of the following:
 
 - **an absolute import path to a callable** that returns a `list[str]` of file paths, eg. `some_package.get_schema_files`
 - **an absolute import path to a variable** holding the path to a single schema file, eg. `some_package.SCHEMA_FILE`
 - **an absolute import path to a variable** holding the path to a directory — all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_package.SCHEMA_DIR`
 - **a path to a directory** — all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `./my_schemas/`
 - **a path to a specific file** to be used, eg. `./shared/types.graphql`
-
-An import path that cannot be resolved (missing package, or the attribute no longer exists) raises a configuration error rather than being silently skipped.
 
 ```toml
 [tool.ariadne-codegen]

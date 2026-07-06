@@ -149,7 +149,7 @@ def _build_schema_from_str(schema_str: str) -> GraphQLSchema:
 
 def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
     """Get graphql schema built from a single file or directory path."""
-    return _build_schema_from_str(load_graphql_files_from_path(Path(schema_path)))
+    return get_graphql_schema_from_paths([schema_path])
 
 
 def resolve_schema_paths(sources: list[str]) -> list[Path]:

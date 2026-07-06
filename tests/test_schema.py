@@ -657,36 +657,18 @@ def test_introspect_remote_schema_uses_default_introspection_settings_when_not_p
     )
 
 
-def test_resolve_schema_paths_with_single_file(tmp_path, schema_str):
-    schema_file = tmp_path / "schema.graphql"
-    schema_file.write_text(schema_str, encoding="utf-8")
-
-    result = resolve_schema_paths([schema_file.as_posix()])
-
-    assert result == [schema_file]
-
-
-def test_resolve_schema_paths_with_directory(schemas_directory):
-    result = resolve_schema_paths([schemas_directory.as_posix()])
-
-    names = {p.name for p in result}
-    assert "schema.graphql" in names
-    assert "user.graphql" in names
-
-
-def test_resolve_schema_paths_with_multiple_local_sources(
-    tmp_path, schema_str, extra_type_str
+def test_resolve_schema_paths_with_local_files_and_directories(
+    tmp_path, schema_str, schemas_directory
 ):
-    file1 = tmp_path / "schema.graphql"
-    file1.write_text(schema_str, encoding="utf-8")
-    file2 = tmp_path / "user.graphql"
-    file2.write_text(extra_type_str, encoding="utf-8")
+    single_file = tmp_path / "extra.graphql"
+    single_file.write_text(schema_str, encoding="utf-8")
 
-    result = resolve_schema_paths([file1.as_posix(), file2.as_posix()])
+    result = resolve_schema_paths(
+        [single_file.as_posix(), schemas_directory.as_posix()]
+    )
 
-    assert file1 in result
-    assert file2 in result
-    assert len(result) == 2
+    assert single_file in result
+    assert {"schema.graphql", "user.graphql"}.issubset({p.name for p in result})
 
 
 def test_resolve_schema_paths_with_callable_python_attribute(
@@ -722,6 +704,49 @@ def test_resolve_schema_paths_with_path_attribute_pointing_to_directory(
     names = {p.name for p in result}
     assert "schema.graphql" in names
     assert "user.graphql" in names
+
+
+def test_resolve_schema_paths_with_path_attribute_pointing_to_file(
+    tmp_path, schema_str, mocker
+):
+    schema_file = tmp_path / "schema.graphql"
+    schema_file.write_text(schema_str, encoding="utf-8")
+    mock_module = mocker.Mock()
+    mock_module.SCHEMA_FILE = schema_file.as_posix()
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    result = resolve_schema_paths(["some_pkg.SCHEMA_FILE"])
+
+    assert result == [schema_file]
+
+
+def test_resolve_schema_paths_accepts_file_with_any_extension(tmp_path, schema_str):
+    schema_file = tmp_path / "my_schema_file.any"
+    schema_file.write_text(schema_str, encoding="utf-8")
+
+    result = resolve_schema_paths([schema_file.as_posix()])
+
+    assert result == [schema_file]
+
+
+def test_resolve_schema_paths_accepts_local_dotted_names(
+    tmp_path, schema_str, extra_type_str, mocker
+):
+    # dotted file/directory names must be treated as local paths, not import paths
+    dotted_file = tmp_path / "my.schema.graphql"
+    dotted_file.write_text(schema_str, encoding="utf-8")
+    dotted_dir = tmp_path / "my.schemas.dir"
+    dotted_dir.mkdir()
+    (dotted_dir / "user.graphql").write_text(extra_type_str, encoding="utf-8")
+    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+
+    result = resolve_schema_paths([dotted_file.as_posix(), dotted_dir.as_posix()])
+
+    assert dotted_file in result
+    assert {"my.schema.graphql", "user.graphql"} == {p.name for p in result}
+    mock_import.assert_not_called()
 
 
 def test_resolve_schema_paths_raises_invalid_configuration_on_import_error(mocker):
@@ -770,73 +795,6 @@ def test_resolve_schema_paths_raises_when_variable_points_to_missing_file(
 
     with pytest.raises(InvalidConfiguration):
         resolve_schema_paths(["some_pkg.SCHEMA_FILE"])
-
-
-def test_resolve_schema_paths_existing_file_skips_importlib(
-    tmp_path, schema_str, mocker
-):
-    schema_file = tmp_path / "schema.graphql"
-    schema_file.write_text(schema_str, encoding="utf-8")
-    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
-
-    resolve_schema_paths([schema_file.as_posix()])
-
-    mock_import.assert_not_called()
-
-
-def test_resolve_schema_paths_accepts_file_with_any_extension(tmp_path, schema_str):
-    schema_file = tmp_path / "my_schema_file.any"
-    schema_file.write_text(schema_str, encoding="utf-8")
-
-    result = resolve_schema_paths([schema_file.as_posix()])
-
-    assert result == [schema_file]
-
-
-def test_resolve_schema_paths_accepts_local_file_with_dots_in_name(
-    tmp_path, schema_str, mocker
-):
-    # a dotted filename must be treated as a local file, not an import path
-    schema_file = tmp_path / "my.schema.graphql"
-    schema_file.write_text(schema_str, encoding="utf-8")
-    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
-
-    result = resolve_schema_paths([schema_file.as_posix()])
-
-    assert result == [schema_file]
-    mock_import.assert_not_called()
-
-
-def test_resolve_schema_paths_accepts_local_dir_with_dots_in_name(
-    tmp_path, schema_str, extra_type_str, mocker
-):
-    # a dotted directory path must be treated as a local dir, not an import path
-    schemas_dir = tmp_path / "my.schemas.dir"
-    schemas_dir.mkdir()
-    (schemas_dir / "schema.graphql").write_text(schema_str, encoding="utf-8")
-    (schemas_dir / "user.graphql").write_text(extra_type_str, encoding="utf-8")
-    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
-
-    result = resolve_schema_paths([schemas_dir.as_posix()])
-
-    assert {p.name for p in result} == {"schema.graphql", "user.graphql"}
-    mock_import.assert_not_called()
-
-
-def test_resolve_schema_paths_with_path_attribute_pointing_to_file(
-    tmp_path, schema_str, mocker
-):
-    schema_file = tmp_path / "schema.graphql"
-    schema_file.write_text(schema_str, encoding="utf-8")
-    mock_module = mocker.Mock()
-    mock_module.SCHEMA_FILE = schema_file.as_posix()
-    mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
-    )
-
-    result = resolve_schema_paths(["some_pkg.SCHEMA_FILE"])
-
-    assert result == [schema_file]
 
 
 def test_resolve_schema_paths_raises_invalid_configuration_for_source_without_dot(
