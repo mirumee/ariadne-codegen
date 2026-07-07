@@ -2,7 +2,6 @@
 
 import ast
 
-import pytest
 from graphql import OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.client_generators.constants import TYPENAME_ALIAS
@@ -28,7 +27,6 @@ SCHEMA = """
 """
 
 
-@pytest.mark.xfail(reason="Codegen emits duplicate typename__ for multi-interface types")
 def test_no_duplicate_typename_when_type_implements_multiple_interfaces():
     """Codegen produces duplicate typename__ fields when a type implements
     multiple interfaces and the query spreads on both with __typename.

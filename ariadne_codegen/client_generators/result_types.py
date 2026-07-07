@@ -352,7 +352,15 @@ class ResultTypesGenerator:
         self._fragments_used_as_mixins = self._fragments_used_as_mixins.union(
             set(fragments)
         )
-        return fields, fragments
+
+        seen_names: set[str] = set()
+        deduplicated: list[FieldNode] = []
+        for field in fields:
+            name = field.alias.value if field.alias else field.name.value
+            if name not in seen_names:
+                seen_names.add(name)
+                deduplicated.append(field)
+        return deduplicated, fragments
 
     def _get_inline_fragment_root_type(
         self, selection_value: str, root_type: str
