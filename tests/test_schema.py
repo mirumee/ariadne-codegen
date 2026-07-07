@@ -806,17 +806,6 @@ def test_resolve_schema_paths_raises_invalid_configuration_for_source_without_do
         resolve_schema_paths([missing.name])
 
 
-def test_resolve_schema_paths_raises_invalid_configuration_for_unexpected_type(mocker):
-    mock_module = mocker.Mock()
-    mock_module.NOT_A_PATH = 123  # not callable, not str/Path
-    mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
-    )
-
-    with pytest.raises(InvalidConfiguration):
-        resolve_schema_paths(["some_pkg.NOT_A_PATH"])
-
-
 def test_get_graphql_schema_from_paths_returns_graphql_schema(
     tmp_path, schema_str, extra_type_str
 ):

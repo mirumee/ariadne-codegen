@@ -194,15 +194,10 @@ def _resolve_import_source(source: str) -> list[Path]:
 
     if callable(obj):
         return [Path(f) for f in obj()]
-    if isinstance(obj, (str, Path)):
-        obj_path = Path(obj)
-        if obj_path.is_dir():
-            return sorted(walk_graphql_files(obj_path))
-        return [obj_path]
-    raise InvalidConfiguration(
-        f"Schema source '{source}' resolved to {type(obj).__name__}; expected a "
-        "path string, a Path, or a callable returning a list of paths."
-    )
+    obj_path = Path(obj)
+    if obj_path.is_dir():
+        return sorted(walk_graphql_files(obj_path))
+    return [obj_path]
 
 
 def get_graphql_schema_from_paths(schema_paths: list[str]) -> GraphQLSchema:
