@@ -797,6 +797,39 @@ def test_resolve_schema_paths_raises_when_variable_points_to_missing_file(
         resolve_schema_paths(["some_pkg.SCHEMA_FILE"])
 
 
+def test_resolve_schema_paths_raises_when_callable_returns_non_iterable(mocker):
+    mock_module = mocker.Mock()
+    mock_module.get_files = mocker.Mock(return_value=42)  # not a list of paths
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths(["some_pkg.get_files"])
+
+
+def test_resolve_schema_paths_raises_when_callable_returns_invalid_item(mocker):
+    mock_module = mocker.Mock()
+    mock_module.get_files = mocker.Mock(return_value=[None, 123])  # not paths
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths(["some_pkg.get_files"])
+
+
+def test_resolve_schema_paths_raises_when_variable_is_wrong_type(mocker):
+    mock_module = mocker.Mock()
+    mock_module.NOT_A_PATH = 123  # not callable, not str/Path
+    mocker.patch(
+        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+    )
+
+    with pytest.raises(InvalidConfiguration):
+        resolve_schema_paths(["some_pkg.NOT_A_PATH"])
+
+
 def test_resolve_schema_paths_raises_invalid_configuration_for_source_without_dot(
     tmp_path,
 ):

@@ -1,5 +1,5 @@
 import importlib
-from collections.abc import Generator, Sequence
+from collections.abc import Generator, Iterable, Sequence
 from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, cast
@@ -179,8 +179,8 @@ def resolve_schema_paths(sources: list[str]) -> list[Path]:
 def _resolve_import_source(source: str) -> list[Path]:
     """Resolve a dotted Python import path to schema file paths.
 
-    The imported object may be a callable returning a list of paths, or a string
-    / ``Path`` pointing to a file or a directory.
+    The imported object must be a callable returning a list of file paths, or a
+    string / ``Path`` pointing to a file or a directory.
     """
     try:
         module_path, attr = source.rsplit(".", 1)
@@ -193,11 +193,30 @@ def _resolve_import_source(source: str) -> list[Path]:
         ) from exc
 
     if callable(obj):
-        return [Path(f) for f in obj()]
-    obj_path = Path(obj)
+        returned = obj()
+        if isinstance(returned, (str, bytes, Path)) or not isinstance(
+            returned, Iterable
+        ):
+            raise InvalidConfiguration(
+                f"Schema source '{source}' must be a callable returning a list of "
+                f"paths, but it returned {type(returned).__name__}."
+            )
+        return [_coerce_schema_path(source, item) for item in returned]
+
+    obj_path = _coerce_schema_path(source, obj)
     if obj_path.is_dir():
         return sorted(walk_graphql_files(obj_path))
     return [obj_path]
+
+
+def _coerce_schema_path(source: str, value: object) -> Path:
+    """Coerce an imported value to a Path, or raise ``InvalidConfiguration``."""
+    if isinstance(value, (str, Path)):
+        return Path(value)
+    raise InvalidConfiguration(
+        f"Schema source '{source}' resolved to an invalid path value "
+        f"{value!r} ({type(value).__name__}); expected a str or Path."
+    )
 
 
 def get_graphql_schema_from_paths(schema_paths: list[str]) -> GraphQLSchema:
