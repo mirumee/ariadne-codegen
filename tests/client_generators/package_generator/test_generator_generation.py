@@ -42,7 +42,6 @@ def test_get_package_generator_without_default_settings(tmp_path: Path):
 
     settings_without_defaults = ClientSettings(
         schema_path=schema_path.as_posix(),
-        remote_schema_url="remote_schema_url",
         remote_schema_headers={"header": "header"},
         remote_schema_verify_ssl=False,
         remote_schema_timeout=5,

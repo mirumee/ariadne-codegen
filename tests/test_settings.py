@@ -583,32 +583,24 @@ def test_using_remote_schema_false_when_only_schema_path_is_provided(tmp_path):
     assert settings.using_remote_schema is False
 
 
-def test_using_remote_schema_false_when_both_provided(tmp_path):
+def test_client_settings_schema_path_and_remote_url_raises_invalid_configuration(
+    tmp_path,
+):
     """
-    Test that using_remote_schema is False when both schema_path and remote_schema_url
-    are provided.
+    Test that providing both schema_path and remote_schema_url is rejected:
+    only one schema source may be selected at a time.
     """
     schema_path = tmp_path / "schema.graphql"
     schema_path.touch()
     queries_path = tmp_path / "queries.graphql"
     queries_path.touch()
 
-    base_client_file_content = """
-    class BaseClient:
-        pass
-    """
-    base_client_file_path = tmp_path / "base_client.py"
-    base_client_file_path.write_text(dedent(base_client_file_content))
-
-    settings = ClientSettings(
-        schema_path=schema_path.as_posix(),
-        remote_schema_url="http://testserver/graphql/",
-        queries_path=queries_path.as_posix(),
-        base_client_name="BaseClient",
-        base_client_file_path=base_client_file_path.as_posix(),
-    )
-
-    assert settings.using_remote_schema is False
+    with pytest.raises(InvalidConfiguration):
+        ClientSettings(
+            schema_path=schema_path.as_posix(),
+            remote_schema_url="http://testserver/graphql/",
+            queries_path=queries_path.as_posix(),
+        )
 
 
 def test_introspection_settings_defaults(tmp_path):
@@ -721,9 +713,123 @@ def test_graphql_schema_settings_used_settings_message_includes_introspection(
     )
     assert "Introspection settings:" not in local_settings.used_settings_message
 
-    both_settings = GraphQLSchemaSettings(
-        schema_path=schema_path.as_posix(),
-        remote_schema_url="http://testserver/graphql/",
-        introspection_specified_by_url=True,
+
+def test_client_settings_with_schema_paths_is_valid(tmp_path):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_paths=["pkg.get_files", "./schemas/"],
+        queries_path=queries_path.as_posix(),
     )
-    assert "Introspection settings:" not in both_settings.used_settings_message
+
+    assert settings.schema_paths == ["pkg.get_files", "./schemas/"]
+
+
+def test_graphql_schema_settings_with_schema_paths_is_valid():
+    settings = GraphQLSchemaSettings(schema_paths=["pkg.SCHEMA_DIR"])
+
+    assert settings.schema_paths == ["pkg.SCHEMA_DIR"]
+
+
+def test_client_settings_with_schema_path_and_schema_paths_raises_invalid_configuration(
+    tmp_path,
+):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    with pytest.raises(InvalidConfiguration):
+        ClientSettings(
+            schema_path=schema_path.as_posix(),
+            schema_paths=["pkg.get_files"],
+            queries_path=queries_path.as_posix(),
+        )
+
+
+def test_graphql_schema_settings_schema_path_and_paths_raises_invalid_configuration(
+    tmp_path,
+):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+
+    with pytest.raises(InvalidConfiguration):
+        GraphQLSchemaSettings(
+            schema_path=schema_path.as_posix(),
+            schema_paths=["pkg.get_files"],
+        )
+
+
+def test_client_settings_schema_paths_and_remote_url_raises_invalid_configuration(
+    tmp_path,
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    with pytest.raises(InvalidConfiguration):
+        ClientSettings(
+            schema_paths=["pkg.get_files"],
+            remote_schema_url="http://testserver/graphql/",
+            queries_path=queries_path.as_posix(),
+        )
+
+
+def test_client_settings_without_any_schema_source_raises_invalid_configuration(
+    tmp_path,
+):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    with pytest.raises(InvalidConfiguration):
+        ClientSettings(queries_path=queries_path.as_posix())
+
+
+def test_graphql_schema_settings_without_schema_source_raises_invalid_configuration():
+    with pytest.raises(InvalidConfiguration):
+        GraphQLSchemaSettings()
+
+
+def test_using_remote_schema_false_when_schema_paths_provided(tmp_path):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_paths=["pkg.get_files"],
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.using_remote_schema is False
+
+
+def test_client_settings_schema_source_returns_schema_paths_joined(tmp_path):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_paths=["pkg.get_files", "./extra/"],
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.schema_source == "pkg.get_files, ./extra/"
+
+
+def test_client_settings_used_settings_message_includes_schema_paths(tmp_path):
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_paths=["pkg.get_files", "./schemas/"],
+        queries_path=queries_path.as_posix(),
+    )
+
+    result = settings.used_settings_message
+    assert "pkg.get_files" in result
+    assert "./schemas/" in result
+
+
+def test_graphql_schema_settings_used_settings_message_includes_schema_paths():
+    settings = GraphQLSchemaSettings(schema_paths=["pkg.SCHEMA_DIR"])
+
+    result = settings.used_settings_message
+    assert "pkg.SCHEMA_DIR" in result

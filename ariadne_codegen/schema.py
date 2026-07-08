@@ -1,4 +1,5 @@
-from collections.abc import Generator, Sequence
+import importlib
+from collections.abc import Generator, Iterable, Sequence
 from dataclasses import asdict
 from pathlib import Path
 from typing import Optional, cast
@@ -28,10 +29,11 @@ from typing_extensions import Any
 from .client_generators.constants import MIXIN_FROM_NAME, MIXIN_IMPORT_NAME, MIXIN_NAME
 from .exceptions import (
     IntrospectionError,
+    InvalidConfiguration,
     InvalidGraphqlSyntax,
     InvalidOperationForSchema,
 )
-from .settings import IntrospectionSettings
+from .settings import IntrospectionSettings, assert_path_exists
 
 
 def filter_operations_definitions(
@@ -133,12 +135,94 @@ def introspect_remote_schema(
     return cast(IntrospectionQuery, data)
 
 
-def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
-    """Get graphql schema build from provided path."""
-    schema_str = load_graphql_files_from_path(Path(schema_path))
+def _read_graphql_files(paths: list[Path]) -> str:
+    """Read and concatenate the contents of the given graphql files."""
+    return "\n".join(read_graphql_file(path) for path in paths)
+
+
+def _build_schema_from_str(schema_str: str) -> GraphQLSchema:
+    """Build a GraphQLSchema from concatenated schema source."""
     graphql_ast = parse(schema_str)
     schema: GraphQLSchema = build_ast_schema(graphql_ast, assume_valid=True)
     return schema
+
+
+def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
+    """Get graphql schema built from a single file or directory path."""
+    return get_graphql_schema_from_paths([schema_path])
+
+
+def resolve_schema_paths(sources: list[str]) -> list[Path]:
+    """Resolve a list of schema sources to concrete file paths.
+
+    Each entry is first tried as a local filesystem path - a directory (searched
+    recursively for graphql files) or a file. If it points to neither, it is
+    treated as a dotted Python import path (e.g. ``pkg.SCHEMA_DIR`` or
+    ``pkg.get_schema_files``); an import path that cannot be resolved raises
+    ``InvalidConfiguration``.
+    """
+    result: list[Path] = []
+    for source in sources:
+        path = Path(source)
+        if path.is_dir():
+            result.extend(sorted(walk_graphql_files(path)))
+        elif path.is_file():
+            result.append(path)
+        else:
+            resolved = _resolve_import_source(source)
+            for resolved_path in resolved:
+                assert_path_exists(resolved_path.as_posix())
+            result.extend(resolved)
+    return result
+
+
+def _resolve_import_source(source: str) -> list[Path]:
+    """Resolve a dotted Python import path to schema file paths.
+
+    The imported object must be a callable returning a list of file paths, or a
+    string / ``Path`` pointing to a file or a directory.
+    """
+    try:
+        module_path, attr = source.rsplit(".", 1)
+        module = importlib.import_module(module_path)
+        obj = getattr(module, attr)
+    except (ImportError, AttributeError, ValueError) as exc:
+        raise InvalidConfiguration(
+            f"Could not resolve schema source '{source}'. It is neither an "
+            f"existing file/directory nor an importable attribute: {exc}."
+        ) from exc
+
+    if callable(obj):
+        returned = obj()
+        if isinstance(returned, (str, bytes, Path)) or not isinstance(
+            returned, Iterable
+        ):
+            raise InvalidConfiguration(
+                f"Schema source '{source}' must be a callable returning a list of "
+                f"paths, but it returned {type(returned).__name__}."
+            )
+        return [_coerce_schema_path(source, item) for item in returned]
+
+    obj_path = _coerce_schema_path(source, obj)
+    if obj_path.is_dir():
+        return sorted(walk_graphql_files(obj_path))
+    return [obj_path]
+
+
+def _coerce_schema_path(source: str, value: object) -> Path:
+    """Coerce an imported value to a Path, or raise ``InvalidConfiguration``."""
+    if isinstance(value, (str, Path)):
+        return Path(value)
+    raise InvalidConfiguration(
+        f"Schema source '{source}' resolved to an invalid path value "
+        f"{value!r} ({type(value).__name__}); expected a str or Path."
+    )
+
+
+def get_graphql_schema_from_paths(schema_paths: list[str]) -> GraphQLSchema:
+    """Get graphql schema built from multiple sources (paths or import paths)."""
+    resolved = resolve_schema_paths(schema_paths)
+    return _build_schema_from_str(_read_graphql_files(resolved))
 
 
 def load_graphql_files_from_path(path: Path) -> str:
@@ -147,8 +231,7 @@ def load_graphql_files_from_path(path: Path) -> str:
     If path is a directory, collect schemas from multiple files.
     """
     if path.is_dir():
-        schema_list = [read_graphql_file(f) for f in sorted(walk_graphql_files(path))]
-        return "\n".join(schema_list)
+        return _read_graphql_files(sorted(walk_graphql_files(path)))
     return read_graphql_file(path.resolve())
 
 

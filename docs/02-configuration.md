@@ -18,10 +18,32 @@ queries_path = "queries.graphql"
 
 - `queries_path` - path to file/directory with queries (Can be optional if `enable_custom_operations` is used)
 
-One of the following 2 parameters is required, in case of providing both of them `schema_path` is prioritized:
+Exactly one of the following 3 parameters is required. They are mutually exclusive - providing more than one raises a configuration error:
 
 - `schema_path` - path to file/directory with graphql schema
+- `schema_paths` - list of schema sources resolved at codegen time; each entry may be a local path (file or directory) or a dotted Python attribute path (`pkg.ATTR` or `pkg.callable`). See details below.
 - `remote_schema_url` - url to graphql server, where introspection query can be perfomed
+
+### `schema_paths` entries
+
+Each entry in `schema_paths` must be one of the following:
+
+- **an absolute import path to a callable** that returns a `list[str]` of file paths, eg. `some_pkg.get_schema_files`
+- **an absolute import path to a variable** holding the path to a single schema file, eg. `some_pkg.SCHEMA_FILE`
+- **an absolute import path to a variable** holding the path to a directory - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_pkg.SCHEMA_DIR`
+- **a path to a directory** - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `./schemas/`
+- **a path to a specific file** to be used, eg. `./foo/bar.graphql`
+
+```toml
+[tool.ariadne-codegen]
+schema_paths = [
+  "some_gql_commontypes.get_schema_files",
+  "other_pkg.SCHEMA_DIR",
+  "./my_other_packages/",
+  "./foo/bar.graphql",
+]
+queries_path = "queries.graphql"
+```
 
 ## Optional settings:
 
