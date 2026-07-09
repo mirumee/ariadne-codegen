@@ -291,12 +291,27 @@ def process_name(
     return processed_name
 
 
+def _split_leading_comments(code: str) -> tuple[str, str]:
+    """Separate a module's leading comment block from its code.
+
+    `ast.unparse` drops comments, which would otherwise discard the header that
+    `_add_comments_to_code` puts on every generated file.
+    """
+    lines = code.splitlines(keepends=True)
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            return "".join(lines[:index]), "".join(lines[index:])
+    return "", code
+
+
 def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
     """Set a keyword argument on the ``ConfigDict`` call in ``BaseModel``.
 
     Does nothing if the keyword is already present, so explicit user values are
     never overwritten.
     """
+    header, code = _split_leading_comments(code)
     tree = ast.parse(code)
     for node in tree.body:
         if not isinstance(node, ast.ClassDef):
@@ -316,7 +331,7 @@ def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
             if not any(kw.arg == arg for kw in call.keywords):
                 call.keywords.append(ast.keyword(arg=arg, value=value))
     ast.fix_missing_locations(tree)
-    return ast.unparse(tree)
+    return header + ast.unparse(tree)
 
 
 def add_extra_to_base_model(code: str) -> str:

@@ -16,6 +16,7 @@ from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..settings import ClientSettings, CommentsStrategy
 from ..utils import (
+    _format_code,
     add_defer_build_to_base_model,
     add_extra_to_base_model,
     ast_to_raw_str,
@@ -461,11 +462,8 @@ class PackageGenerator:
         }
         for source_path, target_name in files_to_copy.items():
             code = self._add_comments_to_code(source_path.read_text(encoding="utf-8"))
-            is_base_model = source_path == self.base_model_file_path
-            if is_base_model and not self.ignore_extra_fields:
-                code = add_extra_to_base_model(code)
-            if self.defer_model_build and source_path.name == "base_model.py":
-                code = add_defer_build_to_base_model(code)
+            if source_path.name == "base_model.py":
+                code = self._rewrite_base_model(code)
             if self.plugin_manager:
                 code = self.plugin_manager.copy_code(code)
             target_path = self.package_path / target_name
@@ -485,6 +483,19 @@ class PackageGenerator:
             from_="base_model",
             level=1,
         )
+
+    def _rewrite_base_model(self, code: str) -> str:
+        rewritten = code
+        if not self.ignore_extra_fields:
+            rewritten = add_extra_to_base_model(rewritten)
+        if self.defer_model_build:
+            rewritten = add_defer_build_to_base_model(rewritten)
+
+        if rewritten == code:
+            return code
+        # Each rewrite round-trips through `ast.unparse`, which drops the blank
+        # lines and import order of the copied dependency.
+        return _format_code(rewritten, remove_unused_imports=False)
 
     def _generate_init(self):
         init_file_path = self.package_path / "__init__.py"
