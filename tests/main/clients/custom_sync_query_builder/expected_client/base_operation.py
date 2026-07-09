@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
 from graphql import (
     ArgumentNode,
@@ -9,6 +9,8 @@ from graphql import (
     SelectionSetNode,
     VariableNode,
 )
+
+GraphQLFieldT = TypeVar("GraphQLFieldT", bound="GraphQLField")
 
 
 class GraphQLArgument:
@@ -152,3 +154,22 @@ class GraphQLField:
             for subfield in subfields:
                 formatted_variables.update(subfield.get_formatted_variables())
         return formatted_variables
+
+
+class GraphQLLeafField(Generic[GraphQLFieldT]):
+    """
+    Descriptor that builds a fresh field on every access.
+
+    Leaf selections are reached through the class (``ProductFields.name``). A
+    single shared instance would carry ``alias()`` and ``to_ast()`` state from one
+    query into every later one, so each access gets its own field.
+    """
+
+    __slots__ = ("_field_name", "_field_class")
+
+    def __init__(self, field_name: str, field_class: type[GraphQLFieldT]) -> None:
+        self._field_name = field_name
+        self._field_class = field_class
+
+    def __get__(self, instance: object, owner: Optional[type] = None) -> GraphQLFieldT:
+        return self._field_class(self._field_name)
