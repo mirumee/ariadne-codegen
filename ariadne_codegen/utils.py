@@ -13,6 +13,7 @@ from typing import Optional
 
 from graphql import Node
 from pydantic import BaseModel
+from pydantic.alias_generators import to_camel
 
 from .plugins.manager import PluginManager
 
@@ -23,6 +24,24 @@ _SUBPROCESS_TIMEOUT = 30
 # `ruff check --fix` exits 1 when violations it cannot fix remain. That is not an
 # error for us: the fixable ones were still applied.
 _RUFF_CHECK_OK_RETURN_CODES = (0, 1)
+
+PYDANTIC_ALIAS_GENERATORS_MODULE = "pydantic.alias_generators"
+TO_CAMEL_NAME = "to_camel"
+
+
+def needs_explicit_alias(
+    python_name: str, schema_name: str, use_alias_generator: bool
+) -> bool:
+    """Whether a field must carry an explicit `Field(alias=...)`.
+
+    With `alias_generator=to_camel` on the base model, pydantic derives the alias
+    from the Python name, so only the names it cannot reconstruct need spelling
+    out: `__typename`, keyword-escaped names like `list_`, acronyms (`productID`)
+    and schemas that are already snake_case (`some_field` -> `someField`).
+    """
+    if use_alias_generator:
+        return to_camel(python_name) != schema_name
+    return python_name != schema_name
 
 
 @lru_cache(maxsize=1)
@@ -334,6 +353,13 @@ def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
     return header + ast.unparse(tree)
 
 
+def _add_import_to_base_model(code: str, module: str, name: str) -> str:
+    header, body = _split_leading_comments(code)
+    if f"from {module} import {name}" in body:
+        return code
+    return f"{header}from {module} import {name}\n{body}"
+
+
 def add_extra_to_base_model(code: str) -> str:
     "Adds `extra='forbid'` to the ConfigDict in BaseModel if not already present."
     return _set_base_model_config_kwarg(code, "extra", ast.Constant("forbid"))
@@ -342,3 +368,17 @@ def add_extra_to_base_model(code: str) -> str:
 def add_defer_build_to_base_model(code: str) -> str:
     "Adds `defer_build=True` to the ConfigDict in BaseModel if not already present."
     return _set_base_model_config_kwarg(code, "defer_build", ast.Constant(True))
+
+
+def add_alias_generator_to_base_model(code: str) -> str:
+    """Adds `alias_generator=to_camel` to the ConfigDict in BaseModel.
+
+    Generators only emit an explicit `Field(alias=...)` for the fields whose
+    GraphQL name `to_camel` cannot reconstruct, so the two must stay in sync.
+    """
+    code = _set_base_model_config_kwarg(
+        code, "alias_generator", ast.Name(id=TO_CAMEL_NAME)
+    )
+    return _add_import_to_base_model(
+        code, PYDANTIC_ALIAS_GENERATORS_MODULE, TO_CAMEL_NAME
+    )

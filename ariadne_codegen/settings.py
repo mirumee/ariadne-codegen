@@ -186,6 +186,7 @@ class ClientSettings(BaseSettings):
     include_typename: bool = True
     ignore_extra_fields: bool = True
     defer_model_build: bool = False
+    use_alias_generator: bool = False
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
@@ -312,6 +313,12 @@ class ClientSettings(BaseSettings):
             if self.defer_model_build
             else "Building Pydantic models eagerly at import time."
         )
+        use_alias_generator_msg = (
+            "Deriving field aliases with `alias_generator=to_camel` "
+            "(faster import of generated models)."
+            if self.use_alias_generator
+            else "Spelling out a `Field(alias=...)` for every renamed field."
+        )
         introspection_msg = (
             self._introspection_settings_message() if self.using_remote_schema else ""
         )
@@ -334,6 +341,7 @@ class ClientSettings(BaseSettings):
             {async_client_msg}
             {include_typename_msg}
             {defer_model_build_msg}
+            {use_alias_generator_msg}
             {files_to_include_msg}
             {plugins_msg}
             """

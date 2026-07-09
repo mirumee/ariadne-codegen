@@ -1,5 +1,9 @@
 import ast
+import json
 import os
+import subprocess
+import sys
+import textwrap
 from importlib.metadata import version
 from pathlib import Path
 
@@ -264,6 +268,17 @@ def test_main_shows_version():
             ),
             "defer_model_build_client",
             CLIENTS_PATH / "defer_model_build" / "expected_client",
+        ),
+        (
+            (
+                CLIENTS_PATH / "alias_generator" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "alias_generator" / "queries.graphql",
+                    CLIENTS_PATH / "alias_generator" / "schema.graphql",
+                ),
+            ),
+            "alias_generator_client",
+            CLIENTS_PATH / "alias_generator" / "expected_client",
         ),
     ],
     indirect=["project_dir"],
@@ -540,3 +555,76 @@ def test_main_generates_correct_schema_file(project_dir, file_name, expected_fil
     expected = normalise(expected_file_path.read_text())
 
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "project_dir",
+    [
+        (
+            CLIENTS_PATH / "alias_generator" / "pyproject.toml",
+            (
+                CLIENTS_PATH / "alias_generator" / "queries.graphql",
+                CLIENTS_PATH / "alias_generator" / "schema.graphql",
+            ),
+        )
+    ],
+    indirect=True,
+)
+def test_main_alias_generator_keeps_every_effective_alias(project_dir):
+    """`alias_generator=to_camel` must not change what any field is named on the wire.
+
+    Fields whose GraphQL name `to_camel` can reconstruct lose their explicit
+    `Field(alias=...)`; the rest keep it. Asking pydantic for the alias it will
+    really use (rather than reading the generated source) is what guards that
+    split. A schema whose names are already snake_case (`some_field` ->
+    `someField`) would otherwise be silently mis-aliased.
+    """
+    pyproject = (project_dir / "pyproject.toml").read_text()
+
+    assert CliRunner().invoke(main).exit_code == 0
+    with_generator = _resolved_aliases(project_dir, "alias_generator_client")
+
+    (project_dir / "pyproject.toml").write_text(
+        pyproject.replace("use_alias_generator = true", "use_alias_generator = false")
+    )
+    assert CliRunner().invoke(main).exit_code == 0
+    without_generator = _resolved_aliases(project_dir, "alias_generator_client")
+
+    assert with_generator == without_generator
+    # Sanity: fields the generator reconstructs really do carry a derived alias.
+    assert with_generator["ListUsersUsers.first_name"] == "firstName"
+    assert with_generator["ListUsersUsers.some_field"] == "some_field"
+    assert with_generator["GetAccountAccountUser.typename__"] == "__typename"
+
+
+def _resolved_aliases(project_dir: Path, package_name: str) -> dict[str, str]:
+    """Ask pydantic which name each generated field validates/serialises under."""
+    script = textwrap.dedent(
+        f"""
+        import importlib, json, pkgutil
+        import {package_name} as package
+
+        aliases = {{}}
+        for module_info in pkgutil.iter_modules(package.__path__):
+            module = importlib.import_module(f"{package_name}.{{module_info.name}}")
+            for attribute_name in dir(module):
+                model = getattr(module, attribute_name)
+                if (
+                    isinstance(model, type)
+                    and hasattr(model, "model_fields")
+                    and model.__module__ == module.__name__
+                ):
+                    for field_name, field in model.model_fields.items():
+                        key = f"{{attribute_name}}.{{field_name}}"
+                        aliases[key] = field.alias or field_name
+        print(json.dumps(aliases, sort_keys=True))
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=project_dir,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return json.loads(result.stdout)

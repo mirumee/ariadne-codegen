@@ -25,7 +25,7 @@ from ..codegen import (
     model_has_forward_refs,
 )
 from ..plugins.manager import PluginManager
-from ..utils import process_name
+from ..utils import needs_explicit_alias, process_name
 from .constants import (
     ALIAS_KEYWORD,
     ANNOTATED,
@@ -56,6 +56,7 @@ class InputTypesGenerator:
         custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
         defer_model_build: bool = False,
+        use_alias_generator: bool = False,
     ) -> None:
         self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
@@ -63,6 +64,7 @@ class InputTypesGenerator:
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
         self.defer_model_build = defer_model_build
+        self.use_alias_generator = use_alias_generator
 
         self._imports = [
             generate_import_from([OPTIONAL, ANY, UNION, ANNOTATED], TYPING_MODULE),
@@ -190,7 +192,7 @@ class InputTypesGenerator:
                 ),
                 lineno=lineno,
             )
-            if name != org_name:
+            if needs_explicit_alias(name, org_name, self.use_alias_generator):
                 field_implementation.value = self._process_field_value(
                     field_implementation=field_implementation, alias=org_name
                 )

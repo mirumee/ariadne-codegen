@@ -17,6 +17,7 @@ from ..plugins.manager import PluginManager
 from ..settings import ClientSettings, CommentsStrategy
 from ..utils import (
     _format_code,
+    add_alias_generator_to_base_model,
     add_defer_build_to_base_model,
     add_extra_to_base_model,
     ast_to_raw_str,
@@ -116,6 +117,7 @@ class PackageGenerator:
         include_typename: bool = True,
         ignore_extra_fields: bool = True,
         defer_model_build: bool = False,
+        use_alias_generator: bool = False,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -173,6 +175,7 @@ class PackageGenerator:
         self.include_typename = include_typename
         self.ignore_extra_fields = ignore_extra_fields
         self.defer_model_build = defer_model_build
+        self.use_alias_generator = use_alias_generator
 
         self._result_types_files: dict[str, ast.Module] = {}
         self._generated_files: list[str] = []
@@ -290,6 +293,7 @@ class PackageGenerator:
             default_optional_fields_to_none=self.default_optional_fields_to_none,
             include_typename=self.include_typename,
             defer_model_build=self.defer_model_build,
+            use_alias_generator=self.use_alias_generator,
         )
         self._unpacked_fragments = self._unpacked_fragments.union(
             query_types_generator.get_unpacked_fragments()
@@ -490,6 +494,8 @@ class PackageGenerator:
             rewritten = add_extra_to_base_model(rewritten)
         if self.defer_model_build:
             rewritten = add_defer_build_to_base_model(rewritten)
+        if self.use_alias_generator:
+            rewritten = add_alias_generator_to_base_model(rewritten)
 
         if rewritten == code:
             return code
@@ -590,6 +596,7 @@ def get_package_generator(
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
         defer_model_build=settings.defer_model_build,
+        use_alias_generator=settings.use_alias_generator,
     )
     fragments_definitions = {f.name.value: f for f in fragments or []}
     fragments_generator = FragmentsGenerator(
@@ -603,6 +610,7 @@ def get_package_generator(
         default_optional_fields_to_none=settings.default_optional_fields_to_none,
         include_typename=settings.include_typename,
         defer_model_build=settings.defer_model_build,
+        use_alias_generator=settings.use_alias_generator,
     )
     custom_fields_generator = CustomFieldsGenerator(
         schema=schema,
@@ -688,4 +696,5 @@ def get_package_generator(
         include_typename=settings.include_typename,
         ignore_extra_fields=settings.ignore_extra_fields,
         defer_model_build=settings.defer_model_build,
+        use_alias_generator=settings.use_alias_generator,
     )

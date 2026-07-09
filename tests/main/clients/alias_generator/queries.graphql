@@ -1,0 +1,23 @@
+query ListUsers($filter: UserFilter) {
+  users(filter: $filter) {
+    id
+    firstName
+    lastName
+    some_field
+    productID
+    URL
+  }
+}
+
+query GetAccount {
+  account {
+    ... on User {
+      id
+      firstName
+    }
+    ... on Admin {
+      id
+      accessLevel
+    }
+  }
+}
