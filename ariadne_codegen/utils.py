@@ -1,9 +1,11 @@
 import ast
 import builtins
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+from functools import lru_cache
 from keyword import iskeyword
 from pathlib import Path
 from textwrap import indent
@@ -18,63 +20,75 @@ _LINE_LENGTH = 88
 _TARGET_VERSION = "py310"
 _SUBPROCESS_TIMEOUT = 30
 
+# `ruff check --fix` exits 1 when violations it cannot fix remain. That is not an
+# error for us: the fixable ones were still applied.
+_RUFF_CHECK_OK_RETURN_CODES = (0, 1)
+
+
+@lru_cache(maxsize=1)
+def _ruff_command() -> list[str]:
+    """Command prefix used to invoke ruff.
+
+    Running the binary directly skips a full Python interpreter startup on every
+    call, which otherwise dominates generation time for packages with many
+    modules. Falls back to `python -m ruff` if the binary cannot be located.
+    """
+    try:
+        from ruff.__main__ import find_ruff_bin
+
+        return [find_ruff_bin()]
+    except (ImportError, FileNotFoundError):
+        pass
+
+    ruff_path = shutil.which("ruff")
+    if ruff_path:
+        return [ruff_path]
+
+    return [sys.executable, "-m", "ruff"]
+
+
+def _ruff_style_args() -> list[str]:
+    """`--isolated` keeps output deterministic regardless of the user's config."""
+    return [
+        "--isolated",
+        "--target-version",
+        _TARGET_VERSION,
+        "--line-length",
+        str(_LINE_LENGTH),
+    ]
+
+
+def _ruff_select(remove_unused_imports: bool) -> str:
+    return "I,F401" if remove_unused_imports else "I"
+
 
 def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
-    """Format generated code with ruff: sort imports, remove unused imports, and format.
-
-    Uses ``--isolated`` so the output is deterministic regardless of the
-    user's ruff configuration.
-    """
-    select_rules = ["I"]
-    if remove_unused_imports:
-        select_rules.append("F401")
-
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        suffix=".py",
-        delete=False,
-        encoding="utf-8",
-    ) as f:
-        f.write(code)
-        tmp_path = f.name
-    try:
-        subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "ruff",
-                "check",
-                "--fix",
-                "--isolated",
-                "--select",
-                ",".join(select_rules),
-                "--target-version",
-                _TARGET_VERSION,
-                "--line-length",
-                str(_LINE_LENGTH),
-                tmp_path,
-            ],
-            check=False,
-            capture_output=True,
-            timeout=_SUBPROCESS_TIMEOUT,
-        )
-        code = Path(tmp_path).read_text(encoding="utf-8")
-    finally:
-        Path(tmp_path).unlink(missing_ok=True)
-
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "ruff",
-            "format",
-            "--isolated",
-            "--target-version",
-            _TARGET_VERSION,
-            "--line-length",
-            str(_LINE_LENGTH),
+    """Format a single module with ruff: sort imports, drop unused ones, format."""
+    check = subprocess.run(
+        _ruff_command()
+        + ["check", "--fix"]
+        + _ruff_style_args()
+        + [
+            "--select",
+            _ruff_select(remove_unused_imports),
+            "--stdin-filename",
+            "generated.py",
             "-",
         ],
+        input=code,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+        timeout=_SUBPROCESS_TIMEOUT,
+    )
+    if check.returncode in _RUFF_CHECK_OK_RETURN_CODES:
+        # An empty result is legitimate (e.g. a module of only unused imports),
+        # so this must not fall back to `code` on a falsy stdout.
+        code = check.stdout
+
+    result = subprocess.run(
+        _ruff_command() + ["format"] + _ruff_style_args() + ["-"],
         input=code,
         capture_output=True,
         text=True,
@@ -87,6 +101,48 @@ def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
             f"ruff format failed (exit code {result.returncode}): {result.stderr}"
         )
     return result.stdout
+
+
+def format_many(codes: list[str], *, remove_unused_imports: bool = True) -> list[str]:
+    """Format many modules with a single pair of ruff invocations.
+
+    Equivalent to calling `_format_code` on each module, but ruff walks a scratch
+    directory instead of being spawned twice per module.
+    """
+    if not codes:
+        return []
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        paths = []
+        for index, code in enumerate(codes):
+            path = Path(tmp_dir) / f"module_{index}.py"
+            path.write_text(code, encoding="utf-8")
+            paths.append(path)
+
+        subprocess.run(
+            _ruff_command()
+            + ["check", "--fix", "--no-cache"]
+            + _ruff_style_args()
+            + ["--select", _ruff_select(remove_unused_imports), tmp_dir],
+            capture_output=True,
+            check=False,
+            timeout=_SUBPROCESS_TIMEOUT,
+        )
+
+        result = subprocess.run(
+            _ruff_command() + ["format", "--no-cache"] + _ruff_style_args() + [tmp_dir],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+            timeout=_SUBPROCESS_TIMEOUT,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"ruff format failed (exit code {result.returncode}): {result.stderr}"
+            )
+
+        return [path.read_text(encoding="utf-8") for path in paths]
 
 
 PYDANTIC_RESERVED_FIELD_NAMES = [
@@ -102,6 +158,19 @@ def _is_builtin_type_name(name: str) -> bool:
     return isinstance(value, type)
 
 
+def ast_to_raw_str(
+    ast_obj: ast.AST,
+    multiline_strings: bool = False,
+    multiline_strings_offset: int = 4,
+) -> str:
+    """Convert ast object into string, without running ruff over it."""
+    code = ast.unparse(ast_obj)
+    code = remove_blank_line_between_class_and_content(code)
+    if multiline_strings:
+        code = format_multiline_strings(code, offset=multiline_strings_offset)
+    return code
+
+
 def ast_to_str(
     ast_obj: ast.AST,
     remove_unused_imports: bool = True,
@@ -109,11 +178,10 @@ def ast_to_str(
     multiline_strings_offset: int = 4,
 ) -> str:
     """Convert ast object into string."""
-    code = ast.unparse(ast_obj)
-    code = remove_blank_line_between_class_and_content(code)
-    if multiline_strings:
-        code = format_multiline_strings(code, offset=multiline_strings_offset)
-    return _format_code(code, remove_unused_imports=remove_unused_imports)
+    return _format_code(
+        ast_to_raw_str(ast_obj, multiline_strings, multiline_strings_offset),
+        remove_unused_imports=remove_unused_imports,
+    )
 
 
 def remove_blank_line_between_class_and_content(code: str) -> str:
