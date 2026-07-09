@@ -111,7 +111,7 @@ class ResultTypesGenerator:
                 [OPTIONAL, UNION, ANY, LITERAL, ANNOTATED], TYPING_MODULE
             ),
             generate_import_from([FIELD_CLASS, BEFORE_VALIDATOR], PYDANTIC_MODULE),
-            base_model_import
+            deepcopy(base_model_import)
             or generate_import_from([BASE_MODEL_CLASS_NAME], PYDANTIC_MODULE),
         ]
         self._public_names: list[str] = []

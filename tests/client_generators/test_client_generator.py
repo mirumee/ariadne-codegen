@@ -1090,3 +1090,28 @@ def test_add_method_generates_correct_method_body_for_shadowed_data_variable(
     method_def = class_def.body[0]
     assert isinstance(method_def, ast.FunctionDef)
     assert compare_ast(method_def.body, expected_method_body)
+
+
+def test_generate_does_not_put_shared_import_constants_into_generated_module(
+    async_base_client_import,
+):
+    """Generated modules must not alias the module-level import constants.
+
+    Plugins rewrite imports in place (`ClientForwardRefsPlugin` strips names off
+    them). When the constant itself was inserted into the module, that mutation
+    leaked into every later generation in the same process, eventually emitting a
+    client whose `UnsetType` annotation had no matching import.
+    """
+    generator = ClientGenerator(
+        base_client_import=async_base_client_import,
+        arguments_generator=ArgumentsGenerator(schema=GraphQLSchema()),
+    )
+
+    module = generator.generate()
+
+    for node in module.body:
+        if isinstance(node, ast.ImportFrom):
+            node.names = []
+
+    assert [alias.name for alias in UNSET_IMPORT.names] == ["UNSET", "UnsetType"]
+    assert [alias.name for alias in UPLOAD_IMPORT.names] == ["Upload"]

@@ -1,5 +1,6 @@
 import ast
 from collections import defaultdict
+from copy import deepcopy
 from typing import Optional, cast
 
 from graphql import (
@@ -66,8 +67,8 @@ class InputTypesGenerator:
         self._imports = [
             generate_import_from([OPTIONAL, ANY, UNION, ANNOTATED], TYPING_MODULE),
             generate_import_from([FIELD_CLASS, PLAIN_SERIALIZER], PYDANTIC_MODULE),
-            base_model_import,
-            *([] if upload_import is None else [upload_import]),
+            deepcopy(base_model_import),
+            *([] if upload_import is None else [deepcopy(upload_import)]),
         ]
         self._dependencies: dict[str, list[str]] = defaultdict(list)
         self._used_enums: dict[str, list[str]] = defaultdict(list)

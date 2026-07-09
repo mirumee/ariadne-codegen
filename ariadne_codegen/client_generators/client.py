@@ -1,4 +1,5 @@
 import ast
+from copy import deepcopy
 from typing import Optional, Union, cast
 
 from graphql import OperationDefinitionNode, OperationType
@@ -819,6 +820,10 @@ class ClientGenerator:
     def _add_import(self, import_: Optional[ast.ImportFrom] = None):
         if not import_:
             return
+        # Shared module-level nodes (UNSET_IMPORT, UPLOAD_IMPORT, ...) must never
+        # reach a generated module: plugins rewrite imports in place, which would
+        # otherwise corrupt the constant for every later run in this process.
+        import_ = deepcopy(import_)
         if self.plugin_manager:
             import_ = self.plugin_manager.generate_client_import(import_)
         if import_.names and import_.module:
