@@ -1,6 +1,6 @@
 from typing import Any, Union
 
-from .base_operation import GraphQLField
+from .base_operation import GraphQLField, GraphQLLeafField
 from .custom_typing_fields import (
     AppGraphQLField,
     CollectionTranslatableContentGraphQLField,
@@ -21,7 +21,7 @@ from .custom_typing_fields import (
 
 
 class AppFields(GraphQLField):
-    id: "AppGraphQLField" = AppGraphQLField("id")
+    id = GraphQLLeafField("id", AppGraphQLField)
 
     def fields(self, *subfields: AppGraphQLField) -> "AppFields":
         """Subfields should come from the AppFields class"""
@@ -34,28 +34,22 @@ class AppFields(GraphQLField):
 
 
 class CollectionTranslatableContentFields(GraphQLField):
-    id: "CollectionTranslatableContentGraphQLField" = (
-        CollectionTranslatableContentGraphQLField("id")
-    )
+    id = GraphQLLeafField("id", CollectionTranslatableContentGraphQLField)
     "The ID of the collection translatable content."
-    collection_id: "CollectionTranslatableContentGraphQLField" = (
-        CollectionTranslatableContentGraphQLField("collectionId")
+    collection_id = GraphQLLeafField(
+        "collectionId", CollectionTranslatableContentGraphQLField
     )
     "The ID of the collection to translate.\n\nAdded in Saleor 3.14."
-    seo_title: "CollectionTranslatableContentGraphQLField" = (
-        CollectionTranslatableContentGraphQLField("seoTitle")
-    )
+    seo_title = GraphQLLeafField("seoTitle", CollectionTranslatableContentGraphQLField)
     "SEO title to translate."
-    seo_description: "CollectionTranslatableContentGraphQLField" = (
-        CollectionTranslatableContentGraphQLField("seoDescription")
+    seo_description = GraphQLLeafField(
+        "seoDescription", CollectionTranslatableContentGraphQLField
     )
     "SEO description to translate."
-    name: "CollectionTranslatableContentGraphQLField" = (
-        CollectionTranslatableContentGraphQLField("name")
-    )
+    name = GraphQLLeafField("name", CollectionTranslatableContentGraphQLField)
     "Collection's name to translate."
-    description: "CollectionTranslatableContentGraphQLField" = (
-        CollectionTranslatableContentGraphQLField("description")
+    description = GraphQLLeafField(
+        "description", CollectionTranslatableContentGraphQLField
     )
     "Collection's description to translate.\n\nRich text format. For reference see https://editorjs.io/"
 
@@ -72,11 +66,11 @@ class CollectionTranslatableContentFields(GraphQLField):
 
 
 class MetadataErrorFields(GraphQLField):
-    field: "MetadataErrorGraphQLField" = MetadataErrorGraphQLField("field")
+    field = GraphQLLeafField("field", MetadataErrorGraphQLField)
     "Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field."
-    message: "MetadataErrorGraphQLField" = MetadataErrorGraphQLField("message")
+    message = GraphQLLeafField("message", MetadataErrorGraphQLField)
     "The error message."
-    code: "MetadataErrorGraphQLField" = MetadataErrorGraphQLField("code")
+    code = GraphQLLeafField("code", MetadataErrorGraphQLField)
     "The error code."
 
     def fields(self, *subfields: MetadataErrorGraphQLField) -> "MetadataErrorFields":
@@ -90,9 +84,9 @@ class MetadataErrorFields(GraphQLField):
 
 
 class MetadataItemFields(GraphQLField):
-    key: "MetadataItemGraphQLField" = MetadataItemGraphQLField("key")
+    key = GraphQLLeafField("key", MetadataItemGraphQLField)
     "Key of a metadata item."
-    value: "MetadataItemGraphQLField" = MetadataItemGraphQLField("value")
+    value = GraphQLLeafField("value", MetadataItemGraphQLField)
     "Value of a metadata item."
 
     def fields(self, *subfields: MetadataItemGraphQLField) -> "MetadataItemFields":
@@ -163,10 +157,10 @@ class ObjectWithMetadataInterface(GraphQLField):
 
 
 class PageInfoFields(GraphQLField):
-    has_next_page: "PageInfoGraphQLField" = PageInfoGraphQLField("hasNextPage")
-    has_previous_page: "PageInfoGraphQLField" = PageInfoGraphQLField("hasPreviousPage")
-    start_cursor: "PageInfoGraphQLField" = PageInfoGraphQLField("startCursor")
-    end_cursor: "PageInfoGraphQLField" = PageInfoGraphQLField("endCursor")
+    has_next_page = GraphQLLeafField("hasNextPage", PageInfoGraphQLField)
+    has_previous_page = GraphQLLeafField("hasPreviousPage", PageInfoGraphQLField)
+    start_cursor = GraphQLLeafField("startCursor", PageInfoGraphQLField)
+    end_cursor = GraphQLLeafField("endCursor", PageInfoGraphQLField)
 
     def fields(self, *subfields: PageInfoGraphQLField) -> "PageInfoFields":
         """Subfields should come from the PageInfoFields class"""
@@ -179,9 +173,9 @@ class PageInfoFields(GraphQLField):
 
 
 class ProductFields(GraphQLField):
-    id: "ProductGraphQLField" = ProductGraphQLField("id")
-    slug: "ProductGraphQLField" = ProductGraphQLField("slug")
-    name: "ProductGraphQLField" = ProductGraphQLField("name")
+    id = GraphQLLeafField("id", ProductGraphQLField)
+    slug = GraphQLLeafField("slug", ProductGraphQLField)
+    name = GraphQLLeafField("name", ProductGraphQLField)
 
     @classmethod
     def private_metadata(cls) -> "MetadataItemFields":
@@ -240,9 +234,7 @@ class ProductCountableConnectionFields(GraphQLField):
     def page_info(cls) -> "PageInfoFields":
         return PageInfoFields("pageInfo")
 
-    total_count: "ProductCountableConnectionGraphQLField" = (
-        ProductCountableConnectionGraphQLField("totalCount")
-    )
+    total_count = GraphQLLeafField("totalCount", ProductCountableConnectionGraphQLField)
 
     def fields(
         self,
@@ -266,9 +258,7 @@ class ProductCountableEdgeFields(GraphQLField):
     def node(cls) -> "ProductFields":
         return ProductFields("node")
 
-    cursor: "ProductCountableEdgeGraphQLField" = ProductCountableEdgeGraphQLField(
-        "cursor"
-    )
+    cursor = GraphQLLeafField("cursor", ProductCountableEdgeGraphQLField)
 
     def fields(
         self, *subfields: Union[ProductCountableEdgeGraphQLField, "ProductFields"]
@@ -283,28 +273,20 @@ class ProductCountableEdgeFields(GraphQLField):
 
 
 class ProductTranslatableContentFields(GraphQLField):
-    id: "ProductTranslatableContentGraphQLField" = (
-        ProductTranslatableContentGraphQLField("id")
-    )
+    id = GraphQLLeafField("id", ProductTranslatableContentGraphQLField)
     "The ID of the product translatable content."
-    product_id: "ProductTranslatableContentGraphQLField" = (
-        ProductTranslatableContentGraphQLField("productId")
-    )
+    product_id = GraphQLLeafField("productId", ProductTranslatableContentGraphQLField)
     "The ID of the product to translate.\n\nAdded in Saleor 3.14."
-    seo_title: "ProductTranslatableContentGraphQLField" = (
-        ProductTranslatableContentGraphQLField("seoTitle")
-    )
+    seo_title = GraphQLLeafField("seoTitle", ProductTranslatableContentGraphQLField)
     "SEO title to translate."
-    seo_description: "ProductTranslatableContentGraphQLField" = (
-        ProductTranslatableContentGraphQLField("seoDescription")
+    seo_description = GraphQLLeafField(
+        "seoDescription", ProductTranslatableContentGraphQLField
     )
     "SEO description to translate."
-    name: "ProductTranslatableContentGraphQLField" = (
-        ProductTranslatableContentGraphQLField("name")
-    )
+    name = GraphQLLeafField("name", ProductTranslatableContentGraphQLField)
     "Product's name to translate."
-    description: "ProductTranslatableContentGraphQLField" = (
-        ProductTranslatableContentGraphQLField("description")
+    description = GraphQLLeafField(
+        "description", ProductTranslatableContentGraphQLField
     )
     "Product's description to translate.\n\nRich text format. For reference see https://editorjs.io/"
 
@@ -348,9 +330,7 @@ class TranslatableItemConnectionFields(GraphQLField):
     def edges(cls) -> "TranslatableItemEdgeFields":
         return TranslatableItemEdgeFields("edges")
 
-    total_count: "TranslatableItemConnectionGraphQLField" = (
-        TranslatableItemConnectionGraphQLField("totalCount")
-    )
+    total_count = GraphQLLeafField("totalCount", TranslatableItemConnectionGraphQLField)
     "A total count of items in the collection."
 
     def fields(
@@ -371,11 +351,9 @@ class TranslatableItemConnectionFields(GraphQLField):
 
 
 class TranslatableItemEdgeFields(GraphQLField):
-    node: "TranslatableItemUnion" = TranslatableItemUnion("node")
+    node = GraphQLLeafField("node", TranslatableItemUnion)
     "The item at the end of the edge."
-    cursor: "TranslatableItemEdgeGraphQLField" = TranslatableItemEdgeGraphQLField(
-        "cursor"
-    )
+    cursor = GraphQLLeafField("cursor", TranslatableItemEdgeGraphQLField)
     "A cursor for use in pagination."
 
     def fields(

@@ -43,6 +43,7 @@ COMMENT_DATETIME_FORMAT = "%Y-%m-%d %H:%M"
 BASE_OPERATION_FILE_PATH = Path(__file__).parent / "dependencies" / "base_operation.py"
 BASE_GRAPHQL_OPERATION_CLASS_NAME = "BaseGraphQLOperation"
 BASE_GRAPHQL_FIELD_CLASS_NAME = "GraphQLField"
+GRAPHQL_LEAF_FIELD_CLASS_NAME = "GraphQLLeafField"
 CUSTOM_FIELDS_FILE_PATH = Path(__file__).parent / "custom_fields.py"
 CUSTOM_FIELDS_TYPING_FILE_PATH = Path(__file__).parent / "custom_typing_fields.py"
 
