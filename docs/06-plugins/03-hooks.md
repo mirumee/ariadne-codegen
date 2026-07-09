@@ -17,7 +17,7 @@ Hooks below are listed in the order they fire during a single `ariadne-codegen` 
 def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
 ```
 
-Called once at startup, immediately after the schema is loaded from path or URL. `assume_valid` is set to `True` during parsing, so `graphql.assert_valid_schema` runs only after this hook returns. This is the earliest point at which plugins can inspect or modify the schema. After each plugin's `process_schema` returns, `self.schema` is updated on **all** plugin instances.
+Called once at startup, immediately after the schema is loaded from path or URL and before it is validated. The schema is built with `assume_valid=True` (in [`ariadne_codegen/schema.py`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/schema.py)), which defers validation: `ariadne-codegen` only calls `graphql.assert_valid_schema` *after* this hook returns (see [`main.py`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/main.py)). That makes `process_schema` the one place where a plugin can repair a schema that would otherwise fail validation. It is also the earliest point at which plugins can inspect or modify the schema. After each plugin's `process_schema` returns, `self.schema` is updated on **all** plugin instances.
 
 ### generate_client_import
 

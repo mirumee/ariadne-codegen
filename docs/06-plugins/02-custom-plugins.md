@@ -26,21 +26,9 @@ Every element of the list can enable plugins in 2 ways:
 
 ### Sequential pipeline
 
-All plugins run in the order they are listed under `plugins` in `pyproject.toml`. Each plugin receives the **output of the previous plugin** as its input, not the original value. If plugin A and plugin B both implement `generate_client_class`, B sees the `ast.ClassDef` that A already modified.
+All plugins run in the order they are listed under `plugins` in `pyproject.toml`. Each plugin receives the **output of the previous plugin** as its input, not the original value.
 
 There is no priority mechanism. Every plugin executes every hook it defines. Order is controlled entirely by the position in the `plugins` list.
-
-### What every plugin instance has
-
-- `self.schema: GraphQLSchema` - the full GraphQL schema, kept up-to-date by `process_schema`
-- `self.config_dict: dict` - the parsed `pyproject.toml` as a dict
-
-### What plugins cannot do
-
-- Control or skip other plugins in the chain
-- Read the output of sibling plugins
-- Prevent the hook chain from continuing
-- Write files directly (transform content through code-string hooks; the framework handles writing)
 
 ### Two hook levels
 
