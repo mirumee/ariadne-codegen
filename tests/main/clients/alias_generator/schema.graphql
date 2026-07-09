@@ -1,0 +1,31 @@
+schema { query: Query }
+
+input UserFilter {
+  firstName: String
+  lastName: String
+  some_field: String
+  productID: String
+  URL: String
+  list: [String!]
+}
+
+type User {
+  id: ID!
+  firstName: String
+  lastName: String
+  some_field: String
+  productID: String
+  URL: String
+}
+
+type Admin {
+  id: ID!
+  accessLevel: Int!
+}
+
+union Account = User | Admin
+
+type Query {
+  users(filter: UserFilter): [User!]!
+  account: Account!
+}

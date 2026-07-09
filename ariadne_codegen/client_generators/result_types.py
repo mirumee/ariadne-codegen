@@ -46,7 +46,7 @@ from ..codegen import (
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
-from ..utils import process_name, str_to_pascal_case
+from ..utils import needs_explicit_alias, process_name, str_to_pascal_case
 from .constants import (
     ALIAS_KEYWORD,
     ANNOTATED,
@@ -88,6 +88,7 @@ class ResultTypesGenerator:
         default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
         defer_model_build: bool = False,
+        use_alias_generator: bool = False,
     ) -> None:
         self.schema = schema
         self.operation_definition = operation_definition
@@ -105,6 +106,7 @@ class ResultTypesGenerator:
         self.default_optional_fields_to_none = default_optional_fields_to_none
         self.include_typename = include_typename
         self.defer_model_build = defer_model_build
+        self.use_alias_generator = use_alias_generator
 
         self._imports: list[ast.ImportFrom] = [
             generate_import_from(
@@ -456,9 +458,8 @@ class ResultTypesGenerator:
     ) -> ast.AnnAssign:
         keywords: dict[str, ast.expr] = {}
 
-        if (
-            isinstance(field_implementation.target, ast.Name)
-            and field_implementation.target.id != field_schema_name
+        if isinstance(field_implementation.target, ast.Name) and needs_explicit_alias(
+            field_implementation.target.id, field_schema_name, self.use_alias_generator
         ):
             keywords[ALIAS_KEYWORD] = generate_constant(field_schema_name)
 

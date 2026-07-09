@@ -1,0 +1,6 @@
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+include_comments = "none"
+target_package_name = "alias_generator_client"
+use_alias_generator = true

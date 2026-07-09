@@ -23,6 +23,7 @@ class FragmentsGenerator:
         default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
         defer_model_build: bool = False,
+        use_alias_generator: bool = False,
     ) -> None:
         self.schema = schema
         self.enums_module_name = enums_module_name
@@ -34,6 +35,7 @@ class FragmentsGenerator:
         self.default_optional_fields_to_none = default_optional_fields_to_none
         self.include_typename = include_typename
         self.defer_model_build = defer_model_build
+        self.use_alias_generator = use_alias_generator
 
         self._fragments_names = set(self.fragments_definitions.keys())
         self._generated_public_names: list[str] = []
@@ -60,6 +62,7 @@ class FragmentsGenerator:
                 plugin_manager=self.plugin_manager,
                 default_optional_fields_to_none=self.default_optional_fields_to_none,
                 include_typename=self.include_typename,
+                use_alias_generator=self.use_alias_generator,
             )
             imports.extend(generator.get_imports())
             class_defs = generator.get_classes()

@@ -82,6 +82,7 @@ Optional settings:
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
 - `defer_model_build` (defaults to `false`) - defers building of generated Pydantic models until they are first used. Sets `defer_build=True` on the generated `BaseModel` and skips the eager `model_rebuild()` calls, so importing the generated package is much faster for large schemas. See [Improving import performance for large schemas](#improving-import-performance-for-large-schemas).
+- `use_alias_generator` (defaults to `false`) - sets `alias_generator=to_camel` on the generated `BaseModel`, so fields no longer need their own `Field(alias=...)` when the alias can be derived from the Python name. See [Improving import performance for large schemas](#improving-import-performance-for-large-schemas).
 
 These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`.
 
@@ -477,6 +478,30 @@ To generate multiple different clients you can store config for each in differen
 ariadne-codegen --config clientA.toml
 ariadne-codegen --config clientB.toml
 ```
+
+## Improving import performance for large schemas
+
+For a large schema, most of the time spent importing the generated package goes into defining Pydantic models rather than into your code. Two options address that, and they compose:
+
+```toml
+[tool.ariadne-codegen]
+defer_model_build = true
+use_alias_generator = true
+```
+
+`defer_model_build` sets `defer_build=True` on the generated `BaseModel` and drops the eager `model_rebuild()` calls, so a model's core schema is built the first time it is used instead of at import. `use_alias_generator` sets `alias_generator=to_camel`, which removes the `Field(alias=...)` call from every field whose GraphQL name can be derived from its Python name - each of those calls otherwise constructs two `FieldInfo` objects at import.
+
+Importing a generated package for a schema with 120 object types, 120 input types and 40 operations:
+
+| settings | import time |
+| --- | --- |
+| neither | 216 ms |
+| `defer_model_build` | 134 ms |
+| both | 100 ms |
+
+`use_alias_generator` does not change what any field is called on the wire. Names that `to_camel` cannot reconstruct keep an explicit `Field(alias=...)`: `__typename`, keyword-escaped names such as `list_`, acronyms such as `productID`, and schemas whose fields are already snake_case (`some_field` would otherwise become `someField`).
+
+Two caveats. `defer_model_build` moves the build cost to first use rather than removing it, so a short-lived process that touches every model pays it anyway. And because `alias_generator` is set on the shared `BaseModel`, it also applies to fields you add through [custom mixins](#extending-models-with-custom-mixins) - name those in snake_case and they will be aliased to camelCase.
 
 ## Generated code dependencies
 
