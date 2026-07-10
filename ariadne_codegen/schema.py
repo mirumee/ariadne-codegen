@@ -1,4 +1,3 @@
-import importlib
 from collections.abc import Generator, Iterable, Sequence
 from dataclasses import asdict
 from pathlib import Path
@@ -32,8 +31,9 @@ from .exceptions import (
     InvalidConfiguration,
     InvalidGraphqlSyntax,
     InvalidOperationForSchema,
+    ModuleImportError,
 )
-from .module_importer import get_module_or_attribute
+from .module_importer import get_attribute_from_module, get_module_or_attribute
 from .settings import IntrospectionSettings, assert_path_exists
 
 
@@ -223,10 +223,8 @@ def _resolve_import_source(source: str) -> list[Path]:
     string / ``Path`` pointing to a file or a directory.
     """
     try:
-        module_path, attr = source.rsplit(".", 1)
-        module = importlib.import_module(module_path)
-        obj = getattr(module, attr)
-    except (ImportError, AttributeError, ValueError) as exc:
+        obj = get_attribute_from_module(source)
+    except ModuleImportError as exc:
         raise InvalidConfiguration(
             f"Could not resolve schema source '{source}'. It is neither an "
             f"existing file/directory nor an importable attribute: {exc}."
