@@ -1,0 +1,14 @@
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+include_comments = "none"
+target_package_name = "example_client"
+enable_custom_operations = true
+
+[tool.ariadne-codegen.scalars.UUID]
+type = "uuid.UUID"
+
+[tool.ariadne-codegen.scalars.Decimal]
+type = "decimal.Decimal"
+
+[tool.ariadne-codegen.scalars.DateTime]
+type = "datetime.datetime"
