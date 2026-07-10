@@ -1,5 +1,8 @@
 from .base_model import BaseModel
-from .fragments import UserFields
+from .fragments import (
+    UserFields,
+    UserFieldsFriends,  # noqa: F401
+)
 
 
 class ListUsers(BaseModel):

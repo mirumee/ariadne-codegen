@@ -1,6 +1,9 @@
 from pydantic import Field
 
-from .shorter_results_fragments import ListAnimalsFragment
+from .shorter_results_fragments import (
+    ListAnimalsFragment,
+    ListAnimalsFragmentListAnimals,  # noqa: F401
+)
 
 
 class GetAnimalFragmentWithExtra(ListAnimalsFragment):

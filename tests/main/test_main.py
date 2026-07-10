@@ -388,6 +388,125 @@ def test_main_applies_base_model_config_with_multipart_uploads_disabled(
     [
         (
             (
+                CLIENTS_PATH / "defer_model_build" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "defer_model_build" / "queries.graphql",
+                    CLIENTS_PATH / "defer_model_build" / "schema.graphql",
+                ),
+            ),
+            "defer_model_build_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_defer_model_build_package_validates_fragment_mixin_payload(
+    project_dir, package_name
+):
+    """A deferred operation whose result subclasses a fragment must still build
+    and validate a real payload.
+
+    ``query ListUsers { users { ...UserFields } }`` generates
+    ``class ListUsersUsers(UserFields)`` in ``list_users.py`` while
+    ``UserFields.friends`` is a forward reference to ``UserFieldsFriends`` defined
+    in ``fragments.py``. With ``defer_model_build`` the subclass is built lazily
+    on first validation and resolves that inherited forward reference against its
+    *own* module, so ``list_users.py`` must keep ``UserFieldsFriends`` importable.
+    Diffing the generated source never exercised this. The package is imported
+    and a payload validated here, across every supported Python version.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0, result.output
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+
+    sys.path.insert(0, str(project_dir))
+    for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+        del sys.modules[name]
+    try:
+        package = importlib.import_module(package_name)
+        parsed = package.ListUsers.model_validate(
+            {
+                "users": [
+                    {"id": "1", "name": "Ann", "friends": [{"id": "2", "name": "Bob"}]}
+                ]
+            }
+        )
+        assert parsed.users[0].friends[0].name == "Bob"
+    finally:
+        for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+            del sys.modules[name]
+        sys.path.remove(str(project_dir))
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH / "fragment_mixin_forward_refs" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "defer_model_build" / "queries.graphql",
+                    CLIENTS_PATH / "defer_model_build" / "schema.graphql",
+                ),
+            ),
+            "fragment_mixin_forward_refs_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_default_package_validates_fragment_mixin_payload(
+    project_dir, package_name
+):
+    """A default (non-defer) operation whose result subclasses a fragment must
+    still build and validate a real payload.
+
+    ``query ListUsers { users { ...UserFields } }`` generates
+    ``class ListUsersUsers(UserFields)`` in ``list_users.py`` while
+    ``UserFields.friends`` is a forward reference to ``UserFieldsFriends`` defined
+    in ``fragments.py``. Without ``defer_model_build`` the eager
+    ``ListUsers.model_rebuild()`` re-evaluates that inherited forward reference
+    against the subclass's *own* module, so ``list_users.py`` must keep
+    ``UserFieldsFriends`` importable. On Python 3.10 this fails otherwise with
+    ``PydanticUndefinedAnnotation``; on 3.11+ the inherited reference is reused
+    rather than re-evaluated so it happens to pass. Diffing the generated source
+    never exercised this. The package is imported and a payload validated here.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0, result.output
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+
+    # Guard the generated shape the test depends on: a lazily-built subclass of a
+    # fragment must not be present (that is the defer path, covered elsewhere).
+    base_model_code = (package_path / "base_model.py").read_text()
+    assert "defer_build=True" not in base_model_code
+
+    sys.path.insert(0, str(project_dir))
+    for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+        del sys.modules[name]
+    try:
+        package = importlib.import_module(package_name)
+        parsed = package.ListUsers.model_validate(
+            {
+                "users": [
+                    {"id": "1", "name": "Ann", "friends": [{"id": "2", "name": "Bob"}]}
+                ]
+            }
+        )
+        assert parsed.users[0].friends[0].name == "Bob"
+    finally:
+        for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+            del sys.modules[name]
+        sys.path.remove(str(project_dir))
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
                 CLIENTS_PATH
                 / "client_forward_refs_custom_operations"
                 / "pyproject.toml",
