@@ -11,7 +11,6 @@ from ariadne_codegen.plugins.explorer import (
     get_plugin_type,
     get_plugins_types,
     get_plugins_types_from_module,
-    is_module_str,
     is_plugin_type,
 )
 
@@ -92,21 +91,6 @@ def test_get_plugins_types_returns_plugin_classes_from_all_modules(tmp_path_cwd)
         "module_xyz.x.PluginX",
         "module_xyz.y.PluginY",
     } == {f"{c.__module__}.{c.__name__}" for c in types}
-
-
-def test_is_module_str_returns_true_if_string_points_to_existing_module(tmp_path_cwd):
-    module_str = "test_a.sub_b.sub_c"
-    create_module_dir(tmp_path_cwd, module_str)
-
-    assert is_module_str(module_str)
-
-
-def test_is_module_str_returns_false_if_string_points_to_specific_file(tmp_path_cwd):
-    module_str = "test_a.sub_b.sub_c"
-    module_path = create_module_dir(tmp_path_cwd, module_str)
-    module_path.joinpath("abcd.py").touch()
-
-    assert not is_module_str(module_str + ".abcd.py")
 
 
 def test_get_plugins_types_from_module_returns_all_public_plugins(tmp_path_cwd):

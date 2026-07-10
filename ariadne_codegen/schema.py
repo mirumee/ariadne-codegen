@@ -1,7 +1,7 @@
-from collections.abc import Generator, Sequence
+from collections.abc import Generator, Iterable, Sequence
 from dataclasses import asdict
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional, Protocol, cast
 
 import httpx
 from graphql import (
@@ -28,10 +28,49 @@ from typing_extensions import Any
 from .client_generators.constants import MIXIN_FROM_NAME, MIXIN_IMPORT_NAME, MIXIN_NAME
 from .exceptions import (
     IntrospectionError,
+    InvalidConfiguration,
     InvalidGraphqlSyntax,
     InvalidOperationForSchema,
+    ModuleImportError,
 )
-from .settings import IntrospectionSettings
+from .module_importer import get_attribute_from_module, get_module_or_attribute
+from .settings import BaseSettings, IntrospectionSettings, assert_path_exists
+
+
+class Response(Protocol):
+    status_code: int
+
+    def json(self, **kwargs: Any) -> Any: ...
+
+
+class HttpClient(Protocol):
+    def post(
+        self,
+        url: Any | str,
+        json: Any | None = None,
+        headers: Any | None = None,
+        verify: Any | None = None,
+        timeout: Any | None = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+
+def get_graphql_schema(settings: BaseSettings) -> GraphQLSchema:
+    """Return GraphQL schema from the source defined in settings."""
+    if settings.schema_path:
+        schema = get_graphql_schema_from_path(settings.schema_path)
+    elif settings.schema_paths:
+        schema = get_graphql_schema_from_paths(settings.schema_paths)
+    else:
+        schema = get_graphql_schema_from_url(
+            url=settings.remote_schema_url,
+            headers=settings.remote_schema_headers,
+            verify_ssl=settings.remote_schema_verify_ssl,
+            timeout=settings.remote_schema_timeout,
+            introspection_settings=settings.introspection_settings,
+            http_client_path=settings.remote_schema_http_client_path,
+        )
+    return schema
 
 
 def filter_operations_definitions(
@@ -74,10 +113,17 @@ def get_graphql_schema_from_url(
     verify_ssl: bool = True,
     timeout: float = 5,
     introspection_settings: Optional[IntrospectionSettings] = None,
+    http_client_path: str | None = None,
 ) -> GraphQLSchema:
+    http_client = (
+        get_remote_schema_http_client(http_client_path)
+        if http_client_path is not None
+        else httpx
+    )
     return build_client_schema(
         introspect_remote_schema(
             url=url,
+            http_client=http_client,
             headers=headers,
             verify_ssl=verify_ssl,
             timeout=timeout,
@@ -87,8 +133,19 @@ def get_graphql_schema_from_url(
     )
 
 
+def get_remote_schema_http_client(http_client_path: str) -> HttpClient:
+    imported_module_or_attribute = get_module_or_attribute(http_client_path)
+    if callable(imported_module_or_attribute):
+        return imported_module_or_attribute()
+    return imported_module_or_attribute
+
+
 def introspect_remote_schema(
     url: str,
+    # Default `httpx` module confirms the `HttpClient` protocol,
+    # but `ty` does not implement recognizing module as protocol.
+    # Remove `Any` when https://github.com/astral-sh/ty/issues/931 will be ready.
+    http_client: HttpClient | Any,
     headers: Optional[dict[str, str]] = None,
     verify_ssl: bool = True,
     timeout: float = 5,
@@ -97,18 +154,21 @@ def introspect_remote_schema(
     # If introspection settings are not provided, use default values.
     settings = introspection_settings or IntrospectionSettings()
     query = get_introspection_query(**asdict(settings))
+
     try:
-        response = httpx.post(
-            url,
-            json={"query": query},
-            headers=headers,
-            verify=verify_ssl,
-            timeout=timeout,
-        )
+        httpx.URL(url)
     except httpx.InvalidURL as exc:
         raise IntrospectionError(f"Invalid remote schema url: {url}") from exc
 
-    if not response.is_success:
+    response = http_client.post(
+        url,
+        json={"query": query},
+        headers=headers,
+        verify=verify_ssl,
+        timeout=timeout,
+    )
+
+    if not (200 <= response.status_code <= 299):
         raise IntrospectionError(
             "Failure of remote schema introspection. "
             f"HTTP status code: {response.status_code}"
@@ -133,12 +193,92 @@ def introspect_remote_schema(
     return cast(IntrospectionQuery, data)
 
 
-def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
-    """Get graphql schema build from provided path."""
-    schema_str = load_graphql_files_from_path(Path(schema_path))
+def _read_graphql_files(paths: list[Path]) -> str:
+    """Read and concatenate the contents of the given graphql files."""
+    return "\n".join(read_graphql_file(path) for path in paths)
+
+
+def _build_schema_from_str(schema_str: str) -> GraphQLSchema:
+    """Build a GraphQLSchema from concatenated schema source."""
     graphql_ast = parse(schema_str)
     schema: GraphQLSchema = build_ast_schema(graphql_ast, assume_valid=True)
     return schema
+
+
+def get_graphql_schema_from_path(schema_path: str) -> GraphQLSchema:
+    """Get graphql schema built from a single file or directory path."""
+    return get_graphql_schema_from_paths([schema_path])
+
+
+def resolve_schema_paths(sources: list[str]) -> list[Path]:
+    """Resolve a list of schema sources to concrete file paths.
+
+    Each entry is first tried as a local filesystem path - a directory (searched
+    recursively for graphql files) or a file. If it points to neither, it is
+    treated as a dotted Python import path (e.g. ``pkg.SCHEMA_DIR`` or
+    ``pkg.get_schema_files``); an import path that cannot be resolved raises
+    ``InvalidConfiguration``.
+    """
+    result: list[Path] = []
+    for source in sources:
+        path = Path(source)
+        if path.is_dir():
+            result.extend(sorted(walk_graphql_files(path)))
+        elif path.is_file():
+            result.append(path)
+        else:
+            resolved = _resolve_import_source(source)
+            for resolved_path in resolved:
+                assert_path_exists(resolved_path.as_posix())
+            result.extend(resolved)
+    return result
+
+
+def _resolve_import_source(source: str) -> list[Path]:
+    """Resolve a dotted Python import path to schema file paths.
+
+    The imported object must be a callable returning a list of file paths, or a
+    string / ``Path`` pointing to a file or a directory.
+    """
+    try:
+        obj = get_attribute_from_module(source)
+    except ModuleImportError as exc:
+        raise InvalidConfiguration(
+            f"Could not resolve schema source '{source}'. It is neither an "
+            f"existing file/directory nor an importable attribute: {exc}."
+        ) from exc
+
+    if callable(obj):
+        returned = obj()
+        if isinstance(returned, (str, bytes, Path)) or not isinstance(
+            returned, Iterable
+        ):
+            raise InvalidConfiguration(
+                f"Schema source '{source}' must be a callable returning a list of "
+                f"paths, but it returned {type(returned).__name__}."
+            )
+        return [_coerce_schema_path(source, item) for item in returned]
+
+    obj_path = _coerce_schema_path(source, obj)
+    if obj_path.is_dir():
+        return sorted(walk_graphql_files(obj_path))
+    return [obj_path]
+
+
+def _coerce_schema_path(source: str, value: object) -> Path:
+    """Coerce an imported value to a Path, or raise ``InvalidConfiguration``."""
+    if isinstance(value, (str, Path)):
+        return Path(value)
+    raise InvalidConfiguration(
+        f"Schema source '{source}' resolved to an invalid path value "
+        f"{value!r} ({type(value).__name__}); expected a str or Path."
+    )
+
+
+def get_graphql_schema_from_paths(schema_paths: list[str]) -> GraphQLSchema:
+    """Get graphql schema built from multiple sources (paths or import paths)."""
+    resolved = resolve_schema_paths(schema_paths)
+    return _build_schema_from_str(_read_graphql_files(resolved))
 
 
 def load_graphql_files_from_path(path: Path) -> str:
@@ -147,8 +287,7 @@ def load_graphql_files_from_path(path: Path) -> str:
     If path is a directory, collect schemas from multiple files.
     """
     if path.is_dir():
-        schema_list = [read_graphql_file(f) for f in sorted(walk_graphql_files(path))]
-        return "\n".join(schema_list)
+        return _read_graphql_files(sorted(walk_graphql_files(path)))
     return read_graphql_file(path.resolve())
 
 

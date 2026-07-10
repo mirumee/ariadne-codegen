@@ -1,9 +1,11 @@
 import ast
+import subprocess
 from textwrap import dedent
 
 import pytest
 
 from ariadne_codegen.utils import (
+    _format_code,
     add_extra_to_base_model,
     ast_to_str,
     convert_to_multiline_string,
@@ -76,6 +78,29 @@ def test_ast_to_str_removes_unused_imports():
 
     assert generated_code == expected_generated_code
     assert not_used_imported_class not in generated_code
+
+
+def test_ast_to_str_non_ascii_unicode_round_trip_issue_422():
+    """Regression for mirumee/ariadne-codegen#422 (Windows cp1252 / ruff stdin)."""
+    description = "商店 line: émoji 🛍️ — characters outside cp1252"
+    module = ast.parse(f'"""{description}"""')
+    generated = ast_to_str(module, remove_unused_imports=False)
+    assert description in generated
+
+
+def test_format_code_ruff_format_uses_utf8_encoding_issue_422(mocker):
+    """Ensure ruff format stdin/stdout use UTF-8 (mirumee/ariadne-codegen#422)."""
+    spy = mocker.patch("ariadne_codegen.utils.subprocess.run", wraps=subprocess.run)
+
+    _format_code("x = 1\n")
+
+    format_calls = [
+        call
+        for call in spy.call_args_list
+        if tuple(call[0][0][2:4]) == ("ruff", "format")
+    ]
+    assert format_calls, "expected a ruff format subprocess.run"
+    assert format_calls[-1][1].get("encoding") == "utf-8"
 
 
 @pytest.mark.parametrize(

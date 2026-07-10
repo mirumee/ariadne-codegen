@@ -10,11 +10,15 @@ from graphql.validation import specified_rules
 
 from .client_generators.constants import (
     DEFAULT_ASYNC_BASE_CLIENT_NAME,
+    DEFAULT_ASYNC_BASE_CLIENT_NO_UPLOAD_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+    DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_PATH,
     DEFAULT_BASE_CLIENT_NAME,
+    DEFAULT_BASE_CLIENT_NO_UPLOAD_PATH,
     DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+    DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
     DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
     DEFAULT_BASE_CLIENT_PATH,
 )
@@ -67,10 +71,12 @@ class IntrospectionSettings:
 @dataclass
 class BaseSettings:
     schema_path: str = ""
+    schema_paths: list[str] = field(default_factory=list)
     remote_schema_url: str = ""
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
     remote_schema_timeout: float = 5
+    remote_schema_http_client_path: str | None = None
     enable_custom_operations: bool = False
     plugins: list[str] = field(default_factory=list)
     introspection_descriptions: bool = False
@@ -81,9 +87,25 @@ class BaseSettings:
     introspection_input_object_one_of: bool = False
 
     def __post_init__(self):
-        if not self.schema_path and not self.remote_schema_url:
+        provided_sources = [
+            name
+            for name, value in (
+                ("schema_path", self.schema_path),
+                ("schema_paths", self.schema_paths),
+                ("remote_schema_url", self.remote_schema_url),
+            )
+            if value
+        ]
+        if not provided_sources:
             raise InvalidConfiguration(
-                "Schema source not provided. Use schema_path or remote_schema_url"
+                "Schema source not provided. Use one of: schema_path, schema_paths,"
+                " or remote_schema_url."
+            )
+        if len(provided_sources) > 1:
+            raise InvalidConfiguration(
+                "Cannot use more than one schema source at the same time. "
+                f"Provided: {', '.join(provided_sources)}. Use only one of: "
+                "schema_path, schema_paths, or remote_schema_url."
             )
 
         if self.schema_path:
@@ -98,7 +120,16 @@ class BaseSettings:
         """
         Return true if remote schema is used as source, false otherwise.
         """
-        return bool(self.remote_schema_url) and not bool(self.schema_path)
+        return bool(self.remote_schema_url)
+
+    @property
+    def schema_source(self) -> str:
+        """Return a human-readable description of the configured schema source."""
+        if self.schema_path:
+            return self.schema_path
+        if self.schema_paths:
+            return ", ".join(self.schema_paths)
+        return self.remote_schema_url
 
     @property
     def introspection_settings(self) -> IntrospectionSettings:
@@ -134,6 +165,7 @@ class ClientSettings(BaseSettings):
     client_file_name: str = "client"
     base_client_name: str = ""
     base_client_file_path: str = ""
+    base_client_module_name: str = ""
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     fragments_module_name: str = "fragments"
@@ -143,6 +175,7 @@ class ClientSettings(BaseSettings):
     include_all_enums: bool = True
     async_client: bool = True
     opentelemetry_client: bool = False
+    multipart_uploads: bool = True
     skip_validation_rules: list[str] = field(
         default_factory=lambda: [
             "NoUnusedFragments",
@@ -195,33 +228,54 @@ class ClientSettings(BaseSettings):
 
     def _set_default_base_client_data(self):
         default_clients_map = {
-            (True, True): (
+            (True, True, True): (
                 DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH,
                 DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH.stem,
             ),
-            (True, False): (
+            (True, True, False): (
+                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
+                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+                DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_PATH.stem,
+            ),
+            (True, False, True): (
                 DEFAULT_ASYNC_BASE_CLIENT_PATH,
                 DEFAULT_ASYNC_BASE_CLIENT_NAME,
+                DEFAULT_ASYNC_BASE_CLIENT_PATH.stem,
             ),
-            (False, True): (
+            (True, False, False): (
+                DEFAULT_ASYNC_BASE_CLIENT_NO_UPLOAD_PATH,
+                DEFAULT_ASYNC_BASE_CLIENT_NAME,
+                DEFAULT_ASYNC_BASE_CLIENT_PATH.stem,
+            ),
+            (False, True, True): (
                 DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH,
                 DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH.stem,
             ),
-            (False, False): (
+            (False, True, False): (
+                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NO_UPLOAD_PATH,
+                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_NAME,
+                DEFAULT_BASE_CLIENT_OPEN_TELEMETRY_PATH.stem,
+            ),
+            (False, False, True): (
                 DEFAULT_BASE_CLIENT_PATH,
                 DEFAULT_BASE_CLIENT_NAME,
+                DEFAULT_BASE_CLIENT_PATH.stem,
+            ),
+            (False, False, False): (
+                DEFAULT_BASE_CLIENT_NO_UPLOAD_PATH,
+                DEFAULT_BASE_CLIENT_NAME,
+                DEFAULT_BASE_CLIENT_PATH.stem,
             ),
         }
         if not self.base_client_name and not self.base_client_file_path:
-            path, name = default_clients_map[
-                (self.async_client, self.opentelemetry_client)
+            path, name, module_name = default_clients_map[
+                (self.async_client, self.opentelemetry_client, self.multipart_uploads)
             ]
             self.base_client_name = name
             self.base_client_file_path = path.as_posix()
-
-    @property
-    def schema_source(self) -> str:
-        return self.schema_path if self.schema_path else self.remote_schema_url
+            self.base_client_module_name = module_name
 
     @property
     def used_settings_message(self) -> str:
@@ -258,7 +312,7 @@ class ClientSettings(BaseSettings):
         return dedent(
             f"""\
             Selected strategy: {Strategy.CLIENT}
-            Using schema from '{self.schema_path or self.remote_schema_url}'.
+            Using schema from '{self.schema_source}'.
             {introspection_msg}
             Reading queries from '{self.queries_path}'.
             Using '{self.target_package_name}' as package name.
@@ -296,6 +350,7 @@ class ModelsOnlySettings(BaseSettings):
     default_optional_fields_to_none: bool = False
     include_typename: bool = True
     ignore_extra_fields: bool = True
+    multipart_uploads: bool = True
 
     def __post_init__(self):
         super().__post_init__()
@@ -324,10 +379,6 @@ class ModelsOnlySettings(BaseSettings):
 
         for file_path in self.files_to_include:
             assert_path_is_valid_file(file_path)
-
-    @property
-    def schema_source(self) -> str:
-        return self.schema_path if self.schema_path else self.remote_schema_url
 
     @property
     def used_settings_message(self) -> str:
@@ -400,7 +451,7 @@ class GraphQLSchemaSettings(BaseSettings):
             return dedent(
                 f"""\
                 Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-                Using schema from {self.schema_path or self.remote_schema_url}
+                Using schema from {self.schema_source}
                 {introspection_msg}
                 Saving graphql schema to: {self.target_file_path}
                 Using {self.schema_variable_name} as variable name for schema.
@@ -412,7 +463,7 @@ class GraphQLSchemaSettings(BaseSettings):
         return dedent(
             f"""\
             Selected strategy: {Strategy.GRAPHQL_SCHEMA}
-            Using schema from {self.schema_path or self.remote_schema_url}
+            Using schema from {self.schema_source}
             {introspection_msg}
             Saving graphql schema to: {self.target_file_path}
             {plugins_msg}
