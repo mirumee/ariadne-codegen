@@ -15,6 +15,9 @@ Marked `performance`, so they can be run on their own:
     hatch test -- -m performance
 """
 
+from pathlib import Path
+from typing import NamedTuple
+
 import pytest
 
 from .helpers import generate_package, measure_import_seconds, report
@@ -48,6 +51,11 @@ VARIANTS = {
 }
 
 
+class Variant(NamedTuple):
+    seconds: float
+    package_path: Path
+
+
 def _build_schema() -> str:
     lines = [
         "schema { query: Query }",
@@ -68,7 +76,7 @@ def _build_schema() -> str:
 
 
 @pytest.fixture(scope="module")
-def timings(tmp_path_factory) -> dict[str, float]:
+def timings(tmp_path_factory) -> dict[str, Variant]:
     """Generate each variant once, and time importing it."""
     schema = _build_schema()
     results = {}
@@ -78,19 +86,19 @@ def timings(tmp_path_factory) -> dict[str, float]:
         (project_dir / "schema.graphql").write_text(schema)
         (project_dir / "queries.graphql").write_text(QUERIES)
         package_path = generate_package(project_dir, package_name, settings)
-        results[variant] = {
-            "seconds": measure_import_seconds(project_dir, package_name),
-            "package_path": package_path,
-        }
+        results[variant] = Variant(
+            seconds=measure_import_seconds(project_dir, package_name),
+            package_path=package_path,
+        )
     return results
 
 
 def test_import_timings_are_reported(request, timings):
     """Not an assertion so much as the numbers the other tests are asserting on."""
-    slowest = timings["eager"]["seconds"]
+    slowest = timings["eager"].seconds
     rows = [
-        f"{variant:12s} {values['seconds'] * 1000:7.1f} ms"
-        f"   ({slowest / values['seconds']:.2f}x vs eager)"
+        f"{variant:12s} {values.seconds * 1000:7.1f} ms"
+        f"   ({slowest / values.seconds:.2f}x vs eager)"
         for variant, values in timings.items()
     ]
     fields_per_model = FIELDS_PER_MODEL + FIELDS_PER_MODEL // 2 + NUMBER_OF_HUBS + 2
@@ -110,17 +118,17 @@ def test_defer_model_build_speeds_up_import(timings):
     # would still "pass" whenever the machine happened to be fast.
     assert any(
         "model_rebuild()" in path.read_text()
-        for path in eager["package_path"].glob("*.py")
+        for path in eager.package_path.glob("*.py")
     ), "expected the eager package to contain model_rebuild() calls"
     assert all(
         "model_rebuild()" not in path.read_text()
-        for path in deferred["package_path"].glob("*.py")
+        for path in deferred.package_path.glob("*.py")
     ), "deferred package must not contain model_rebuild() calls"
 
-    speedup = eager["seconds"] / deferred["seconds"]
+    speedup = eager.seconds / deferred.seconds
     assert speedup >= MIN_DEFER_SPEEDUP, (
         f"defer_model_build import not fast enough: "
-        f"eager={eager['seconds']:.3f}s deferred={deferred['seconds']:.3f}s "
+        f"eager={eager.seconds:.3f}s deferred={deferred.seconds:.3f}s "
         f"speedup={speedup:.2f}x (expected >= {MIN_DEFER_SPEEDUP}x)"
     )
 
@@ -131,22 +139,22 @@ def test_alias_generator_speeds_up_import_on_top_of_defer(timings):
 
     # Every field name in this schema round-trips through `to_camel`, so the
     # setting should have removed all of them.
-    assert (deferred["package_path"] / "input_types.py").read_text().count("alias=")
+    assert (deferred.package_path / "input_types.py").read_text().count("alias=")
     assert (
-        not (with_alias["package_path"] / "input_types.py").read_text().count("alias=")
+        not (with_alias.package_path / "input_types.py").read_text().count("alias=")
     ), "expected use_alias_generator to remove every explicit Field(alias=...)"
 
-    speedup = deferred["seconds"] / with_alias["seconds"]
+    speedup = deferred.seconds / with_alias.seconds
     assert speedup >= MIN_ALIAS_GENERATOR_SPEEDUP, (
         f"use_alias_generator import not fast enough: "
-        f"deferred={deferred['seconds']:.3f}s with_alias={with_alias['seconds']:.3f}s "
+        f"deferred={deferred.seconds:.3f}s with_alias={with_alias.seconds:.3f}s "
         f"speedup={speedup:.2f}x (expected >= {MIN_ALIAS_GENERATOR_SPEEDUP}x)"
     )
 
 
 def test_defer_model_build_and_alias_generator_compose(timings):
-    eager = timings["eager"]["seconds"]
-    both = timings["defer+alias"]["seconds"]
+    eager = timings["eager"].seconds
+    both = timings["defer+alias"].seconds
 
     speedup = eager / both
     assert speedup >= MIN_COMBINED_SPEEDUP, (

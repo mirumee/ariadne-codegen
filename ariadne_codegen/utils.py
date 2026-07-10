@@ -28,6 +28,15 @@ _RUFF_CHECK_OK_RETURN_CODES = (0, 1)
 PYDANTIC_ALIAS_GENERATORS_MODULE = "pydantic.alias_generators"
 TO_CAMEL_NAME = "to_camel"
 
+# `to_camel` agrees across every pydantic 2.x only for names it was written to
+# take: lowercase, digits and underscores. Given anything with an uppercase
+# letter, pydantic < 2.8 runs it through `str.title()` (`firstName` ->
+# `firstname`) while >= 2.8 returns it untouched. We decide here, with the
+# generator's pydantic, which fields may omit an alias; the generated package
+# rebuilds those aliases with the *user's* pydantic. So only names in this
+# alphabet are safe to leave to the generator.
+_VERSION_STABLE_UNDER_TO_CAMEL = re.compile(r"[a-z0-9_]*")
+
 
 def needs_explicit_alias(
     python_name: str, schema_name: str, use_alias_generator: bool
@@ -39,9 +48,11 @@ def needs_explicit_alias(
     out: `__typename`, keyword-escaped names like `list_`, acronyms (`productID`)
     and schemas that are already snake_case (`some_field` -> `someField`).
     """
-    if use_alias_generator:
-        return to_camel(python_name) != schema_name
-    return python_name != schema_name
+    if not use_alias_generator:
+        return python_name != schema_name
+    if not _VERSION_STABLE_UNDER_TO_CAMEL.fullmatch(python_name):
+        return True
+    return to_camel(python_name) != schema_name
 
 
 @lru_cache(maxsize=1)
@@ -101,10 +112,13 @@ def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
         check=False,
         timeout=_SUBPROCESS_TIMEOUT,
     )
-    if check.returncode in _RUFF_CHECK_OK_RETURN_CODES:
-        # An empty result is legitimate (e.g. a module of only unused imports),
-        # so this must not fall back to `code` on a falsy stdout.
-        code = check.stdout
+    if check.returncode not in _RUFF_CHECK_OK_RETURN_CODES:
+        raise RuntimeError(
+            f"ruff check failed (exit code {check.returncode}): {check.stderr}"
+        )
+    # An empty result is legitimate (e.g. a module of only unused imports), so
+    # this must not fall back to `code` on a falsy stdout.
+    code = check.stdout
 
     result = subprocess.run(
         _ruff_command() + ["format"] + _ruff_style_args() + ["-"],
@@ -138,15 +152,21 @@ def format_many(codes: list[str], *, remove_unused_imports: bool = True) -> list
             path.write_text(code, encoding="utf-8")
             paths.append(path)
 
-        subprocess.run(
+        check = subprocess.run(
             _ruff_command()
             + ["check", "--fix", "--no-cache"]
             + _ruff_style_args()
             + ["--select", _ruff_select(remove_unused_imports), tmp_dir],
             capture_output=True,
+            text=True,
+            encoding="utf-8",
             check=False,
             timeout=_SUBPROCESS_TIMEOUT,
         )
+        if check.returncode not in _RUFF_CHECK_OK_RETURN_CODES:
+            raise RuntimeError(
+                f"ruff check failed (exit code {check.returncode}): {check.stderr}"
+            )
 
         result = subprocess.run(
             _ruff_command() + ["format", "--no-cache"] + _ruff_style_args() + [tmp_dir],
@@ -324,11 +344,11 @@ def _split_leading_comments(code: str) -> tuple[str, str]:
     return "", code
 
 
-def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
-    """Set a keyword argument on the ``ConfigDict`` call in ``BaseModel``.
+def _set_base_model_config_kwargs(code: str, kwargs: dict[str, ast.expr]) -> str:
+    """Set keyword arguments on the ``ConfigDict`` call in ``BaseModel``.
 
-    Does nothing if the keyword is already present, so explicit user values are
-    never overwritten.
+    Keywords already present are left alone, so explicit user values are never
+    overwritten. Every keyword is applied in one parse/unparse round trip.
     """
     header, code = _split_leading_comments(code)
     tree = ast.parse(code)
@@ -347,10 +367,19 @@ def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
                 continue
             if call.func.id != "ConfigDict":
                 continue
-            if not any(kw.arg == arg for kw in call.keywords):
-                call.keywords.append(ast.keyword(arg=arg, value=value))
+            present = {kw.arg for kw in call.keywords}
+            call.keywords.extend(
+                ast.keyword(arg=arg, value=value)
+                for arg, value in kwargs.items()
+                if arg not in present
+            )
     ast.fix_missing_locations(tree)
     return header + ast.unparse(tree)
+
+
+def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
+    """Set a single keyword argument on the ``ConfigDict`` call in ``BaseModel``."""
+    return _set_base_model_config_kwargs(code, {arg: value})
 
 
 def _add_import_to_base_model(code: str, module: str, name: str) -> str:
@@ -382,3 +411,34 @@ def add_alias_generator_to_base_model(code: str) -> str:
     return _add_import_to_base_model(
         code, PYDANTIC_ALIAS_GENERATORS_MODULE, TO_CAMEL_NAME
     )
+
+
+def rewrite_base_model(
+    code: str,
+    *,
+    forbid_extra: bool = False,
+    defer_build: bool = False,
+    alias_generator: bool = False,
+) -> str:
+    """Apply the requested ConfigDict settings to the copied `base_model.py`.
+
+    Returns `code` untouched when nothing was requested. Otherwise every keyword
+    goes in with a single `ast.unparse`, which drops the blank lines and import
+    order of the copied dependency, so the result is handed back to ruff.
+    """
+    kwargs: dict[str, ast.expr] = {}
+    if forbid_extra:
+        kwargs["extra"] = ast.Constant("forbid")
+    if defer_build:
+        kwargs["defer_build"] = ast.Constant(True)
+    if alias_generator:
+        kwargs["alias_generator"] = ast.Name(id=TO_CAMEL_NAME)
+    if not kwargs:
+        return code
+
+    rewritten = _set_base_model_config_kwargs(code, kwargs)
+    if alias_generator:
+        rewritten = _add_import_to_base_model(
+            rewritten, PYDANTIC_ALIAS_GENERATORS_MODULE, TO_CAMEL_NAME
+        )
+    return _format_code(rewritten, remove_unused_imports=False)

@@ -19,7 +19,8 @@ We use [Hatch](https://github.com/pypa/hatch) for project management.
 Formatting and linting (including typing-related rules) use [ruff](https://github.com/astral-sh/ruff). To format the code, run:
 
 ```bash
-hatch fmt
+hatch check code --fix
+hatch check fmt --fix
 ```
 
 The contents of the `ariadne-codegen` package are annotated with types and validated using [ty](https://github.com/astral-sh/ty). To run type checking, use:

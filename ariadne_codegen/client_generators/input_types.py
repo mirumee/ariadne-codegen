@@ -14,15 +14,13 @@ from ..codegen import (
     generate_ann_assign,
     generate_class_def,
     generate_constant,
-    generate_expr,
     generate_import_from,
     generate_keyword,
-    generate_method_call,
+    generate_model_rebuild_calls,
     generate_module,
     generate_name,
     generate_pass,
     generate_pydantic_field,
-    model_has_forward_refs,
 )
 from ..plugins.manager import PluginManager
 from ..utils import needs_explicit_alias, process_name
@@ -33,7 +31,6 @@ from .constants import (
     BASE_MODEL_CLASS_NAME,
     BASE_MODEL_IMPORT,
     FIELD_CLASS,
-    MODEL_REBUILD_METHOD,
     OPTIONAL,
     PLAIN_SERIALIZER,
     PYDANTIC_MODULE,
@@ -93,16 +90,8 @@ class InputTypesGenerator:
             scalar_data = self.custom_scalars[scalar_name]
             self._imports.extend(generate_scalar_imports(scalar_data))
 
-        model_rebuild_calls = (
-            []
-            if self.defer_model_build
-            else [
-                generate_expr(
-                    generate_method_call(class_def.name, MODEL_REBUILD_METHOD)
-                )
-                for class_def in class_defs
-                if model_has_forward_refs(class_def)
-            ]
+        model_rebuild_calls = generate_model_rebuild_calls(
+            class_defs, self.defer_model_build
         )
 
         module_body = (

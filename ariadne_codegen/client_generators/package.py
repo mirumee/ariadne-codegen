@@ -16,13 +16,10 @@ from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..settings import ClientSettings, CommentsStrategy
 from ..utils import (
-    _format_code,
-    add_alias_generator_to_base_model,
-    add_defer_build_to_base_model,
-    add_extra_to_base_model,
     ast_to_raw_str,
     format_many,
     process_name,
+    rewrite_base_model,
     str_to_pascal_case,
 )
 from .arguments import ArgumentsGenerator
@@ -226,16 +223,23 @@ class PackageGenerator:
         remove_unused_imports: bool = True,
         multiline_strings: bool = False,
         comment_source: Optional[str] = None,
-        plugin_hook: Optional[Callable[[str], str]] = None,
+        plugin_hook: Optional[str] = None,
     ) -> None:
-        """Unparse a module now, format and write it once generation is done."""
+        """Unparse a module now, format and write it once generation is done.
+
+        `plugin_hook` names a `PluginManager` method; it is resolved here so the
+        `plugin_manager is None` case is handled in one place.
+        """
+        hook: Optional[Callable[[str], str]] = None
+        if plugin_hook and self.plugin_manager:
+            hook = getattr(self.plugin_manager, plugin_hook)
         self._pending_files.append(
             _PendingFile(
                 path=path,
                 code=ast_to_raw_str(module, multiline_strings=multiline_strings),
                 remove_unused_imports=remove_unused_imports,
                 comment_source=comment_source,
-                plugin_hook=plugin_hook if self.plugin_manager else None,
+                plugin_hook=hook,
             )
         )
         self._generated_files.append(path.name)
@@ -359,11 +363,7 @@ class PackageGenerator:
             client_module,
             multiline_strings=True,
             comment_source=self.queries_source,
-            plugin_hook=(
-                self.plugin_manager.generate_client_code
-                if self.plugin_manager
-                else None
-            ),
+            plugin_hook="generate_client_code",
         )
         self._used_enums.extend(
             self.client_generator.arguments_generator.get_used_enums()
@@ -394,9 +394,7 @@ class PackageGenerator:
             enums_file_path,
             module,
             comment_source=self.schema_source,
-            plugin_hook=(
-                self.plugin_manager.generate_enums_code if self.plugin_manager else None
-            ),
+            plugin_hook="generate_enums_code",
         )
         self.init_generator.add_import(
             self.enums_generator.get_generated_public_names(), self.enums_module_name, 1
@@ -414,11 +412,7 @@ class PackageGenerator:
             input_types_file_path,
             module,
             comment_source=self.schema_source,
-            plugin_hook=(
-                self.plugin_manager.generate_inputs_code
-                if self.plugin_manager
-                else None
-            ),
+            plugin_hook="generate_inputs_code",
         )
         self._used_enums.extend(self.input_types_generator.get_used_enums())
         self.init_generator.add_import(
@@ -433,11 +427,7 @@ class PackageGenerator:
                 self.package_path / file_name,
                 module,
                 comment_source=self.queries_source,
-                plugin_hook=(
-                    self.plugin_manager.generate_result_types_code
-                    if self.plugin_manager
-                    else None
-                ),
+                plugin_hook="generate_result_types_code",
             )
 
     def _generate_fragments(self):
@@ -489,19 +479,12 @@ class PackageGenerator:
         )
 
     def _rewrite_base_model(self, code: str) -> str:
-        rewritten = code
-        if not self.ignore_extra_fields:
-            rewritten = add_extra_to_base_model(rewritten)
-        if self.defer_model_build:
-            rewritten = add_defer_build_to_base_model(rewritten)
-        if self.use_alias_generator:
-            rewritten = add_alias_generator_to_base_model(rewritten)
-
-        if rewritten == code:
-            return code
-        # Each rewrite round-trips through `ast.unparse`, which drops the blank
-        # lines and import order of the copied dependency.
-        return _format_code(rewritten, remove_unused_imports=False)
+        return rewrite_base_model(
+            code,
+            forbid_extra=not self.ignore_extra_fields,
+            defer_build=self.defer_model_build,
+            alias_generator=self.use_alias_generator,
+        )
 
     def _generate_init(self):
         init_file_path = self.package_path / "__init__.py"
@@ -510,9 +493,7 @@ class PackageGenerator:
             init_file_path,
             init_module,
             remove_unused_imports=False,
-            plugin_hook=(
-                self.plugin_manager.generate_init_code if self.plugin_manager else None
-            ),
+            plugin_hook="generate_init_code",
         )
 
     def _generate_custom_queries(self):
