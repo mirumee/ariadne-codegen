@@ -69,7 +69,9 @@ queries_path = "queries.graphql"
 - `multipart_uploads` (defaults to `true`) - when set to `false`, a lighter base client variant is generated that omits multipart file upload support.
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
-- `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
+- `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation. Adds `graphql-core` to the generated package's runtime dependencies.
+- `defer_model_build` (defaults to `false`) - defers building of generated Pydantic models until they are first used. Sets `defer_build=True` on the generated `BaseModel`, so importing the generated package is much faster for large schemas. Requires `pydantic >= 2.9`.
+- `use_alias_generator` (defaults to `false`) - sets `alias_generator=to_camel` on the generated `BaseModel`, so fields no longer need their own `Field(alias=...)` when the alias can be derived from the Python name. Requires `pydantic >= 2.9`.
 
 These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`.
 

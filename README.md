@@ -509,6 +509,25 @@ Both options need `pydantic >= 2.9` in the environment that runs the generated p
 
 Two caveats. `defer_model_build` moves the build cost to first use rather than removing it, so a short-lived process that touches every model pays it anyway. And because `alias_generator` is set on the shared `BaseModel`, it also applies to fields you add through [custom mixins](#extending-models-with-custom-mixins) - name those in snake_case and they will be aliased to camelCase.
 
+## Fragments and forward references
+
+When an operation spreads a fragment, the generated result class subclasses the fragment class:
+
+```python
+# get_products.py
+from .fragments import (
+    ProductListItem,
+    ProductListItemThumbnail,  # noqa: F401
+)
+
+class GetProductsProductsEdgesNode(ProductListItem):
+    pass
+```
+
+Pydantic resolves the annotations a subclass inherits against the subclass's own module, so any class the fragment refers to by forward reference has to be importable there. That is what the second import is for. It carries `# noqa: F401` because the name only appears inside an inherited annotation, and your linter would otherwise call it unused.
+
+This is emitted for every generated client, not only with `defer_model_build`.
+
 ## Generated code dependencies
 
 Generated code requires:
@@ -516,8 +535,11 @@ Generated code requires:
 - [pydantic](https://github.com/pydantic/pydantic)
 - [httpx](https://github.com/encode/httpx)
 - [websockets](https://github.com/python-websockets/websockets) (only for default async base client)
+- [graphql-core](https://github.com/graphql-python/graphql-core) (only with `enable_custom_operations`)
 
 Both `httpx` and `websockets` dependencies can be avoided by providing another base client class with `base_client_file_path` and `base_client_name` options.
+
+`graphql-core` cannot: with `enable_custom_operations` the generated `base_operation.py` and `client.py` build and print a GraphQL AST at runtime. It adds roughly 25 ms to the import of the generated package.
 
 ## Example
 
