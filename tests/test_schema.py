@@ -339,11 +339,11 @@ def test_introspect_remote_schema_called_with_invalid_url_raises_introspection_e
     mocker,
 ):
     mocker.patch(
-        "ariadne_codegen.schema.httpx.post", side_effect=httpx.InvalidURL("msg")
+        "ariadne_codegen.schema.httpx.URL", side_effect=httpx.InvalidURL("msg")
     )
 
     with pytest.raises(IntrospectionError):
-        introspect_remote_schema("invalid_url")
+        introspect_remote_schema("invalid_url", httpx)
 
 
 def test_introspect_remote_schema_raises_introspection_error_for_not_success_response(
@@ -355,7 +355,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_not_success_res
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "400" in exc.value.args[0]
 
@@ -369,7 +369,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_not_json_respon
     )
 
     with pytest.raises(IntrospectionError):
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
 
 def test_introspect_remote_schema_raises_introspection_error_for_not_dict_response(
@@ -381,7 +381,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_not_dict_respon
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "Invalid introspection result format." in str(exc.value)
 
@@ -395,7 +395,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_json_without_da
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "Invalid data key in introspection result." in str(exc.value)
 
@@ -419,7 +419,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_graphql_errors(
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "Error message" in exc.value.args[0]
 
@@ -436,7 +436,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_invalid_data_va
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "Invalid data key in introspection result." in str(exc.value)
 
@@ -450,7 +450,7 @@ def test_introspect_remote_schema_returns_introspection_result(mocker):
         ),
     )
 
-    result = introspect_remote_schema("http://testserver/graphql/")
+    result = introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert result == {"__schema": {}}
 
@@ -464,7 +464,9 @@ def test_introspect_remote_schema_uses_provided_headers(mocker):
         ),
     )
 
-    introspect_remote_schema("http://testserver/graphql/", headers={"test": "value"})
+    introspect_remote_schema(
+        "http://testserver/graphql/", httpx, headers={"test": "value"}
+    )
 
     assert mocked_post.called
     assert mocked_post.call_args.kwargs["headers"] == {"test": "value"}
@@ -479,10 +481,27 @@ def test_introspect_remote_schema_uses_provided_verify_ssl_flag(verify_ssl, mock
         ),
     )
 
-    introspect_remote_schema("http://testserver/graphql/", verify_ssl=verify_ssl)
+    introspect_remote_schema("http://testserver/graphql/", httpx, verify_ssl=verify_ssl)
 
     assert mocked_post.called
     assert mocked_post.call_args.kwargs["verify"] == verify_ssl
+
+
+def test_introspect_remote_schema_works_with_custom_classes():
+
+    class TestResponse:
+        status_code = 200
+
+        def json(self, **kwargs):
+            return {"data": {"__schema": {}}}
+
+    class TestClient:
+        def post(self, url, **kwargs):
+            return TestResponse()
+
+    result = introspect_remote_schema("http://testserver/graphql/", TestClient())
+
+    assert result == {"__schema": {}}
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_single_file(
@@ -614,7 +633,7 @@ def test_introspect_remote_schema_passes_introspection_settings_to_introspection
     )
 
     introspect_remote_schema(
-        "http://testserver/graphql/", introspection_settings=settings
+        "http://testserver/graphql/", httpx, introspection_settings=settings
     )
 
     mocked_get_query.assert_called_once_with(
@@ -645,7 +664,7 @@ def test_introspect_remote_schema_uses_default_introspection_settings_when_not_p
         ),
     )
 
-    introspect_remote_schema("http://testserver/graphql/")
+    introspect_remote_schema("http://testserver/graphql/", httpx)
 
     mocked_get_query.assert_called_once_with(
         descriptions=False,

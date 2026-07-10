@@ -54,7 +54,7 @@ def test_get_module_or_attribute_returns_module_for_module_string(
 
 
 def test_get_module_or_attribute_returns_attribute_from_module(tmp_path_cwd):
-    module_path = create_module_dir(tmp_path_cwd, "test_module")
+    module_path = create_module_dir(tmp_path_cwd, "test_module_a")
     file_content = """
     from ariadne_codegen import Plugin
 
@@ -63,10 +63,10 @@ def test_get_module_or_attribute_returns_attribute_from_module(tmp_path_cwd):
     """
     module_path.joinpath("xyz.py").write_text(dedent(file_content))
 
-    test_class = get_module_or_attribute("test_module.xyz.TestClass")
+    test_class = get_module_or_attribute("test_module_a.xyz.TestClass")
 
     assert test_class.__name__ == "TestClass"
-    assert test_class.__module__ == "test_module.xyz"
+    assert test_class.__module__ == "test_module_a.xyz"
 
 
 def test_is_module_str_returns_true_if_string_points_to_existing_module(tmp_path_cwd):
@@ -85,7 +85,7 @@ def test_is_module_str_returns_false_if_string_points_to_specific_file(tmp_path_
 
 
 def test_get_attribute_from_module_returns_attribute(tmp_path_cwd):
-    module_path = create_module_dir(tmp_path_cwd, "test_module")
+    module_path = create_module_dir(tmp_path_cwd, "test_module_b")
     file_content = """
     from ariadne_codegen import Plugin
 
@@ -94,10 +94,10 @@ def test_get_attribute_from_module_returns_attribute(tmp_path_cwd):
     """
     module_path.joinpath("xyz.py").write_text(dedent(file_content))
 
-    test_class = get_attribute_from_module("test_module.xyz.TestClass")
+    test_class = get_attribute_from_module("test_module_b.xyz.TestClass")
 
     assert test_class.__name__ == "TestClass"
-    assert test_class.__module__ == "test_module.xyz"
+    assert test_class.__module__ == "test_module_b.xyz"
 
 
 def test_get_attribute_from_module_raises_module_import_error_for_class():

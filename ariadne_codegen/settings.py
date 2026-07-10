@@ -75,6 +75,7 @@ class BaseSettings:
     remote_schema_headers: dict = field(default_factory=dict)
     remote_schema_verify_ssl: bool = True
     remote_schema_timeout: float = 5
+    remote_schema_http_client_path: str | None = None
     enable_custom_operations: bool = False
     plugins: list[str] = field(default_factory=list)
     introspection_descriptions: bool = False

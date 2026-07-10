@@ -55,6 +55,7 @@ def client(config_dict):
             verify_ssl=settings.remote_schema_verify_ssl,
             timeout=settings.remote_schema_timeout,
             introspection_settings=settings.introspection_settings,
+            http_client_path=settings.remote_schema_http_client_path,
         )
 
     plugin_manager = PluginManager(
@@ -106,6 +107,7 @@ def graphql_schema(config_dict):
             verify_ssl=settings.remote_schema_verify_ssl,
             timeout=settings.remote_schema_timeout,
             introspection_settings=settings.introspection_settings,
+            http_client_path=settings.remote_schema_http_client_path,
         )
     plugin_manager = PluginManager(
         schema=schema,
