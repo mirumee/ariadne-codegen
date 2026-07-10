@@ -34,7 +34,7 @@ from .exceptions import (
     ModuleImportError,
 )
 from .module_importer import get_attribute_from_module, get_module_or_attribute
-from .settings import IntrospectionSettings, assert_path_exists
+from .settings import BaseSettings, IntrospectionSettings, assert_path_exists
 
 
 class Response(Protocol):
@@ -53,6 +53,24 @@ class HttpClient(Protocol):
         timeout: Any | None = None,
         **kwargs: Any,
     ) -> Response: ...
+
+
+def get_graphql_schema(settings: BaseSettings) -> GraphQLSchema:
+    """Return GraphQL schema from the source defined in settings."""
+    if settings.schema_path:
+        schema = get_graphql_schema_from_path(settings.schema_path)
+    elif settings.schema_paths:
+        schema = get_graphql_schema_from_paths(settings.schema_paths)
+    else:
+        schema = get_graphql_schema_from_url(
+            url=settings.remote_schema_url,
+            headers=settings.remote_schema_headers,
+            verify_ssl=settings.remote_schema_verify_ssl,
+            timeout=settings.remote_schema_timeout,
+            introspection_settings=settings.introspection_settings,
+            http_client_path=settings.remote_schema_http_client_path,
+        )
+    return schema
 
 
 def filter_operations_definitions(
