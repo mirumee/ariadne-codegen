@@ -1,7 +1,10 @@
 from pydantic import Field
 
 from .base_model import BaseModel
-from .fragments import MinimalA
+from .fragments import (
+    MinimalA,
+    MinimalAFieldB,  # noqa: F401
+)
 
 
 class ExampleQuery1(BaseModel):

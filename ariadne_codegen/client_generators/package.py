@@ -11,7 +11,7 @@ from graphql import (
     OperationType,
 )
 
-from ..codegen import generate_import_from
+from ..codegen import collect_class_forward_ref_names, generate_import_from
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..settings import ClientSettings, CommentsStrategy
@@ -179,6 +179,11 @@ class PackageGenerator:
         self._pending_files: list[_PendingFile] = []
         self._unpacked_fragments: set[str] = set()
         self._used_enums: list[str] = []
+        self._fragments_module: Optional[ast.Module] = None
+        # For each fragment class, the forward-referenced names a subclass of it
+        # must be able to resolve. Populated for every client, regardless of
+        # `defer_model_build` (the bug it guards against affects both modes).
+        self._fragment_mixin_forward_refs: dict[str, set[str]] = {}
 
         self.enable_custom_operations = enable_custom_operations
         if self.enable_custom_operations:
@@ -191,6 +196,7 @@ class PackageGenerator:
         if not self.package_path.exists():
             self.package_path.mkdir()
         self._generate_input_types()
+        self._build_fragments_module()
         self._generate_result_types()
         self._generate_fragments()
         self._copy_files()
@@ -224,11 +230,14 @@ class PackageGenerator:
         multiline_strings: bool = False,
         comment_source: Optional[str] = None,
         plugin_hook: Optional[str] = None,
+        prepend_code: str = "",
     ) -> None:
         """Unparse a module now, format and write it once generation is done.
 
         `plugin_hook` names a `PluginManager` method; it is resolved here so the
-        `plugin_manager is None` case is handled in one place.
+        `plugin_manager is None` case is handled in one place. `prepend_code` is
+        raw source inserted before the unparsed module, since `ast.unparse` cannot
+        carry the `# noqa` comment that keeps forward-reference-only imports.
         """
         hook: Optional[Callable[[str], str]] = None
         if plugin_hook and self.plugin_manager:
@@ -236,7 +245,8 @@ class PackageGenerator:
         self._pending_files.append(
             _PendingFile(
                 path=path,
-                code=ast_to_raw_str(module, multiline_strings=multiline_strings),
+                code=prepend_code
+                + ast_to_raw_str(module, multiline_strings=multiline_strings),
                 remove_unused_imports=remove_unused_imports,
                 comment_source=comment_source,
                 plugin_hook=hook,
@@ -428,19 +438,102 @@ class PackageGenerator:
                 module,
                 comment_source=self.queries_source,
                 plugin_hook="generate_result_types_code",
+                prepend_code=self._mixin_forward_ref_import(module),
             )
 
-    def _generate_fragments(self):
+    def _build_fragments_module(self):
+        """Generate the fragments module once (it has side effects) and map every
+        fragment class to the forward references a subclass needs.
+        """
         if not set(self.fragments_definitions.keys()).difference(
             self._unpacked_fragments
         ):
             return
 
-        module = self.fragments_generator.generate(
+        self._fragments_module = self.fragments_generator.generate(
             exclude_names=self._unpacked_fragments
         )
+        self._fragment_mixin_forward_refs = self._map_fragment_forward_refs(
+            self._fragments_module
+        )
+
+    @staticmethod
+    def _map_fragment_forward_refs(module: ast.Module) -> dict[str, set[str]]:
+        """For each fragment class, the forward-referenced names a subclass must
+        resolve: its own field forward references plus those it inherits from any
+        fragment base class."""
+        class_defs = {
+            node.name: node for node in module.body if isinstance(node, ast.ClassDef)
+        }
+        needed: dict[str, set[str]] = {}
+
+        def resolve(name: str, seen: set[str]) -> set[str]:
+            if name in needed:
+                return needed[name]
+            if name in seen or name not in class_defs:
+                return set()
+            seen.add(name)
+            class_def = class_defs[name]
+            names = collect_class_forward_ref_names(class_def)
+            for base in class_def.bases:
+                if isinstance(base, ast.Name):
+                    names = names | resolve(base.id, seen)
+            needed[name] = names
+            return names
+
+        for class_name in class_defs:
+            resolve(class_name, set())
+        return needed
+
+    def _mixin_forward_ref_import(self, module: ast.Module) -> str:
+        """Raw import keeping the fragment forward references a module's mixin
+        subclasses need in scope.
+
+        A class like `class OpNode(SomeFragment): pass` resolves the fragment's
+        inherited forward references against its *own* module. The referenced
+        classes live in the fragments module, so they must be importable here.
+        This holds regardless of `defer_model_build`: with the deferred build
+        Pydantic resolves them lazily on first use, and without it the eager
+        `OpNode.model_rebuild()` re-evaluates the inherited references in this
+        module too (observably on Python 3.10). They only appear inside the
+        inherited annotations, hence the `# noqa: F401`.
+        """
+        if not self._fragment_mixin_forward_refs:
+            return ""
+
+        already_present = {
+            alias.name
+            for node in module.body
+            if isinstance(node, ast.ImportFrom)
+            for alias in node.names
+        }
+        already_present |= {
+            node.name for node in module.body if isinstance(node, ast.ClassDef)
+        }
+
+        needed: set[str] = set()
+        for node in module.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            for base in node.bases:
+                if isinstance(base, ast.Name):
+                    needed |= self._fragment_mixin_forward_refs.get(base.id, set())
+
+        needed -= already_present
+        if not needed:
+            return ""
+
+        names = ", ".join(sorted(needed))
+        return f"from .{self.fragments_module_name} import {names}  # noqa: F401\n"
+
+    def _generate_fragments(self):
+        if self._fragments_module is None:
+            return
+
         file_path = self.package_path / f"{self.fragments_module_name}.py"
-        self._queue_module(file_path, module, comment_source=self.queries_source)
+        self._queue_module(
+            file_path, self._fragments_module, comment_source=self.queries_source
+        )
         self._used_enums.extend(self.fragments_generator.get_used_enums())
         self.init_generator.add_import(
             self.fragments_generator.get_generated_public_names(),

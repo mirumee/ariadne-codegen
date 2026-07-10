@@ -445,3 +445,31 @@ class ClassDefNamesVisitor(ast.NodeVisitor):
             return
 
         self.generic_visit(node)
+
+
+class ForwardRefNamesVisitor(ast.NodeVisitor):
+    """Collects the class names referenced as forward references (quoted names)."""
+
+    def __init__(self):
+        self.names: set[str] = set()
+
+    def visit_Name(self, node):  # noqa: N802
+        if '"' in node.id or "'" in node.id:
+            self.names.add(node.id.strip("\"'"))
+        self.generic_visit(node)
+
+    def visit_Subscript(self, node):  # noqa: N802
+        if isinstance(node.value, ast.Name) and node.value.id == "Literal":
+            return
+
+        self.generic_visit(node)
+
+
+def collect_class_forward_ref_names(class_def: ast.ClassDef) -> set[str]:
+    """Names a subclass must resolve from the forward references in `class_def`'s
+    own field annotations (excludes bases, nested classes and `Literal` values)."""
+    visitor = ForwardRefNamesVisitor()
+    for statement in class_def.body:
+        if isinstance(statement, ast.AnnAssign):
+            visitor.visit(statement.annotation)
+    return visitor.names
