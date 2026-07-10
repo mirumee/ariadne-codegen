@@ -91,6 +91,11 @@ class CustomFieldsGenerator:
     def generate(self) -> ast.Module:
         """Generates an AST module containing the custom fields and required imports."""
         self.argument_generator.add_custom_scalar_imports()
+        # Copy the argument generator's imports (input types, enums and, crucially,
+        # custom scalar imports registered by ``add_custom_scalar_imports`` above)
+        # into the module import list. This must run after the call above, otherwise
+        # scalar types used in field-argument annotations would never be imported.
+        self._imports.extend(self.argument_generator.imports)
         module = generate_module(
             body=cast(list[ast.stmt], self._imports + self._class_defs),
         )
@@ -346,7 +351,6 @@ class CustomFieldsGenerator:
             return_arguments_keys,
             return_arguments_values,
         ) = self.argument_generator.generate_arguments(arguments)
-        self._imports.extend(self.argument_generator.imports)
 
         if arguments:
             for arg in arguments.values():
