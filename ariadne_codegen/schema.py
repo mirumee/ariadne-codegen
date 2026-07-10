@@ -1,8 +1,7 @@
-import importlib
 from collections.abc import Generator, Iterable, Sequence
 from dataclasses import asdict
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional, Protocol, cast
 
 import httpx
 from graphql import (
@@ -32,8 +31,46 @@ from .exceptions import (
     InvalidConfiguration,
     InvalidGraphqlSyntax,
     InvalidOperationForSchema,
+    ModuleImportError,
 )
-from .settings import IntrospectionSettings, assert_path_exists
+from .module_importer import get_attribute_from_module, get_module_or_attribute
+from .settings import BaseSettings, IntrospectionSettings, assert_path_exists
+
+
+class Response(Protocol):
+    status_code: int
+
+    def json(self, **kwargs: Any) -> Any: ...
+
+
+class HttpClient(Protocol):
+    def post(
+        self,
+        url: Any | str,
+        json: Any | None = None,
+        headers: Any | None = None,
+        verify: Any | None = None,
+        timeout: Any | None = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+
+def get_graphql_schema(settings: BaseSettings) -> GraphQLSchema:
+    """Return GraphQL schema from the source defined in settings."""
+    if settings.schema_path:
+        schema = get_graphql_schema_from_path(settings.schema_path)
+    elif settings.schema_paths:
+        schema = get_graphql_schema_from_paths(settings.schema_paths)
+    else:
+        schema = get_graphql_schema_from_url(
+            url=settings.remote_schema_url,
+            headers=settings.remote_schema_headers,
+            verify_ssl=settings.remote_schema_verify_ssl,
+            timeout=settings.remote_schema_timeout,
+            introspection_settings=settings.introspection_settings,
+            http_client_path=settings.remote_schema_http_client_path,
+        )
+    return schema
 
 
 def filter_operations_definitions(
@@ -76,10 +113,17 @@ def get_graphql_schema_from_url(
     verify_ssl: bool = True,
     timeout: float = 5,
     introspection_settings: Optional[IntrospectionSettings] = None,
+    http_client_path: str | None = None,
 ) -> GraphQLSchema:
+    http_client = (
+        get_remote_schema_http_client(http_client_path)
+        if http_client_path is not None
+        else httpx
+    )
     return build_client_schema(
         introspect_remote_schema(
             url=url,
+            http_client=http_client,
             headers=headers,
             verify_ssl=verify_ssl,
             timeout=timeout,
@@ -89,8 +133,19 @@ def get_graphql_schema_from_url(
     )
 
 
+def get_remote_schema_http_client(http_client_path: str) -> HttpClient:
+    imported_module_or_attribute = get_module_or_attribute(http_client_path)
+    if callable(imported_module_or_attribute):
+        return imported_module_or_attribute()
+    return imported_module_or_attribute
+
+
 def introspect_remote_schema(
     url: str,
+    # Default `httpx` module confirms the `HttpClient` protocol,
+    # but `ty` does not implement recognizing module as protocol.
+    # Remove `Any` when https://github.com/astral-sh/ty/issues/931 will be ready.
+    http_client: HttpClient | Any,
     headers: Optional[dict[str, str]] = None,
     verify_ssl: bool = True,
     timeout: float = 5,
@@ -99,18 +154,21 @@ def introspect_remote_schema(
     # If introspection settings are not provided, use default values.
     settings = introspection_settings or IntrospectionSettings()
     query = get_introspection_query(**asdict(settings))
+
     try:
-        response = httpx.post(
-            url,
-            json={"query": query},
-            headers=headers,
-            verify=verify_ssl,
-            timeout=timeout,
-        )
+        httpx.URL(url)
     except httpx.InvalidURL as exc:
         raise IntrospectionError(f"Invalid remote schema url: {url}") from exc
 
-    if not response.is_success:
+    response = http_client.post(
+        url,
+        json={"query": query},
+        headers=headers,
+        verify=verify_ssl,
+        timeout=timeout,
+    )
+
+    if not (200 <= response.status_code <= 299):
         raise IntrospectionError(
             "Failure of remote schema introspection. "
             f"HTTP status code: {response.status_code}"
@@ -183,10 +241,8 @@ def _resolve_import_source(source: str) -> list[Path]:
     string / ``Path`` pointing to a file or a directory.
     """
     try:
-        module_path, attr = source.rsplit(".", 1)
-        module = importlib.import_module(module_path)
-        obj = getattr(module, attr)
-    except (ImportError, AttributeError, ValueError) as exc:
+        obj = get_attribute_from_module(source)
+    except ModuleImportError as exc:
         raise InvalidConfiguration(
             f"Could not resolve schema source '{source}'. It is neither an "
             f"existing file/directory nor an importable attribute: {exc}."

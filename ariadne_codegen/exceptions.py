@@ -36,3 +36,7 @@ class IntrospectionError(CodeGenException):
 
 class PluginImportError(CodeGenException):
     """Error occurred during the plugin lookup."""
+
+
+class ModuleImportError(CodeGenException):
+    """Error occurred during the module lookup from declarative settings."""

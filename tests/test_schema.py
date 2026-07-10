@@ -339,11 +339,11 @@ def test_introspect_remote_schema_called_with_invalid_url_raises_introspection_e
     mocker,
 ):
     mocker.patch(
-        "ariadne_codegen.schema.httpx.post", side_effect=httpx.InvalidURL("msg")
+        "ariadne_codegen.schema.httpx.URL", side_effect=httpx.InvalidURL("msg")
     )
 
     with pytest.raises(IntrospectionError):
-        introspect_remote_schema("invalid_url")
+        introspect_remote_schema("invalid_url", httpx)
 
 
 def test_introspect_remote_schema_raises_introspection_error_for_not_success_response(
@@ -355,7 +355,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_not_success_res
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "400" in exc.value.args[0]
 
@@ -369,7 +369,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_not_json_respon
     )
 
     with pytest.raises(IntrospectionError):
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
 
 def test_introspect_remote_schema_raises_introspection_error_for_not_dict_response(
@@ -381,7 +381,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_not_dict_respon
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "Invalid introspection result format." in str(exc.value)
 
@@ -395,7 +395,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_json_without_da
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "Invalid data key in introspection result." in str(exc.value)
 
@@ -419,7 +419,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_graphql_errors(
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "Error message" in exc.value.args[0]
 
@@ -436,7 +436,7 @@ def test_introspect_remote_schema_raises_introspection_error_for_invalid_data_va
     )
 
     with pytest.raises(IntrospectionError) as exc:
-        introspect_remote_schema("http://testserver/graphql/")
+        introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert "Invalid data key in introspection result." in str(exc.value)
 
@@ -450,7 +450,7 @@ def test_introspect_remote_schema_returns_introspection_result(mocker):
         ),
     )
 
-    result = introspect_remote_schema("http://testserver/graphql/")
+    result = introspect_remote_schema("http://testserver/graphql/", httpx)
 
     assert result == {"__schema": {}}
 
@@ -464,7 +464,9 @@ def test_introspect_remote_schema_uses_provided_headers(mocker):
         ),
     )
 
-    introspect_remote_schema("http://testserver/graphql/", headers={"test": "value"})
+    introspect_remote_schema(
+        "http://testserver/graphql/", httpx, headers={"test": "value"}
+    )
 
     assert mocked_post.called
     assert mocked_post.call_args.kwargs["headers"] == {"test": "value"}
@@ -479,10 +481,27 @@ def test_introspect_remote_schema_uses_provided_verify_ssl_flag(verify_ssl, mock
         ),
     )
 
-    introspect_remote_schema("http://testserver/graphql/", verify_ssl=verify_ssl)
+    introspect_remote_schema("http://testserver/graphql/", httpx, verify_ssl=verify_ssl)
 
     assert mocked_post.called
     assert mocked_post.call_args.kwargs["verify"] == verify_ssl
+
+
+def test_introspect_remote_schema_works_with_custom_classes():
+
+    class TestResponse:
+        status_code = 200
+
+        def json(self, **kwargs):
+            return {"data": {"__schema": {}}}
+
+    class TestClient:
+        def post(self, url, **kwargs):
+            return TestResponse()
+
+    result = introspect_remote_schema("http://testserver/graphql/", TestClient())
+
+    assert result == {"__schema": {}}
 
 
 def test_get_graphql_queries_returns_schema_definitions_from_single_file(
@@ -614,7 +633,7 @@ def test_introspect_remote_schema_passes_introspection_settings_to_introspection
     )
 
     introspect_remote_schema(
-        "http://testserver/graphql/", introspection_settings=settings
+        "http://testserver/graphql/", httpx, introspection_settings=settings
     )
 
     mocked_get_query.assert_called_once_with(
@@ -645,7 +664,7 @@ def test_introspect_remote_schema_uses_default_introspection_settings_when_not_p
         ),
     )
 
-    introspect_remote_schema("http://testserver/graphql/")
+    introspect_remote_schema("http://testserver/graphql/", httpx)
 
     mocked_get_query.assert_called_once_with(
         descriptions=False,
@@ -681,7 +700,8 @@ def test_resolve_schema_paths_with_callable_python_attribute(
     mock_module = mocker.Mock()
     mock_module.get_files = mock_callable
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     result = resolve_schema_paths(["some_pkg.get_files"])
@@ -696,7 +716,8 @@ def test_resolve_schema_paths_with_path_attribute_pointing_to_directory(
     mock_module = mocker.Mock()
     mock_module.SCHEMA_DIR = schemas_directory.as_posix()
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     result = resolve_schema_paths(["some_pkg.SCHEMA_DIR"])
@@ -714,7 +735,8 @@ def test_resolve_schema_paths_with_path_attribute_pointing_to_file(
     mock_module = mocker.Mock()
     mock_module.SCHEMA_FILE = schema_file.as_posix()
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     result = resolve_schema_paths(["some_pkg.SCHEMA_FILE"])
@@ -740,7 +762,9 @@ def test_resolve_schema_paths_accepts_local_dotted_names(
     dotted_dir = tmp_path / "my.schemas.dir"
     dotted_dir.mkdir()
     (dotted_dir / "user.graphql").write_text(extra_type_str, encoding="utf-8")
-    mock_import = mocker.patch("ariadne_codegen.schema.importlib.import_module")
+    mock_import = mocker.patch(
+        "ariadne_codegen.module_importer.importlib.import_module"
+    )
 
     result = resolve_schema_paths([dotted_file.as_posix(), dotted_dir.as_posix()])
 
@@ -751,8 +775,8 @@ def test_resolve_schema_paths_accepts_local_dotted_names(
 
 def test_resolve_schema_paths_raises_invalid_configuration_on_import_error(mocker):
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module",
-        side_effect=ImportError("module not found"),
+        "ariadne_codegen.module_importer.importlib.import_module",
+        side_effect=ModuleNotFoundError("module not found"),
     )
 
     with pytest.raises(InvalidConfiguration):
@@ -762,7 +786,8 @@ def test_resolve_schema_paths_raises_invalid_configuration_on_import_error(mocke
 def test_resolve_schema_paths_raises_invalid_configuration_on_missing_attribute(mocker):
     mock_module = mocker.Mock(spec=[])
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     with pytest.raises(InvalidConfiguration):
@@ -776,7 +801,8 @@ def test_resolve_schema_paths_raises_when_callable_returns_missing_file(
     mock_module = mocker.Mock()
     mock_module.get_files = mocker.Mock(return_value=[missing.as_posix()])
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     with pytest.raises(InvalidConfiguration):
@@ -790,7 +816,8 @@ def test_resolve_schema_paths_raises_when_variable_points_to_missing_file(
     mock_module = mocker.Mock()
     mock_module.SCHEMA_FILE = missing.as_posix()
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     with pytest.raises(InvalidConfiguration):
@@ -801,7 +828,8 @@ def test_resolve_schema_paths_raises_when_callable_returns_non_iterable(mocker):
     mock_module = mocker.Mock()
     mock_module.get_files = mocker.Mock(return_value=42)  # not a list of paths
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     with pytest.raises(InvalidConfiguration):
@@ -812,7 +840,8 @@ def test_resolve_schema_paths_raises_when_callable_returns_invalid_item(mocker):
     mock_module = mocker.Mock()
     mock_module.get_files = mocker.Mock(return_value=[None, 123])  # not paths
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     with pytest.raises(InvalidConfiguration):
@@ -823,7 +852,8 @@ def test_resolve_schema_paths_raises_when_variable_is_wrong_type(mocker):
     mock_module = mocker.Mock()
     mock_module.NOT_A_PATH = 123  # not callable, not str/Path
     mocker.patch(
-        "ariadne_codegen.schema.importlib.import_module", return_value=mock_module
+        "ariadne_codegen.module_importer.importlib.import_module",
+        return_value=mock_module,
     )
 
     with pytest.raises(InvalidConfiguration):
