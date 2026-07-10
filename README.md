@@ -529,6 +529,20 @@ A string with a name for type map variable, must be valid python identifier.
 
 Defaults to `"type_map"`. Used only if target is a Python file.
 
+## Generating models only
+
+If you only need Pydantic models for a schema (enums, input types, per-query result types and fragments) without a generated `Client`, base client, or `exceptions.py`, call `ariadne-codegen` with the `models_only` argument:
+
+```
+ariadne-codegen models_only
+```
+
+`models_only` mode reads configuration from the same `[tool.ariadne-codegen]` section as [`client`](#configuration). Any schema source that `client` accepts is supported: `schema_path`, `schema_paths`, `remote_schema_url` (with `remote_schema_headers`, `remote_schema_verify_ssl`, `remote_schema_timeout`, `remote_schema_http_client_path`) and `plugins`.
+
+`queries_path` is optional in this mode; when omitted, only enums, input types and (if any) fragments are generated. When provided, an additional result-type module is emitted for each operation.
+
+Client-specific settings (`client_name`, `client_file_name`, `base_client_name`, `base_client_file_path`, `async_client`, `opentelemetry_client`, `enable_custom_operations`, ...) are ignored — no client, base client, or `exceptions.py` file is generated.
+
 ---
 
 ## Versioning policy ##
