@@ -17,6 +17,7 @@ from .client_generators.constants import (
     ANY,
     FIELD_CLASS,
     LIST,
+    MODEL_REBUILD_METHOD,
     OPTIONAL,
     SIMPLE_TYPE_MAP,
     UNION,
@@ -411,6 +412,23 @@ def model_has_forward_refs(class_def: ast.ClassDef) -> bool:
     visitor = ClassDefNamesVisitor()
     visitor.visit(class_def)
     return visitor.found_name_with_quote
+
+
+def generate_model_rebuild_calls(
+    class_defs: list[ast.ClassDef], defer_model_build: bool = False
+) -> list[ast.Expr]:
+    """`Model.model_rebuild()` for every class that carries a forward reference.
+
+    Empty when the build is deferred: the generated base model then carries
+    `defer_build=True` and pydantic resolves the references on first use.
+    """
+    if defer_model_build:
+        return []
+    return [
+        generate_expr(generate_method_call(class_def.name, MODEL_REBUILD_METHOD))
+        for class_def in class_defs
+        if model_has_forward_refs(class_def)
+    ]
 
 
 class ClassDefNamesVisitor(ast.NodeVisitor):
