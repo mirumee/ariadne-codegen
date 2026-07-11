@@ -8,7 +8,7 @@ header = """# CHANGELOG
 
 All notable unreleased changes to this project will be documented in this file.
 
-For released versions, see the [Releases](https://github.com/mirumee/ariadne/releases) page.
+For released versions, see the [Releases](https://github.com/mirumee/ariadne-codegen/releases) page.
 
 """
 # Template produces two zones:
@@ -35,25 +35,25 @@ body = """
 {%- if non_breaking and group != "_misc" %}
 ### {{ group }}
 {% for commit in non_breaking -%}
-- {{ commit.message | upper_first | trim }}{% if commit.remote.username %} (by @{{ commit.remote.username }}{% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/mirumee/ariadne/pull/{{ commit.remote.pr_number }}){% endif %}){% endif %}
+- {{ commit.message | upper_first | trim }}{% if commit.remote.username %} (by @{{ commit.remote.username }}{% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/mirumee/ariadne-codegen/pull/{{ commit.remote.pr_number }}){% endif %}){% endif %}
 {% endfor %}
 {%- endif -%}
 {% endfor %}
 {% if version %}
 ## What's Changed
 {% for commit in commits -%}
-* {{ commit.message | upper_first | trim }}{% if commit.remote.username %} by @{{ commit.remote.username }}{% endif %}{% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/mirumee/ariadne/pull/{{ commit.remote.pr_number }}){% endif %}
+* {{ commit.message | upper_first | trim }}{% if commit.remote.username %} by @{{ commit.remote.username }}{% endif %}{% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/mirumee/ariadne-codegen/pull/{{ commit.remote.pr_number }}){% endif %}
 {% endfor %}
 {%- if github.contributors is defined -%}
 {%- set new_contributors = github.contributors | filter(attribute="is_first_time", value=true) -%}
 {%- if new_contributors | length != 0 %}
 ### New Contributors
 {% for contributor in new_contributors -%}
-* @{{ contributor.username }} made their first contribution{% if contributor.pr_number %} in [#{{ contributor.pr_number }}](https://github.com/mirumee/ariadne/pull/{{ contributor.pr_number }}){% endif %}
+* @{{ contributor.username }} made their first contribution{% if contributor.pr_number %} in [#{{ contributor.pr_number }}](https://github.com/mirumee/ariadne-codegen/pull/{{ contributor.pr_number }}){% endif %}
 {% endfor %}
 {%- endif -%}
 {%- endif %}
-**Full Changelog**: https://github.com/mirumee/ariadne/compare/{{ previous.version }}...{{ version }}
+**Full Changelog**: https://github.com/mirumee/ariadne-codegen/compare/{{ previous.version }}...{{ version }}
 {% endif -%}
 """
 trim = true
@@ -73,7 +73,7 @@ sort_commits = "oldest"
 tag_pattern = "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
 # Skip pre-release tags – their commits are folded into the next stable release
 skip_tags = "\\.(rc|dev)[0-9]*$"
-ignore_tags = "\\.(b|beta|alpha)[0-9]*$"
+ignore_tags = "\\.(a|b|alpha|beta)[0-9]*$"
 
 commit_parsers = [
     { message = "^feat", group = "✨ New Features" },
