@@ -10,10 +10,11 @@ Generated code requires:
 - [httpx](https://github.com/encode/httpx)
 - [websockets](https://github.com/python-websockets/websockets) (only for the default async base client)
 - [graphql-core](https://github.com/graphql-python/graphql-core) (only when `enable_custom_operations` is used)
+- [opentelemetry-api](https://github.com/open-telemetry/opentelemetry-python) (only when `opentelemetry_client` is enabled)
 
 ## When each dependency is required
 
-- **pydantic** is always required — all generated models (inputs, enums, results,
+- **pydantic** is always required - all generated models (inputs, enums, results,
   fragments) inherit from a pydantic `BaseModel`.
 - **httpx** is required by the default base clients (`AsyncBaseClient` and
   `BaseClient`), which use it to perform HTTP requests.
@@ -24,6 +25,9 @@ Generated code requires:
   (`enable_custom_operations = true`); the generated `client.py` and `base_operation.py`
   then import GraphQL AST nodes from it. Regular generated clients do not import it.
   See [Custom operation builder](../02-guides/12-custom-operation-builder.md).
+- **opentelemetry-api** is required only when `opentelemetry_client = true`, which
+  swaps in an OpenTelemetry-instrumented base client that imports `opentelemetry.trace`
+  and `opentelemetry.context`. See [OpenTelemetry](../02-guides/09-opentelemetry.md).
 
 ## Avoiding httpx and websockets
 

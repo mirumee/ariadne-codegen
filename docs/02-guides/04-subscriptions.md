@@ -19,7 +19,7 @@ pip install ariadne-codegen[subscriptions]
 ```
 
 Subscriptions are only available on the async client. The synchronous base client
-(`async_client = false`) has no subscription support — see
+(`async_client = false`) has no subscription support - see
 [Async vs sync client](./10-async-vs-sync.md).
 
 ## Connecting

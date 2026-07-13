@@ -156,7 +156,7 @@ $ ariadne-codegen
 Structure of generated package:
 
 ```
-grapql_client/
+graphql_client/
     __init__.py
     async_base_client.py
     base_model.py
@@ -169,7 +169,6 @@ grapql_client/
     input_types.py
     list_all_users.py
     list_users_by_country.py
-    scalars.py
     upload_file.py
 ```
 

@@ -8,7 +8,7 @@ title: Schema sources
 from a local file/directory, from installed Python packages, or by introspecting a
 remote GraphQL server.
 
-Exactly one of the following settings is required — `schema_path`, `schema_paths`
+Exactly one of the following settings is required - `schema_path`, `schema_paths`
 and `remote_schema_url` are **mutually exclusive**, so only one schema source may be
 used at a time:
 
@@ -36,17 +36,17 @@ Each entry in `schema_paths` is first tried as a local filesystem path, and if i
 is neither an existing file nor directory it is treated as a dotted Python import
 path. An entry must be one of the following:
 
-- a path to a directory — all `.graphql`, `.graphqls` and `.gql` files from it are included (searched recursively), eg. `./my_schemas/`
+- a path to a directory - all `.graphql`, `.graphqls` and `.gql` files from it are included (searched recursively), eg. `./my_schemas/`
 - a path to a specific file to be used, eg. `./shared/types.graphql`
 - an absolute import path to a callable that returns a `list[str]` of file paths, eg. `some_package.get_schema_files`
 - an absolute import path to a variable holding the path to a single schema file, eg. `some_package.SCHEMA_FILE`
-- an absolute import path to a variable holding the path to a directory — all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_package.SCHEMA_DIR`
+- an absolute import path to a variable holding the path to a directory - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_package.SCHEMA_DIR`
 
 ```toml
 [tool.ariadne-codegen]
 schema_paths = [
-  "some_gql_commontypes.get_schema_files",   # callable → returns list of paths
-  "other_pkg.SCHEMA_DIR",                     # variable → directory
+  "some_gql_commontypes.get_schema_files",   # callable -> returns list of paths
+  "other_pkg.SCHEMA_DIR",                     # variable -> directory
   "./my_other_packages/",                     # local directory
   "./foo/bar.graphql",                        # local file
 ]
@@ -69,6 +69,7 @@ The following options control how the introspection request is performed:
 - `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
 - `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies whether to verify ssl while introspecting remote schema
 - `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
+- `remote_schema_http_client_path` (defaults to `None`) - dotted import path to a custom HTTP client used only for the introspection request, instead of the default `httpx` client
 
 ## Introspection query options
 

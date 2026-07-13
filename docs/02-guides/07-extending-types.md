@@ -22,7 +22,7 @@ class OperationNameField(BaseModel, {import}):
     ...
 ```
 
-You don't need to declare the directive in your schema — `ariadne-codegen` registers
+You don't need to declare the directive in your schema - `ariadne-codegen` registers
 it automatically before processing your operations, so you can use `@mixin` right
 away.
 
@@ -36,8 +36,8 @@ functionality of generated classes.
 
 The directive is valid in two locations:
 
-- on a **field** — extends the model generated for that field's selection set.
-- on a **fragment definition** — extends the model generated for that fragment.
+- on a **field** - extends the model generated for that field's selection set.
+- on a **fragment definition** - extends the model generated for that fragment.
 
 ```gql
 fragment UserData on User @mixin(from: ".mixins", import: "UsersMixin") {

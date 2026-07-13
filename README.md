@@ -4,24 +4,26 @@
 
 [![Build Status](https://github.com/mirumee/ariadne-codegen/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/mirumee/ariadne-codegen/actions)
 
-Python code generator that turns a GraphQL schema and your operations into a fully typed, async (or sync) Python client built on Pydantic. You write your queries, mutations and subscriptions in GraphQL, and ariadne-codegen generates a typed Python method for each one, returning Pydantic models — so you get autocompletion and static type checking instead of hand-writing query strings and parsing raw JSON.
+Python code generator that turns a GraphQL schema and your operations into a fully typed, async (or sync) Python client built on Pydantic. You write your queries, mutations and subscriptions in GraphQL, and ariadne-codegen generates a typed Python method for each one, returning Pydantic models - so you get autocompletion and static type checking instead of hand-writing query strings and parsing raw JSON.
 
 📖 **[Documentation](docs/01-introduction.md)** · [Step-by-step example](docs/02-guides/01-step-by-step-example.md) · [Configuration reference](docs/03-reference/01-configuration.md)
 
 ## Features
 
-- **Fully typed models** — Pydantic models for schema types, inputs, enums, fragments, and every operation's result.
-- **Typed client methods** — each query, mutation, and subscription becomes a method with typed arguments and a typed return value.
-- **[Async or sync](docs/02-guides/10-async-vs-sync.md)** — generate an async client (default) or a synchronous one.
-- **[Subscriptions](docs/02-guides/04-subscriptions.md)** — real-time updates over WebSockets (`graphql-transport-ws`).
-- **[File uploads](docs/02-guides/05-file-uploads.md)** — multipart requests via the GraphQL multipart request spec.
-- **[Custom scalars](docs/02-guides/06-custom-scalars.md)** — map GraphQL scalars to your own Python types with `serialize`/`parse` hooks.
-- **[Extensible output](docs/02-guides/07-extending-types.md)** — inject mixins into generated models, copy in your own files, or swap the [base client](docs/03-reference/02-generated-code-dependencies.md) (custom auth, or to drop the `httpx`/`websockets` deps).
-- **[Flexible schema sources](docs/02-guides/02-schema-sources.md)** — a local file, installed Python packages, or remote introspection.
-- **[Plugin system](docs/04-plugins/01-intro.md)** — customize generation through hooks, plus ready-made plugins (shorter results, extracted operation strings, forward refs, …).
-- **More** — [programmatic query building](docs/02-guides/12-custom-operation-builder.md), [OpenTelemetry tracing](docs/02-guides/09-opentelemetry.md), [multiple clients per project](docs/02-guides/08-multiple-clients.md), and a [schema-copy mode](docs/02-guides/11-schema-generation.md).
+- **Fully typed models** - Pydantic models for schema types, inputs, enums, fragments, and every operation's result.
+- **Typed client methods** - each query, mutation, and subscription becomes a method with typed arguments and a typed return value.
+- **[Async or sync](docs/02-guides/10-async-vs-sync.md)** - generate an async client (default) or a synchronous one.
+- **[Subscriptions](docs/02-guides/04-subscriptions.md)** - real-time updates over WebSockets (`graphql-transport-ws`).
+- **[File uploads](docs/02-guides/05-file-uploads.md)** - multipart requests via the GraphQL multipart request spec.
+- **[Custom scalars](docs/02-guides/06-custom-scalars.md)** - map GraphQL scalars to your own Python types with `serialize`/`parse` hooks.
+- **[Extensible output](docs/02-guides/07-extending-types.md)** - inject mixins into generated models, copy in your own files, or swap the [base client](docs/03-reference/02-generated-code-dependencies.md) (custom auth, or to drop the `httpx`/`websockets` deps).
+- **[Flexible schema sources](docs/02-guides/02-schema-sources.md)** - a local file, installed Python packages, or remote introspection.
+- **[Plugin system](docs/04-plugins/01-intro.md)** - customize generation through hooks, plus ready-made plugins (shorter results, extracted operation strings, forward refs, …).
+- **More** - [programmatic query building](docs/02-guides/12-custom-operation-builder.md), [OpenTelemetry tracing](docs/02-guides/09-opentelemetry.md), [multiple clients per project](docs/02-guides/08-multiple-clients.md), and a [schema-copy mode](docs/02-guides/11-schema-generation.md).
 
 ## Installation
+
+Requires Python 3.10 or newer.
 
 ```
 pip install ariadne-codegen

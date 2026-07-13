@@ -20,12 +20,12 @@ opentelemetry_client = true
 ```
 
 The exact base client that gets generated depends on this option together with
-`async_client` and `multipart_uploads` — you get an async or sync variant, with or
+`async_client` and `multipart_uploads` - you get an async or sync variant, with or
 without multipart upload support. Regardless of the variant, the tracing arguments
 below work the same way.
 
 The `opentelemetry` import is optional: if the package is not installed the tracing
-code is a no-op, so the generated client still works — it just doesn't produce spans.
+code is a no-op, so the generated client still works - it just doesn't produce spans.
 To actually export spans, install and configure OpenTelemetry (`opentelemetry-api`
 plus an SDK/exporter).
 

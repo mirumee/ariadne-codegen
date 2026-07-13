@@ -60,10 +60,10 @@ client = Client(
 The `ws_*` arguments only exist on the async base client (subscriptions are not
 supported by the synchronous client). See [Subscriptions](./04-subscriptions.md) for
 details. The synchronous base client (`async_client = false`) accepts only `url`,
-`headers` and `http_client` — see [Async vs sync client](./10-async-vs-sync.md).
+`headers` and `http_client` - see [Async vs sync client](./10-async-vs-sync.md).
 
 If you enable the OpenTelemetry base client (`opentelemetry_client = true`), the
-constructor also accepts tracing arguments — see [Open Telemetry](./09-opentelemetry.md).
+constructor also accepts tracing arguments - see [Open Telemetry](./09-opentelemetry.md).
 
 ## Using the client as a context manager
 

@@ -13,9 +13,9 @@ ariadne-codegen graphqlschema
 
 `graphqlschema` mode reads configuration from the same place as the client, but uses
 only the `schema_path`, `schema_paths`, `remote_schema_url`, `remote_schema_headers`,
-`remote_schema_verify_ssl`, `remote_schema_timeout` options to retrieve the schema
-(see [Schema sources](./02-schema-sources.md)) and the `plugins` option to load
-plugins.
+`remote_schema_verify_ssl`, `remote_schema_timeout`, `remote_schema_http_client_path`,
+and `introspection_*` options to retrieve the schema (see
+[Schema sources](./02-schema-sources.md)) and the `plugins` option to load plugins.
 
 Before writing the file, the loaded schema is passed through each plugin's
 `process_schema` hook and then validated, so this mode can also be used to apply
@@ -64,7 +64,7 @@ target_file_path = "schema.graphql"
 ```
 
 These settings live in the same `[tool.ariadne-codegen]` section as the rest of the
-configuration — there is no separate subsection for `graphqlschema` mode.
+configuration - there is no separate subsection for `graphqlschema` mode.
 
 ```
 ariadne-codegen graphqlschema

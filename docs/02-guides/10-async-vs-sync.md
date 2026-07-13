@@ -4,7 +4,7 @@ title: Async vs sync client
 
 # Async vs sync client
 
-By default the generated client is asynchronous — every operation is available as an
+By default the generated client is asynchronous - every operation is available as an
 `async` method and the client inherits from `AsyncBaseClient`.
 
 To generate a synchronous client instead, set `async_client` to `false`:
@@ -26,7 +26,7 @@ async_client = false
 | Custom `http_client`   | `httpx.AsyncClient`                 | `httpx.Client`                    |
 | Subscriptions          | supported                           | **not supported**                 |
 
-The generated method bodies mirror this — the async client does
+The generated method bodies mirror this - the async client does
 `response = await self.execute(...)`, the sync client does `response = self.execute(...)`:
 
 ```py

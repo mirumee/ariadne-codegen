@@ -18,16 +18,16 @@ queries_path = "queries.graphql"
 
 - `queries_path` - path to file/directory with queries (Can be optional if `enable_custom_operations` is used)
 
-Exactly one of the following parameters is required — they are mutually exclusive, so only one schema source may be used at a time (see [Schema sources](../02-guides/02-schema-sources.md)):
+Exactly one of the following parameters is required - they are mutually exclusive, so only one schema source may be used at a time (see [Schema sources](../02-guides/02-schema-sources.md)):
 
 - `schema_path` - path to file/directory with graphql schema
 - `schema_paths` - list of local paths and/or installed-package sources to build the schema from
-- `remote_schema_url` - url to graphql server, where introspection query can be perfomed
+- `remote_schema_url` - url to graphql server, where introspection query can be performed
 
 ## Optional settings:
 
 - `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
-- `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies wheter to verify ssl while introspecting remote schema
+- `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies whether to verify ssl while introspecting remote schema
 - `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
 - `remote_schema_http_client_path` (defaults to `None`) - dotted import path to a custom HTTP client (a class/callable that returns one, or a ready client object) providing an `httpx`-compatible `post` interface, used only for the remote schema introspection request. If unset, the default `httpx` client is used.
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
@@ -81,10 +81,11 @@ These options control which fields are included in the GraphQL introspection que
 
 Several settings have dedicated guides that explain them in context:
 
-- [Schema sources](../02-guides/02-schema-sources.md) — `schema_path`, `remote_schema_url`, `remote_schema_*`, and `introspection_*`
-- [File uploads](../02-guides/05-file-uploads.md) — `multipart_uploads`
-- [Custom scalars](../02-guides/06-custom-scalars.md) — scalar sections and `files_to_include`
-- [Async vs sync client](../02-guides/10-async-vs-sync.md) — `async_client`
-- [Open Telemetry](../02-guides/09-opentelemetry.md) — `opentelemetry_client`
-- [Plugins](../04-plugins/01-intro.md) — `plugins`
-- [Custom operation builder](../02-guides/12-custom-operation-builder.md) — `enable_custom_operations`
+- [Schema sources](../02-guides/02-schema-sources.md) - `schema_path`, `remote_schema_url`, `remote_schema_*`, and `introspection_*`
+- [Schema generation](../02-guides/11-schema-generation.md) - `graphqlschema` mode and its settings
+- [File uploads](../02-guides/05-file-uploads.md) - `multipart_uploads`
+- [Custom scalars](../02-guides/06-custom-scalars.md) - scalar sections and `files_to_include`
+- [Async vs sync client](../02-guides/10-async-vs-sync.md) - `async_client`
+- [Open Telemetry](../02-guides/09-opentelemetry.md) - `opentelemetry_client`
+- [Plugins](../04-plugins/01-intro.md) - `plugins`
+- [Custom operation builder](../02-guides/12-custom-operation-builder.md) - `enable_custom_operations`

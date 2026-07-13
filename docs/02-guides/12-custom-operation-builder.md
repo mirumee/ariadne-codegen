@@ -96,7 +96,7 @@ asyncio.run(get_products())
    2. This method sends the queries to the server and retrieves the response.
 
 Unlike the per-operation client methods, `client.query(...)` and
-`client.mutation(...)` return the raw response as a `dict[str, Any]` — the result is
+`client.mutation(...)` return the raw response as a `dict[str, Any]` - the result is
 not parsed into a generated Pydantic model.
 
 ## Building mutations
