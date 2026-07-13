@@ -12,6 +12,7 @@ We start with a GraphQL schema that defines queries, mutations, and subscription
 This schema includes `User` types, input objects for creating users and setting preferences, and a `Color` enum. It also shows how to use default values in input objects.
 
 ```graphql
+# /schema.graphql
 schema {
   query: Query
   mutation: Mutation
@@ -97,6 +98,7 @@ Next we define the operations we want to use: a mutation to create a user, queri
 Notice that we also define fragments (`BasicUser` and `UserPersonalData`) to reuse fields across queries.
 
 ```graphql
+# /queries.graphql
 mutation CreateUser($userData: UserCreateInput!) {
   userCreate(userData: $userData) {
     id

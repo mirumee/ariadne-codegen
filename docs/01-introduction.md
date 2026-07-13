@@ -1,3 +1,8 @@
+---
+title: Introduction
+slug: /
+---
+
 # Ariadne Code Generator
 
 [![Ariadne](https://ariadnegraphql.org/img/logo-horizontal-sm.png)](https://ariadnegraphql.org)
