@@ -14,7 +14,11 @@ from ariadne_codegen.client_generators.dependencies import (
     base_client_open_telemetry,
     base_client_open_telemetry_no_upload,
 )
-from ariadne_codegen.config import ClientSettings, GraphQLSchemaSettings
+from ariadne_codegen.config import (
+    ClientSettings,
+    GraphQLSchemaSettings,
+    ModelsOnlySettings,
+)
 from ariadne_codegen.exceptions import InvalidConfiguration
 
 
@@ -540,6 +544,47 @@ def test_client_settings_include_typename_can_be_set_to_true(tmp_path):
     )
 
     assert settings.include_typename is True
+
+
+def test_models_only_settings_can_be_created_without_queries_path(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+
+    settings = ModelsOnlySettings(schema_path=schema_path.as_posix())
+
+    assert settings.queries_path == ""
+    assert settings.target_package_name == "graphql_client"
+    assert settings.enums_module_name == "enums"
+    assert settings.input_types_module_name == "input_types"
+    assert settings.fragments_module_name == "fragments"
+
+
+def test_models_only_settings_used_settings_message_contains_strategy(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+
+    settings = ModelsOnlySettings(schema_path=schema_path.as_posix())
+    message = settings.used_settings_message
+
+    assert "models_only" in message
+    assert schema_path.as_posix() in message
+    assert "Client" not in message
+    assert "base_client" not in message
+
+
+def test_models_only_settings_accepts_optional_queries_path(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ModelsOnlySettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.queries_path == queries_path.as_posix()
+    assert "queries" in settings.used_settings_message
 
 
 def test_using_remote_schema_true_when_only_remote_schema_url_is_provided(tmp_path):

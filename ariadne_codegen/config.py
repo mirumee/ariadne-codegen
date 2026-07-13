@@ -7,7 +7,12 @@ import toml
 
 from .client_generators.scalars import ScalarData
 from .exceptions import ConfigFileNotFound, MissingConfiguration
-from .settings import ClientSettings, CommentsStrategy, GraphQLSchemaSettings
+from .settings import (
+    ClientSettings,
+    CommentsStrategy,
+    GraphQLSchemaSettings,
+    ModelsOnlySettings,
+)
 
 simplefilter("default", DeprecationWarning)
 
@@ -101,6 +106,57 @@ def get_section(config_dict: dict) -> dict:
         return config_dict[codegen_key]
 
     raise MissingConfiguration(f"Config has no [{tool_key}.{codegen_key}] section.")
+
+
+def get_models_only_settings(config_dict: dict) -> ModelsOnlySettings:
+    """Parse configuration dict and return ModelsOnlySettings instance."""
+    section = get_section(config_dict).copy()
+    settings_fields_names = {f.name for f in fields(ModelsOnlySettings)}
+    try:
+        section["scalars"] = {
+            name: ScalarData(
+                type_=data["type"],
+                serialize=data.get("serialize"),
+                parse=data.get("parse"),
+                import_=data.get("import"),
+            )
+            for name, data in section.get("scalars", {}).items()
+        }
+    except KeyError as exc:
+        raise MissingConfiguration(
+            "Missing 'type' field for scalar definition"
+        ) from exc
+
+    try:
+        if "include_comments" in section and isinstance(
+            section["include_comments"], bool
+        ):
+            section["include_comments"] = (
+                CommentsStrategy.TIMESTAMP.value
+                if section["include_comments"]
+                else CommentsStrategy.NONE.value
+            )
+            options = ", ".join(strategy.value for strategy in CommentsStrategy)
+            warn(
+                "Support for boolean 'include_comments' value has been deprecated "
+                "and will be dropped in future release. "
+                f"Instead use one of following options: {options}",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        return ModelsOnlySettings(
+            **{
+                key: value
+                for key, value in section.items()
+                if key in settings_fields_names
+            }
+        )
+    except TypeError as exc:
+        missing_fields = settings_fields_names.difference(section)
+        raise MissingConfiguration(
+            f"Missing configuration fields: {', '.join(missing_fields)}"
+        ) from exc
 
 
 def get_graphql_schema_settings(config_dict: dict) -> GraphQLSchemaSettings:

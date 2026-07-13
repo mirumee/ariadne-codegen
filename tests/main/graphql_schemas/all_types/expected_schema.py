@@ -202,7 +202,6 @@ schema: GraphQLSchema = GraphQLSchema(
                 DirectiveLocation.ARGUMENT_DEFINITION,
                 DirectiveLocation.INPUT_FIELD_DEFINITION,
                 DirectiveLocation.ENUM_VALUE,
-                DirectiveLocation.DIRECTIVE_DEFINITION,
             ),
             args={
                 "reason": GraphQLArgument(
