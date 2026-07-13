@@ -2,7 +2,7 @@
 title: Custom plugins
 ---
 
-# How to implement plugin
+# Custom plugins
 
 Plugin is a class extending `ariadne_codegen.plugins.base.Plugin`.
 
@@ -11,7 +11,7 @@ Plugins are instantiated once, at the beginning of `ariadne-codegen` command, wi
 - `schema: GraphQLSchema`: parsed graphql schema
 - `config_dict: dict`: parsed `pyproject.toml` file represented as a dictionary
 
-To handle specific events custom plugins need to override [hook methods](#hooks) from default `Plugin`. Default hook methods from `Plugin` don't implement any logic on their own.
+To handle specific events custom plugins need to override [hook methods](./03-hooks.md) from default `Plugin`. Default hook methods from `Plugin` don't implement any logic on their own.
 
 ## Enabling plugins
 
@@ -22,282 +22,143 @@ Every element of the list can enable plugins in 2 ways:
 
 2. Providing only package name, eg. `my_package`. In this case all plugins from selected package will be used. For class to be accessible this way, it needs to be in package's public api. Plugin has to be importable from package, eg. `from my_package import MyPlugin` has to work.
 
-## Hooks
+## Plugin execution model
 
-### generate_init_module
+### Sequential pipeline
 
-```py
-def generate_init_module(self, module: ast.Module) -> ast.Module:
-```
+All plugins run in the order they are listed under `plugins` in `pyproject.toml`. Each plugin receives the **output of the previous plugin** as its input, not the original value.
 
-Hook executed on generation of init module. Module has list of public, generated classes and reimports them all. Later this module will be saved as `__init__.py`.
+There is no priority mechanism. Every plugin executes every hook it defines. Order is controlled entirely by the position in the `plugins` list.
 
-### generate_init_import
+### Two hook levels
 
-```py
-def generate_init_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
-```
+**AST-level hooks** (`generate_*_module`, `generate_*_class`, `generate_*_field`, `generate_*_method`, etc.) - fire during code generation, before the AST is serialised to a string. You work with Python `ast` node objects.
 
-Hook executed on addition of import to init module. Later this import will be placed in `__init__.py`.
+**Code-string hooks** (`generate_*_code`, `copy_code`) - fire after AST→string conversion, immediately before each file is written to disk. You work with the final Python source as a plain string. These are the closest equivalent to a file-emission interceptor.
 
-### generate_enum
+### `process_schema` special case
 
-```py
-def generate_enum(self, class_def: ast.ClassDef, enum_type: GraphQLEnumType) -> ast.ClassDef:
-```
+After each plugin's `process_schema()` returns, `self.schema` is updated on **all** plugin instances - not just the ones that haven't run yet. This guarantees that every subsequent hook in every plugin sees the schema as last modified.
 
-Hook executed on generation of class definition of single enum.
+### Post-generation
 
-### generate_enums_module
+There is currently no hook that fires after **all** files have been written. The `generate_*_code` / `copy_code` hooks cover per-file interception. If you need a post-generation callback (e.g. to run a formatter over the whole output directory), open an issue.
 
-```py
-def generate_enums_module(self, module: ast.Module) -> ast.Module:
-```
+### Custom operations and fields coverage
 
-Hook executed on generation of enums module. Module has all classes representing enums from schema. Later this module will be saved as `{enums_module_name}.py`, `enums_module_name` is taken from config.
+The files generated with `enable_custom_operations = true` are reached by only a few hooks. None of them have a code-string hook, and the custom-fields files have no dedicated AST hook.
 
-### generate_client_module
+| File | AST hook | `generate_client_import` | `get_file_comment` |
+|------|----------|:---:|:---:|
+| `custom_queries.py` / `custom_mutations.py` | `generate_custom_method`, `generate_custom_module` | ✅ | ✅ |
+| `custom_fields.py` | none | ✅ | ✅ |
+| `custom_typing_fields.py` | none | none | ✅ |
 
-```py
-def generate_client_module(self, module: ast.Module) -> ast.Module:
-```
+## Examples
 
-Hook executed on generation of client module. Module contains `gql` function definition and client class. Later this module will be saved as `{client_file_name}.py`, `client_file_name` is taken from config.
+### Pipeline - two plugins on the same hook
 
-### generate_gql_function
+`PluginA` and `PluginB` both implement `generate_client_class`. When registered as `plugins = ["my_pkg.PluginA", "my_pkg.PluginB"]`, `PluginB` receives the `class_def` already modified by `PluginA`.
 
 ```py
-def generate_gql_function(self, function_def: ast.FunctionDef) -> ast.FunctionDef:
+import ast
+from ariadne_codegen.plugins.base import Plugin
+
+
+class PluginA(Plugin):
+    def generate_client_class(self, class_def: ast.ClassDef) -> ast.ClassDef:
+        docstring = ast.Expr(value=ast.Constant(value="Auto-generated client."))
+        class_def.body.insert(0, docstring)
+        return class_def
+
+
+class PluginB(Plugin):
+    def generate_client_class(self, class_def: ast.ClassDef) -> ast.ClassDef:
+        # class_def.body[0] is already the docstring inserted by PluginA
+        class_def.name = "Generated" + class_def.name
+        return class_def
 ```
 
-Hook executed on generation of `gql` function.
-
-### generate_client_class
+Result in `client.py`:
 
 ```py
-def generate_client_class(self, class_def: ast.ClassDef) -> ast.ClassDef:
+class GeneratedClient(AsyncBaseClient):
+    """Auto-generated client."""
+    ...
 ```
 
-Hook executed on generation of client class. Class contains method for every graphql operation.
+### AST hook - adding a field to every result class
 
-### generate_client_import
+`generate_result_class` fires once per Pydantic model class inside a result file (e.g. `get_user.py`). There can be multiple classes per operation - one for the top-level result and one for each nested type. This plugin adds `__operation__: str = "GetUser"` as the first field of every result class.
 
 ```py
-def generate_client_import(self, import_: ast.ImportFrom) -> ast.ImportFrom:
+import ast
+from ariadne_codegen.plugins.base import Plugin
+
+
+class ASTPlugin(Plugin):
+    def generate_result_class(
+        self, class_def, operation_definition, selection_set
+    ) -> ast.ClassDef:
+        op_name = (
+            operation_definition.name.value if operation_definition.name else "unknown"
+        )
+        attr = ast.AnnAssign(
+            target=ast.Name(id="__operation__"),
+            annotation=ast.Name(id="str"),
+            value=ast.Constant(value=op_name),
+            simple=1,
+            lineno=1,
+            col_offset=0,
+        )
+        class_def.body.insert(0, attr)
+        return class_def
 ```
 
-Hook executed on addition of import to client module. Later this import will be placed in `{client_file_name}.py`, `client_file_name` is taken from config.
+### Code-string hook - adding a header to generated files
 
-### generate_client_method
+`generate_client_code` and `generate_enums_code` receive the final Python source as a plain string, immediately before the file is written to disk. This is the right place for text-based transformations that are simpler to do on a string than on an AST.
 
 ```py
-def generate_client_method(
-    self,
-    method_def: Union[ast.FunctionDef, ast.AsyncFunctionDef],
-    operation_definition: OperationDefinitionNode,
-) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
+from ariadne_codegen.plugins.base import Plugin
+
+
+class HeaderPlugin(Plugin):
+    def generate_client_code(self, generated_code: str) -> str:
+        header = "\n".join([
+            "# ──────────────────────────────────────────",
+            "# Auto-generated - do not edit manually",
+            "# Generated by ariadne-codegen",
+            "# ──────────────────────────────────────────",
+            "",
+        ])
+        return header + generated_code
+
+    def generate_enums_code(self, generated_code: str) -> str:
+        return self.generate_client_code(generated_code)
 ```
 
-Hook executed on generation of client's method, which represents single graphql operation. Depends on the configuration method can be either async or not.
-`
+### `process_schema` - inspecting the schema at startup
 
-### generate_arguments
+`process_schema` runs once, before any file is generated. `self.schema` on all plugin instances is updated after each plugin's `process_schema` returns, so every subsequent hook call sees the latest schema.
 
 ```py
-def generate_arguments(
-    self,
-    arguments: ast.arguments,
-    variable_definitions: Tuple[VariableDefinitionNode, ...],
-) -> ast.arguments:
+from graphql import GraphQLSchema
+from ariadne_codegen.plugins.base import Plugin
+
+
+class SchemaPlugin(Plugin):
+    def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
+        query_type = schema.query_type
+        if query_type and "_version" not in query_type.fields:
+            print("[SchemaPlugin] Query type is missing _version field")
+        # Return the schema unmodified, or return a new GraphQLSchema to replace it.
+        return schema
 ```
 
-Hook executed on generation of arguments for specific client's method.
+### Reading config - VersionPlugin
 
-### generate_arguments_dict
-
-```py
-def generate_arguments_dict(
-    self,
-    dict_: ast.Dict,
-    variable_definitions: Tuple[VariableDefinitionNode, ...],
-) -> ast.Dict:
-```
-
-Hook executed on generation of dictionary with arguments of graphql operation. Serialized dictionary is later used as variables payload.
-
-### generate_inputs_module
-
-```py
-def generate_inputs_module(self, module: ast.Module) -> ast.Module:
-```
-
-Hook executed on generation of inputs module. Module has all classes representing inputs from schema. Later this module will be saved as `{input_types_module_name}.py`, `input_types_module_name` is taken from config.
-
-### generate_input_class
-
-```py
-def generate_input_class(
-    self, class_def: ast.ClassDef, input_type: GraphQLInputObjectType
-) -> ast.ClassDef:
-```
-
-Hook executed on generation of class definition for input from schema.
-
-### generate_input_field
-
-```py
-    def generate_input_field(
-        self,
-        field_implementation: ast.AnnAssign,
-        input_field: GraphQLInputField,
-        field_name: str,
-    ) -> ast.AnnAssign:
-```
-
-Hook executed on generation of representation for input field.
-
-### generate_result_types_module
-
-```py
-def generate_result_types_module(
-    self, module: ast.Module, operation_definition: ExecutableDefinitionNode
-) -> ast.Module:
-```
-
-Hook executed on generation of module with models reprenting result of given operation.
-
-### generate_operation_str
-
-```py
-def generate_operation_str(
-    self, operation_str: str, operation_definition: ExecutableDefinitionNode
-) -> str:
-```
-
-Hook executed on generation of string representation of given operation. Result is later used by generated client as part of payload sent to graphql server.
-
-### generate_result_class
-
-```py
-def generate_result_class(
-    self,
-    class_def: ast.ClassDef,
-    operation_definition: ExecutableDefinitionNode,
-    selection_set: SelectionSetNode,
-) -> ast.ClassDef:
-```
-
-Hook executed on generation of single model, part of result of given query or mutation.
-
-### generate_result_field
-
-```py
-def generate_result_field(
-    self,
-    field_implementation: ast.AnnAssign,
-    operation_definition: ExecutableDefinitionNode,
-    field: FieldNode,
-) -> ast.AnnAssign:
-```
-
-Hook executed on generation of single model field.
-
-### generate_client_code
-
-```py
-def generate_client_code(self, generated_code: str) -> str:
-```
-
-Hook executed on generation of client code. Result is used as content of `{client_file_name}.py`, `client_file_name` is taken from config.
-
-### generate_enums_code
-
-```py
-def generate_enums_code(self, generated_code: str) -> str:
-```
-
-Hook executed on generation of enums code. Result is used as content of `{enums_module_name}.py`, `enums_module_name` is taken from config.
-
-### generate_inputs_code
-
-```py
-def generate_inputs_code(self, generated_code: str) -> str:
-```
-
-Hook executed on generation of input models code. Result is used as content of `{input_types_module_name}.py`, `input_types_module_name` is taken from config.
-
-### generate_result_types_code
-
-```py
-def generate_result_types_code(self, generated_code: str) -> str:
-```
-
-Hook executed on generation of result models code for one operation. Result is used as content of `{operation_name}.py`.
-
-### copy_code
-
-```py
-def copy_code(self, copied_code: str) -> str:
-```
-
-Hook executed on copying file's content to result package.
-Files hook is called for:
-
-- `base_client.py` or `async_base_client.py` or custom base client `base_client_file_path`
-- `base_model.py`
-- `exceptions.py`
-- all files from config's `files_to_include`
-
-### generate_init_code
-
-```py
-def generate_init_code(self, generated_code: str) -> str:
-```
-
-Hook executed on generation of init code. Result is used as content of `__init__.py`.
-
-### process_name
-
-```py
-def process_name(self, name: str, node: Optional[Node] = None) -> str:
-```
-
-Hook executed on processing of GraphQL field, argument or operation name.
-
-### generate_fragments_module
-
-```py
-def generate_fragments_module(
-    self,
-    module: ast.Module,
-    fragments_definitions: Dict[str, FragmentDefinitionNode],
-) -> ast.Module:
-```
-
-Hook executed on generation of fragments module. Module has classes representing all fragments from provided queries. Later this module will be saved as `{fragments_module_name}.py`, `fragments_module_name` is taken from config.
-
-### process_schema
-
-```py
-def process_schema(self, schema: GraphQLSchema) -> GraphQLSchema:
-```
-
-Hook executed on creating `GraphQLSchema` object from path or url provided in settings. During parsing `assume_valid` is set to `True`. Then this hook is called, and only after that `graphql.assert_valid_schema` is used to validate schema.
-To ensure all plugins have current version of schema, result of this hook is propagated to all plugins, updating their `schema` field.
-
-### get_file_comment
-
-```py
-def get_file_comment(
-    self, comment: str, code: str, source: Optional[str] = None
-) -> str:
-```
-
-Hook executed on generating comment included at the beginning of a generated code.
-
-## Example
-
-This example plugin adds `__version__ = "..."` to generated `__init__.py` file.
+Adds `__version__ = "..."` to the generated `__init__.py` by reading a value from `pyproject.toml`.
 
 ```py
 import ast
@@ -321,9 +182,7 @@ class VersionPlugin(Plugin):
         return module
 ```
 
-`VersionPlugin` reads version from parsed `pyproject.toml`, eg. following entry will produce `__version__ = "0.21"`.
-
 ```toml
 [tool.version_plugin]
-version = 0.21
+version = "0.21"
 ```
