@@ -29,12 +29,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Determine release notes options
+        id: relopts
+        run: |
+          # Pre-release tags (e.g. 0.19.a1, 0.19.rc1) are excluded from cliff.toml's
+          # tag_pattern, so `--latest` would resolve to the previous stable tag. For
+          # those, generate notes for the unreleased range and label them with the tag.
+          if [[ "${{ github.ref_name }}" =~ (a|b|rc|alpha|beta|dev)[0-9]*$ ]]; then
+            echo "args=--unreleased --tag ${{ github.ref_name }} --strip all" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "args=--latest --strip all" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Generate release notes
         id: release-notes
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --latest --strip all
+          args: ${{ steps.relopts.outputs.args }}
         env:
           OUTPUT: RELEASE_NOTES.md
           GITHUB_REPO: ${{ github.repository }}
@@ -51,6 +64,7 @@ jobs:
           files: |
             ./dist/*
           draft: true
+          prerelease: ${{ steps.relopts.outputs.prerelease }}
           body_path: RELEASE_NOTES.md
       - name: Summary
         run: |
