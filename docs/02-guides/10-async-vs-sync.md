@@ -14,8 +14,6 @@ To generate a synchronous client instead, set `async_client` to `false`:
 async_client = false
 ```
 
-- `async_client` (defaults to `true`) - default generated client is `async`, change this option to `false` to generate a synchronous client instead
-
 ## What changes
 
 |                        | Async (default)                     | Sync (`async_client = false`)     |
@@ -23,7 +21,7 @@ async_client = false
 | Base class             | `AsyncBaseClient`                   | `BaseClient`                      |
 | Operation methods      | `async def` (must be `await`ed)     | plain `def`                       |
 | Context manager        | `async with`                        | `with`                            |
-| Custom `http_client`   | `httpx.AsyncClient`                 | `httpx.Client`                    |
+| Custom `http_client`   | async client (default `httpx.AsyncClient`) | sync client (default `httpx.Client`) |
 | Subscriptions          | supported                           | **not supported**                 |
 
 The generated method bodies mirror this - the async client does
@@ -57,38 +55,3 @@ Subscriptions are only available when using async client.
 ```
 
 See [Subscriptions](./04-subscriptions.md).
-
-## Passing a custom http client
-
-The choice of async vs sync also determines which `httpx` client you can supply when
-passing your own http client:
-
-```py
-client = Client(http_client=CustomComplexHttpClient())
-```
-
-`CustomComplexHttpClient` needs to be an instance of `httpx.AsyncClient` for the
-async client, or `httpx.Client` for the sync client. See
-[Using generated client](./03-using-generated-client.md#advanced-http-configuration).
-
-## Calling the client
-
-```py
-# async
-import asyncio
-from graphql_client.client import Client
-
-async def main():
-    async with Client(url="https://example.com/graphql") as client:
-        users = await client.list_all_users()
-
-asyncio.run(main())
-```
-
-```py
-# sync
-from graphql_client.client import Client
-
-with Client(url="https://example.com/graphql") as client:
-    users = client.list_all_users()
-```

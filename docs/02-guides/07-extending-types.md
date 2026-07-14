@@ -29,8 +29,14 @@ away.
 Both arguments must be string literals; if either `from` or `import` is missing (or
 a non-string value is passed), generation fails with a `ParsingError`.
 
-This directive can be used along with the `files_to_include` option to extend the
-functionality of generated classes.
+The directive only emits the `from {from} import {import}` line - it does not copy any
+code - so the imported module must be reachable from the generated package. This
+depends on what `from` points to:
+
+- a **relative import** (e.g. `from: ".mixins"`) refers to a module inside the generated
+  package, so you must copy that module in with the [`files_to_include`](../03-reference/01-configuration.md) option.
+- an **absolute import** (e.g. `from: "my_package.mixins"`) just has to be importable in
+  the environment where the generated code runs; `files_to_include` is not needed.
 
 ### Where `@mixin` can be used
 

@@ -14,11 +14,11 @@ used at a time:
 
 - `schema_path` - path to file/directory with GraphQL schema
 - `schema_paths` - list of local paths and/or installed-package sources to build the schema from
-- `remote_schema_url` - url to GraphQL server, where introspection query can be performed
+- `remote_schema_url` - URL to GraphQL server, where introspection query can be performed
 
 ## Local schema file
 
-Point `schema_path` at a `.graphql` file or a directory containing schema files:
+Point `schema_path` at a single schema file or at a directory:
 
 ```toml
 [tool.ariadne-codegen]
@@ -26,11 +26,19 @@ schema_path = "schema.graphql"
 queries_path = "queries.graphql"
 ```
 
-## Loading schema from installed packages
+When `schema_path` points to a directory, `ariadne-codegen` reads every file with a
+`.graphql`, `.graphqls` or `.gql` extension in it (searched recursively) and combines
+them into a single schema.
 
-`schema_paths` lets you pull type definitions from installed Python packages
-alongside your local schema files, so codegen can resolve types that live in a
-shared library without copying them manually.
+## Combining multiple schema files
+
+`schema_paths` lets you build a single schema from several sources in different
+locations - multiple files and/or directories - instead of a single `schema_path`.
+Each source is resolved and all the collected files are combined into one schema.
+
+It additionally supports importing schema files from installed Python packages, so
+codegen can resolve types that live in a shared library without copying them
+manually.
 
 Each entry in `schema_paths` is first tried as a local filesystem path, and if it
 is neither an existing file nor directory it is treated as a dotted Python import

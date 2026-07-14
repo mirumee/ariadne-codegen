@@ -98,5 +98,4 @@ server closes the subscription (or you `break` out of it).
 Arguments `ws_origin` and `ws_headers` are added as headers to the handshake
 request, and `ws_connection_init_payload` is used as the payload of the
 [ConnectionInit](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md#connectioninit)
-message. See [Using generated client](./03-using-generated-client.md#client-configuration)
-for the full list of constructor arguments.
+message.

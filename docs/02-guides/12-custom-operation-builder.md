@@ -4,13 +4,7 @@ title: Custom operation builder
 
 # Custom operation builder
 
-The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way.
-
-## Enabling
-
-Set `enable_custom_operations = true` in your config. This mode generates additional
-helper modules instead of (or alongside) the per-operation client methods, so
-`queries_path` becomes optional:
+The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way. This feature is disabled by default. To enable it, set `enable_custom_operations = true` in your config. It generates additional helper modules instead of (or alongside) the per-operation client methods, so `queries_path` becomes optional:
 
 ```toml
 [tool.ariadne-codegen]
@@ -28,7 +22,7 @@ With it enabled, the following modules are generated in your package:
 The client also gains `query(...)`, `mutation(...)` and `execute_custom_operation(...)`
 methods for executing the built operations.
 
-## Example Code
+## Example: custom queries
 
 ```python
 import asyncio
@@ -99,7 +93,7 @@ Unlike the per-operation client methods, `client.query(...)` and
 `client.mutation(...)` return the raw response as a `dict[str, Any]` - the result is
 not parsed into a generated Pydantic model.
 
-## Building mutations
+## Example: custom mutations
 
 Mutations are built the same way, using the generated `Mutation` class from
 `custom_mutations` and executed with `client.mutation(...)`:

@@ -92,7 +92,7 @@ for a walk-through of everything that gets generated.
 
 ## Contributing
 
-Contributions are welcome! See [Contributing](docs/05-community/01-contributing.md) for how to report bugs, work on issues, and open pull requests.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs, work on issues, and open pull requests.
 
 Also make sure you follow [@AriadneGraphQL](https://twitter.com/AriadneGraphQL) on Twitter for latest updates, news and random musings!
 

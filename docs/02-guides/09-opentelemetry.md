@@ -6,9 +6,10 @@ title: Open Telemetry
 
 When the config option `opentelemetry_client` is set to `true` then the default,
 included base client is replaced with one that implements opt-in Open Telemetry
-support. By default this support does nothing, but when the `opentelemetry-api`
-package is installed and the `tracer` argument is provided then the client will
-create spans with data about performed requests.
+support. By default this support does nothing, but when the
+[`opentelemetry-api`](https://pypi.org/project/opentelemetry-api/) package is installed
+and the `tracer` argument is provided then the client will create spans with data about
+performed requests.
 
 ## Enabling
 
