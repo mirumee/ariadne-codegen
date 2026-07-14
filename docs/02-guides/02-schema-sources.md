@@ -71,7 +71,7 @@ The following options control how the introspection request is performed:
 - `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
 - `remote_schema_http_client_path` (defaults to `None`) - dotted import path to a custom HTTP client used only for the introspection request, instead of the default `httpx` client
 
-## Introspection query options
+### Introspection query options
 
 These options only apply when the schema is fetched via `remote_schema_url`. They
 map directly to the arguments of `graphql-core`'s
