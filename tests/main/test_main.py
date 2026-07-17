@@ -804,3 +804,72 @@ def _resolved_aliases(project_dir: Path, package_name: str) -> dict[str, str]:
         check=True,
     )
     return json.loads(result.stdout)
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH / "lazy_imports" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "lazy_imports" / "queries.graphql",
+                    CLIENTS_PATH / "lazy_imports" / "schema.graphql",
+                ),
+            ),
+            "lazy_imports_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_with_lazy_imports_imports_generated_modules_on_first_use(
+    project_dir, package_name
+):
+    """With ``lazy_imports = true`` importing the package must not import the
+    modules holding the models, and touching a name must import only its module.
+
+    This needs both halves to be in place, which is why the setting turns the
+    ``ClientForwardRefsPlugin`` on: the lazy ``__init__`` stops the package
+    importing every module, and the plugin stops ``client.py`` importing the input
+    types for its annotations. With either one alone the other still pulls the
+    models in and the import costs what it always did, which no assertion on the
+    generated source would catch, so the package is imported and driven here.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0, result.output
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+
+    sys.path.insert(0, str(project_dir))
+    for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+        del sys.modules[name]
+    try:
+        package = importlib.import_module(package_name)
+
+        assert f"{package_name}.input_types" not in sys.modules
+        assert f"{package_name}.get_user" not in sys.modules
+        assert f"{package_name}.client" not in sys.modules
+
+        # The client half: reaching the client must not drag in the input types
+        # it only names in annotations.
+        assert package.Client.__name__ == "Client"
+        assert f"{package_name}.client" in sys.modules
+        assert f"{package_name}.input_types" not in sys.modules
+
+        # The init half: a name imports its own module and nothing else.
+        assert package.UserFilterInput.__name__ == "UserFilterInput"
+        assert f"{package_name}.input_types" in sys.modules
+        assert f"{package_name}.get_user" not in sys.modules
+
+        # Deferring the imports must not change what the models do.
+        parsed = package.GetUser.model_validate({"user": {"id": "1", "name": "Ann"}})
+        assert parsed.user.name == "Ann"
+        assert f"{package_name}.get_user" in sys.modules
+
+        assert package.__all__ == sorted(package.__all__)
+        assert "UserFilterInput" in package.__all__
+    finally:
+        for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+            del sys.modules[name]
+        sys.path.remove(str(project_dir))

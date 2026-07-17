@@ -9,6 +9,7 @@ from textwrap import dedent
 from graphql.validation import specified_rules
 
 from .client_generators.constants import (
+    CLIENT_FORWARD_REFS_PLUGIN,
     DEFAULT_ASYNC_BASE_CLIENT_NAME,
     DEFAULT_ASYNC_BASE_CLIENT_NO_UPLOAD_PATH,
     DEFAULT_ASYNC_BASE_CLIENT_OPEN_TELEMETRY_NAME,
@@ -187,11 +188,22 @@ class ClientSettings(BaseSettings):
     ignore_extra_fields: bool = True
     defer_model_build: bool = False
     use_alias_generator: bool = False
+    lazy_imports: bool = False
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
             raise TypeError("__init__ missing 1 required argument: 'queries_path'")
         super().__post_init__()
+
+        # `lazy_imports` only pays off when both halves are in place: the lazy
+        # `__init__` stops the package importing every module, and the plugin stops
+        # `client.py` importing every input type for its annotations. With either
+        # one alone the other still pulls the models in, and the import costs the
+        # same, so the setting turns the plugin on rather than leaving it to be
+        # paired up by hand. Appended last: it rewrites the client module other
+        # plugins (`ShorterResultsPlugin`) produce, so it has to see their output.
+        if self.lazy_imports and CLIENT_FORWARD_REFS_PLUGIN not in self.plugins:
+            self.plugins.append(CLIENT_FORWARD_REFS_PLUGIN)
 
         try:
             self.include_comments = CommentsStrategy(self.include_comments)
@@ -330,6 +342,12 @@ class ClientSettings(BaseSettings):
                 "Deriving field aliases with `alias_generator=to_camel` "
                 "(faster import of generated models)."
             )
+        lazy_imports_msg = (
+            "Importing generated modules on first use "
+            "(faster import of generated package)."
+            if self.lazy_imports
+            else "Importing every generated module in the package's `__init__`."
+        )
         introspection_msg = (
             self._introspection_settings_message() if self.using_remote_schema else ""
         )
@@ -353,6 +371,7 @@ class ClientSettings(BaseSettings):
             {include_typename_msg}
             {defer_model_build_msg}
             {use_alias_generator_msg}
+            {lazy_imports_msg}
             {files_to_include_msg}
             {plugins_msg}
             """

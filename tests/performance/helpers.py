@@ -67,16 +67,28 @@ def generate_package(project_dir: Path, package_name: str, settings: str = "") -
     return package_path
 
 
-def measure_import_seconds(project_dir: Path, package_name: str) -> float:
-    """Import the package in a fresh interpreter; return the best wall-clock time."""
+def measure_import_seconds(
+    project_dir: Path, package_name: str, reach_client: bool = False
+) -> float:
+    """Import the package in a fresh interpreter; return the best wall-clock time.
+
+    `reach_client` also resolves the client class. With `lazy_imports` the import
+    on its own barely does anything (the work moves to the first use of a name),
+    so timing only the import would flatter the setting rather than measure it.
+    Reaching the client is the smallest thing an application does that has to pay
+    for whatever the import deferred.
+    """
+    statements = f"import {package_name}  # noqa: F401"
+    if reach_client:
+        statements += f"\n{package_name}.Client"
     script = textwrap.dedent(
-        f"""
+        """
         import time
         start = time.perf_counter()
-        import {package_name}  # noqa: F401
+        {statements}
         print(time.perf_counter() - start)
         """
-    )
+    ).format(statements=statements)
     best = float("inf")
     for _ in range(TIMING_REPEATS):
         completed = subprocess.run(
