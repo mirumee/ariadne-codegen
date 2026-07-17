@@ -403,15 +403,19 @@ def test_main_applies_base_model_config_with_multipart_uploads_disabled(
 def test_main_defer_model_build_package_validates_fragment_mixin_payload(
     project_dir, package_name
 ):
-    """A deferred operation whose result subclasses a fragment must still build
-    and validate a real payload.
+    """A deferred operation that spreads a fragment must build and validate a
+    real payload, whether or not it selects fields of its own.
 
-    ``query ListUsers { users { ...UserFields } }`` generates
-    ``class ListUsersUsers(UserFields)`` in ``list_users.py`` while
-    ``UserFields.friends`` is a forward reference to ``UserFieldsFriends`` defined
-    in ``fragments.py``. With ``defer_model_build`` the subclass is built lazily
-    on first validation and resolves that inherited forward reference against its
-    *own* module, so ``list_users.py`` must keep ``UserFieldsFriends`` importable.
+    ``query ListUsers { users { ...UserFields } }`` selects nothing beyond the
+    fragment, so ``ListUsersUsers`` is bound straight to ``UserFields`` and there
+    is no subclass to resolve anything against.
+
+    ``ListUsersWithManager`` adds ``manager`` on top of the spread, which needs a
+    real ``class ListUsersWithManagerUsers(UserFields)``. ``UserFields.friends``
+    is a forward reference to ``UserFieldsFriends`` defined in ``fragments.py``,
+    and with ``defer_model_build`` the subclass is built lazily on first
+    validation and resolves that *inherited* reference against its own module,
+    so ``list_users_with_manager.py`` must keep ``UserFieldsFriends`` importable.
     Diffing the generated source never exercised this. The package is imported
     and a payload validated here, across every supported Python version.
     """
@@ -434,6 +438,22 @@ def test_main_defer_model_build_package_validates_fragment_mixin_payload(
             }
         )
         assert parsed.users[0].friends[0].name == "Bob"
+        assert package.ListUsersUsers is package.UserFields
+
+        with_manager = package.ListUsersWithManager.model_validate(
+            {
+                "users": [
+                    {
+                        "id": "1",
+                        "name": "Ann",
+                        "friends": [{"id": "2", "name": "Bob"}],
+                        "manager": {"id": "3", "name": "Cid"},
+                    }
+                ]
+            }
+        )
+        assert with_manager.users[0].friends[0].name == "Bob"
+        assert with_manager.users[0].manager.name == "Cid"
     finally:
         for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
             del sys.modules[name]
@@ -459,19 +479,19 @@ def test_main_defer_model_build_package_validates_fragment_mixin_payload(
 def test_main_default_package_validates_fragment_mixin_payload(
     project_dir, package_name
 ):
-    """A default (non-defer) operation whose result subclasses a fragment must
-    still build and validate a real payload.
+    """A default (non-defer) operation that spreads a fragment and selects fields
+    of its own must still build and validate a real payload.
 
-    ``query ListUsers { users { ...UserFields } }`` generates
-    ``class ListUsersUsers(UserFields)`` in ``list_users.py`` while
+    ``ListUsersWithManager`` adds ``manager`` on top of ``...UserFields``, so it
+    needs a real ``class ListUsersWithManagerUsers(UserFields)``.
     ``UserFields.friends`` is a forward reference to ``UserFieldsFriends`` defined
-    in ``fragments.py``. Without ``defer_model_build`` the eager
-    ``ListUsers.model_rebuild()`` re-evaluates that inherited forward reference
-    against the subclass's *own* module, so ``list_users.py`` must keep
-    ``UserFieldsFriends`` importable. On Python 3.10 this fails otherwise with
-    ``PydanticUndefinedAnnotation``; on 3.11+ the inherited reference is reused
-    rather than re-evaluated so it happens to pass. Diffing the generated source
-    never exercised this. The package is imported and a payload validated here.
+    in ``fragments.py``, and the eager ``model_rebuild()`` re-evaluates that
+    *inherited* reference against the subclass's own module, so
+    ``list_users_with_manager.py`` must keep ``UserFieldsFriends`` importable. On
+    Python 3.10 this fails otherwise with ``PydanticUndefinedAnnotation``; on
+    3.11+ the inherited reference is reused rather than re-evaluated so it
+    happens to pass. Diffing the generated source never exercised this. The
+    package is imported and a payload validated here.
     """
     result = CliRunner().invoke(main)
 
@@ -489,14 +509,20 @@ def test_main_default_package_validates_fragment_mixin_payload(
         del sys.modules[name]
     try:
         package = importlib.import_module(package_name)
-        parsed = package.ListUsers.model_validate(
+        parsed = package.ListUsersWithManager.model_validate(
             {
                 "users": [
-                    {"id": "1", "name": "Ann", "friends": [{"id": "2", "name": "Bob"}]}
+                    {
+                        "id": "1",
+                        "name": "Ann",
+                        "friends": [{"id": "2", "name": "Bob"}],
+                        "manager": {"id": "3", "name": "Cid"},
+                    }
                 ]
             }
         )
         assert parsed.users[0].friends[0].name == "Bob"
+        assert parsed.users[0].manager.name == "Cid"
     finally:
         for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
             del sys.modules[name]

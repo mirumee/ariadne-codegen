@@ -1,8 +1,3 @@
-from .shorter_results_fragments import (
-    FragmentWithSingleField,
-    FragmentWithSingleFieldQueryUnwrapFragment,  # noqa: F401
-)
+from .shorter_results_fragments import FragmentWithSingleField
 
-
-class UnwrapFragment(FragmentWithSingleField):
-    pass
+UnwrapFragment = FragmentWithSingleField

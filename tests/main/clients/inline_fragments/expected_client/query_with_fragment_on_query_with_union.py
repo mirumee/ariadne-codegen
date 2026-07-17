@@ -1,10 +1,3 @@
-from .fragments import (  # noqa: F401
-    FragmentOnQueryWithUnion,
-    FragmentOnQueryWithUnionQueryUTypeA,
-    FragmentOnQueryWithUnionQueryUTypeB,
-    FragmentOnQueryWithUnionQueryUTypeC,
-)
+from .fragments import FragmentOnQueryWithUnion
 
-
-class QueryWithFragmentOnQueryWithUnion(FragmentOnQueryWithUnion):
-    pass
+QueryWithFragmentOnQueryWithUnion = FragmentOnQueryWithUnion

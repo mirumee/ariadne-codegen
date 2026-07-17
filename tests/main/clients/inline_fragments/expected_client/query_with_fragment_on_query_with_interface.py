@@ -1,10 +1,3 @@
-from .fragments import (  # noqa: F401
-    FragmentOnQueryWithInterface,
-    FragmentOnQueryWithInterfaceQueryIInterface,
-    FragmentOnQueryWithInterfaceQueryITypeA,
-    FragmentOnQueryWithInterfaceQueryITypeB,
-)
+from .fragments import FragmentOnQueryWithInterface
 
-
-class QueryWithFragmentOnQueryWithInterface(FragmentOnQueryWithInterface):
-    pass
+QueryWithFragmentOnQueryWithInterface = FragmentOnQueryWithInterface

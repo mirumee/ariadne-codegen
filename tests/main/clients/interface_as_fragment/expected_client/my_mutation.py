@@ -22,8 +22,7 @@ class MyMutationChangeItem(BaseModel):
     ]
 
 
-class MyMutationChangeItemContacts(Item):
-    pass
+MyMutationChangeItemContacts = Item
 
 
 class MyMutationChangeItemErrorsItemServiceInternalError(ItemError):
