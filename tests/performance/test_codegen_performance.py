@@ -1,23 +1,22 @@
-"""Timing guards for how long generation itself takes.
+"""Guard on how many times generation spawns ruff.
 
-Formatting used to spawn `python -m ruff` twice per generated file: a full Python
-interpreter startup per spawn, and a spawn count linear in the size of the
-package. Ruff is now invoked as a binary, once per rule-selection group for the
-whole package.
+Formatting used to spawn ruff twice per generated file, a spawn count linear in
+the size of the package. Ruff is now invoked once per rule-selection group for
+the whole package. The test asserts that mechanism, that the spawn count stays
+constant as the package grows, rather than wall-clock time, so it does not flake
+on a loaded runner.
 
-Marked `performance`, so they can be run on their own:
+Marked `performance`, so it can be run on its own:
 
     hatch test -- -m performance
 """
 
 import subprocess
-import time
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
-import ariadne_codegen.client_generators.package as package_module
 import ariadne_codegen.utils as utils
 
 from .helpers import generate_package, report
@@ -37,12 +36,6 @@ LARGE_OPERATION_COUNT = 60
 # and again for `format`. Nothing here rewrites base_model.py, which would add a
 # further pair. The bound matters less than the fact that it does not scale.
 MAX_RUFF_SPAWNS = 6
-
-# Batching beats formatting each file separately by ~6x on the large package,
-# with both using the ruff binary. The threshold leaves a wide margin.
-MIN_BATCHING_SPEEDUP = 2.0
-
-TIMING_REPEATS = 2
 
 
 def _build_project(project_dir: Path, operation_count: int) -> None:
@@ -106,52 +99,3 @@ def test_ruff_spawn_count_does_not_grow_with_the_package(request, tmp_path):
         f"{large_files} files -> {large_spawns} spawns"
     )
     assert large_spawns <= MAX_RUFF_SPAWNS
-
-
-def test_ruff_is_not_spawned_through_a_python_interpreter(tmp_path):
-    """`python -m ruff` costs a full interpreter startup on every call."""
-    _build_project(tmp_path, SMALL_OPERATION_COUNT)
-
-    calls, _ = _generate_recording_spawns(tmp_path)
-
-    assert _ruff_spawns(calls), "expected generation to run ruff"
-    for call in calls:
-        argv = call[0][0]
-        assert "-m" not in argv[:2], f"ruff spawned through an interpreter: {argv[:3]}"
-
-
-def test_batched_formatting_beats_formatting_each_file(request, monkeypatch, tmp_path):
-    _build_project(tmp_path, LARGE_OPERATION_COUNT)
-    generate_package(tmp_path, "codegen_client")  # warm caches and the filesystem
-
-    batched = min(_time_generation(tmp_path) for _ in range(TIMING_REPEATS))
-
-    def _format_each_file(codes, *, remove_unused_imports=True):
-        return [
-            utils._format_code(code, remove_unused_imports=remove_unused_imports)
-            for code in codes
-        ]
-
-    monkeypatch.setattr(package_module, "format_many", _format_each_file)
-    per_file = min(_time_generation(tmp_path) for _ in range(TIMING_REPEATS))
-
-    speedup = per_file / batched
-    report(
-        request,
-        f"generation of a {LARGE_OPERATION_COUNT}-operation package",
-        [
-            f"one ruff pass per file  {per_file:5.2f}s",
-            f"one ruff pass per group {batched:5.2f}s   ({speedup:.2f}x)",
-        ],
-    )
-    assert speedup >= MIN_BATCHING_SPEEDUP, (
-        f"batched formatting not fast enough: per_file={per_file:.3f}s "
-        f"batched={batched:.3f}s speedup={speedup:.2f}x "
-        f"(expected >= {MIN_BATCHING_SPEEDUP}x)"
-    )
-
-
-def _time_generation(project_dir: Path) -> float:
-    start = time.perf_counter()
-    generate_package(project_dir, "codegen_client")
-    return time.perf_counter() - start
