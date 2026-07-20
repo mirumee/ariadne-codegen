@@ -344,11 +344,14 @@ def _split_leading_comments(code: str) -> tuple[str, str]:
 def _set_base_model_config_kwargs(code: str, kwargs: dict[str, ast.expr]) -> str:
     """Set keyword arguments on the ``ConfigDict`` call in ``BaseModel``.
 
-    Keywords already present are left alone, so explicit user values are never
-    overwritten. Every keyword is applied in one parse/unparse round trip.
+    Keywords already present are left alone (user values win); all are applied in
+    one parse/unparse round trip. Raises when there is no such call to patch: the
+    generators have already emitted code that assumes the config landed, so
+    silently skipping it would ship a package that misbehaves at runtime.
     """
     header, code = _split_leading_comments(code)
     tree = ast.parse(code)
+    patched = False
     for node in tree.body:
         if not isinstance(node, ast.ClassDef):
             continue
@@ -364,50 +367,39 @@ def _set_base_model_config_kwargs(code: str, kwargs: dict[str, ast.expr]) -> str
                 continue
             if call.func.id != "ConfigDict":
                 continue
+            patched = True
             present = {kw.arg for kw in call.keywords}
             call.keywords.extend(
                 ast.keyword(arg=arg, value=value)
                 for arg, value in kwargs.items()
                 if arg not in present
             )
+    if not patched:
+        raise RuntimeError(
+            f"Cannot apply {', '.join(sorted(kwargs))} to the generated `BaseModel`: "
+            "no `model_config = ConfigDict(...)` assignment found in the base model "
+            "file. The generated package would not carry the settings it was "
+            "generated for."
+        )
     ast.fix_missing_locations(tree)
     return header + ast.unparse(tree)
 
 
-def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
-    """Set a single keyword argument on the ``ConfigDict`` call in ``BaseModel``."""
-    return _set_base_model_config_kwargs(code, {arg: value})
+def _imports_name(code: str, module: str, name: str) -> bool:
+    """Whether ``code`` already binds ``name`` via ``from module import name``."""
+    return any(
+        isinstance(node, ast.ImportFrom)
+        and node.module == module
+        and any(alias.name == name and alias.asname is None for alias in node.names)
+        for node in ast.parse(code).body
+    )
 
 
 def _add_import_to_base_model(code: str, module: str, name: str) -> str:
     header, body = _split_leading_comments(code)
-    if f"from {module} import {name}" in body:
+    if _imports_name(body, module, name):
         return code
     return f"{header}from {module} import {name}\n{body}"
-
-
-def add_extra_to_base_model(code: str) -> str:
-    "Adds `extra='forbid'` to the ConfigDict in BaseModel if not already present."
-    return _set_base_model_config_kwarg(code, "extra", ast.Constant("forbid"))
-
-
-def add_defer_build_to_base_model(code: str) -> str:
-    "Adds `defer_build=True` to the ConfigDict in BaseModel if not already present."
-    return _set_base_model_config_kwarg(code, "defer_build", ast.Constant(True))
-
-
-def add_alias_generator_to_base_model(code: str) -> str:
-    """Adds `alias_generator=to_camel` to the ConfigDict in BaseModel.
-
-    Generators only emit an explicit `Field(alias=...)` for the fields whose
-    GraphQL name `to_camel` cannot reconstruct, so the two must stay in sync.
-    """
-    code = _set_base_model_config_kwarg(
-        code, "alias_generator", ast.Name(id=TO_CAMEL_NAME)
-    )
-    return _add_import_to_base_model(
-        code, PYDANTIC_ALIAS_GENERATORS_MODULE, TO_CAMEL_NAME
-    )
 
 
 def rewrite_base_model(
@@ -419,9 +411,13 @@ def rewrite_base_model(
 ) -> str:
     """Apply the requested ConfigDict settings to the copied `base_model.py`.
 
-    Returns `code` untouched when nothing was requested. Otherwise every keyword
-    goes in with a single `ast.unparse`, which drops the blank lines and import
-    order of the copied dependency, so the result is handed back to ruff.
+    Returns `code` untouched when nothing is requested. Otherwise `ast.unparse`
+    drops the copy's blank lines and import order, so the result goes back to ruff.
+
+    `alias_generator` must stay in sync with the generators: they emit
+    `Field(alias=...)` only where `to_camel` cannot reconstruct the GraphQL name,
+    so a package generated with it but missing the config would drop every field
+    whose alias was left implicit.
     """
     kwargs: dict[str, ast.expr] = {}
     if forbid_extra:
