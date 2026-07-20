@@ -309,18 +309,18 @@ def test_main_with_defer_model_build_omits_model_rebuild_calls(
     assert package_path.is_dir()
 
     for module_path in package_path.glob("*.py"):
-        assert (
-            "model_rebuild()" not in module_path.read_text()
-        ), f"unexpected model_rebuild() in {module_path.name}"
+        assert "model_rebuild()" not in module_path.read_text(), (
+            f"unexpected model_rebuild() in {module_path.name}"
+        )
 
     base_model_code = (package_path / "base_model.py").read_text()
     assert "defer_build=True" in base_model_code
 
     # Forward references must still be generated (otherwise there would be
     # nothing to defer). This guards against accidentally dropping them.
-    assert 'Optional["UserFilterInput"]' in (
-        package_path / "input_types.py"
-    ).read_text()
+    assert (
+        'Optional["UserFilterInput"]' in (package_path / "input_types.py").read_text()
+    )
 
 
 @pytest.mark.parametrize(

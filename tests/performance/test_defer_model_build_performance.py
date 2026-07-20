@@ -132,9 +132,7 @@ def test_defer_model_build_speeds_up_import(tmp_path):
     deferred_dir = tmp_path / "deferred"
 
     eager_package = _generate_package(eager_dir, "eager_client", defer=False)
-    deferred_package = _generate_package(
-        deferred_dir, "deferred_client", defer=True
-    )
+    deferred_package = _generate_package(deferred_dir, "deferred_client", defer=True)
 
     # Sanity: the eager package builds models at import time (model_rebuild),
     # the deferred one must not.
@@ -142,8 +140,7 @@ def test_defer_model_build_speeds_up_import(tmp_path):
         "model_rebuild()" in p.read_text() for p in eager_package.glob("*.py")
     ), "expected eager package to contain model_rebuild() calls"
     assert all(
-        "model_rebuild()" not in p.read_text()
-        for p in deferred_package.glob("*.py")
+        "model_rebuild()" not in p.read_text() for p in deferred_package.glob("*.py")
     ), "deferred package must not contain model_rebuild() calls"
 
     eager_seconds = _measure_import_seconds(eager_dir, "eager_client")
