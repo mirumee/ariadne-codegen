@@ -180,9 +180,8 @@ class PackageGenerator:
         self._unpacked_fragments: set[str] = set()
         self._used_enums: list[str] = []
         self._fragments_module: Optional[ast.Module] = None
-        # For each fragment class, the forward-referenced names a subclass of it
-        # must be able to resolve. Populated for every client, regardless of
-        # `defer_model_build` (the bug it guards against affects both modes).
+        # Per fragment class: the forward-ref names a subclass must resolve. Built
+        # for every client (the bug it guards affects both `defer_model_build` modes).
         self._fragment_mixin_forward_refs: dict[str, set[str]] = {}
 
         self.enable_custom_operations = enable_custom_operations
@@ -234,10 +233,10 @@ class PackageGenerator:
     ) -> None:
         """Unparse a module now, format and write it once generation is done.
 
-        `plugin_hook` names a `PluginManager` method; it is resolved here so the
-        `plugin_manager is None` case is handled in one place. `prepend_code` is
-        raw source inserted before the unparsed module, since `ast.unparse` cannot
-        carry the `# noqa` comment that keeps forward-reference-only imports.
+        `plugin_hook` names a `PluginManager` method, resolved here so the
+        `plugin_manager is None` case lives in one place. `prepend_code` is raw
+        source inserted before the module, since `ast.unparse` can't carry the
+        `# noqa` comment that keeps forward-reference-only imports.
         """
         hook: Optional[Callable[[str], str]] = None
         if plugin_hook and self.plugin_manager:
@@ -442,9 +441,8 @@ class PackageGenerator:
             )
 
     def _build_fragments_module(self):
-        """Generate the fragments module once (it has side effects) and map every
-        fragment class to the forward references a subclass needs.
-        """
+        """Generate the fragments module once (it has side effects) and map each
+        fragment class to the forward references a subclass needs."""
         if not set(self.fragments_definitions.keys()).difference(
             self._unpacked_fragments
         ):
@@ -459,9 +457,8 @@ class PackageGenerator:
 
     @staticmethod
     def _map_fragment_forward_refs(module: ast.Module) -> dict[str, set[str]]:
-        """For each fragment class, the forward-referenced names a subclass must
-        resolve: its own field forward references plus those it inherits from any
-        fragment base class."""
+        """Per fragment class, the forward-ref names a subclass must resolve: its
+        own field references plus those inherited from any fragment base."""
         class_defs = {
             node.name: node for node in module.body if isinstance(node, ast.ClassDef)
         }
@@ -486,17 +483,15 @@ class PackageGenerator:
         return needed
 
     def _mixin_forward_ref_import(self, module: ast.Module) -> str:
-        """Raw import keeping the fragment forward references a module's mixin
-        subclasses need in scope.
+        """Raw import bringing a module's fragment-mixin forward references into
+        scope.
 
-        A class like `class OpNode(SomeFragment): pass` resolves the fragment's
-        inherited forward references against its *own* module. The referenced
-        classes live in the fragments module, so they must be importable here.
-        This holds regardless of `defer_model_build`: with the deferred build
-        Pydantic resolves them lazily on first use, and without it the eager
-        `OpNode.model_rebuild()` re-evaluates the inherited references in this
-        module too (observably on Python 3.10). They only appear inside the
-        inherited annotations, hence the `# noqa: F401`.
+        `class OpNode(SomeFragment): pass` resolves the fragment's inherited
+        forward references against its *own* module, but the referenced classes
+        live in the fragments module. True in both `defer_model_build` modes:
+        deferred resolves them lazily, eager re-evaluates them here via
+        `model_rebuild()` (observable on Python 3.10). They appear only in the
+        inherited annotations, hence `# noqa: F401`.
         """
         if not self._fragment_mixin_forward_refs:
             return ""

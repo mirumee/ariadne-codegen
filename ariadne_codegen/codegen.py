@@ -417,10 +417,10 @@ def model_has_forward_refs(class_def: ast.ClassDef) -> bool:
 def generate_model_rebuild_calls(
     class_defs: list[ast.ClassDef], defer_model_build: bool = False
 ) -> list[ast.Expr]:
-    """`Model.model_rebuild()` for every class that carries a forward reference.
+    """`Model.model_rebuild()` for every class with a forward reference.
 
-    Empty when the build is deferred: the generated base model then carries
-    `defer_build=True` and pydantic resolves the references on first use.
+    Empty when deferred: the base model carries `defer_build=True` and pydantic
+    resolves references on first use.
     """
     if defer_model_build:
         return []
@@ -448,7 +448,7 @@ class ClassDefNamesVisitor(ast.NodeVisitor):
 
 
 class ForwardRefNamesVisitor(ast.NodeVisitor):
-    """Collects the class names referenced as forward references (quoted names)."""
+    """Collects class names used as forward references (quoted names)."""
 
     def __init__(self):
         self.names: set[str] = set()
@@ -466,8 +466,8 @@ class ForwardRefNamesVisitor(ast.NodeVisitor):
 
 
 def collect_class_forward_ref_names(class_def: ast.ClassDef) -> set[str]:
-    """Names a subclass must resolve from the forward references in `class_def`'s
-    own field annotations (excludes bases, nested classes and `Literal` values)."""
+    """Forward-reference names from `class_def`'s own field annotations (skips
+    bases, nested classes and `Literal` values)."""
     visitor = ForwardRefNamesVisitor()
     for statement in class_def.body:
         if isinstance(statement, ast.AnnAssign):

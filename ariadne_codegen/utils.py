@@ -38,12 +38,11 @@ _VERSION_STABLE_UNDER_TO_CAMEL = re.compile(r"[a-z0-9_]*")
 def needs_explicit_alias(
     python_name: str, schema_name: str, use_alias_generator: bool
 ) -> bool:
-    """Whether a field must carry an explicit `Field(alias=...)`.
+    """Whether a field needs an explicit `Field(alias=...)`.
 
-    With `alias_generator=to_camel` on the base model, pydantic derives the alias
-    from the Python name, so only the names it cannot reconstruct need spelling
-    out: `__typename`, keyword-escaped names like `list_`, acronyms (`productID`)
-    and schemas that are already snake_case (`some_field` -> `someField`).
+    With `alias_generator=to_camel`, pydantic derives the alias from the Python
+    name, so only names it cannot reconstruct need one: `__typename`, escaped
+    keywords (`list_`), acronyms (`productID`) and already-snake_case schema names.
     """
     if not use_alias_generator:
         return python_name != schema_name
@@ -113,8 +112,8 @@ def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
         raise RuntimeError(
             f"ruff check failed (exit code {check.returncode}): {check.stderr}"
         )
-    # An empty result is legitimate (e.g. a module of only unused imports), so
-    # this must not fall back to `code` on a falsy stdout.
+    # An empty result is legitimate (a module of only unused imports), so don't
+    # fall back to `code` on falsy stdout.
     code = check.stdout
 
     result = subprocess.run(
@@ -344,8 +343,8 @@ def _split_leading_comments(code: str) -> tuple[str, str]:
 def _set_base_model_config_kwargs(code: str, kwargs: dict[str, ast.expr]) -> str:
     """Set keyword arguments on the ``ConfigDict`` call in ``BaseModel``.
 
-    Keywords already present are left alone, so explicit user values are never
-    overwritten. Every keyword is applied in one parse/unparse round trip.
+    Keywords already present are left alone (user values win); all are applied in
+    one parse/unparse round trip.
     """
     header, code = _split_leading_comments(code)
     tree = ast.parse(code)
@@ -399,8 +398,8 @@ def add_defer_build_to_base_model(code: str) -> str:
 def add_alias_generator_to_base_model(code: str) -> str:
     """Adds `alias_generator=to_camel` to the ConfigDict in BaseModel.
 
-    Generators only emit an explicit `Field(alias=...)` for the fields whose
-    GraphQL name `to_camel` cannot reconstruct, so the two must stay in sync.
+    Generators emit `Field(alias=...)` only where `to_camel` can't reconstruct the
+    GraphQL name, so the two must stay in sync.
     """
     code = _set_base_model_config_kwarg(
         code, "alias_generator", ast.Name(id=TO_CAMEL_NAME)
@@ -419,9 +418,8 @@ def rewrite_base_model(
 ) -> str:
     """Apply the requested ConfigDict settings to the copied `base_model.py`.
 
-    Returns `code` untouched when nothing was requested. Otherwise every keyword
-    goes in with a single `ast.unparse`, which drops the blank lines and import
-    order of the copied dependency, so the result is handed back to ruff.
+    Returns `code` untouched when nothing is requested. Otherwise `ast.unparse`
+    drops the copy's blank lines and import order, so the result goes back to ruff.
     """
     kwargs: dict[str, ast.expr] = {}
     if forbid_extra:
