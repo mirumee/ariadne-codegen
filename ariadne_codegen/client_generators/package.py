@@ -246,19 +246,19 @@ class PackageGenerator:
         """
         for remove_unused_imports in (True, False):
             group = [
-                pending
-                for pending in self._pending_files
-                if pending.remove_unused_imports is remove_unused_imports
+                pending_file
+                for pending_file in self._pending_files
+                if pending_file.remove_unused_imports is remove_unused_imports
             ]
             formatted = format_many(
-                [pending.code for pending in group],
+                [pending_file.code for pending_file in group],
                 remove_unused_imports=remove_unused_imports,
             )
-            for pending, code in zip(group, formatted, strict=True):
-                code = self._add_comments_to_code(code, pending.comment_source)
-                if pending.plugin_hook:
-                    code = pending.plugin_hook(code)
-                pending.path.write_text(code)
+            for pending_file, code in zip(group, formatted, strict=True):
+                code = self._add_comments_to_code(code, pending_file.comment_source)
+                if pending_file.plugin_hook:
+                    code = pending_file.plugin_hook(code)
+                pending_file.path.write_text(code)
 
         self._pending_files.clear()
 
