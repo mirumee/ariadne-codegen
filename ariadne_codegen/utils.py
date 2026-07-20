@@ -28,13 +28,10 @@ _RUFF_CHECK_OK_RETURN_CODES = (0, 1)
 PYDANTIC_ALIAS_GENERATORS_MODULE = "pydantic.alias_generators"
 TO_CAMEL_NAME = "to_camel"
 
-# `to_camel` agrees across every pydantic 2.x only for names it was written to
-# take: lowercase, digits and underscores. Given anything with an uppercase
-# letter, pydantic < 2.8 runs it through `str.title()` (`firstName` ->
-# `firstname`) while >= 2.8 returns it untouched. We decide here, with the
-# generator's pydantic, which fields may omit an alias; the generated package
-# rebuilds those aliases with the *user's* pydantic. So only names in this
-# alphabet are safe to leave to the generator.
+# `to_camel` is version-stable only for lowercase/digit/underscore names; names
+# with an uppercase letter were mangled by `str.title()` before pydantic 2.8. The
+# generator omits aliases using its pydantic while the package rebuilds them with
+# the user's, so only these names are safe to leave to `to_camel`.
 _VERSION_STABLE_UNDER_TO_CAMEL = re.compile(r"[a-z0-9_]*")
 
 
