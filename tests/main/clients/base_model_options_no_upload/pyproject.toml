@@ -5,4 +5,5 @@ target_package_name = "base_model_options_no_upload_client"
 include_comments = "none"
 multipart_uploads = false
 defer_model_build = true
+use_alias_generator = true
 ignore_extra_fields = false

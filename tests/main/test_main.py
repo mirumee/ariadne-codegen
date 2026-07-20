@@ -363,15 +363,16 @@ def test_main_applies_base_model_config_with_multipart_uploads_disabled(
     With uploads disabled the base model is copied from ``base_model_no_upload.py``
     rather than ``base_model.py``, so keying the rewrite off the source file name
     silently skipped it, shipping a ``BaseModel`` without the requested
-    ``defer_build``/``extra`` config while still reporting the options as enabled.
-    The rewrite is keyed off the base-model source path, so it must fire in both
-    upload modes.
+    ``defer_build``/``alias_generator``/``extra`` config while still reporting the
+    options as enabled. The rewrite is keyed off the base-model source path, so it
+    must fire in both upload modes.
     """
     result = CliRunner().invoke(main)
 
     assert result.exit_code == 0
     base_model_code = (project_dir / package_name / "base_model.py").read_text()
     assert "defer_build=True" in base_model_code
+    assert "alias_generator=to_camel" in base_model_code
     assert 'extra="forbid"' in base_model_code
 
 
