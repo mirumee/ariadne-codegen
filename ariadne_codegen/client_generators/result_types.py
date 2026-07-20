@@ -188,13 +188,12 @@ class ResultTypesGenerator:
     ) -> list[ast.stmt]:
         """Bind a name that only spreads one fragment straight to that fragment.
 
-        `class OpNode(Fragment): pass` adds nothing to `Fragment` but a name, and
-        the name is not free: Pydantic resolves the forward references `OpNode`
-        *inherits* against `OpNode`'s own module, so every nested class of the
-        fragment has to be imported here just to be found (see
-        `PackageGenerator._mixin_forward_ref_import`). `OpNode = Fragment` needs
-        neither those imports nor a second model, and stays correct regardless of
-        how a Python version chooses to evaluate inherited annotations.
+        `class OpNode(Fragment): pass` adds only a name, and the name is not free:
+        Pydantic resolves the forward references `OpNode` *inherits* against its
+        own module, so every nested class of the fragment must be imported here to
+        be found (see `PackageGenerator._mixin_forward_ref_import`). `OpNode =
+        Fragment` needs neither those imports nor a second model, and stays correct
+        however a Python version evaluates inherited annotations.
         """
         mixin_bases = {
             str_to_pascal_case(name) for name in self._fragments_used_as_mixins
@@ -215,9 +214,8 @@ class ResultTypesGenerator:
     def _only_spreads_fragment(class_def: ast.ClassDef, mixin_bases: set[str]) -> bool:
         """True for `class X(SomeFragment): pass` and nothing else.
 
-        More than one base means the subclass merges fragments or a `@mixin`
-        class, and a non-empty body means it selects fields of its own; both need
-        a real subclass.
+        More than one base (merged fragments or a `@mixin`) or a non-empty body
+        (fields of its own) means a real subclass is needed.
         """
         return (
             len(class_def.bases) == 1

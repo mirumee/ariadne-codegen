@@ -11,14 +11,10 @@ from .constants import (
     TYPING_MODULE,
 )
 
-# The module-level `__getattr__` PEP 562 defines: Python calls it only for names
-# that are not already module globals, so each generated module is imported the
-# first time one of its classes is touched. The import is cached in `globals()`,
-# which takes this hook out of the path for every later access.
-#
-# Written as source rather than built node by node because it is a fixed block -
-# there is nothing here to parameterize, and the f-string in the error message is
-# a wall of `ast.JoinedStr` to assemble by hand.
+# Module-level `__getattr__` (PEP 562): Python calls it only for names not already
+# in globals, so each generated module is imported the first time one of its names
+# is touched, then cached in `globals()` to stay out of the path afterwards. Kept
+# as source rather than AST nodes: a fixed block with nothing to parameterize.
 LAZY_IMPORTS_HELPERS = '''\
 def __getattr__(name):
     """Import the module a generated name lives in, the first time it is used."""
@@ -88,19 +84,15 @@ class InitFileGenerator:
     def _generate_lazy_module(self) -> ast.Module:
         """Generate an init that imports each module the first time it is needed.
 
-        The imports the eager init runs at module level move under `TYPE_CHECKING`,
-        so type checkers and IDEs still resolve every name statically, and a
-        `__getattr__` hook does the real import at runtime.
-
-        This only pays off alongside the `ClientForwardRefsPlugin`, which keeps
-        `client.py` from importing the input types for its annotations. Importing
-        the client would otherwise pull in the models this defers. `lazy_imports`
-        turns that plugin on for exactly this reason.
+        The eager init's module-level imports move under `TYPE_CHECKING` (so type
+        checkers still resolve every name), and a `__getattr__` hook does the real
+        import at runtime. This only pays off with the `ClientForwardRefsPlugin`,
+        which `lazy_imports` turns on: otherwise importing `client.py` pulls in the
+        input types it annotates with and the deferral buys nothing.
         """
-        # `getattr(module, name)` fetches the name as the generated module spells
-        # it, so an aliased import would need both names carried through. Nothing
-        # generates one (`add_import` builds plain `ast.alias(name)`), and the
-        # eager `__all__` above makes the same assumption by reading `.name`.
+        # An aliased import (`import X as Y`) would need both names carried through
+        # here, but nothing generates one: `add_import` builds a plain
+        # `ast.alias(name)`, and the eager `__all__` reads `.name` the same way.
         lazy_imports_map: dict[str, str] = {}
         for import_ in self.imports:
             module_name = "." * import_.level + (import_.module or "")

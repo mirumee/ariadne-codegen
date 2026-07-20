@@ -195,13 +195,11 @@ class ClientSettings(BaseSettings):
             raise TypeError("__init__ missing 1 required argument: 'queries_path'")
         super().__post_init__()
 
-        # `lazy_imports` only pays off when both halves are in place: the lazy
-        # `__init__` stops the package importing every module, and the plugin stops
-        # `client.py` importing every input type for its annotations. With either
-        # one alone the other still pulls the models in, and the import costs the
-        # same, so the setting turns the plugin on rather than leaving it to be
-        # paired up by hand. Appended last: it rewrites the client module other
-        # plugins (`ShorterResultsPlugin`) produce, so it has to see their output.
+        # `lazy_imports` needs both halves: the lazy `__init__` stops the package
+        # importing every module, and the plugin stops `client.py` importing every
+        # input type it annotates with. Either alone still pulls the models in, so
+        # the setting turns the plugin on for you. Appended last: it rewrites the
+        # client module other plugins (`ShorterResultsPlugin`) produce.
         if self.lazy_imports and CLIENT_FORWARD_REFS_PLUGIN not in self.plugins:
             self.plugins.append(CLIENT_FORWARD_REFS_PLUGIN)
 
