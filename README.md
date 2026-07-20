@@ -81,8 +81,8 @@ Optional settings:
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
-- `defer_model_build` (defaults to `false`) - defers building of generated Pydantic models until they are first used. Sets `defer_build=True` on the generated `BaseModel` and skips the eager `model_rebuild()` calls, so importing the generated package is much faster for large schemas. See [Improving import performance for large schemas](#improving-import-performance-for-large-schemas).
-- `use_alias_generator` (defaults to `false`) - sets `alias_generator=to_camel` on the generated `BaseModel`, so fields no longer need their own `Field(alias=...)` when the alias can be derived from the Python name. See [Improving import performance for large schemas](#improving-import-performance-for-large-schemas).
+- `defer_model_build` (defaults to `false`) - defers building of generated Pydantic models until they are first used. Sets `defer_build=True` on the generated `BaseModel` and skips the eager `model_rebuild()` calls, so importing the generated package is much faster for large schemas. See [Improving import performance for large schemas](docs/07-improving-import-performance.md).
+- `use_alias_generator` (defaults to `false`) - sets `alias_generator=to_camel` on the generated `BaseModel`, so fields no longer need their own `Field(alias=...)` when the alias can be derived from the Python name. See [Improving import performance for large schemas](docs/07-improving-import-performance.md).
 
 These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`.
 
@@ -478,55 +478,6 @@ To generate multiple different clients you can store config for each in differen
 ariadne-codegen --config clientA.toml
 ariadne-codegen --config clientB.toml
 ```
-
-## Improving import performance for large schemas
-
-For a large schema, most of the time spent importing the generated package goes into defining Pydantic models rather than into your code. Two options address that, and they compose:
-
-```toml
-[tool.ariadne-codegen]
-defer_model_build = true
-use_alias_generator = true
-```
-
-`defer_model_build` sets `defer_build=True` on the generated `BaseModel` and drops the eager `model_rebuild()` calls, so a model's core schema is built the first time it is used instead of at import. `use_alias_generator` sets `alias_generator=to_camel`, which removes the `Field(alias=...)` call from every field whose GraphQL name can be derived from its Python name - each of those calls otherwise constructs two `FieldInfo` objects at import.
-
-A model's core schema inlines the schemas of the types it references, so the cost of building it grows with the schema rather than with the number of models alone. The saving grows the same way:
-
-| settings | 120 object types, 120 input types, 40 operations | 300 input types, 38 fields each |
-| --- | --- | --- |
-| defaults, neither option set | 216 ms | 552 ms |
-| `defer_model_build` alone | 134 ms (1.6x) | 293 ms (1.9x) |
-| `defer_model_build` + `use_alias_generator` | 100 ms (2.2x) | 194 ms (2.8x) |
-
-Absolute times depend on the machine; the ratios are what carry over. The second schema is the one `tests/performance/test_import_performance.py` builds, so you can reproduce that column with `hatch test -- -m performance`.
-
-Both options are opt-in, and neither changes generated code until you set it: a package generated with the defaults imports in the same time it always did.
-
-Both options need `pydantic >= 2.9` in the environment that runs the generated package. `defer_build` is not a `ConfigDict` key before 2.5, and `to_camel` mangled camelCase names (`firstName` became `firstname`) until 2.9.
-
-`use_alias_generator` does not change what any field is called on the wire. Names that `to_camel` cannot reconstruct keep an explicit `Field(alias=...)`: `__typename`, keyword-escaped names such as `list_`, acronyms such as `productID`, and schemas whose fields are already snake_case (`some_field` would otherwise become `someField`). The same holds with `convert_to_snake_case = false`, where field names already match the schema and every renamed field keeps its alias.
-
-Two caveats. `defer_model_build` moves the build cost to first use rather than removing it, so a short-lived process that touches every model pays it anyway. And because `alias_generator` is set on the shared `BaseModel`, it also applies to fields you add through [custom mixins](#extending-models-with-custom-mixins) - name those in snake_case and they will be aliased to camelCase.
-
-## Fragments and forward references
-
-When an operation spreads a fragment, the generated result class subclasses the fragment class:
-
-```python
-# get_products.py
-from .fragments import (
-    ProductListItem,
-    ProductListItemThumbnail,  # noqa: F401
-)
-
-class GetProductsProductsEdgesNode(ProductListItem):
-    pass
-```
-
-Pydantic resolves the annotations a subclass inherits against the subclass's own module, so any class the fragment refers to by forward reference has to be importable there. That is what the second import is for. It carries `# noqa: F401` because the name only appears inside an inherited annotation, and your linter would otherwise call it unused.
-
-This is emitted for every generated client, not only with `defer_model_build`.
 
 ## Generated code dependencies
 
