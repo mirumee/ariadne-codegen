@@ -462,7 +462,7 @@ class PackageGenerator:
         }
         for source_path, target_name in files_to_copy.items():
             code = self._add_comments_to_code(source_path.read_text(encoding="utf-8"))
-            if source_path.name == "base_model.py":
+            if source_path == self.base_model_file_path:
                 code = self._rewrite_base_model(code)
             if self.plugin_manager:
                 code = self.plugin_manager.copy_code(code)
