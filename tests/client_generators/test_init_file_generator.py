@@ -1,4 +1,5 @@
 import ast
+import importlib
 import sys
 
 import pytest
@@ -159,7 +160,7 @@ def test_generate_with_lazy_imports_triggers_plugin_hooks(mocked_plugin_manager)
 
 @pytest.fixture
 def lazy_package(tmp_path, monkeypatch):
-    """Write a package whose init the generator produced, and make it importable."""
+    """Write a package whose init the generator produced, and import it."""
     generator = InitFileGenerator(lazy_imports=True)
     generator.add_import(["Alpha"], "alpha", 1)
     generator.add_import(["Beta"], "beta", 1)
@@ -171,7 +172,7 @@ def lazy_package(tmp_path, monkeypatch):
     (package / "beta.py").write_text("class Beta:\n    pass\n")
 
     monkeypatch.syspath_prepend(tmp_path)
-    yield
+    yield importlib.import_module("lazy_package")
     for name in [n for n in sys.modules if n.startswith("lazy_package")]:
         del sys.modules[name]
 
@@ -179,8 +180,6 @@ def lazy_package(tmp_path, monkeypatch):
 def test_lazy_imports_init_imports_a_module_only_when_a_name_from_it_is_used(
     lazy_package,
 ):
-    import lazy_package  # noqa: PLC0415
-
     assert "lazy_package.alpha" not in sys.modules
     assert "lazy_package.beta" not in sys.modules
 
@@ -192,8 +191,6 @@ def test_lazy_imports_init_imports_a_module_only_when_a_name_from_it_is_used(
 
 
 def test_lazy_imports_init_caches_the_name_after_the_first_use(lazy_package):
-    import lazy_package  # noqa: PLC0415
-
     first = lazy_package.Alpha
 
     # The hook writes the name into the module globals, which takes it out of the
@@ -203,13 +200,9 @@ def test_lazy_imports_init_caches_the_name_after_the_first_use(lazy_package):
 
 
 def test_lazy_imports_init_raises_attribute_error_for_unknown_name(lazy_package):
-    import lazy_package  # noqa: PLC0415
-
     with pytest.raises(AttributeError, match="has no attribute 'Nope'"):
         _ = lazy_package.Nope
 
 
 def test_lazy_imports_init_reports_the_public_api_through_dir(lazy_package):
-    import lazy_package  # noqa: PLC0415
-
     assert dir(lazy_package) == ["Alpha", "Beta"]
