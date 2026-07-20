@@ -91,10 +91,9 @@ class CustomFieldsGenerator:
     def generate(self) -> ast.Module:
         """Generates an AST module containing the custom fields and required imports."""
         self.argument_generator.add_custom_scalar_imports()
-        # Copy the argument generator's imports (input types, enums and, crucially,
-        # custom scalar imports registered by ``add_custom_scalar_imports`` above)
-        # into the module import list. This must run after the call above, otherwise
-        # scalar types used in field-argument annotations would never be imported.
+        # Pull in the argument generator's imports (scalars, input types, enums).
+        # Must run after `add_custom_scalar_imports` above, or scalars used in
+        # field-argument annotations are never imported.
         self._imports.extend(self.argument_generator.imports)
         module = generate_module(
             body=cast(list[ast.stmt], self._imports + self._class_defs),
@@ -241,8 +240,8 @@ class CustomFieldsGenerator:
                 field.args,
                 description=field.description,
             )
-        # A descriptor rather than a field instance: a class attribute is shared by
-        # every query that selects it, and `alias()`/`to_ast()` mutate the field.
+        # A descriptor, not a shared instance: the class attribute is reused by
+        # every query, and `alias()`/`to_ast()` mutate the field.
         return generate_assign(
             targets=[name],
             value=generate_call(

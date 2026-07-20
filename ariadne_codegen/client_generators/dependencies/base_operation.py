@@ -157,12 +157,10 @@ class GraphQLField:
 
 
 class GraphQLLeafField(Generic[GraphQLFieldT]):
-    """
-    Descriptor that builds a fresh field on every access.
+    """Descriptor that builds a fresh field on every access.
 
-    Leaf selections are reached through the class (``ProductFields.name``). A
-    single shared instance would carry ``alias()`` and ``to_ast()`` state from one
-    query into every later one, so each access gets its own field.
+    Leaf selections are reached through the class (``ProductFields.name``); a
+    shared instance would leak ``alias()``/``to_ast()`` state between queries.
     """
 
     __slots__ = ("_field_name", "_field_class")

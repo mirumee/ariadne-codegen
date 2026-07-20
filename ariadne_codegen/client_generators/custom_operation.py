@@ -95,10 +95,9 @@ class CustomOperationGenerator:
             self._class_def.body.append(ast.Pass())
 
         self.argument_generator.add_custom_scalar_imports()
-        # Copy the argument generator's imports (input types, enums and, crucially,
-        # custom scalar imports registered by ``add_custom_scalar_imports`` above)
-        # into the module import list. This must run after the call above, otherwise
-        # scalar types used in operation-argument annotations would never be imported.
+        # Pull in the argument generator's imports (scalars, input types, enums).
+        # Must run after `add_custom_scalar_imports` above, or scalars used in
+        # operation-argument annotations are never imported.
         for import_ in self.argument_generator.imports:
             self._add_import(import_)
 
