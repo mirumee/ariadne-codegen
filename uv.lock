@@ -92,7 +92,7 @@ requires-dist = [
     { name = "ipdb", marker = "extra == 'dev'" },
     { name = "opentelemetry-api", marker = "extra == 'opentelemetry'" },
     { name = "opentelemetry-api", marker = "extra == 'test'" },
-    { name = "pydantic", specifier = ">=2.0.0,<3.0.0" },
+    { name = "pydantic", specifier = ">=2.8.0,<3.0.0" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pytest-asyncio", marker = "extra == 'test'" },
     { name = "pytest-httpx", marker = "extra == 'test'" },
