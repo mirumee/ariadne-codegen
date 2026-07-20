@@ -486,11 +486,8 @@ Generated code requires:
 - [pydantic](https://github.com/pydantic/pydantic)
 - [httpx](https://github.com/encode/httpx)
 - [websockets](https://github.com/python-websockets/websockets) (only for default async base client)
-- [graphql-core](https://github.com/graphql-python/graphql-core) (only with `enable_custom_operations`)
 
 Both `httpx` and `websockets` dependencies can be avoided by providing another base client class with `base_client_file_path` and `base_client_name` options.
-
-`graphql-core` cannot: with `enable_custom_operations` the generated `base_operation.py` and `client.py` build and print a GraphQL AST at runtime. It adds roughly 25 ms to the import of the generated package.
 
 ## Example
 
