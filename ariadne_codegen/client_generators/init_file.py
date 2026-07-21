@@ -60,27 +60,6 @@ class InitFileGenerator:
             module = self.plugin_manager.generate_init_module(module)
         return module
 
-    def _get_exported_names(self) -> list[str]:
-        names: list[str] = []
-        for import_ in self.imports:
-            names.extend([n.name for n in import_.names])
-        return sorted(names)
-
-    def _generate_all_assign(self, lineno: int) -> ast.Assign:
-        return ast.Assign(
-            targets=[ast.Name(id=ALL_NAME)],
-            value=ast.List(
-                elts=[ast.Constant(value=n) for n in self._get_exported_names()]
-            ),
-            lineno=lineno,
-        )
-
-    def _generate_eager_module(self) -> ast.Module:
-        module = ast.Module(body=self.imports, type_ignores=[])
-        if self.imports:
-            module.body.append(self._generate_all_assign(lineno=len(self.imports) + 1))
-        return module
-
     def _generate_lazy_module(self) -> ast.Module:
         """Generate an init that imports each module the first time it is needed.
 
@@ -132,3 +111,24 @@ class InitFileGenerator:
         # none; unparse only needs them to be present and consistent.
         ast.fix_missing_locations(module)
         return module
+
+    def _generate_eager_module(self) -> ast.Module:
+        module = ast.Module(body=self.imports, type_ignores=[])
+        if self.imports:
+            module.body.append(self._generate_all_assign(lineno=len(self.imports) + 1))
+        return module
+
+    def _generate_all_assign(self, lineno: int) -> ast.Assign:
+        return ast.Assign(
+            targets=[ast.Name(id=ALL_NAME)],
+            value=ast.List(
+                elts=[ast.Constant(value=n) for n in self._get_exported_names()]
+            ),
+            lineno=lineno,
+        )
+
+    def _get_exported_names(self) -> list[str]:
+        names: list[str] = []
+        for import_ in self.imports:
+            names.extend([n.name for n in import_.names])
+        return sorted(names)
