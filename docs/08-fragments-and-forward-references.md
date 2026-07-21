@@ -19,4 +19,4 @@ class GetProductsProductsEdgesNode(ProductListItem):
 
 Pydantic resolves the annotations a subclass inherits against the subclass's own module, so any class the fragment refers to by forward reference has to be importable there. That is what the second import is for. It carries `# noqa: F401` because the name only appears inside an inherited annotation, and your linter would otherwise call it unused.
 
-This is emitted for every generated client, not only with `defer_model_build`.
+This import is emitted for every generated client, regardless of the settings.
