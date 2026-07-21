@@ -6,12 +6,15 @@ title: Step-by-step example
 
 This example shows how **ariadne-codegen** can take a GraphQL schema and a set of queries, generate a fully typed Python client, and produce ready-to-use models for queries, mutations, and subscriptions.
 
+The full source for this example (schema, queries, and generated client) is available in [EXAMPLE.md](https://github.com/mirumee/ariadne-codegen/blob/main/EXAMPLE.md).
+
 ## Schema file
 
 We start with a GraphQL schema that defines queries, mutations, and subscriptions.
 This schema includes `User` types, input objects for creating users and setting preferences, and a `Color` enum. It also shows how to use default values in input objects.
 
 ```graphql
+# /schema.graphql
 schema {
   query: Query
   mutation: Mutation
@@ -97,6 +100,7 @@ Next we define the operations we want to use: a mutation to create a user, queri
 Notice that we also define fragments (`BasicUser` and `UserPersonalData`) to reuse fields across queries.
 
 ```graphql
+# /queries.graphql
 mutation CreateUser($userData: UserCreateInput!) {
   userCreate(userData: $userData) {
     id
@@ -180,7 +184,6 @@ graphql_client/
     input_types.py
     list_all_users.py
     list_users_by_country.py
-    scalars.py
     upload_file.py
 ```
 
@@ -200,7 +203,7 @@ class Client(AsyncBaseClient):
     async def upload_file(...): ...
 ```
 
-Each method executes the corresponding GraphQL operation and returns a typed Pydantic model.
+Each method executes the corresponding GraphQL operation and returns a typed Pydantic model, except `get_users_counter`, which is a subscription method - it returns an `AsyncIterator` and yields a new model for every message. See [Subscriptions](04-subscriptions.md) for details.
 
 ### Base client
 
