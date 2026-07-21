@@ -308,18 +308,37 @@ BASE_MODEL_SOURCE = dedent(
 
 
 @pytest.mark.parametrize(
-    "settings, expected",
+    "settings, added_lines",
     [
-        ({"forbid_extra": True}, 'extra="forbid"'),
-        ({"defer_build": True}, "defer_build=True"),
-        ({"alias_generator": True}, "alias_generator=to_camel"),
+        ({"forbid_extra": True}, ['extra="forbid"']),
+        ({"defer_build": True}, ["defer_build=True"]),
+        (
+            {"alias_generator": True},
+            [
+                "alias_generator=to_camel",
+                "from pydantic.alias_generators import to_camel",
+            ],
+        ),
+        (
+            {"forbid_extra": True, "defer_build": True, "alias_generator": True},
+            [
+                'extra="forbid"',
+                "defer_build=True",
+                "alias_generator=to_camel",
+                "from pydantic.alias_generators import to_camel",
+            ],
+        ),
     ],
 )
-def test_rewrite_base_model_adds_a_missing_config_kwarg(settings, expected):
+def test_rewrite_base_model_applies_requested_settings(settings, added_lines):
     result = rewrite_base_model(BASE_MODEL_SOURCE, **settings)
 
-    assert expected in result
+    for line in added_lines:
+        assert line in result, line
     assert "populate_by_name=True" in result
+    # the to_camel import must not ride along unless alias_generator asked for it
+    if "alias_generator" not in settings:
+        assert "to_camel" not in result
 
 
 @pytest.mark.parametrize(
@@ -368,23 +387,6 @@ def test_rewrite_base_model_keeps_the_generated_file_header():
 
 def test_rewrite_base_model_without_settings_returns_the_source_untouched():
     assert rewrite_base_model(BASE_MODEL_SOURCE) is BASE_MODEL_SOURCE
-
-
-def test_rewrite_base_model_applies_every_setting_in_one_pass():
-    result = rewrite_base_model(
-        BASE_MODEL_SOURCE, forbid_extra=True, defer_build=True, alias_generator=True
-    )
-
-    assert "from pydantic.alias_generators import to_camel" in result
-    for kwarg in ('extra="forbid"', "defer_build=True", "alias_generator=to_camel"):
-        assert kwarg in result, kwarg
-    assert "populate_by_name=True" in result
-
-
-def test_rewrite_base_model_only_imports_to_camel_when_it_is_used():
-    result = rewrite_base_model(BASE_MODEL_SOURCE, defer_build=True)
-
-    assert "to_camel" not in result
 
 
 def _count_imported_bindings(code: str, name: str) -> int:
