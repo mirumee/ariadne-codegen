@@ -185,6 +185,7 @@ class ClientSettings(BaseSettings):
     default_optional_fields_to_none: bool = False
     include_typename: bool = True
     ignore_extra_fields: bool = True
+    defer_model_build: bool = False
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
@@ -305,6 +306,12 @@ class ClientSettings(BaseSettings):
             if self.include_typename
             else "Not including __typename fields in generated queries."
         )
+        defer_model_build_msg = (
+            "Deferring Pydantic model builds to first use "
+            "(faster import of generated package)."
+            if self.defer_model_build
+            else "Building Pydantic models eagerly at import time."
+        )
         introspection_msg = (
             self._introspection_settings_message() if self.using_remote_schema else ""
         )
@@ -326,6 +333,7 @@ class ClientSettings(BaseSettings):
             {snake_case_msg}
             {async_client_msg}
             {include_typename_msg}
+            {defer_model_build_msg}
             {files_to_include_msg}
             {plugins_msg}
             """

@@ -254,6 +254,17 @@ def test_main_shows_version():
             "expected_client",
             CLIENTS_PATH / "no_multipart_upload" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "defer_model_build" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "defer_model_build" / "queries.graphql",
+                    CLIENTS_PATH / "defer_model_build" / "schema.graphql",
+                ),
+            ),
+            "defer_model_build_client",
+            CLIENTS_PATH / "defer_model_build" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
@@ -266,6 +277,86 @@ def test_main_generates_correct_package(
     package_path = project_dir / package_name
     assert package_path.is_dir()
     assert_the_same_files_in_directories(package_path, expected_package_path)
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH / "defer_model_build" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "defer_model_build" / "queries.graphql",
+                    CLIENTS_PATH / "defer_model_build" / "schema.graphql",
+                ),
+            ),
+            "defer_model_build_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_with_defer_model_build_omits_model_rebuild_calls(
+    project_dir, package_name
+):
+    """With ``defer_model_build = true`` the generated package must not contain
+    any eager ``model_rebuild()`` calls, and ``BaseModel`` must enable
+    ``defer_build`` so Pydantic builds each model schema lazily on first use.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+
+    for module_path in package_path.glob("*.py"):
+        assert "model_rebuild()" not in module_path.read_text(), (
+            f"unexpected model_rebuild() in {module_path.name}"
+        )
+
+    base_model_code = (package_path / "base_model.py").read_text()
+    assert "defer_build=True" in base_model_code
+
+    # Forward references must still be generated (otherwise there would be
+    # nothing to defer). This guards against accidentally dropping them.
+    assert (
+        'Optional["UserFilterInput"]' in (package_path / "input_types.py").read_text()
+    )
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH / "base_model_options_no_upload" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "base_model_options_no_upload" / "queries.graphql",
+                    CLIENTS_PATH / "base_model_options_no_upload" / "schema.graphql",
+                ),
+            ),
+            "base_model_options_no_upload_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_applies_base_model_config_with_multipart_uploads_disabled(
+    project_dir, package_name
+):
+    """The base-model rewrites must apply even when ``multipart_uploads = false``.
+
+    With uploads disabled the base model is copied from ``base_model_no_upload.py``
+    rather than ``base_model.py``, so keying the rewrite off the source file name
+    silently skipped it, shipping a ``BaseModel`` without the requested
+    ``defer_build``/``extra`` config while still reporting the options as enabled.
+    The rewrite is keyed off the base-model source path, so it must fire in both
+    upload modes.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0
+    base_model_code = (project_dir / package_name / "base_model.py").read_text()
+    assert "defer_build=True" in base_model_code
+    assert 'extra="forbid"' in base_model_code
 
 
 @pytest.mark.parametrize(

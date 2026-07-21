@@ -50,6 +50,7 @@ Exactly one of the following parameters is required - they are mutually exclusiv
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
+- `defer_model_build` (defaults to `false`) - defers building of generated Pydantic models until they are first used. Sets `defer_build=True` on the generated `BaseModel` and skips the eager `model_rebuild()` calls, so importing the generated package is much faster for large schemas.
 - `include_typename` (defaults to `true`) - a flag that specifies whether to include the `__typename` field in generated models
 - `ignore_extra_fields` (defaults to `true`) - when `true`, generated models ignore extra fields returned by the server; set to `false` to add `extra="forbid"` to the base model so unexpected fields raise a validation error
 - `default_optional_fields_to_none` (defaults to `false`) - when `true`, optional fields in generated models default to `None` instead of being required keyword arguments

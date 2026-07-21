@@ -1,0 +1,25 @@
+fragment UserFields on User {
+    id
+    name
+    friends {
+        id
+        name
+    }
+}
+
+query GetUser($id: ID!) {
+    user(id: $id) {
+        id
+        name
+        friends {
+            id
+            name
+        }
+    }
+}
+
+query ListUsers($filter: UserFilterInput) {
+    users(filter: $filter) {
+        ...UserFields
+    }
+}

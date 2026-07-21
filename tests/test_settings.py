@@ -833,3 +833,33 @@ def test_graphql_schema_settings_used_settings_message_includes_schema_paths():
 
     result = settings.used_settings_message
     assert "pkg.SCHEMA_DIR" in result
+
+
+def test_client_settings_defer_model_build_defaults_to_false(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.defer_model_build is False
+
+
+def test_client_settings_defer_model_build_can_be_set_to_true(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        defer_model_build=True,
+    )
+
+    assert settings.defer_model_build is True
+    assert "Deferring Pydantic model builds" in settings.used_settings_message

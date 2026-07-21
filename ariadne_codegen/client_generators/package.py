@@ -1,4 +1,6 @@
 import ast
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -14,8 +16,11 @@ from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..settings import ClientSettings, CommentsStrategy
 from ..utils import (
+    _format_code,
+    add_defer_build_to_base_model,
     add_extra_to_base_model,
-    ast_to_str,
+    ast_to_raw_str,
+    format_many,
     process_name,
     str_to_pascal_case,
 )
@@ -52,6 +57,17 @@ from .init_file import InitFileGenerator
 from .input_types import InputTypesGenerator
 from .result_types import ResultTypesGenerator
 from .scalars import ScalarData
+
+
+@dataclass
+class _PendingFile:
+    """A generated module awaiting formatting and a write to disk."""
+
+    path: Path
+    code: str
+    remove_unused_imports: bool
+    comment_source: Optional[str] = None
+    plugin_hook: Optional[Callable[[str], str]] = None
 
 
 class PackageGenerator:
@@ -99,6 +115,7 @@ class PackageGenerator:
         default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
         ignore_extra_fields: bool = True,
+        defer_model_build: bool = False,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -155,9 +172,11 @@ class PackageGenerator:
         self.default_optional_fields_to_none = default_optional_fields_to_none
         self.include_typename = include_typename
         self.ignore_extra_fields = ignore_extra_fields
+        self.defer_model_build = defer_model_build
 
         self._result_types_files: dict[str, ast.Module] = {}
         self._generated_files: list[str] = []
+        self._pending_files: list[_PendingFile] = []
         self._unpacked_fragments: set[str] = set()
         self._used_enums: list[str] = []
 
@@ -193,8 +212,55 @@ class PackageGenerator:
         self._generate_client()
         self._generate_enums()
         self._generate_init()
+        self._write_pending_files()
 
         return sorted(self._generated_files)
+
+    def _queue_module(
+        self,
+        path: Path,
+        module: ast.Module,
+        remove_unused_imports: bool = True,
+        multiline_strings: bool = False,
+        comment_source: Optional[str] = None,
+        plugin_hook: Optional[Callable[[str], str]] = None,
+    ) -> None:
+        """Unparse a module now, format and write it once generation is done."""
+        self._pending_files.append(
+            _PendingFile(
+                path=path,
+                code=ast_to_raw_str(module, multiline_strings=multiline_strings),
+                remove_unused_imports=remove_unused_imports,
+                comment_source=comment_source,
+                plugin_hook=plugin_hook if self.plugin_manager else None,
+            )
+        )
+        self._generated_files.append(path.name)
+
+    def _write_pending_files(self) -> None:
+        """Format every queued module, then apply comments, plugins and write.
+
+        Modules are batched by their ruff rule selection so that ruff is spawned
+        a fixed number of times rather than twice per generated file. Plugins
+        still see formatted code, as they did when each file formatted alone.
+        """
+        for remove_unused_imports in (True, False):
+            group = [
+                pending_file
+                for pending_file in self._pending_files
+                if pending_file.remove_unused_imports is remove_unused_imports
+            ]
+            formatted = format_many(
+                [pending_file.code for pending_file in group],
+                remove_unused_imports=remove_unused_imports,
+            )
+            for pending_file, code in zip(group, formatted, strict=True):
+                code = self._add_comments_to_code(code, pending_file.comment_source)
+                if pending_file.plugin_hook:
+                    code = pending_file.plugin_hook(code)
+                pending_file.path.write_text(code)
+
+        self._pending_files.clear()
 
     def add_operation(self, definition: OperationDefinitionNode):
         name = definition.name
@@ -223,6 +289,7 @@ class PackageGenerator:
             plugin_manager=self.plugin_manager,
             default_optional_fields_to_none=self.default_optional_fields_to_none,
             include_typename=self.include_typename,
+            defer_model_build=self.defer_model_build,
         )
         self._unpacked_fragments = self._unpacked_fragments.union(
             query_types_generator.get_unpacked_fragments()
@@ -283,13 +350,17 @@ class PackageGenerator:
     def _generate_client(self):
         client_file_path = self.package_path / f"{self.client_file_name}.py"
         client_module = self.client_generator.generate()
-        code = self._add_comments_to_code(
-            ast_to_str(client_module, multiline_strings=True), self.queries_source
+        self._queue_module(
+            client_file_path,
+            client_module,
+            multiline_strings=True,
+            comment_source=self.queries_source,
+            plugin_hook=(
+                self.plugin_manager.generate_client_code
+                if self.plugin_manager
+                else None
+            ),
         )
-        if self.plugin_manager:
-            code = self.plugin_manager.generate_client_code(code)
-        client_file_path.write_text(code)
-        self._generated_files.append(client_file_path.name)
         self._used_enums.extend(
             self.client_generator.arguments_generator.get_used_enums()
         )
@@ -314,12 +385,15 @@ class PackageGenerator:
         else:
             module = self.enums_generator.generate(types_to_include=self._used_enums)
 
-        code = self._add_comments_to_code(ast_to_str(module), self.schema_source)
-        if self.plugin_manager:
-            code = self.plugin_manager.generate_enums_code(code)
         enums_file_path = self.package_path / f"{self.enums_module_name}.py"
-        enums_file_path.write_text(code)
-        self._generated_files.append(enums_file_path.name)
+        self._queue_module(
+            enums_file_path,
+            module,
+            comment_source=self.schema_source,
+            plugin_hook=(
+                self.plugin_manager.generate_enums_code if self.plugin_manager else None
+            ),
+        )
         self.init_generator.add_import(
             self.enums_generator.get_generated_public_names(), self.enums_module_name, 1
         )
@@ -332,11 +406,16 @@ class PackageGenerator:
             module = self.input_types_generator.generate(types_to_include=used_inputs)
 
         input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
-        code = self._add_comments_to_code(ast_to_str(module), self.schema_source)
-        if self.plugin_manager:
-            code = self.plugin_manager.generate_inputs_code(code)
-        input_types_file_path.write_text(code)
-        self._generated_files.append(input_types_file_path.name)
+        self._queue_module(
+            input_types_file_path,
+            module,
+            comment_source=self.schema_source,
+            plugin_hook=(
+                self.plugin_manager.generate_inputs_code
+                if self.plugin_manager
+                else None
+            ),
+        )
         self._used_enums.extend(self.input_types_generator.get_used_enums())
         self.init_generator.add_import(
             self.input_types_generator.get_generated_public_names(),
@@ -346,12 +425,16 @@ class PackageGenerator:
 
     def _generate_result_types(self):
         for file_name, module in self._result_types_files.items():
-            file_path = self.package_path / file_name
-            code = self._add_comments_to_code(ast_to_str(module), self.queries_source)
-            if self.plugin_manager:
-                code = self.plugin_manager.generate_result_types_code(code)
-            file_path.write_text(code)
-            self._generated_files.append(file_path.name)
+            self._queue_module(
+                self.package_path / file_name,
+                module,
+                comment_source=self.queries_source,
+                plugin_hook=(
+                    self.plugin_manager.generate_result_types_code
+                    if self.plugin_manager
+                    else None
+                ),
+            )
 
     def _generate_fragments(self):
         if not set(self.fragments_definitions.keys()).difference(
@@ -363,9 +446,7 @@ class PackageGenerator:
             exclude_names=self._unpacked_fragments
         )
         file_path = self.package_path / f"{self.fragments_module_name}.py"
-        code = self._add_comments_to_code(ast_to_str(module), self.queries_source)
-        file_path.write_text(code)
-        self._generated_files.append(file_path.name)
+        self._queue_module(file_path, module, comment_source=self.queries_source)
         self._used_enums.extend(self.fragments_generator.get_used_enums())
         self.init_generator.add_import(
             self.fragments_generator.get_generated_public_names(),
@@ -381,9 +462,8 @@ class PackageGenerator:
         }
         for source_path, target_name in files_to_copy.items():
             code = self._add_comments_to_code(source_path.read_text(encoding="utf-8"))
-            is_base_model = source_path == self.base_model_file_path
-            if is_base_model and not self.ignore_extra_fields:
-                code = add_extra_to_base_model(code)
+            if source_path == self.base_model_file_path:
+                code = self._rewrite_base_model(code)
             if self.plugin_manager:
                 code = self.plugin_manager.copy_code(code)
             target_path = self.package_path / target_name
@@ -404,46 +484,62 @@ class PackageGenerator:
             level=1,
         )
 
+    def _rewrite_base_model(self, code: str) -> str:
+        rewritten = code
+        if not self.ignore_extra_fields:
+            rewritten = add_extra_to_base_model(rewritten)
+        if self.defer_model_build:
+            rewritten = add_defer_build_to_base_model(rewritten)
+
+        if rewritten == code:
+            return code
+        # Each rewrite round-trips through `ast.unparse`, which drops the blank
+        # lines and import order of the copied dependency.
+        return _format_code(rewritten, remove_unused_imports=False)
+
     def _generate_init(self):
         init_file_path = self.package_path / "__init__.py"
         init_module = self.init_generator.generate()
-        code = self._add_comments_to_code(ast_to_str(init_module, False))
-        if self.plugin_manager:
-            code = self.plugin_manager.generate_init_code(code)
-        init_file_path.write_text(code)
-        self._generated_files.append(init_file_path.name)
+        self._queue_module(
+            init_file_path,
+            init_module,
+            remove_unused_imports=False,
+            plugin_hook=(
+                self.plugin_manager.generate_init_code if self.plugin_manager else None
+            ),
+        )
 
     def _generate_custom_queries(self):
         assert self.custom_query_generator is not None
-        file_path = self.package_path / "custom_queries.py"
-        module = self.custom_query_generator.generate()
-        code = self._add_comments_to_code(ast_to_str(module, False))
-        file_path.write_text(code)
-        self._generated_files.append(file_path.name)
+        self._queue_module(
+            self.package_path / "custom_queries.py",
+            self.custom_query_generator.generate(),
+            remove_unused_imports=False,
+        )
 
     def _generate_custom_mutations(self):
         assert self.custom_mutation_generator is not None
-        file_path = self.package_path / "custom_mutations.py"
-        module = self.custom_mutation_generator.generate()
-        code = self._add_comments_to_code(ast_to_str(module, False))
-        file_path.write_text(code)
-        self._generated_files.append(file_path.name)
+        self._queue_module(
+            self.package_path / "custom_mutations.py",
+            self.custom_mutation_generator.generate(),
+            remove_unused_imports=False,
+        )
 
     def _generate_custom_fields_typing(self):
         assert self.custom_fields_typing_generator is not None
-        file_path = self.package_path / "custom_typing_fields.py"
-        module = self.custom_fields_typing_generator.generate()
-        code = self._add_comments_to_code(ast_to_str(module, False))
-        file_path.write_text(code)
-        self._generated_files.append(file_path.name)
+        self._queue_module(
+            self.package_path / "custom_typing_fields.py",
+            self.custom_fields_typing_generator.generate(),
+            remove_unused_imports=False,
+        )
 
     def _generate_custom_fields(self):
         assert self.custom_fields_generator is not None
-        file_path = self.package_path / "custom_fields.py"
-        module = self.custom_fields_generator.generate()
-        code = self._add_comments_to_code(ast_to_str(module, False))
-        file_path.write_text(code)
-        self._generated_files.append(file_path.name)
+        self._queue_module(
+            self.package_path / "custom_fields.py",
+            self.custom_fields_generator.generate(),
+            remove_unused_imports=False,
+        )
 
 
 def get_package_generator(
@@ -493,6 +589,7 @@ def get_package_generator(
         convert_to_snake_case=settings.convert_to_snake_case,
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
+        defer_model_build=settings.defer_model_build,
     )
     fragments_definitions = {f.name.value: f for f in fragments or []}
     fragments_generator = FragmentsGenerator(
@@ -505,6 +602,7 @@ def get_package_generator(
         plugin_manager=plugin_manager,
         default_optional_fields_to_none=settings.default_optional_fields_to_none,
         include_typename=settings.include_typename,
+        defer_model_build=settings.defer_model_build,
     )
     custom_fields_generator = CustomFieldsGenerator(
         schema=schema,
@@ -589,4 +687,5 @@ def get_package_generator(
         default_optional_fields_to_none=settings.default_optional_fields_to_none,
         include_typename=settings.include_typename,
         ignore_extra_fields=settings.ignore_extra_fields,
+        defer_model_build=settings.defer_model_build,
     )
