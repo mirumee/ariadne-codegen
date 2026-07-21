@@ -4,9 +4,25 @@ title: Custom operation builder
 
 # Custom operation builder
 
-The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way.
+The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way. This feature is disabled by default. To enable it, set `enable_custom_operations = true` in your config. It generates additional helper modules instead of (or alongside) the per-operation client methods, so `queries_path` becomes optional:
 
-## Example Code
+```toml
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+enable_custom_operations = true
+```
+
+With it enabled, the following modules are generated in your package:
+
+- `custom_fields.py` - a `…Fields` class per object type, used to select fields.
+- `custom_typing_fields.py` - supporting types for field selection.
+- `custom_queries.py` - a `Query` class with a builder method per root query field (generated only if the schema has a `Query` type).
+- `custom_mutations.py` - a `Mutation` class with a builder method per root mutation field (generated only if the schema has a `Mutation` type).
+
+The client also gains `query(...)`, `mutation(...)` and `execute_custom_operation(...)`
+methods for executing the built operations.
+
+## Example: custom queries
 
 ```python
 import asyncio
@@ -72,6 +88,32 @@ asyncio.run(get_products())
 3. Executing the Queries:
    1. The client.query(...) method is called with the built queries and an operation name "get_products".
    2. This method sends the queries to the server and retrieves the response.
+
+Unlike the per-operation client methods, `client.query(...)` and
+`client.mutation(...)` return the raw response as a `dict[str, Any]` - the result is
+not parsed into a generated Pydantic model.
+
+## Example: custom mutations
+
+Mutations are built the same way, using the generated `Mutation` class from
+`custom_mutations` and executed with `client.mutation(...)`:
+
+```python
+from graphql_client import Client
+from graphql_client.custom_fields import ProductFields
+from graphql_client.custom_mutations import Mutation
+
+
+async def update_product():
+    client = Client(url="https://saleor.cloud/graphql/")
+
+    build = Mutation.product_update(id="...").fields(
+        ProductFields.id,
+        ProductFields.name,
+    )
+    response = await client.mutation(build, operation_name="update_product")
+    print(response)
+```
 
 ## Example pyproject.toml configuration.
 

@@ -4,41 +4,58 @@
 
 [![Build Status](https://github.com/mirumee/ariadne-codegen/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/mirumee/ariadne-codegen/actions)
 
-Python code generator that takes graphql schema, queries, mutations and subscriptions and generates Python package with fully typed and asynchronous GraphQL client.
+Python code generator that turns a GraphQL schema and your operations into a fully typed, async (or sync) Python client built on Pydantic. You write your queries, mutations and subscriptions in GraphQL, and ariadne-codegen generates a typed Python method for each one, returning Pydantic models - so you get autocompletion and static type checking instead of hand-writing query strings and parsing raw JSON.
 
-It's available as `ariadne-codegen` command and reads configuration from the `pyproject.toml` file:
-
-```
-ariadne-codegen
-```
-
-It can also be run as `python -m ariadne_codegen`.
+📖 **[Documentation](docs/01-introduction.md)** · [Step-by-step example](docs/02-guides/01-step-by-step-example.md) · [Configuration reference](docs/03-reference/01-configuration.md)
 
 ## Features
 
-- Generate pydantic models from schema types, inputs and enums.
-- Generate pydantic models for GraphQL results.
-- Generate client package with each GraphQL operation available as async method.
+- **Fully typed models** - Pydantic models for schema types, inputs, enums, fragments, and every operation's result.
+- **Typed client methods** - each query, mutation, and subscription becomes a method with typed arguments and a typed return value.
+- **[Async or sync](docs/02-guides/10-async-vs-sync.md)** - generate an async client (default) or a synchronous one.
+- **[Subscriptions](docs/02-guides/04-subscriptions.md)** - real-time updates over WebSockets (`graphql-transport-ws`).
+- **[File uploads](docs/02-guides/05-file-uploads.md)** - multipart requests via the GraphQL multipart request spec.
+- **[Custom scalars](docs/02-guides/06-custom-scalars.md)** - map GraphQL scalars to your own Python types with `serialize`/`parse` hooks.
+- **[Extensible output](docs/02-guides/07-extending-types.md)** - inject mixins into generated models, copy in your own files, or swap the [base client](docs/03-reference/02-generated-code-dependencies.md) (custom auth, or to drop the `httpx`/`websockets` deps).
+- **[Flexible schema sources](docs/02-guides/02-schema-sources.md)** - a local file, installed Python packages, or remote introspection.
+- **[Plugin system](docs/04-plugins/01-intro.md)** - customize generation through hooks, plus ready-made plugins (shorter results, extracted operation strings, forward refs, …).
+- **More** - [programmatic query building](docs/02-guides/12-custom-operation-builder.md), [OpenTelemetry tracing](docs/02-guides/09-opentelemetry.md), [multiple clients per project](docs/02-guides/08-multiple-clients.md), and a [schema-copy mode](docs/02-guides/11-schema-generation.md).
 
 ## Installation
 
-Ariadne Code Generator can be installed with pip:
+Requires Python 3.10 or newer.
 
 ```
 pip install ariadne-codegen
 ```
 
-To support subscriptions, default base client requires `websockets` package:
+Add subscription (WebSocket) support with:
 
 ```
 pip install ariadne-codegen[subscriptions]
 ```
 
-## Configuration
+## Quickstart
 
-`ariadne-codegen` reads configuration from `[tool.ariadne-codegen]` section in your `pyproject.toml`. You can use other configuration file with `--config` option, eg. `ariadne-codegen --config custom_file.toml`
+Generate a typed client from three files.
 
-Minimal configuration for client generation:
+**1. Describe your schema** in `schema.graphql`:
+
+```graphql
+type Query {
+  hello(name: String!): String!
+}
+```
+
+**2. Write the operations you need** in `queries.graphql`:
+
+```graphql
+query Greet($name: String!) {
+  hello(name: $name)
+}
+```
+
+**3. Point `ariadne-codegen` at them** in `pyproject.toml`:
 
 ```toml
 [tool.ariadne-codegen]
@@ -46,513 +63,37 @@ schema_path = "schema.graphql"
 queries_path = "queries.graphql"
 ```
 
-Required settings:
+Then generate the client:
 
-- `queries_path` - path to file/directory with queries (Can be optional if `enable_custom_operations` is used)
-
-Exactly one of the following 3 parameters is required. They are mutually exclusive - providing more than one raises a configuration error:
-
-- `schema_path` - path to file/directory with graphql schema
-- `schema_paths` - list of schema sources; each entry can be a local path (file or directory) or a dotted Python attribute path (resolved at codegen time). See [Loading schema from installed packages](#loading-schema-from-installed-packages).
-- `remote_schema_url` - url to graphql server, where introspection query can be perfomed
-
-Optional settings:
-
-- `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
-- `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies wheter to verify ssl while introspecting remote schema
-- `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
-- `remote_schema_http_client_path` - absolute import path to the HTTP client class used to introspect remote schema. If not provided, default `httpx` client is used.
-- `target_package_name` (defaults to `"graphql_client"`) - name of generated package
-- `target_package_path` (defaults to cwd) - path where to generate package
-- `client_name` (defaults to `"Client"`) - name of generated client class
-- `client_file_name` (defaults to `"client"`) - name of file with generated client class
-- `base_client_name` (defaults to `"AsyncBaseClient"`) - name of base client class
-- `base_client_file_path` (defaults to `.../ariadne_codegen/client_generators/dependencies/async_base_client.py`) - path to file where `base_client_name` is defined
-- `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
-- `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
-- `fragments_module_name` (defaults to `"fragments"`) - name of file with generated fragments models
-- `include_comments` (defaults to `"stable"`) - option which sets content of comments included at the top of every generated file. Valid choices are: `"none"` (no comments), `"timestamp"` (comment with generation timestamp), `"stable"` (comment contains a message that this is a generated file)
-- `convert_to_snake_case` (defaults to `true`) - a flag that specifies whether to convert fields and arguments names to snake case
-- `include_all_inputs` (defaults to `true`) - a flag specifying whether to include all inputs defined in the schema, or only those used in supplied operations
-- `include_all_enums` (defaults to `true`) - a flag specifying whether to include all enums defined in the schema, or only those used in supplied operations
-- `async_client` (defaults to `true`) - default generated client is `async`, change this to option `false` to generate synchronous client instead
-- `opentelemetry_client` (defaults to `false`) - default base clients don't support any performance tracing. Change this option to `true` to use the base client with Open Telemetry support.
-- `multipart_uploads` (defaults to `true`) - when set to `false`, a lighter base client variant is generated that omits multipart file upload support.
-- `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
-- `plugins` (defaults to `[]`) - list of plugins to use during generation
-- `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
-
-These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`.
-
-- `introspection_descriptions` (defaults to `false`) – include descriptions in the introspection result
-- `introspection_input_value_deprecation` (defaults to `false`) – include deprecation information for input values
-- `introspection_specified_by_url` (defaults to `false`) – include `specifiedByUrl` for custom scalars
-- `introspection_schema_description` (defaults to `false`) – include schema description
-- `introspection_directive_is_repeatable` (defaults to `false`) – include `isRepeatable` information for directives
-- `introspection_input_object_one_of` (defaults to `false`) – include `oneOf` information for input objects
-
-## Loading schema from installed packages
-
-`schema_paths` lets you pull type definitions from installed Python packages alongside your local schema files, so codegen can resolve types that live in a shared library without copying them manually.
-
-Each entry in `schema_paths` must be one of the following:
-
-- **an absolute import path to a callable** that returns a `list[str]` of file paths, eg. `some_package.get_schema_files`
-- **an absolute import path to a variable** holding the path to a single schema file, eg. `some_package.SCHEMA_FILE`
-- **an absolute import path to a variable** holding the path to a directory — all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_package.SCHEMA_DIR`
-- **a path to a directory** — all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `./my_schemas/`
-- **a path to a specific file** to be used, eg. `./shared/types.graphql`
-
-```toml
-[tool.ariadne-codegen]
-schema_paths = [
-  "some_gql_commontypes.get_schema_files",   # callable → returns list of paths
-  "other_pkg.SCHEMA_DIR",                     # variable → directory
-  "./my_other_packages/",                     # local directory
-  "./foo/bar.graphql",                        # local file
-]
-queries_path = "queries.graphql"
+```
+ariadne-codegen
 ```
 
-`schema_path`, `schema_paths` and `remote_schema_url` are mutually exclusive - only one schema source may be used at a time.
-
-## Custom operation builder
-
-The custom operation builder allows you to create complex GraphQL queries in a structured and intuitive way.
-
-### Example Code
+This creates a `graphql_client` package. Use it:
 
 ```python
 import asyncio
 from graphql_client import Client
-from graphql_client.custom_fields import (
-    ProductFields,
-    ProductTranslatableContentFields,
-    ProductTranslationFields,
-    TranslatableItemConnectionFields,
-    TranslatableItemEdgeFields,
-)
-from graphql_client.custom_queries import Query
-from graphql_client.enums import LanguageCodeEnum, TranslatableKinds
 
 
-async def get_products():
-    # Create a client instance with the specified URL and headers
-    client = Client(
-        url="https://saleor.cloud/graphql/",
-        headers={"authorization": "bearer ..."},
-    )
+async def main():
+    async with Client(url="https://example.com/graphql") as client:
+        result = await client.greet(name="World")
+        print(result.hello)
 
-    # Build the queries
-    product_query = Query.product(id="...", channel="channel-uk").fields(
-        ProductFields.id,
-        ProductFields.name,
-    )
 
-    translation_query = Query.translations(kind=TranslatableKinds.PRODUCT, first=10).fields(
-        TranslatableItemConnectionFields.edges().alias("aliased_edges").fields(
-            TranslatableItemEdgeFields.node.on(
-                "ProductTranslatableContent",
-                ProductTranslatableContentFields.id,
-                ProductTranslatableContentFields.product_id,
-                ProductTranslatableContentFields.name,
-            )
-        )
-    )
-
-    # Execute the queries with an operation name
-    response = await client.query(
-        product_query,
-        translation_query,
-        operation_name="get_products",
-    )
-
-    print(response)
-
-# Run the async function
-asyncio.run(get_products())
+asyncio.run(main())
 ```
 
-### Explanation
+`greet` is a typed method generated from your `Greet` operation, and `result` is a
+validated Pydantic model. See the [step-by-step example](docs/02-guides/01-step-by-step-example.md)
+for a walk-through of everything that gets generated.
 
-1. Building the Product Query:
-   1. The Query.product(id="...", channel="channel-uk") initiates a query for a product with the specified ID and channel.
-   2. .fields(ProductFields.id, ProductFields.name) specifies the fields to retrieve for the product: id and name.
-2. Building the Translation Query:
-   1. The Query.translations(kind=TranslatableKinds.PRODUCT, first=10) initiates a query for product translations.
-   2. .fields(...) specifies the fields to retrieve for the translations.
-   3. .alias("aliased_edges") renames the edges field to aliased_edges.
-   4. .on("ProductTranslatableContent", ...) specifies the fields to retrieve if the node is of type ProductTranslatableContent: id, product_id, and name.
-3. Executing the Queries:
-   1. The client.query(...) method is called with the built queries and an operation name "get_products".
-   2. This method sends the queries to the server and retrieves the response.
-
-### Example pyproject.toml configuration
-
-`Note: queries_path is optional when enable_custom_operations is set to true`
-
-```toml
-[tool.ariadne-codegen]
-schema_path = "schema.graphql"
-include_comments = "none"
-target_package_name = "example_client"
-enable_custom_operations = true
-```
-
-## Plugins
-
-Ariadne Codegen implements a plugin system that enables further customization and fine-tuning of generated Python code. It’s documentation is available separately in the [PLUGINS.md](https://github.com/mirumee/ariadne-codegen/blob/main/PLUGINS.md) file.
-
-### Standard plugins
-
-Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen.contrib` package:
-
-- [`ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin`](ariadne_codegen/contrib/shorter_results.py) - This plugin processes generated client methods for operations where only single top field is requested, so they return this field's value directly instead of operation's result type. For example get_user method generated for query `GetUser() { user(...) { ... }}` will return value of user field directly instead of `GetUserResult`.
-
-- [`ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin`](ariadne_codegen/contrib/extract_operations.py) - This extracts query strings from generated client's methods into separate `operations.py` module. It also modifies the generated client to import these definitions. Generated module name can be customized by adding `operations_module_name="custom_name"` to the `[tool.ariadne-codegen.operations]` section in config. Eg.:
-
-    ```toml
-    [tool.ariadne-codegen]
-    ...
-    plugins = ["ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin"]
-
-    [tool.ariadne-codegen.extract_operations]
-    operations_module_name = "custom_operations_module_name"
-    ```
-
-- [`ariadne_codegen.contrib.client_forward_refs.ClientForwardRefsPlugin`](ariadne_codegen/contrib/client_forward_refs.py) - This plugin changes generated client module moving all Pydantic models imports under the `TYPE_CHECKING` condition, making them forward references. This greatly improves the import performance of the `client` module.
-
-- [`ariadne_codegen.contrib.no_reimports.NoReimportsPlugin`](ariadne_codegen/contrib/no_reimports.py) - This plugin removes content of generated `__init__.py`. This is useful in scenarios where generated plugins contain so many Pydantic models that client's eager initialization of entire package on first import is very slow.
-
-## Using generated client
-
-Generated client can be imported from package:
-
-```py
-from {target_package_name}.{client_file_name} import {client_name}
-```
-
-Example with default settings:
-
-```py
-from graphql_client.client import Client
-```
-
-### Passing headers to client
-
-Client (with default base client), takes passed headers and attaches them to every sent request.
-
-```py
-client = Client("https://example.com/graphql", {"Authorization": "Bearer token"})
-```
-
-### Using custom http client
-
-The default base class http client can be replaced with another client:
-
-```py
-client = Client(http_client=CustomComplexHttpClient())
-```
-
-`CustomComplexHttpClient` needs to fulfill the following protocol for async client:
-
-```py
-class Response(Protocol):
-    status_code: int
-
-    def json(self, **kwargs: Any) -> Any: ...
-
-
-class HttpClient(Protocol):
-    async def post(
-        self,
-        url: Any | str,
-        json: Any | None = None,
-        data: Any | None = None,
-        files: Any | None = None,
-        headers: Any | None = None,
-        **kwargs: Any,
-    ) -> Response: ...
-
-    async def aclose(self) -> None: ...
-```
-
-Protocol for sync client:
-
-```py
-class Response(Protocol):
-    status_code: int
-
-    def json(self, **kwargs: Any) -> Any: ...
-
-
-class HttpClient(Protocol):
-    def post(
-        self,
-        url: Any | str,
-        json: Any | None = None,
-        data: Any | None = None,
-        files: Any | None = None,
-        headers: Any | None = None,
-        **kwargs: Any,
-    ) -> Response: ...
-
-    def close(self) -> None: ...
-```
-
-The protocol for sync client is also fulfilled by some commonly known classes, like `requests.Session`.
-
-### Websockets
-
-To handle subscriptions, default `AsyncBaseClient` uses [websockets](https://github.com/python-websockets/websockets) and implements [graphql-transport-ws](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md) subprotocol. Arguments `ws_origin` and `ws_headers` are added as headers to the handshake request and `ws_connection_init_payload` is used as payload of [ConnectionInit](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md#connectioninit) message.
-
-### File upload
-
-Default base client (`AsyncBaseClient` or `BaseClient`) checks if any part of `variables` dictionary is an instance of `Upload`. If at least one instance is found then client sends multipart request according to [GraphQL multipart request specification](https://github.com/jaydenseric/graphql-multipart-request-spec).
-
-Class `Upload` is included in generated client and can be imported from it:
-
-```py
-from {target_package_name} import Upload
-```
-
-By default we use this class to represent graphql scalar `Upload`. For schema with different name for this scalar, you can still use `Upload` and default client for file uploads:
-
-```toml
-[tool.ariadne-codegen.scalars.OTHERSCALAR]
-type = "Upload"
-```
-
-If your schema does not use file uploads, you can set `multipart_uploads = false` in your config to generate a lighter client that omits multipart handling entirely:
-
-```toml
-[tool.ariadne-codegen]
-multipart_uploads = false
-```
-
-### Open Telemetry
-
-When config option `opentelemetry_client` is set to `true` then default, included base client is replaced with one that implements the opt-in Open Telemetry support. By default this support does nothing but when the `opentelemetry-api` package is installed and the `tracer` argument is provided then the client will create spans with data about performed requests.
-
-Tracing arguments handled by `BaseClientOpenTelemetry`:
-
-- `tracer`: `Optional[Union[str, Tracer]] = None` - tracer object or name which will be passed to the `get_tracer` method
-- `root_context`: `Optional[Context] = None` - optional context added to root span
-- `root_span_name`: `str = "GraphQL Operation"` - name of root span
-
-`AsyncBaseClientOpenTelemetry` supports all arguments which `BaseClientOpenTelemetry` does, but also exposes additional arguments regarding websockets:
-
-- `ws_root_context`: `Optional[Context] = None` - optional context added to root span for websocket connection
-- `ws_root_span_name`: `str = "GraphQL Subscription"` - name of root span for websocket connection
-
-## Custom scalars
-
-By default, not built-in scalars are represented as `typing.Any` in generated client.
-You can provide information about specific scalar by adding section to `pyproject.toml`:
-
-```toml
-[tool.ariadne-codegen.scalars.{graphql scalar name}]
-type = "(required) python type name"
-serialize = "function used to serialize scalar"
-parse = "function used to create scalar instance from serialized form"
-```
-
-For each custom scalar client will use given `type` in all occurrences of `{graphql scalar name}`. If provided, `serialize` and `parse` will be used for serialization and deserialization. In result models `type` will be annotated with `BeforeValidator`, eg. `Annotated[type, BeforeValidator(parse)]`. In inputs annotation will use `PlainSerializer`, eg. `Annotated[type, PlainSerializer(serialize)]`.
-If `type`/`serialize`/`parse` contains at least one `.` then string will be split by it's last occurrence. First part will be used as module to import from, and second part as type/method name. For example, `type = "custom_scalars.a.ScalarA"` will produce `from custom_scalars.a import ScalarA`.
-
-### Example with scalar mapped to built-in type
-
-In this case scalar is mapped to built-in `str` which doesn't require custom `serialize` and `parse` methods.
-
-```toml
-[tool.ariadne-codegen.scalars.SCALARA]
-type = "str"
-```
-
-### Example with type supported by pydantic
-
-In this scenario scalar is represented as `datetime`, so it needs to be imported. Pydantic handles serialization and deserialization so custom `parse` and `serialize` is not necessary.
-
-```toml
-[tool.ariadne-codegen.scalars.DATETIME]
-type = "datetime.datetime"
-```
-
-### Example with fully custom type
-
-In this example scalar is represented as class `TypeB`. Pydantic can't handle serialization and deserialization so custom `parse` and `serialize` is necessary. To provide `type`, `parse` and `serialize` implementation we can use `files_to_include` to copy `type_b.py` file.
-
-```toml
-[tool.ariadne-codegen]
-...
-files_to_include = [".../type_b.py"]
-
-[tool.ariadne-codegen.scalars.SCALARB]
-type = ".type_b.TypeB"
-parse = ".type_b.parse_b"
-serialize = ".type_b.serialize_b"
-```
-
-```py
-# inputs.py
-
-class TestInput(BaseModel):
-    value_b: Annotated[TypeB, PlainSerializer(serialize_b)]
-```
-
-```py
-# get_b.py
-
-class GetB(BaseModel):
-    query_b: Annotated[TypeB, BeforeValidator(parse_b)]
-```
-
-```py
-# client.py
-
-class Client(AsyncBaseClient):
-    async def test_mutation(self, value: TypeB) -> TestMutation:
-        ...
-        variables: dict[str, object] = {
-            "value": serialize_b(value),
-        }
-        ...
-```
-
-## Extending generated types
-
-### Extending models with custom mixins
-
-`mixin` directive allows to extend class generated for query/mutation field with custom logic.
-`mixin` takes two required arguments:
-
-- `from` - name of a module to import from
-- `import` - name of a parent class
-
-Generated class will use `import` as extra base class, and import will be added to the file.
-
-```py
-from {from} import {import}
-...
-class OperationNameField(BaseModel, {import}):
-    ...
-```
-
-This directive can be used along with `files_to_include` option to extend functionality of generated classes.
-
-#### Example of usage of `mixin` and `files_to_include`
-
-Query with `mixin` directive:
-
-```gql
-query listUsers {
-    users @mixin(from: ".mixins", import: "UsersMixin") {
-        id
-    }
-}
-```
-
-Part of `pyproject.toml` with `files_to_include` (`mixins.py` contains `UsersMixin` implementation)
-
-```toml
-files_to_include = [".../mixins.py"]
-```
-
-Part of generated `list_users.py` file:
-
-```py
-...
-from .mixins import UsersMixin
-...
-class ListUsersUsers(BaseModel, UsersMixin):
-    ...
-```
-
-## Multiple clients
-
-To generate multiple different clients you can store config for each in different file, then provide path to config file by `--config` option, eg.
-
-```
-ariadne-codegen --config clientA.toml
-ariadne-codegen --config clientB.toml
-```
-
-## Generated code dependencies
-
-Generated code requires:
-
-- [pydantic](https://github.com/pydantic/pydantic)
-- [httpx](https://github.com/encode/httpx)
-- [websockets](https://github.com/python-websockets/websockets) (only for default async base client)
-
-Both `httpx` and `websockets` dependencies can be avoided by providing another base client class with `base_client_file_path` and `base_client_name` options.
-
-## Example
-
-Example with simple schema and few queries and mutations is available [here](https://github.com/mirumee/ariadne-codegen/blob/main/EXAMPLE.md).
-
-## Generating a copy of GraphSQL schema
-
-Instead of generating a client, you can generate a file with a copy of a GraphQL schema. To do this call `ariadne-codegen` with `graphqlschema` argument:
-
-```
-ariadne-codegen graphqlschema
-```
-
-`graphqlschema` mode reads configuration from the same place as [`client`](#configuration) but uses only `schema_path`, `schema_paths`, `remote_schema_url`, `remote_schema_headers`, `remote_schema_verify_ssl`, `remote_schema_timeout`, `remote_schema_http_client_path` options to retrieve the schema and `plugins` option to load plugins.
-
-In addition to the above, `graphqlschema` mode also accepts additional settings specific to it:
-
-### `target_file_path`
-
-A string with destination path for generated file. Must be either a Python (`.py`), or GraphQL (`.graphql` or `.gql`) file.
-
-Defaults to `schema.py`.
-
-Generated Python file will contain:
-
-- Necessary imports
-- Type map declaration `{type_map_variable_name}: TypeMap = {...}`
-- Schema declaration `{schema_variable_name}: GraphQLSchema = GraphQLSchema(...)`
-
-Generated GraphQL file will contain a formatted output of the `print_schema` function from the `graphql-core` package.
-
-### `schema_variable_name`
-
-A string with a name for schema variable, must be valid python identifier.
-
-Defaults to `"schema"`. Used only if target is a Python file.
-
-### `type_map_variable_name`
-
-A string with a name for type map variable, must be valid python identifier.
-
-Defaults to `"type_map"`. Used only if target is a Python file.
-
----
-
-## Versioning policy ##
-
-`ariadne-codegen` follows a custom versioning scheme where the minor version increases for breaking changes, while the patch version increments for bug fixes, enhancements, and other non-breaking updates.
-
-Since `ariadne-codegen` has not yet reached a stable API, this approach is in place until version 1.0.0. Once the API stabilizes, the project will adopt [Semantic Versioning](https://semver.org/)..
-
-## Development
-
-Formatting and linting use [ruff](https://github.com/astral-sh/ruff). We use [Hatch](https://github.com/pypa/hatch) for local tasks:
-
-- `hatch run lint` – lint (formatting check + typecheck)
-- `hatch fmt` – auto-format code
-- `hatch test` – tests with coverage (default Python 3.10)
-- `hatch test -a -p` – tests across all supported Python versions
-- `hatch run check` – full check (format, typecheck, tests)
 
 ## Contributing
 
-We welcome all contributions to Ariadne! If you've found a bug or issue, feel free to use [GitHub issues](https://github.com/mirumee/ariadne-codegen/issues). If you have any questions or feedback, don't hesitate to catch us on [GitHub discussions](https://github.com/mirumee/ariadne/discussions/).
-
-For guidance and instructions, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs, work on issues, and open pull requests.
 
 Also make sure you follow [@AriadneGraphQL](https://twitter.com/AriadneGraphQL) on Twitter for latest updates, news and random musings!
 
-## **Crafted with ❤️ by [Mirumee Software](http://mirumee.com)** <ariadne@mirumee.com>
+# Crafted with ❤️ by [Mirumee Labs](http://mirumee.com) <ariadne@mirumee.com>

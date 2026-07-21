@@ -6,9 +6,9 @@ title: Standard plugins
 
 Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen.contrib` package:
 
-- [`ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/contrib/shorter_results.py#L61) - This plugin processes generated client methods for operations where only single top field is requested, so they return this field's value directly instead of operation's result type. For example get_user method generated for query `GetUser() { user(...) { ... }}` will return value of user field directly instead of `GetUserResult`.
+- [`ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/contrib/shorter_results.py#L62) - This plugin processes generated client methods for operations where only single top field is requested, so they return this field's value directly instead of operation's result type. For example get_user method generated for query `GetUser() { user(...) { ... }}` will return value of user field directly instead of `GetUserResult`.
 
-- [`ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/contrib/extract_operations.py#L29) - This extracts query strings from generated client's methods into separate `operations.py` module. It also modifies the generated client to import these definitions. Generated module name can be customized by adding `operations_module_name="custom_name"` to the `[tool.ariadne-codegen.extract-operations]` section in config. Eg.:
+- [`ariadne_codegen.contrib.extract_operations.ExtractOperationsPlugin`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/contrib/extract_operations.py#L31) - This extracts query strings from generated client's methods into separate `operations.py` module. It also modifies the generated client to import these definitions. Generated module name can be customized by adding `operations_module_name="custom_name"` to the `[tool.ariadne-codegen.extract-operations]` section in config. Eg.:
 
   ```toml
   [tool.ariadne-codegen]

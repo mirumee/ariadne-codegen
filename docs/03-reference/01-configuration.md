@@ -18,37 +18,16 @@ queries_path = "queries.graphql"
 
 - `queries_path` - path to file/directory with queries (Can be optional if `enable_custom_operations` is used)
 
-Exactly one of the following 3 parameters is required. They are mutually exclusive - providing more than one raises a configuration error:
+Exactly one of the following parameters is required - they are mutually exclusive, so only one schema source may be used at a time (see [Schema sources](../02-guides/02-schema-sources.md)):
 
 - `schema_path` - path to file/directory with graphql schema
-- `schema_paths` - list of schema sources resolved at codegen time; each entry may be a local path (file or directory) or a dotted Python attribute path (`pkg.ATTR` or `pkg.callable`). See details below.
-- `remote_schema_url` - url to graphql server, where introspection query can be perfomed
-
-### `schema_paths` entries
-
-Each entry in `schema_paths` must be one of the following:
-
-- **an absolute import path to a callable** that returns a `list[str]` of file paths, eg. `some_pkg.get_schema_files`
-- **an absolute import path to a variable** holding the path to a single schema file, eg. `some_pkg.SCHEMA_FILE`
-- **an absolute import path to a variable** holding the path to a directory - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `some_pkg.SCHEMA_DIR`
-- **a path to a directory** - all `.graphql`, `.graphqls` and `.gql` files from it are included, eg. `./schemas/`
-- **a path to a specific file** to be used, eg. `./foo/bar.graphql`
-
-```toml
-[tool.ariadne-codegen]
-schema_paths = [
-  "some_gql_commontypes.get_schema_files",
-  "other_pkg.SCHEMA_DIR",
-  "./my_other_packages/",
-  "./foo/bar.graphql",
-]
-queries_path = "queries.graphql"
-```
+- `schema_paths` - list of local paths and/or installed-package sources to build the schema from
+- `remote_schema_url` - url to graphql server, where introspection query can be performed
 
 ## Optional settings:
 
-- `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer: token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
-- `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies wheter to verify ssl while introspecting remote schema
+- `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
+- `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies whether to verify ssl while introspecting remote schema
 - `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
 - `remote_schema_http_client_path` - absolute import path to the HTTP client class used to introspect remote schema. If not provided, default `httpx` client is used.
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
@@ -57,6 +36,7 @@ queries_path = "queries.graphql"
 - `client_file_name` (defaults to `"client"`) - name of file with generated client class
 - `base_client_name` (defaults to `"AsyncBaseClient"`) - name of base client class
 - `base_client_file_path` (defaults to `.../ariadne_codegen/client_generators/dependencies/async_base_client.py`) - path to file where `base_client_name` is defined
+- `base_client_module_name` (defaults to the file name of `base_client_file_path`) - name of the module the base client is copied to and imported from in the generated package
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
 - `input_types_module_name` (defaults to `"input_types"`) - name of file with generated input types models
 - `fragments_module_name` (defaults to `"fragments"`) - name of file with generated fragments models
@@ -70,8 +50,25 @@ queries_path = "queries.graphql"
 - `files_to_include` (defaults to `[]`) - list of files which will be copied into generated package
 - `plugins` (defaults to `[]`) - list of plugins to use during generation
 - `enable_custom_operations` (defaults to `false`) - enables building custom operations. Generates additional files that contains all the classes and methods for generation.
+- `include_typename` (defaults to `true`) - a flag that specifies whether to include the `__typename` field in generated models
+- `ignore_extra_fields` (defaults to `true`) - when `true`, generated models ignore extra fields returned by the server; set to `false` to add `extra="forbid"` to the base model so unexpected fields raise a validation error
+- `default_optional_fields_to_none` (defaults to `false`) - when `true`, optional fields in generated models default to `None` instead of being required keyword arguments
+- `skip_validation_rules` (defaults to `["NoUnusedFragments"]`) - list of [graphql-core validation rule](https://github.com/graphql-python/graphql-core) names to skip when validating operations against the schema
 
-These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`.
+### Scalars
+
+Custom scalar mappings are configured in per-scalar subsections rather than a single key:
+
+```toml
+[tool.ariadne-codegen.scalars.{graphql scalar name}]
+type = "..."
+```
+
+See [Custom scalars](../02-guides/06-custom-scalars.md) for the full syntax.
+
+## Introspection query settings:
+
+These options control which fields are included in the GraphQL introspection query when using `remote_schema_url`. See [Schema sources](../02-guides/02-schema-sources.md) for more details.
 
 - `introspection_descriptions` (defaults to `false`) – include descriptions in the introspection result
 - `introspection_input_value_deprecation` (defaults to `false`) – include deprecation information for input values
@@ -80,34 +77,15 @@ These options control which fields are included in the GraphQL introspection que
 - `introspection_directive_is_repeatable` (defaults to `false`) – include `isRepeatable` information for directives
 - `introspection_input_object_one_of` (defaults to `false`) – include `oneOf` information for input objects
 
-## Base Client customization
+## Related guides
 
-The `base_client_file_path` and `base_client_name` can be used to provide a custom base client implementation. It should implement the following protocol for async client:
+Several settings have dedicated guides that explain them in context:
 
-```py
-class AsyncBaseClient(Protocol):
-    async def execute(
-        self,
-        query: str,
-        operation_name: Optional[str] = None,
-        variables: Optional[dict[str, Any]] = None,
-        **kwargs: Any,
-    ) -> Response: ...
-
-    def get_data(self, response: Response) -> dict[str, Any]: ...
-```
-
-Protocol for sync client:
-
-```py
-class BaseClient(Protocol):
-    def execute(
-        self,
-        query: str,
-        operation_name: Optional[str] = None,
-        variables: Optional[dict[str, Any]] = None,
-        **kwargs: Any,
-    ) -> Response: ...
-
-    def get_data(self, response: Response) -> dict[str, Any]: ...
-```
+- [Schema sources](../02-guides/02-schema-sources.md) - `schema_path`, `remote_schema_url`, `remote_schema_*`, and `introspection_*`
+- [Schema generation](../02-guides/11-schema-generation.md) - `graphqlschema` mode and its settings
+- [File uploads](../02-guides/05-file-uploads.md) - `multipart_uploads`
+- [Custom scalars](../02-guides/06-custom-scalars.md) - scalar sections and `files_to_include`
+- [Async vs sync client](../02-guides/10-async-vs-sync.md) - `async_client`
+- [Open Telemetry](../02-guides/09-opentelemetry.md) - `opentelemetry_client`
+- [Plugins](../04-plugins/01-intro.md) - `plugins`
+- [Custom operation builder](../02-guides/12-custom-operation-builder.md) - `enable_custom_operations`
