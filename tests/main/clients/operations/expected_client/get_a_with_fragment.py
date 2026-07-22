@@ -13,9 +13,6 @@ class GetAWithFragmentA(BaseModel):
     value_b: "GetAWithFragmentAValueB" = Field(alias="valueB")
 
 
-class GetAWithFragmentAValueB(FragmentB):
-    pass
-
-
+GetAWithFragmentAValueB = FragmentB
 GetAWithFragment.model_rebuild()
 GetAWithFragmentA.model_rebuild()

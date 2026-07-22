@@ -1,8 +1,3 @@
-from .fragments import (
-    GetQueryAFragment,
-    GetQueryAFragmentQueryA,  # noqa: F401
-)
+from .fragments import GetQueryAFragment
 
-
-class GetQueryAWithFragment(GetQueryAFragment):
-    pass
+GetQueryAWithFragment = GetQueryAFragment

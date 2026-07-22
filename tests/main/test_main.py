@@ -403,15 +403,19 @@ def test_main_applies_base_model_config_with_multipart_uploads_disabled(
 def test_main_defer_model_build_package_validates_fragment_mixin_payload(
     project_dir, package_name
 ):
-    """A deferred operation whose result subclasses a fragment must still build
-    and validate a real payload.
+    """A deferred operation that spreads a fragment must build and validate a
+    real payload, whether or not it selects fields of its own.
 
-    ``query ListUsers { users { ...UserFields } }`` generates
-    ``class ListUsersUsers(UserFields)`` in ``list_users.py`` while
-    ``UserFields.friends`` is a forward reference to ``UserFieldsFriends`` defined
-    in ``fragments.py``. With ``defer_model_build`` the subclass is built lazily
-    on first validation and resolves that inherited forward reference against its
-    *own* module, so ``list_users.py`` must keep ``UserFieldsFriends`` importable.
+    ``query ListUsers { users { ...UserFields } }`` selects nothing beyond the
+    fragment, so ``ListUsersUsers`` is bound straight to ``UserFields`` and there
+    is no subclass to resolve anything against.
+
+    ``ListUsersWithManager`` adds ``manager`` on top of the spread, which needs a
+    real ``class ListUsersWithManagerUsers(UserFields)``. ``UserFields.friends``
+    is a forward reference to ``UserFieldsFriends`` defined in ``fragments.py``,
+    and with ``defer_model_build`` the subclass is built lazily on first
+    validation and resolves that *inherited* reference against its own module,
+    so ``list_users_with_manager.py`` must keep ``UserFieldsFriends`` importable.
     Diffing the generated source never exercised this. The package is imported
     and a payload validated here, across every supported Python version.
     """
@@ -434,6 +438,22 @@ def test_main_defer_model_build_package_validates_fragment_mixin_payload(
             }
         )
         assert parsed.users[0].friends[0].name == "Bob"
+        assert package.ListUsersUsers is package.UserFields
+
+        with_manager = package.ListUsersWithManager.model_validate(
+            {
+                "users": [
+                    {
+                        "id": "1",
+                        "name": "Ann",
+                        "friends": [{"id": "2", "name": "Bob"}],
+                        "manager": {"id": "3", "name": "Cid"},
+                    }
+                ]
+            }
+        )
+        assert with_manager.users[0].friends[0].name == "Bob"
+        assert with_manager.users[0].manager.name == "Cid"
     finally:
         for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
             del sys.modules[name]
@@ -459,19 +479,19 @@ def test_main_defer_model_build_package_validates_fragment_mixin_payload(
 def test_main_default_package_validates_fragment_mixin_payload(
     project_dir, package_name
 ):
-    """A default (non-defer) operation whose result subclasses a fragment must
-    still build and validate a real payload.
+    """A default (non-defer) operation that spreads a fragment and selects fields
+    of its own must still build and validate a real payload.
 
-    ``query ListUsers { users { ...UserFields } }`` generates
-    ``class ListUsersUsers(UserFields)`` in ``list_users.py`` while
+    ``ListUsersWithManager`` adds ``manager`` on top of ``...UserFields``, so it
+    needs a real ``class ListUsersWithManagerUsers(UserFields)``.
     ``UserFields.friends`` is a forward reference to ``UserFieldsFriends`` defined
-    in ``fragments.py``. Without ``defer_model_build`` the eager
-    ``ListUsers.model_rebuild()`` re-evaluates that inherited forward reference
-    against the subclass's *own* module, so ``list_users.py`` must keep
-    ``UserFieldsFriends`` importable. On Python 3.10 this fails otherwise with
-    ``PydanticUndefinedAnnotation``; on 3.11+ the inherited reference is reused
-    rather than re-evaluated so it happens to pass. Diffing the generated source
-    never exercised this. The package is imported and a payload validated here.
+    in ``fragments.py``, and the eager ``model_rebuild()`` re-evaluates that
+    *inherited* reference against the subclass's own module, so
+    ``list_users_with_manager.py`` must keep ``UserFieldsFriends`` importable. On
+    Python 3.10 this fails otherwise with ``PydanticUndefinedAnnotation``; on
+    3.11+ the inherited reference is reused rather than re-evaluated so it
+    happens to pass. Diffing the generated source never exercised this. The
+    package is imported and a payload validated here.
     """
     result = CliRunner().invoke(main)
 
@@ -489,14 +509,20 @@ def test_main_default_package_validates_fragment_mixin_payload(
         del sys.modules[name]
     try:
         package = importlib.import_module(package_name)
-        parsed = package.ListUsers.model_validate(
+        parsed = package.ListUsersWithManager.model_validate(
             {
                 "users": [
-                    {"id": "1", "name": "Ann", "friends": [{"id": "2", "name": "Bob"}]}
+                    {
+                        "id": "1",
+                        "name": "Ann",
+                        "friends": [{"id": "2", "name": "Bob"}],
+                        "manager": {"id": "3", "name": "Cid"},
+                    }
                 ]
             }
         )
         assert parsed.users[0].friends[0].name == "Bob"
+        assert parsed.users[0].manager.name == "Cid"
     finally:
         for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
             del sys.modules[name]
@@ -804,3 +830,72 @@ def _resolved_aliases(project_dir: Path, package_name: str) -> dict[str, str]:
         check=True,
     )
     return json.loads(result.stdout)
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH / "lazy_imports" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "lazy_imports" / "queries.graphql",
+                    CLIENTS_PATH / "lazy_imports" / "schema.graphql",
+                ),
+            ),
+            "lazy_imports_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_with_lazy_imports_imports_generated_modules_on_first_use(
+    project_dir, package_name
+):
+    """With ``lazy_imports = true`` importing the package must not import the
+    modules holding the models, and touching a name must import only its module.
+
+    This needs both halves to be in place, which is why the setting turns the
+    ``ClientForwardRefsPlugin`` on: the lazy ``__init__`` stops the package
+    importing every module, and the plugin stops ``client.py`` importing the input
+    types for its annotations. With either one alone the other still pulls the
+    models in and the import costs what it always did, which no assertion on the
+    generated source would catch, so the package is imported and driven here.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0, result.output
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+
+    sys.path.insert(0, str(project_dir))
+    for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+        del sys.modules[name]
+    try:
+        package = importlib.import_module(package_name)
+
+        assert f"{package_name}.input_types" not in sys.modules
+        assert f"{package_name}.get_user" not in sys.modules
+        assert f"{package_name}.client" not in sys.modules
+
+        # The client half: reaching the client must not drag in the input types
+        # it only names in annotations.
+        assert package.Client.__name__ == "Client"
+        assert f"{package_name}.client" in sys.modules
+        assert f"{package_name}.input_types" not in sys.modules
+
+        # The init half: a name imports its own module and nothing else.
+        assert package.UserFilterInput.__name__ == "UserFilterInput"
+        assert f"{package_name}.input_types" in sys.modules
+        assert f"{package_name}.get_user" not in sys.modules
+
+        # Deferring the imports must not change what the models do.
+        parsed = package.GetUser.model_validate({"user": {"id": "1", "name": "Ann"}})
+        assert parsed.user.name == "Ann"
+        assert f"{package_name}.get_user" in sys.modules
+
+        assert package.__all__ == sorted(package.__all__)
+        assert "UserFilterInput" in package.__all__
+    finally:
+        for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+            del sys.modules[name]
+        sys.path.remove(str(project_dir))

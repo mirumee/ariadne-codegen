@@ -23,3 +23,13 @@ query ListUsers($filter: UserFilterInput) {
         ...UserFields
     }
 }
+
+query ListUsersWithManager($filter: UserFilterInput) {
+    users(filter: $filter) {
+        ...UserFields
+        manager {
+            id
+            name
+        }
+    }
+}

@@ -75,6 +75,8 @@ TYPING_MODULE = "typing"
 GRAPHQL_MODULE = "graphql"
 PYDANTIC_MODULE = "pydantic"
 COLLECTIONS_ABC_MODULE = "collections.abc"
+IMPORTLIB_MODULE = "importlib"
+IMPORT_MODULE_FUNCTION = "import_module"
 FIELD_CLASS = "Field"
 ALIAS_KEYWORD = "alias"
 DEFAULT_KEYWORD = "default"
@@ -95,6 +97,12 @@ SKIP_DIRECTIVE_NAME = "skip"
 INCLUDE_DIRECTIVE_NAME = "include"
 
 KWARGS_NAMES = "kwargs"
+
+ALL_NAME = "__all__"
+LAZY_IMPORTS_MAP_NAME = "_LAZY_IMPORTS"
+CLIENT_FORWARD_REFS_PLUGIN = (
+    "ariadne_codegen.contrib.client_forward_refs.ClientForwardRefsPlugin"
+)
 
 DEFAULT_ASYNC_BASE_CLIENT_PATH = (
     Path(__file__).parent / "dependencies" / "async_base_client.py"

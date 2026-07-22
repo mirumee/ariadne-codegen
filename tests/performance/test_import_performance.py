@@ -1,6 +1,6 @@
 """Timing guards for how long a generated package takes to import.
 
-Two settings make that cheaper, and they attack different costs:
+Three settings make that cheaper, and they attack different costs:
 
 `defer_model_build` stops pydantic building every model's core schema at import.
 Because each model inlines the schemas of the types it references, that cost grows
@@ -9,6 +9,11 @@ super-linearly with the schema.
 `use_alias_generator` removes the `Field(alias=...)` call from every field whose
 GraphQL name `to_camel` can reconstruct. Each of those calls builds two `FieldInfo`
 objects at import, so the cost is linear in the number of fields.
+
+`lazy_imports` stops the package importing the modules at all until a name from one
+is used. The other two make defining a model cheaper; this one skips the models an
+application never touches. It is measured by reaching the client rather than by the
+bare import, which is ~0 ms once nothing is imported eagerly.
 
 Marked `performance`, so they can be run on their own:
 
@@ -37,22 +42,31 @@ NUMBER_OF_HUBS = 6
 #   eager -> defer               1.91x .. 1.97x
 #   defer -> defer+alias         1.48x .. 1.56x
 #   eager -> defer+alias         ~3.0x
+#   defer+alias -> +lazy         ~3.8x   (reaching the client, not the bare import)
 # The thresholds sit well under the low end of each range.
 MIN_DEFER_SPEEDUP = 1.5
 MIN_ALIAS_GENERATOR_SPEEDUP = 1.2
 MIN_COMBINED_SPEEDUP = 2.0
+MIN_LAZY_IMPORTS_SPEEDUP = 2.0
 
-QUERIES = "query Ping {\n    ping\n}\n"
+# The operation takes an input argument, so `client.py` imports a type out of
+# `input_types` to annotate it with. That is what `lazy_imports` has to get out of
+# the module level, and an operation with no arguments would not exercise it.
+QUERIES = "query Ping($filter: Model0) {\n    ping(filter: $filter)\n}\n"
 
 VARIANTS = {
     "eager": "",
     "defer": "defer_model_build = true\n",
     "defer+alias": "defer_model_build = true\nuse_alias_generator = true\n",
+    "defer+alias+lazy": (
+        "defer_model_build = true\nuse_alias_generator = true\nlazy_imports = true\n"
+    ),
 }
 
 
 class Variant(NamedTuple):
     seconds: float
+    client_seconds: float
     package_path: Path
 
 
@@ -88,6 +102,9 @@ def timings(tmp_path_factory) -> dict[str, Variant]:
         package_path = generate_package(project_dir, package_name, settings)
         results[variant] = Variant(
             seconds=measure_import_seconds(project_dir, package_name),
+            client_seconds=measure_import_seconds(
+                project_dir, package_name, reach_client=True
+            ),
             package_path=package_path,
         )
     return results
@@ -97,8 +114,10 @@ def test_import_timings_are_reported(request, timings):
     """Not an assertion so much as the numbers the other tests are asserting on."""
     slowest = timings["eager"].seconds
     rows = [
-        f"{variant:12s} {values.seconds * 1000:7.1f} ms"
-        f"   ({slowest / values.seconds:.2f}x vs eager)"
+        f"{variant:17s} import {values.seconds * 1000:7.1f} ms"
+        f" ({slowest / values.seconds:5.2f}x vs eager)"
+        f"   + reach client {values.client_seconds * 1000:7.1f} ms"
+        f" ({timings['eager'].client_seconds / values.client_seconds:5.2f}x)"
         for variant, values in timings.items()
     ]
     fields_per_model = FIELDS_PER_MODEL + FIELDS_PER_MODEL // 2 + NUMBER_OF_HUBS + 2
@@ -161,4 +180,41 @@ def test_defer_model_build_and_alias_generator_compose(timings):
         f"the two settings together are not fast enough: "
         f"eager={eager:.3f}s both={both:.3f}s "
         f"speedup={speedup:.2f}x (expected >= {MIN_COMBINED_SPEEDUP}x)"
+    )
+
+
+def test_lazy_imports_speeds_up_reaching_the_client_on_top_of_defer_and_alias(timings):
+    """`lazy_imports` is measured by reaching the client, not by the bare import.
+
+    The bare import is ~0 ms once nothing is imported eagerly, which would make any
+    ratio look spectacular without proving an application got faster. Reaching the
+    client is the smallest thing that has to pay for what the import deferred.
+    """
+    baseline = timings["defer+alias"]
+    lazy = timings["defer+alias+lazy"]
+
+    # Tie the timing to the mechanism, and to *both* halves of it: the lazy init
+    # stops the package importing every module, and the plugin the setting turns on
+    # stops `client.py` importing the input types it only names in annotations.
+    # Either one alone leaves the other pulling the models in.
+    lazy_init = (lazy.package_path / "__init__.py").read_text()
+    assert "_LAZY_IMPORTS" in lazy_init, "expected a lazy __init__"
+    assert "def __getattr__(name):" in lazy_init
+
+    baseline_client = (baseline.package_path / "client.py").read_text()
+    lazy_client = (lazy.package_path / "client.py").read_text()
+    assert "from .input_types import" in baseline_client
+    assert "if TYPE_CHECKING:" in lazy_client, (
+        "expected lazy_imports to enable the ClientForwardRefsPlugin"
+    )
+    input_types_import = "from .input_types import"
+    assert input_types_import not in lazy_client.split("if TYPE_CHECKING:")[0], (
+        "client.py must not import input types at module level"
+    )
+
+    speedup = baseline.client_seconds / lazy.client_seconds
+    assert speedup >= MIN_LAZY_IMPORTS_SPEEDUP, (
+        f"lazy_imports not fast enough: "
+        f"baseline={baseline.client_seconds:.3f}s lazy={lazy.client_seconds:.3f}s "
+        f"speedup={speedup:.2f}x (expected >= {MIN_LAZY_IMPORTS_SPEEDUP}x)"
     )

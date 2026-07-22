@@ -24,10 +24,14 @@ from .clients.multiple_fragments.expected_client.fragments import FullA
 
 def test_json_schema_contains_all_properties():
     json_schema = ExampleQuery2.model_json_schema()
-    assert "ExampleQuery2ExampleQuery" in json_schema["$defs"]
+    # `ExampleQuery2ExampleQuery` selects nothing beyond `...FullA`, so it is
+    # bound to `FullA` rather than subclassing it, and pydantic names the
+    # definition after the class it actually is.
+    assert ExampleQuery2ExampleQuery is FullA
+    assert "FullA" in json_schema["$defs"]
     assert "FullAFieldB" in json_schema["$defs"]
 
-    query_props = json_schema["$defs"]["ExampleQuery2ExampleQuery"]["properties"]
+    query_props = json_schema["$defs"]["FullA"]["properties"]
     assert "id" in query_props
     assert "value" in query_props
     assert "fieldB" in query_props

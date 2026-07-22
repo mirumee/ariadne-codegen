@@ -4,6 +4,7 @@ from textwrap import dedent
 
 import pytest
 
+from ariadne_codegen.client_generators.constants import CLIENT_FORWARD_REFS_PLUGIN
 from ariadne_codegen.client_generators.dependencies import (
     async_base_client,
     async_base_client_no_upload,
@@ -863,3 +864,76 @@ def test_client_settings_defer_model_build_can_be_set_to_true(tmp_path):
 
     assert settings.defer_model_build is True
     assert "Deferring Pydantic model builds" in settings.used_settings_message
+
+
+def test_client_settings_lazy_imports_defaults_to_false(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+    )
+
+    assert settings.lazy_imports is False
+    assert settings.plugins == []
+
+
+def test_client_settings_lazy_imports_enables_client_forward_refs_plugin(tmp_path):
+    """The lazy init only pays off with the plugin that keeps `client.py` from
+    importing the input types for its annotations, so the setting turns it on.
+    """
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        lazy_imports=True,
+    )
+
+    assert settings.lazy_imports is True
+    assert settings.plugins == [CLIENT_FORWARD_REFS_PLUGIN]
+    assert "Importing generated modules on first use" in settings.used_settings_message
+
+
+def test_client_settings_lazy_imports_keeps_client_forward_refs_plugin_last(tmp_path):
+    """It rewrites the client module other plugins produce, so it has to run after
+    them, and must not be listed twice when it was already asked for by hand.
+    """
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        lazy_imports=True,
+        plugins=["ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin"],
+    )
+
+    assert settings.plugins == [
+        "ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin",
+        CLIENT_FORWARD_REFS_PLUGIN,
+    ]
+
+
+def test_client_settings_lazy_imports_doesnt_duplicate_explicit_plugin(tmp_path):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+
+    settings = ClientSettings(
+        schema_path=schema_path.as_posix(),
+        queries_path=queries_path.as_posix(),
+        lazy_imports=True,
+        plugins=[CLIENT_FORWARD_REFS_PLUGIN],
+    )
+
+    assert settings.plugins == [CLIENT_FORWARD_REFS_PLUGIN]

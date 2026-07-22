@@ -635,7 +635,9 @@ def get_package_generator(
         else BASE_MODEL_NO_UPLOAD_FILE_PATH
     )
 
-    init_generator = InitFileGenerator(plugin_manager=plugin_manager)
+    init_generator = InitFileGenerator(
+        plugin_manager=plugin_manager, lazy_imports=settings.lazy_imports
+    )
     client_generator = ClientGenerator(
         base_client_import=generate_import_from(
             names=[settings.base_client_name],

@@ -12,6 +12,11 @@ from .fragments import UserFields, UserFieldsFriends
 from .get_user import GetUser, GetUserUser, GetUserUserFriends
 from .input_types import UserFilterInput
 from .list_users import ListUsers, ListUsersUsers
+from .list_users_with_manager import (
+    ListUsersWithManager,
+    ListUsersWithManagerUsers,
+    ListUsersWithManagerUsersManager,
+)
 
 __all__ = [
     "AsyncBaseClient",
@@ -27,6 +32,9 @@ __all__ = [
     "GraphQLClientInvalidResponseError",
     "ListUsers",
     "ListUsersUsers",
+    "ListUsersWithManager",
+    "ListUsersWithManagerUsers",
+    "ListUsersWithManagerUsersManager",
     "Upload",
     "UserFields",
     "UserFieldsFriends",

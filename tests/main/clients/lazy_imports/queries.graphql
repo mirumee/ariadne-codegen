@@ -1,0 +1,13 @@
+query GetUser($id: ID!) {
+    user(id: $id) {
+        id
+        name
+    }
+}
+
+query ListUsers($filter: UserFilterInput) {
+    users(filter: $filter) {
+        id
+        name
+    }
+}

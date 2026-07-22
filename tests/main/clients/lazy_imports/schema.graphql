@@ -1,0 +1,19 @@
+schema {
+    query: Query
+}
+
+type Query {
+    user(id: ID!): User
+    users(filter: UserFilterInput): [User!]!
+}
+
+type User {
+    id: ID!
+    name: String!
+    manager: User
+}
+
+input UserFilterInput {
+    name: String
+    manager: UserFilterInput
+}

@@ -33,6 +33,7 @@ from graphql import (
 
 from ..codegen import (
     generate_ann_assign,
+    generate_assign,
     generate_class_def,
     generate_constant,
     generate_import_from,
@@ -163,13 +164,15 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
+        definitions = self._collapse_fragment_only_classes(self._class_defs)
         model_rebuild_calls = generate_model_rebuild_calls(
-            self._class_defs, self.defer_model_build
+            [node for node in definitions if isinstance(node, ast.ClassDef)],
+            self.defer_model_build,
         )
 
         module_body = (
             cast(list[ast.stmt], self._imports)
-            + cast(list[ast.stmt], self._class_defs)
+            + definitions
             + cast(list[ast.stmt], model_rebuild_calls)
         )
 
@@ -179,6 +182,48 @@ class ResultTypesGenerator:
                 module, operation_definition=self.operation_definition
             )
         return module
+
+    def _collapse_fragment_only_classes(
+        self, class_defs: list[ast.ClassDef]
+    ) -> list[ast.stmt]:
+        """Bind a name that only spreads one fragment straight to that fragment.
+
+        `class OpNode(Fragment): pass` adds only a name, and the name is not free:
+        Pydantic resolves the forward references `OpNode` *inherits* against its
+        own module, so every nested class of the fragment must be imported here to
+        be found (see `PackageGenerator._mixin_forward_ref_import`). `OpNode =
+        Fragment` needs neither those imports nor a second model, and stays correct
+        however a Python version evaluates inherited annotations.
+        """
+        mixin_bases = {
+            str_to_pascal_case(name) for name in self._fragments_used_as_mixins
+        }
+        return [
+            (
+                generate_assign(
+                    targets=[class_def.name],
+                    value=generate_name(cast(ast.Name, class_def.bases[0]).id),
+                )
+                if self._only_spreads_fragment(class_def, mixin_bases)
+                else class_def
+            )
+            for class_def in class_defs
+        ]
+
+    @staticmethod
+    def _only_spreads_fragment(class_def: ast.ClassDef, mixin_bases: set[str]) -> bool:
+        """True for `class X(SomeFragment): pass` and nothing else.
+
+        More than one base (merged fragments or a `@mixin`) or a non-empty body
+        (fields of its own) means a real subclass is needed.
+        """
+        return (
+            len(class_def.bases) == 1
+            and isinstance(class_def.bases[0], ast.Name)
+            and class_def.bases[0].id in mixin_bases
+            and len(class_def.body) == 1
+            and isinstance(class_def.body[0], ast.Pass)
+        )
 
     def get_imports(self) -> list[ast.ImportFrom]:
         return self._imports

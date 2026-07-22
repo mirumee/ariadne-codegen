@@ -6,8 +6,5 @@ class GetG(BaseModel):
     g: "GetGG"
 
 
-class GetGG(FragmentG):
-    pass
-
-
+GetGG = FragmentG
 GetG.model_rebuild()
