@@ -35,18 +35,16 @@ from ..codegen import (
     generate_ann_assign,
     generate_class_def,
     generate_constant,
-    generate_expr,
     generate_import_from,
-    generate_method_call,
+    generate_model_rebuild_calls,
     generate_module,
     generate_name,
     generate_pass,
     generate_pydantic_field,
-    model_has_forward_refs,
 )
 from ..exceptions import NotSupported, ParsingError
 from ..plugins.manager import PluginManager
-from ..utils import process_name, str_to_pascal_case
+from ..utils import needs_explicit_alias, process_name, str_to_pascal_case
 from .constants import (
     ALIAS_KEYWORD,
     ANNOTATED,
@@ -60,7 +58,6 @@ from .constants import (
     MIXIN_FROM_NAME,
     MIXIN_IMPORT_NAME,
     MIXIN_NAME,
-    MODEL_REBUILD_METHOD,
     OPTIONAL,
     PYDANTIC_MODULE,
     TYPENAME_ALIAS,
@@ -88,6 +85,7 @@ class ResultTypesGenerator:
         default_optional_fields_to_none: bool = False,
         include_typename: bool = True,
         defer_model_build: bool = False,
+        use_alias_generator: bool = False,
     ) -> None:
         self.schema = schema
         self.operation_definition = operation_definition
@@ -105,6 +103,7 @@ class ResultTypesGenerator:
         self.default_optional_fields_to_none = default_optional_fields_to_none
         self.include_typename = include_typename
         self.defer_model_build = defer_model_build
+        self.use_alias_generator = use_alias_generator
 
         self._imports: list[ast.ImportFrom] = [
             generate_import_from(
@@ -164,16 +163,8 @@ class ResultTypesGenerator:
         raise NotSupported(f"Not supported operation type: {definition}")
 
     def generate(self) -> ast.Module:
-        model_rebuild_calls = (
-            []
-            if self.defer_model_build
-            else [
-                generate_expr(
-                    generate_method_call(class_def.name, MODEL_REBUILD_METHOD)
-                )
-                for class_def in self._class_defs
-                if model_has_forward_refs(class_def)
-            ]
+        model_rebuild_calls = generate_model_rebuild_calls(
+            self._class_defs, self.defer_model_build
         )
 
         module_body = (
@@ -456,9 +447,8 @@ class ResultTypesGenerator:
     ) -> ast.AnnAssign:
         keywords: dict[str, ast.expr] = {}
 
-        if (
-            isinstance(field_implementation.target, ast.Name)
-            and field_implementation.target.id != field_schema_name
+        if isinstance(field_implementation.target, ast.Name) and needs_explicit_alias(
+            field_implementation.target.id, field_schema_name, self.use_alias_generator
         ):
             keywords[ALIAS_KEYWORD] = generate_constant(field_schema_name)
 

@@ -13,6 +13,7 @@ from typing import Optional
 
 from graphql import Node
 from pydantic import BaseModel
+from pydantic.alias_generators import to_camel
 
 from .plugins.manager import PluginManager
 
@@ -23,6 +24,32 @@ _SUBPROCESS_TIMEOUT = 30
 # `ruff check --fix` exits 1 when violations it cannot fix remain. That is not an
 # error for us: the fixable ones were still applied.
 _RUFF_CHECK_OK_RETURN_CODES = (0, 1)
+
+PYDANTIC_ALIAS_GENERATORS_MODULE = "pydantic.alias_generators"
+TO_CAMEL_NAME = "to_camel"
+
+# `to_camel` is version-stable only for lowercase/digit/underscore names; names
+# with an uppercase letter were mangled by `str.title()` before pydantic 2.8. The
+# generator omits aliases using its pydantic while the package rebuilds them with
+# the user's, so only these names are safe to leave to `to_camel`.
+_VERSION_STABLE_UNDER_TO_CAMEL = re.compile(r"[a-z0-9_]*")
+
+
+def needs_explicit_alias(
+    python_name: str, schema_name: str, use_alias_generator: bool
+) -> bool:
+    """Whether a field must carry an explicit `Field(alias=...)`.
+
+    With `alias_generator=to_camel` on the base model, pydantic derives the alias
+    from the Python name, so only the names it cannot reconstruct need spelling
+    out: `__typename`, keyword-escaped names like `list_`, acronyms (`productID`)
+    and schemas that are already snake_case (`some_field` -> `someField`).
+    """
+    if not use_alias_generator:
+        return python_name != schema_name
+    if not _VERSION_STABLE_UNDER_TO_CAMEL.fullmatch(python_name):
+        return True
+    return to_camel(python_name) != schema_name
 
 
 @lru_cache(maxsize=1)
@@ -82,10 +109,13 @@ def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
         check=False,
         timeout=_SUBPROCESS_TIMEOUT,
     )
-    if check.returncode in _RUFF_CHECK_OK_RETURN_CODES:
-        # An empty result is legitimate (e.g. a module of only unused imports),
-        # so this must not fall back to `code` on a falsy stdout.
-        code = check.stdout
+    if check.returncode not in _RUFF_CHECK_OK_RETURN_CODES:
+        raise RuntimeError(
+            f"ruff check failed (exit code {check.returncode}): {check.stderr}"
+        )
+    # An empty result is legitimate (e.g. a module of only unused imports), so
+    # this must not fall back to `code` on a falsy stdout.
+    code = check.stdout
 
     result = subprocess.run(
         _ruff_command() + ["format"] + _ruff_style_args() + ["-"],
@@ -119,15 +149,21 @@ def format_many(codes: list[str], *, remove_unused_imports: bool = True) -> list
             path.write_text(code, encoding="utf-8")
             paths.append(path)
 
-        subprocess.run(
+        check = subprocess.run(
             _ruff_command()
             + ["check", "--fix", "--no-cache"]
             + _ruff_style_args()
             + ["--select", _ruff_select(remove_unused_imports), tmp_dir],
             capture_output=True,
+            text=True,
+            encoding="utf-8",
             check=False,
             timeout=_SUBPROCESS_TIMEOUT,
         )
+        if check.returncode not in _RUFF_CHECK_OK_RETURN_CODES:
+            raise RuntimeError(
+                f"ruff check failed (exit code {check.returncode}): {check.stderr}"
+            )
 
         result = subprocess.run(
             _ruff_command() + ["format", "--no-cache"] + _ruff_style_args() + [tmp_dir],
@@ -305,14 +341,17 @@ def _split_leading_comments(code: str) -> tuple[str, str]:
     return "", code
 
 
-def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
-    """Set a keyword argument on the ``ConfigDict`` call in ``BaseModel``.
+def _set_base_model_config_kwargs(code: str, kwargs: dict[str, ast.expr]) -> str:
+    """Set keyword arguments on the ``ConfigDict`` call in ``BaseModel``.
 
-    Does nothing if the keyword is already present, so explicit user values are
-    never overwritten.
+    Keywords already present are left alone (user values win); all are applied in
+    one parse/unparse round trip. Raises when there is no such call to patch: the
+    generators have already emitted code that assumes the config landed, so
+    silently skipping it would ship a package that misbehaves at runtime.
     """
     header, code = _split_leading_comments(code)
     tree = ast.parse(code)
+    patched = False
     for node in tree.body:
         if not isinstance(node, ast.ClassDef):
             continue
@@ -328,17 +367,71 @@ def _set_base_model_config_kwarg(code: str, arg: str, value: ast.expr) -> str:
                 continue
             if call.func.id != "ConfigDict":
                 continue
-            if not any(kw.arg == arg for kw in call.keywords):
-                call.keywords.append(ast.keyword(arg=arg, value=value))
+            patched = True
+            present = {kw.arg for kw in call.keywords}
+            call.keywords.extend(
+                ast.keyword(arg=arg, value=value)
+                for arg, value in kwargs.items()
+                if arg not in present
+            )
+    if not patched:
+        raise RuntimeError(
+            f"Cannot apply {', '.join(sorted(kwargs))} to the generated `BaseModel`: "
+            "no `model_config = ConfigDict(...)` assignment found in the base model "
+            "file. The generated package would not carry the settings it was "
+            "generated for."
+        )
     ast.fix_missing_locations(tree)
     return header + ast.unparse(tree)
 
 
-def add_extra_to_base_model(code: str) -> str:
-    "Adds `extra='forbid'` to the ConfigDict in BaseModel if not already present."
-    return _set_base_model_config_kwarg(code, "extra", ast.Constant("forbid"))
+def _imports_name(code: str, module: str, name: str) -> bool:
+    """Whether ``code`` already binds ``name`` via ``from module import name``."""
+    return any(
+        isinstance(node, ast.ImportFrom)
+        and node.module == module
+        and any(alias.name == name and alias.asname is None for alias in node.names)
+        for node in ast.parse(code).body
+    )
 
 
-def add_defer_build_to_base_model(code: str) -> str:
-    "Adds `defer_build=True` to the ConfigDict in BaseModel if not already present."
-    return _set_base_model_config_kwarg(code, "defer_build", ast.Constant(True))
+def _add_import_to_base_model(code: str, module: str, name: str) -> str:
+    header, body = _split_leading_comments(code)
+    if _imports_name(body, module, name):
+        return code
+    return f"{header}from {module} import {name}\n{body}"
+
+
+def rewrite_base_model(
+    code: str,
+    *,
+    forbid_extra: bool = False,
+    defer_build: bool = False,
+    alias_generator: bool = False,
+) -> str:
+    """Apply the requested ConfigDict settings to the copied `base_model.py`.
+
+    Returns `code` untouched when nothing is requested. Otherwise `ast.unparse`
+    drops the copy's blank lines and import order, so the result goes back to ruff.
+
+    `alias_generator` must stay in sync with the generators: they emit
+    `Field(alias=...)` only where `to_camel` cannot reconstruct the GraphQL name,
+    so a package generated with it but missing the config would drop every field
+    whose alias was left implicit.
+    """
+    kwargs: dict[str, ast.expr] = {}
+    if forbid_extra:
+        kwargs["extra"] = ast.Constant("forbid")
+    if defer_build:
+        kwargs["defer_build"] = ast.Constant(True)
+    if alias_generator:
+        kwargs["alias_generator"] = ast.Name(id=TO_CAMEL_NAME)
+    if not kwargs:
+        return code
+
+    rewritten = _set_base_model_config_kwargs(code, kwargs)
+    if alias_generator:
+        rewritten = _add_import_to_base_model(
+            rewritten, PYDANTIC_ALIAS_GENERATORS_MODULE, TO_CAMEL_NAME
+        )
+    return _format_code(rewritten, remove_unused_imports=False)

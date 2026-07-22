@@ -11,17 +11,15 @@ from graphql import (
     OperationType,
 )
 
-from ..codegen import generate_import_from
+from ..codegen import collect_class_forward_ref_names, generate_import_from
 from ..exceptions import ParsingError
 from ..plugins.manager import PluginManager
 from ..settings import ClientSettings, CommentsStrategy
 from ..utils import (
-    _format_code,
-    add_defer_build_to_base_model,
-    add_extra_to_base_model,
     ast_to_raw_str,
     format_many,
     process_name,
+    rewrite_base_model,
     str_to_pascal_case,
 )
 from .arguments import ArgumentsGenerator
@@ -116,6 +114,7 @@ class PackageGenerator:
         include_typename: bool = True,
         ignore_extra_fields: bool = True,
         defer_model_build: bool = False,
+        use_alias_generator: bool = False,
     ) -> None:
         self.package_path = Path(target_path) / package_name
 
@@ -173,12 +172,18 @@ class PackageGenerator:
         self.include_typename = include_typename
         self.ignore_extra_fields = ignore_extra_fields
         self.defer_model_build = defer_model_build
+        self.use_alias_generator = use_alias_generator
 
         self._result_types_files: dict[str, ast.Module] = {}
         self._generated_files: list[str] = []
         self._pending_files: list[_PendingFile] = []
         self._unpacked_fragments: set[str] = set()
         self._used_enums: list[str] = []
+        self._fragments_module: Optional[ast.Module] = None
+        # For each fragment class, the forward-referenced names a subclass of it
+        # must be able to resolve. Populated for every client, regardless of
+        # `defer_model_build` (the bug it guards against affects both modes).
+        self._fragment_mixin_forward_refs: dict[str, set[str]] = {}
 
         self.enable_custom_operations = enable_custom_operations
         if self.enable_custom_operations:
@@ -191,6 +196,7 @@ class PackageGenerator:
         if not self.package_path.exists():
             self.package_path.mkdir()
         self._generate_input_types()
+        self._build_fragments_module()
         self._generate_result_types()
         self._generate_fragments()
         self._copy_files()
@@ -223,16 +229,27 @@ class PackageGenerator:
         remove_unused_imports: bool = True,
         multiline_strings: bool = False,
         comment_source: Optional[str] = None,
-        plugin_hook: Optional[Callable[[str], str]] = None,
+        plugin_hook: Optional[str] = None,
+        prepend_code: str = "",
     ) -> None:
-        """Unparse a module now, format and write it once generation is done."""
+        """Unparse a module now, format and write it once generation is done.
+
+        `plugin_hook` names a `PluginManager` method; it is resolved here so the
+        `plugin_manager is None` case is handled in one place. `prepend_code` is
+        raw source inserted before the unparsed module, since `ast.unparse` cannot
+        carry the `# noqa` comment that keeps forward-reference-only imports.
+        """
+        hook: Optional[Callable[[str], str]] = None
+        if plugin_hook and self.plugin_manager:
+            hook = getattr(self.plugin_manager, plugin_hook)
         self._pending_files.append(
             _PendingFile(
                 path=path,
-                code=ast_to_raw_str(module, multiline_strings=multiline_strings),
+                code=prepend_code
+                + ast_to_raw_str(module, multiline_strings=multiline_strings),
                 remove_unused_imports=remove_unused_imports,
                 comment_source=comment_source,
-                plugin_hook=plugin_hook if self.plugin_manager else None,
+                plugin_hook=hook,
             )
         )
         self._generated_files.append(path.name)
@@ -290,6 +307,7 @@ class PackageGenerator:
             default_optional_fields_to_none=self.default_optional_fields_to_none,
             include_typename=self.include_typename,
             defer_model_build=self.defer_model_build,
+            use_alias_generator=self.use_alias_generator,
         )
         self._unpacked_fragments = self._unpacked_fragments.union(
             query_types_generator.get_unpacked_fragments()
@@ -355,11 +373,7 @@ class PackageGenerator:
             client_module,
             multiline_strings=True,
             comment_source=self.queries_source,
-            plugin_hook=(
-                self.plugin_manager.generate_client_code
-                if self.plugin_manager
-                else None
-            ),
+            plugin_hook="generate_client_code",
         )
         self._used_enums.extend(
             self.client_generator.arguments_generator.get_used_enums()
@@ -390,9 +404,7 @@ class PackageGenerator:
             enums_file_path,
             module,
             comment_source=self.schema_source,
-            plugin_hook=(
-                self.plugin_manager.generate_enums_code if self.plugin_manager else None
-            ),
+            plugin_hook="generate_enums_code",
         )
         self.init_generator.add_import(
             self.enums_generator.get_generated_public_names(), self.enums_module_name, 1
@@ -410,11 +422,7 @@ class PackageGenerator:
             input_types_file_path,
             module,
             comment_source=self.schema_source,
-            plugin_hook=(
-                self.plugin_manager.generate_inputs_code
-                if self.plugin_manager
-                else None
-            ),
+            plugin_hook="generate_inputs_code",
         )
         self._used_enums.extend(self.input_types_generator.get_used_enums())
         self.init_generator.add_import(
@@ -429,24 +437,103 @@ class PackageGenerator:
                 self.package_path / file_name,
                 module,
                 comment_source=self.queries_source,
-                plugin_hook=(
-                    self.plugin_manager.generate_result_types_code
-                    if self.plugin_manager
-                    else None
-                ),
+                plugin_hook="generate_result_types_code",
+                prepend_code=self._mixin_forward_ref_import(module),
             )
 
-    def _generate_fragments(self):
+    def _build_fragments_module(self):
+        """Generate the fragments module once (it has side effects) and map every
+        fragment class to the forward references a subclass needs.
+        """
         if not set(self.fragments_definitions.keys()).difference(
             self._unpacked_fragments
         ):
             return
 
-        module = self.fragments_generator.generate(
+        self._fragments_module = self.fragments_generator.generate(
             exclude_names=self._unpacked_fragments
         )
+        self._fragment_mixin_forward_refs = self._map_fragment_forward_refs(
+            self._fragments_module
+        )
+
+    @staticmethod
+    def _map_fragment_forward_refs(module: ast.Module) -> dict[str, set[str]]:
+        """For each fragment class, the forward-referenced names a subclass must
+        resolve: its own field forward references plus those it inherits from any
+        fragment base class."""
+        class_defs = {
+            node.name: node for node in module.body if isinstance(node, ast.ClassDef)
+        }
+        needed: dict[str, set[str]] = {}
+
+        def resolve(name: str, seen: set[str]) -> set[str]:
+            if name in needed:
+                return needed[name]
+            if name in seen or name not in class_defs:
+                return set()
+            seen.add(name)
+            class_def = class_defs[name]
+            names = collect_class_forward_ref_names(class_def)
+            for base in class_def.bases:
+                if isinstance(base, ast.Name):
+                    names = names | resolve(base.id, seen)
+            needed[name] = names
+            return names
+
+        for class_name in class_defs:
+            resolve(class_name, set())
+        return needed
+
+    def _mixin_forward_ref_import(self, module: ast.Module) -> str:
+        """Raw import keeping the fragment forward references a module's mixin
+        subclasses need in scope.
+
+        A class like `class OpNode(SomeFragment): pass` resolves the fragment's
+        inherited forward references against its *own* module. The referenced
+        classes live in the fragments module, so they must be importable here.
+        This holds regardless of `defer_model_build`: with the deferred build
+        Pydantic resolves them lazily on first use, and without it the eager
+        `OpNode.model_rebuild()` re-evaluates the inherited references in this
+        module too (observably on Python 3.10). They only appear inside the
+        inherited annotations, hence the `# noqa: F401`.
+        """
+        if not self._fragment_mixin_forward_refs:
+            return ""
+
+        already_present = {
+            alias.name
+            for node in module.body
+            if isinstance(node, ast.ImportFrom)
+            for alias in node.names
+        }
+        already_present |= {
+            node.name for node in module.body if isinstance(node, ast.ClassDef)
+        }
+
+        needed: set[str] = set()
+        for node in module.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            for base in node.bases:
+                if isinstance(base, ast.Name):
+                    needed |= self._fragment_mixin_forward_refs.get(base.id, set())
+
+        needed -= already_present
+        if not needed:
+            return ""
+
+        names = ", ".join(sorted(needed))
+        return f"from .{self.fragments_module_name} import {names}  # noqa: F401\n"
+
+    def _generate_fragments(self):
+        if self._fragments_module is None:
+            return
+
         file_path = self.package_path / f"{self.fragments_module_name}.py"
-        self._queue_module(file_path, module, comment_source=self.queries_source)
+        self._queue_module(
+            file_path, self._fragments_module, comment_source=self.queries_source
+        )
         self._used_enums.extend(self.fragments_generator.get_used_enums())
         self.init_generator.add_import(
             self.fragments_generator.get_generated_public_names(),
@@ -485,17 +572,12 @@ class PackageGenerator:
         )
 
     def _rewrite_base_model(self, code: str) -> str:
-        rewritten = code
-        if not self.ignore_extra_fields:
-            rewritten = add_extra_to_base_model(rewritten)
-        if self.defer_model_build:
-            rewritten = add_defer_build_to_base_model(rewritten)
-
-        if rewritten == code:
-            return code
-        # Each rewrite round-trips through `ast.unparse`, which drops the blank
-        # lines and import order of the copied dependency.
-        return _format_code(rewritten, remove_unused_imports=False)
+        return rewrite_base_model(
+            code,
+            forbid_extra=not self.ignore_extra_fields,
+            defer_build=self.defer_model_build,
+            alias_generator=self.use_alias_generator,
+        )
 
     def _generate_init(self):
         init_file_path = self.package_path / "__init__.py"
@@ -504,9 +586,7 @@ class PackageGenerator:
             init_file_path,
             init_module,
             remove_unused_imports=False,
-            plugin_hook=(
-                self.plugin_manager.generate_init_code if self.plugin_manager else None
-            ),
+            plugin_hook="generate_init_code",
         )
 
     def _generate_custom_queries(self):
@@ -590,6 +670,7 @@ def get_package_generator(
         custom_scalars=settings.scalars,
         plugin_manager=plugin_manager,
         defer_model_build=settings.defer_model_build,
+        use_alias_generator=settings.use_alias_generator,
     )
     fragments_definitions = {f.name.value: f for f in fragments or []}
     fragments_generator = FragmentsGenerator(
@@ -603,6 +684,7 @@ def get_package_generator(
         default_optional_fields_to_none=settings.default_optional_fields_to_none,
         include_typename=settings.include_typename,
         defer_model_build=settings.defer_model_build,
+        use_alias_generator=settings.use_alias_generator,
     )
     custom_fields_generator = CustomFieldsGenerator(
         schema=schema,
@@ -688,4 +770,5 @@ def get_package_generator(
         include_typename=settings.include_typename,
         ignore_extra_fields=settings.ignore_extra_fields,
         defer_model_build=settings.defer_model_build,
+        use_alias_generator=settings.use_alias_generator,
     )

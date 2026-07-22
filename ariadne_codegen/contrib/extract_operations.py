@@ -55,7 +55,7 @@ class ExtractOperationsPlugin(Plugin):
             )
             all_assign = cast(ast.Assign, module.body[-1])
             already_imported_names = [
-                cast(ast.Constant, const).value
+                cast(str, cast(ast.Constant, const).value)
                 for const in cast(ast.List, all_assign.value).elts
             ]
             cast(ast.List, all_assign.value).elts = [
