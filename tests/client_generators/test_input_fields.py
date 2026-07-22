@@ -243,6 +243,7 @@ def test_parse_input_field_type_returns_annotation_for_list(
         (BooleanValueNode(value=True), "", ast.Constant(value=True)),
         (NullValueNode(), "", ast.Constant(value=None)),
         (EnumValueNode(value="VAL"), "TestEnum", ast.Name(id="TestEnum.VAL")),
+        (EnumValueNode(value="and"), "TestEnum", ast.Name(id="TestEnum.and_")),
     ],
 )
 def test_parse_input_const_value_node_returns_correct_constant(
