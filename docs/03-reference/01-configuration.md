@@ -34,7 +34,7 @@ Exactly one of the following parameters is required - they are mutually exclusiv
 - `target_package_path` (defaults to cwd) - path where to generate package
 - `client_name` (defaults to `"Client"`) - name of generated client class
 - `client_file_name` (defaults to `"client"`) - name of file with generated client class
-- `base_client_name` (defaults to `"AsyncBaseClient"`) - name of base client class
+- `base_client_name` (defaults to `"AsyncBaseClient"`) - name of base client class. See [Base Client customization](#base-client-customization) below for details.
 - `base_client_file_path` (defaults to `.../ariadne_codegen/client_generators/dependencies/async_base_client.py`) - path to file where `base_client_name` is defined
 - `base_client_module_name` (defaults to the file name of `base_client_file_path`) - name of the module the base client is copied to and imported from in the generated package
 - `enums_module_name` (defaults to `"enums"`) - name of file with generated enums models
@@ -79,6 +79,38 @@ These options control which fields are included in the GraphQL introspection que
 - `introspection_schema_description` (defaults to `false`) – include schema description
 - `introspection_directive_is_repeatable` (defaults to `false`) – include `isRepeatable` information for directives
 - `introspection_input_object_one_of` (defaults to `false`) – include `oneOf` information for input objects
+
+## Base Client customization
+
+The `base_client_file_path` and `base_client_name` can be used to provide a custom base client implementation. It should implement the following protocol for async client:
+
+```py
+class AsyncBaseClient(Protocol):
+    async def execute(
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+    def get_data(self, response: Response) -> dict[str, Any]: ...
+```
+
+Protocol for sync client:
+
+```py
+class BaseClient(Protocol):
+    def execute(
+        self,
+        query: str,
+        operation_name: Optional[str] = None,
+        variables: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> Response: ...
+
+    def get_data(self, response: Response) -> dict[str, Any]: ...
+```
 
 ## Related guides
 
