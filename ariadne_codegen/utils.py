@@ -255,23 +255,19 @@ def str_to_pascal_case(name: str) -> str:
 
 
 def convert_to_multiline_string(
-    source: str, variable_indent_size: int = 8, offset: int = 4
+    value: str, variable_indent_size: int = 8, offset: int = 4
 ) -> str:
     """
-    Converts multiple strings into 1 multilne string.
-    eg. 'abc\\n''def\\n''ghi\\n' is coverted into
+    Renders a string value as an indented triple-quoted block.
+    eg. 'abc\\ndef\\nghi\\n' is rendered as
     \"\"\"
         abc
         def
         ghi
         \"\"\"
     """
-    joined_source = source.replace("\\n", "\n").replace("'", "")
-    if joined_source.endswith("\n"):
-        joined_source += '"""'
-    else:
-        joined_source += '\n"""'
-    return '"""\n' + indent(joined_source, (variable_indent_size + offset) * " ")
+    body = value if value.endswith("\n") else value + "\n"
+    return '"""\n' + indent(body + '"""', (variable_indent_size + offset) * " ")
 
 
 def get_variable_indent_size(source: str) -> int:
@@ -282,20 +278,33 @@ def get_variable_indent_size(source: str) -> int:
     return 0
 
 
+# A run of 2+ adjacent string literals (implicit concatenation) as emitted by
+# ``ast.unparse``: single- or double-quoted, standard escapes, no raw newlines.
+_STRING_LITERAL = r"(?:'(?:\\.|[^'\\\n])*'|\"(?:\\.|[^\"\\\n])*\")"
+_CONCATENATED_STRINGS = re.compile(rf"{_STRING_LITERAL}(?:[^\S\n]*{_STRING_LITERAL})+")
+
+
 def format_multiline_strings(source: str, offset: int = 4) -> str:
-    """Fromats multiline string declarations."""
-    formatted_source = source
-    for match in re.finditer(r".*?=.*?('.*?'\s*){2,}", source):
-        line = match.group()
-        variable_indent_size = get_variable_indent_size(line)
-        orginal_str_match = re.search("'.*'", line)
-        if orginal_str_match:
-            orginal_str = orginal_str_match.group()
-            formatted = convert_to_multiline_string(
-                orginal_str, variable_indent_size=variable_indent_size, offset=offset
-            )
-            formatted_source = formatted_source.replace(orginal_str, formatted)
-    return formatted_source
+    """Renders implicitly-concatenated string literals as ``\"\"\"`` blocks."""
+
+    def _replace(match: "re.Match[str]") -> str:
+        run = match.group()
+        try:
+            value = ast.literal_eval(run)
+        except (ValueError, SyntaxError):
+            return run
+        if not isinstance(value, str) or "\n" not in value:
+            return run
+        # An embedded ``"""`` would close the block early; a backslash or ``\r``
+        # would change the string. Keep those escaped and concatenated instead.
+        if any(c in value for c in ('"""', "\\", "\r")):
+            return run
+        line = source[source.rfind("\n", 0, match.start()) + 1 :]
+        return convert_to_multiline_string(
+            value, get_variable_indent_size(line), offset
+        )
+
+    return _CONCATENATED_STRINGS.sub(_replace, source)
 
 
 def process_name(

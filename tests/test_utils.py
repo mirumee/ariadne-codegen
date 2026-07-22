@@ -230,8 +230,8 @@ def test_get_variable_indent_size_returns_number_of_spaces_at_the_beginning_of_s
     assert get_variable_indent_size(source) == expected_indent
 
 
-def test_convert_to_multiline_string_removes_string_with_triple_quotes():
-    source = "'abc\\n'def\\n''ghi\\n'"
+def test_convert_to_multiline_string_renders_indented_block():
+    source = "abc\ndef\nghi\n"
     expected = '"""\n    abc\n    def\n    ghi\n    """'
 
     assert convert_to_multiline_string(source, variable_indent_size=0) == expected
@@ -254,6 +254,31 @@ def test_format_multiline_strings_returns_code_with_formatted_multiline_strings(
     '''
 
     assert format_multiline_strings(source) == expected
+
+
+def test_format_multiline_strings_preserves_apostrophes():
+    source = "QUERY = 'query Q {\\n''  f(a: \"x = \\'y\\'\")\\n''}\\n'"
+    expected = 'QUERY = """\nquery Q {\n  f(a: "x = \'y\'")\n}\n"""'
+
+    result = format_multiline_strings(source, offset=0)
+
+    assert result == expected
+    namespace: dict = {}
+    exec(result, namespace)  # valid python, apostrophe kept
+    assert "'y'" in namespace["QUERY"]
+
+
+def test_format_multiline_strings_keeps_embedded_triple_quotes_escaped():
+    # A GraphQL block string ("""...""") inside the operation cannot be wrapped
+    # in a python triple-quoted block, so it is left implicitly concatenated.
+    source = "QUERY = 'query Q {\\n''  f(a: \"\"\"\\n''  block\\n''  \"\"\")\\n''}\\n'"
+
+    result = format_multiline_strings(source, offset=0)
+
+    assert result == source
+    namespace: dict = {}
+    exec(result, namespace)  # still valid python
+    assert '"""' in namespace["QUERY"]
 
 
 def test_process_name_triggers_plugin_manager_process_name(mocked_plugin_manager):
