@@ -162,18 +162,19 @@ class ShorterResultsPlugin(Plugin):
 
             # The module we import from is always the same as the method we
             # modified when changing the return type.
-            if stmt.module not in self.extended_imports:
+            module_name = stmt.module
+            if module_name is None or module_name not in self.extended_imports:
                 continue
 
             # Add all additional imports discovered when generating the client
             # method.
-            for additional_import in self.extended_imports[stmt.module]:
+            for additional_import in self.extended_imports[module_name]:
                 stmt.names.append(ast.alias(name=additional_import))
 
             # We delete the key if it already had an import from statement so we
             # can create new imports for types not yet imported such as custom
             # scalars.
-            self.extended_imports.pop(stmt.module, None)
+            self.extended_imports.pop(module_name, None)
 
         for import_from, alias in self.extended_imports.items():
             # We insert the import at the top, it will be sorted properly in a
