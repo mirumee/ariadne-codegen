@@ -95,6 +95,11 @@ class CustomOperationGenerator:
             self._class_def.body.append(ast.Pass())
 
         self.argument_generator.add_custom_scalar_imports()
+        # Pull in the argument generator's imports (scalars, input types, enums).
+        # Must run after `add_custom_scalar_imports` above, or scalars used in
+        # operation-argument annotations are never imported.
+        for import_ in self.argument_generator.imports:
+            self._add_import(import_)
 
         self._class_def.lineno = len(self._imports) + 3
 
@@ -134,9 +139,6 @@ class CustomOperationGenerator:
             return_arguments_keys,
             return_arguments_values,
         ) = self.argument_generator.generate_arguments(operation_args)
-
-        for import_ in self.argument_generator.imports:
-            self._add_import(import_)
 
         if operation_args:
             for arg in operation_args.values():

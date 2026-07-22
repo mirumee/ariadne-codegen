@@ -14,9 +14,9 @@ from graphql import (
 from ariadne_codegen.client_generators.custom_arguments import ArgumentGenerator
 
 from ..codegen import (
-    generate_ann_assign,
     generate_arg,
     generate_arguments,
+    generate_assign,
     generate_attribute,
     generate_call,
     generate_class_def,
@@ -38,6 +38,7 @@ from .constants import (
     BASE_OPERATION_FILE_PATH,
     GRAPHQL_BASE_FIELD_CLASS,
     GRAPHQL_INTERFACE_SUFFIX,
+    GRAPHQL_LEAF_FIELD_CLASS_NAME,
     GRAPHQL_OBJECT_SUFFIX,
     GRAPHQL_UNION_SUFFIX,
     OPTIONAL,
@@ -65,7 +66,10 @@ class CustomFieldsGenerator:
         self._imports: list[ast.ImportFrom] = [
             ast.ImportFrom(
                 module=BASE_OPERATION_FILE_PATH.stem,
-                names=[ast.alias(BASE_GRAPHQL_FIELD_CLASS_NAME)],
+                names=[
+                    ast.alias(BASE_GRAPHQL_FIELD_CLASS_NAME),
+                    ast.alias(GRAPHQL_LEAF_FIELD_CLASS_NAME),
+                ],
                 level=1,
             )
         ]
@@ -87,6 +91,10 @@ class CustomFieldsGenerator:
     def generate(self) -> ast.Module:
         """Generates an AST module containing the custom fields and required imports."""
         self.argument_generator.add_custom_scalar_imports()
+        # Pull in the argument generator's imports (scalars, input types, enums).
+        # Must run after `add_custom_scalar_imports` above, or scalars used in
+        # field-argument annotations are never imported.
+        self._imports.extend(self.argument_generator.imports)
         module = generate_module(
             body=cast(list[ast.stmt], self._imports + self._class_defs),
         )
@@ -232,11 +240,13 @@ class CustomFieldsGenerator:
                 field.args,
                 description=field.description,
             )
-        return generate_ann_assign(
-            target=generate_name(name),
-            annotation=generate_name(f'"{field_name}"'),
+        # A descriptor, not a shared instance: the class attribute is reused by
+        # every query, and `alias()`/`to_ast()` mutate the field.
+        return generate_assign(
+            targets=[name],
             value=generate_call(
-                func=generate_name(field_name), args=[generate_constant(org_name)]
+                func=generate_name(GRAPHQL_LEAF_FIELD_CLASS_NAME),
+                args=[generate_constant(org_name), generate_name(field_name)],
             ),
             lineno=lineno,
         )
@@ -340,7 +350,6 @@ class CustomFieldsGenerator:
             return_arguments_keys,
             return_arguments_values,
         ) = self.argument_generator.generate_arguments(arguments)
-        self._imports.extend(self.argument_generator.imports)
 
         if arguments:
             for arg in arguments.values():

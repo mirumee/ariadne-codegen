@@ -1,5 +1,7 @@
 import ast
+import importlib
 import os
+import sys
 from importlib.metadata import version
 from pathlib import Path
 
@@ -215,6 +217,14 @@ def test_main_shows_version():
         ),
         (
             (
+                CLIENTS_PATH / "custom_query_builder_scalars" / "pyproject.toml",
+                (CLIENTS_PATH / "custom_query_builder_scalars" / "schema.graphql",),
+            ),
+            "example_client",
+            CLIENTS_PATH / "custom_query_builder_scalars" / "expected_client",
+        ),
+        (
+            (
                 CLIENTS_PATH / "client_forward_refs" / "pyproject.toml",
                 (
                     CLIENTS_PATH / "client_forward_refs" / "queries.graphql",
@@ -392,6 +402,53 @@ def test_main_client_forward_refs_with_custom_operations(project_dir, package_na
     client_py = package_path / "client.py"
     assert client_py.exists(), f"Expected {client_py}"
     ast.parse(client_py.read_text())
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name",
+    [
+        (
+            (
+                CLIENTS_PATH / "custom_query_builder_scalars" / "pyproject.toml",
+                (CLIENTS_PATH / "custom_query_builder_scalars" / "schema.graphql",),
+            ),
+            "example_client",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_custom_operations_with_custom_scalar_arguments_are_importable(
+    project_dir, package_name
+):
+    """Custom scalars used in field/operation *argument* positions must have their
+    types imported into ``custom_fields.py``/``custom_queries.py``/
+    ``custom_mutations.py``.
+
+    Regression test: previously the scalar imports were registered after the
+    module import list had already been assembled, so the generated modules
+    referenced e.g. ``Decimal``/``UUID`` in annotations without importing them
+    and raised ``NameError`` on import. Diffing the source would not have caught
+    this, so the modules are actually imported here.
+    """
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0, result.output
+    package_path = project_dir / package_name
+    assert package_path.is_dir()
+
+    sys.path.insert(0, str(project_dir))
+    imported_modules = [
+        name for name in list(sys.modules) if name.split(".")[0] == package_name
+    ]
+    for name in imported_modules:
+        del sys.modules[name]
+    try:
+        for module_suffix in ("custom_fields", "custom_queries", "custom_mutations"):
+            importlib.import_module(f"{package_name}.{module_suffix}")
+    finally:
+        for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
+            del sys.modules[name]
+        sys.path.remove(str(project_dir))
 
 
 @pytest.mark.parametrize(

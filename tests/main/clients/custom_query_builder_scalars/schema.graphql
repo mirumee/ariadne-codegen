@@ -1,0 +1,36 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  checkout(token: UUID): Checkout
+  order(id: ID!, createdAt: DateTime): Order
+}
+
+type Mutation {
+  createPayment(amount: Decimal!, requestedAt: DateTime): Payment
+}
+
+type Checkout {
+  id: ID!
+  storedPaymentMethods(amount: Decimal): PaymentMethod
+}
+
+type PaymentMethod {
+  id: ID!
+}
+
+type Order {
+  id: ID!
+  token: UUID!
+}
+
+type Payment {
+  id: ID!
+  total: Decimal!
+}
+
+scalar UUID
+scalar Decimal
+scalar DateTime
