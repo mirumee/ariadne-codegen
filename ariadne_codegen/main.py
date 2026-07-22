@@ -42,7 +42,7 @@ def main(strategy=Strategy.CLIENT.value, config=None):
 def client(config_dict):
     settings = get_client_settings(config_dict)
 
-    schema = get_graphql_schema(settings)
+    schema = get_graphql_schema(settings, config_dict)
 
     plugin_manager = PluginManager(
         schema=schema,
@@ -82,7 +82,7 @@ def client(config_dict):
 def graphql_schema(config_dict):
     settings = get_graphql_schema_settings(config_dict)
 
-    schema = get_graphql_schema(settings)
+    schema = get_graphql_schema(settings, config_dict)
 
     plugin_manager = PluginManager(
         schema=schema,

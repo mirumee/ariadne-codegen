@@ -29,7 +29,7 @@ Exactly one of the following parameters is required - they are mutually exclusiv
 - `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
 - `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies whether to verify ssl while introspecting remote schema
 - `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
-- `remote_schema_http_client_path` - absolute import path to the HTTP client class used to introspect remote schema. If not provided, default `httpx` client is used.
+- `remote_schema_http_client_path` - absolute import path to the HTTP client used to introspect remote schema. If not provided, default `httpx` client is used. See [Remove schema client customization](#remote-schema-client-customization) below for details.
 - `target_package_name` (defaults to `"graphql_client"`) - name of generated package
 - `target_package_path` (defaults to cwd) - path where to generate package
 - `client_name` (defaults to `"Client"`) - name of generated client class
@@ -79,6 +79,31 @@ These options control which fields are included in the GraphQL introspection que
 - `introspection_schema_description` (defaults to `false`) – include schema description
 - `introspection_directive_is_repeatable` (defaults to `false`) – include `isRepeatable` information for directives
 - `introspection_input_object_one_of` (defaults to `false`) – include `oneOf` information for input objects
+
+## Remote schema client customization
+
+By default, `httpx` is used to introspect a remote schema. Another client can be used instead by setting `remote_schema_http_client_path`. The provided client must implement the following protocol:
+
+```py
+class Response(Protocol):
+    status_code: int
+
+    def json(self, **kwargs: Any) -> Any: ...
+
+
+class HttpClient(Protocol):
+    def post(
+        self,
+        url: Any | str,
+        json: Any | None = None,
+        headers: Any | None = None,
+        verify: Any | None = None,
+        timeout: Any | None = None,
+        **kwargs: Any,
+    ) -> Response: ...
+```
+
+If the provided import path points to a module, the module itself must implement the protocol. If the provided import path points to a callable, it is called with a single argument: `config_dict: dict` (the parsed `pyproject.toml`), and the returned object is expected to implement `HttpClient` protocol.
 
 ## Base Client customization
 
