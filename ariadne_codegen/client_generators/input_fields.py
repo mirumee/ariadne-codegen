@@ -35,6 +35,7 @@ from ..codegen import (
     generate_subscript,
 )
 from ..exceptions import ParsingError
+from ..utils import process_name
 from .constants import (
     ANY,
     FIELD_CLASS,
@@ -136,7 +137,8 @@ def parse_input_const_value_node(
         return generate_constant(None)
 
     if isinstance(node, EnumValueNode):
-        return generate_name(f"{field_type}.{node.value}")
+        member_name = process_name(node.value, convert_to_snake_case=False)
+        return generate_name(f"{field_type}.{member_name}")
 
     if isinstance(node, ListValueNode):
         list_ = generate_list(
