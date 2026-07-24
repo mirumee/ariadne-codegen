@@ -77,7 +77,7 @@ The following options control how the introspection request is performed:
 - `remote_schema_headers` - extra headers that are passed along with introspection query, eg. `{"Authorization" = "Bearer token"}`. To include an environment variable in a header value, prefix the variable with `$`, eg. `{"Authorization" = "$AUTH_TOKEN"}`
 - `remote_schema_verify_ssl` (defaults to `true`) - a flag that specifies whether to verify ssl while introspecting remote schema
 - `remote_schema_timeout` (defaults to `5`) - timeout in seconds while introspecting remote schema
-- `remote_schema_http_client_path` (defaults to `None`) - dotted import path to a custom HTTP client used only for the introspection request, instead of the default `httpx` client
+- `remote_schema_http_client_path` (defaults to `None`) - dotted import path to a module or a callable that returns custom HTTP client. It is used only for the introspection request, instead of the default `httpx` client. See [Configuration](../03-reference/01-configuration.md) for details.
 
 ### Introspection query options
 

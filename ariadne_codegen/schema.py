@@ -55,7 +55,7 @@ class HttpClient(Protocol):
     ) -> Response: ...
 
 
-def get_graphql_schema(settings: BaseSettings) -> GraphQLSchema:
+def get_graphql_schema(settings: BaseSettings, config_dict: dict) -> GraphQLSchema:
     """Return GraphQL schema from the source defined in settings."""
     if settings.schema_path:
         schema = get_graphql_schema_from_path(settings.schema_path)
@@ -64,6 +64,7 @@ def get_graphql_schema(settings: BaseSettings) -> GraphQLSchema:
     else:
         schema = get_graphql_schema_from_url(
             url=settings.remote_schema_url,
+            config_dict=config_dict,
             headers=settings.remote_schema_headers,
             verify_ssl=settings.remote_schema_verify_ssl,
             timeout=settings.remote_schema_timeout,
@@ -109,6 +110,7 @@ def get_graphql_queries(
 
 def get_graphql_schema_from_url(
     url: str,
+    config_dict: dict,
     headers: Optional[dict[str, str]] = None,
     verify_ssl: bool = True,
     timeout: float = 5,
@@ -116,7 +118,7 @@ def get_graphql_schema_from_url(
     http_client_path: str | None = None,
 ) -> GraphQLSchema:
     http_client = (
-        get_remote_schema_http_client(http_client_path)
+        get_remote_schema_http_client(http_client_path, config_dict)
         if http_client_path is not None
         else httpx
     )
@@ -133,10 +135,12 @@ def get_graphql_schema_from_url(
     )
 
 
-def get_remote_schema_http_client(http_client_path: str) -> HttpClient:
+def get_remote_schema_http_client(
+    http_client_path: str, config_dict: dict
+) -> HttpClient:
     imported_module_or_attribute = get_module_or_attribute(http_client_path)
     if callable(imported_module_or_attribute):
-        return imported_module_or_attribute()
+        return imported_module_or_attribute(config_dict)
     return imported_module_or_attribute
 
 
