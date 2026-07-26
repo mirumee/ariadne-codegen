@@ -466,3 +466,16 @@ def test_needs_explicit_alias_without_alias_generator(
     python_name, schema_name, expected
 ):
     assert needs_explicit_alias(python_name, schema_name, False) is expected
+
+
+def test_format_multiline_strings_handles_escaped_single_quotes():
+    source = (
+        "GQL = 'query GetViews {\\n'"
+        "'  q(query: \"WHERE type = \\'Product\\'\")\\n'"
+        "'}\\n'"
+    )
+    expected = (
+        'GQL = """\nquery GetViews {\n  q(query: "WHERE type = \'Product\'")\n}\n"""'
+    )
+
+    assert format_multiline_strings(source, offset=0) == expected
