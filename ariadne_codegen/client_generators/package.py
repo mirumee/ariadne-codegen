@@ -220,7 +220,11 @@ class PackageGenerator:
         self._generate_init()
         self._write_pending_files()
 
-        return sorted(self._generated_files)
+        generated_files = sorted(self._generated_files)
+        if self.plugin_manager:
+            generated_files = self.plugin_manager.generate_files(generated_files)
+
+        return generated_files
 
     def _queue_module(
         self,

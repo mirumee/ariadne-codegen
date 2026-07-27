@@ -30,19 +30,17 @@ All plugins run in the order they are listed under `plugins` in `pyproject.toml`
 
 There is no priority mechanism. Every plugin executes every hook it defines. Order is controlled entirely by the position in the `plugins` list.
 
-### Two hook levels
+### Three hook levels
 
 **AST-level hooks** (`generate_*_module`, `generate_*_class`, `generate_*_field`, `generate_*_method`, etc.) - fire during code generation, before the AST is serialised to a string. You work with Python `ast` node objects.
 
 **Code-string hooks** (`generate_*_code`, `copy_code`) - fire after AST→string conversion, immediately before each file is written to disk. You work with the final Python source as a plain string. These are the closest equivalent to a file-emission interceptor.
 
+**Post-generation hook** - when all the files are written to the disk, `generate_files` is called. You can use it if you need a post-generation callback (e.g. to run a formatter over the whole output files).
+
 ### `process_schema` special case
 
 After each plugin's `process_schema()` returns, `self.schema` is updated on **all** plugin instances - not just the ones that haven't run yet. This guarantees that every subsequent hook in every plugin sees the schema as last modified.
-
-### Post-generation
-
-There is currently no hook that fires after **all** files have been written. The `generate_*_code` / `copy_code` hooks cover per-file interception. If you need a post-generation callback (e.g. to run a formatter over the whole output directory), open an issue.
 
 ### Custom operations and fields coverage
 

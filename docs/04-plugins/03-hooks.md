@@ -290,3 +290,10 @@ def generate_init_code(self, generated_code: str) -> str:
 
 Called once with the complete `__init__.py` source as a string, immediately before the file is written to disk.
 
+### generate_files
+
+```py
+def generate_files(self, generated_files: list[str]) -> list[str]:
+```
+
+Called once with the list of generated files from the package, as the last generator action.
