@@ -12,15 +12,6 @@ from ariadne_codegen.contrib.single_file_client import (
 )
 
 
-def create_module_dir(base: Path, module_str: str) -> Path:
-    path = base
-    for dir_name in module_str.split("."):
-        path = path / dir_name
-        path.mkdir()
-        path.joinpath("__init__.py").touch()
-    return path
-
-
 @pytest.fixture
 def config_dict(tmp_path):
     schema_path = tmp_path / "schema.graphql"
