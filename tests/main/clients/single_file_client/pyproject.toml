@@ -1,0 +1,10 @@
+[tool.ariadne-codegen]
+schema_path = "schema.graphql"
+queries_path = "queries.graphql"
+include_comments = "none"
+target_package_name = "example_client"
+plugins = ["ariadne_codegen.contrib.single_file_client.SingleFileClientPlugin"]
+
+[tool.ariadne-codegen.single-file-client]
+output_file_name = "example_single_file_client.py"
+should_remove_package = true
