@@ -6,7 +6,7 @@ from typing import Any, Optional, Protocol, TypeVar, cast
 from uuid import uuid4
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel as PydanticBaseModel
 from pydantic_core import to_jsonable_python
 
 from .base_model import UNSET
@@ -213,7 +213,7 @@ class AsyncBaseClient:
         }
 
     def _convert_value(self, value: Any) -> Any:
-        if isinstance(value, BaseModel):
+        if isinstance(value, PydanticBaseModel):
             return value.model_dump(by_alias=True, exclude_unset=True)
         if isinstance(value, list):
             return [self._convert_value(item) for item in value]

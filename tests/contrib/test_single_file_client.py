@@ -80,12 +80,12 @@ class BaseModel(PydanticBaseModel):
 """
 
 ASYNC_BASE_CLIENT = """
-from pydantic import BaseModel
+from pydantic import BaseModel as PydanticBaseModel
 from .base_model import UNSET
 
 class AsyncBaseClient:
     def foo():
-        return BaseModel()
+        return PydanticBaseModel()
 
 """
 
