@@ -6,9 +6,9 @@ from textwrap import dedent
 import pytest
 
 from ariadne_codegen.utils import (
-    _format_code,
     ast_to_str,
     convert_to_multiline_string,
+    format_code,
     format_many,
     format_multiline_strings,
     get_variable_indent_size,
@@ -104,7 +104,7 @@ def test_format_code_ruff_format_uses_utf8_encoding_issue_422(mocker):
     """Ensure ruff format stdin/stdout use UTF-8 (mirumee/ariadne-codegen#422)."""
     spy = mocker.patch("ariadne_codegen.utils.subprocess.run", wraps=subprocess.run)
 
-    _format_code("x = 1\n")
+    format_code("x = 1\n")
 
     format_calls = _ruff_calls(spy, "format")
     assert format_calls, "expected a ruff format subprocess.run"
@@ -115,7 +115,7 @@ def test_format_code_invokes_ruff_binary_directly(mocker):
     """Spawning `python -m ruff` per file dominates generation time."""
     spy = mocker.patch("ariadne_codegen.utils.subprocess.run", wraps=subprocess.run)
 
-    _format_code("x = 1\n")
+    format_code("x = 1\n")
 
     for call in spy.call_args_list:
         assert call[0][0][:2] != [sys.executable, "-m"], (
@@ -125,8 +125,8 @@ def test_format_code_invokes_ruff_binary_directly(mocker):
 
 def test_format_code_keeps_empty_result_when_every_import_is_removed():
     """`ruff check --fix` legitimately returns '' here; it must not be discarded."""
-    assert _format_code("from enum import Enum\n") == ""
-    assert _format_code("from enum import Enum\n", remove_unused_imports=False) == (
+    assert format_code("from enum import Enum\n") == ""
+    assert format_code("from enum import Enum\n", remove_unused_imports=False) == (
         "from enum import Enum\n"
     )
 
@@ -141,8 +141,7 @@ def test_format_many_matches_format_code_per_module(remove_unused_imports):
     ]
 
     assert format_many(codes, remove_unused_imports=remove_unused_imports) == [
-        _format_code(code, remove_unused_imports=remove_unused_imports)
-        for code in codes
+        format_code(code, remove_unused_imports=remove_unused_imports) for code in codes
     ]
 
 
@@ -153,7 +152,7 @@ def test_format_many_without_modules_does_not_spawn_ruff(mocker):
     assert not spy.call_args_list
 
 
-@pytest.mark.parametrize("formatter", [_format_code, lambda code: format_many([code])])
+@pytest.mark.parametrize("formatter", [format_code, lambda code: format_many([code])])
 def test_formatting_raises_when_ruff_check_errors(mocker, formatter):
     """A failed check must not silently ship unsorted imports."""
     real_run = subprocess.run

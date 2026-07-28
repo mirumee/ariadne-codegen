@@ -89,7 +89,7 @@ def _ruff_select(remove_unused_imports: bool) -> str:
     return "I,F401" if remove_unused_imports else "I"
 
 
-def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
+def format_code(code: str, *, remove_unused_imports: bool = True) -> str:
     """Format a single module with ruff: sort imports, drop unused ones, format."""
     check = subprocess.run(
         _ruff_command()
@@ -136,7 +136,7 @@ def _format_code(code: str, *, remove_unused_imports: bool = True) -> str:
 def format_many(codes: list[str], *, remove_unused_imports: bool = True) -> list[str]:
     """Format many modules with a single pair of ruff invocations.
 
-    Equivalent to calling `_format_code` on each module, but ruff walks a scratch
+    Equivalent to calling `format_code` on each module, but ruff walks a scratch
     directory instead of being spawned twice per module.
     """
     if not codes:
@@ -214,7 +214,7 @@ def ast_to_str(
     multiline_strings_offset: int = 4,
 ) -> str:
     """Convert ast object into string."""
-    return _format_code(
+    return format_code(
         ast_to_raw_str(ast_obj, multiline_strings, multiline_strings_offset),
         remove_unused_imports=remove_unused_imports,
     )
@@ -434,4 +434,4 @@ def rewrite_base_model(
         rewritten = _add_import_to_base_model(
             rewritten, PYDANTIC_ALIAS_GENERATORS_MODULE, TO_CAMEL_NAME
         )
-    return _format_code(rewritten, remove_unused_imports=False)
+    return format_code(rewritten, remove_unused_imports=False)
