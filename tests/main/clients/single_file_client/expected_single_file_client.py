@@ -101,7 +101,7 @@ class GraphQLClientGraphQLMultiError(GraphQLClientError):
         self.data = data
 
     def __str__(self) -> str:
-        return "; ".join((str(e) for e in self.errors))
+        return "; ".join(str(e) for e in self.errors)
 
     @classmethod
     def from_errors_dicts(
@@ -113,7 +113,7 @@ class GraphQLClientGraphQLMultiError(GraphQLClientError):
         )
 
 
-class GraphQLClientInvalidMessageFormat(GraphQLClientError):
+class GraphQLClientInvalidMessageFormat(GraphQLClientError):  # noqa: N818
     def __init__(self, message: Union[str, bytes]) -> None:
         self.message = message
 
@@ -184,22 +184,30 @@ class UploadFile(BaseModel):
 
 
 try:
-    from websockets import ClientConnection
-    from websockets import connect as ws_connect
-    from websockets.typing import Data, Origin, Subprotocol
+    from websockets import (  # type: ignore[import-not-found,unused-ignore]
+        ClientConnection,
+    )
+    from websockets import (  # type: ignore[import-not-found,unused-ignore]
+        connect as ws_connect,
+    )
+    from websockets.typing import (  # type: ignore[import-not-found,unused-ignore]
+        Data,
+        Origin,
+        Subprotocol,
+    )
 except ImportError:
     from contextlib import asynccontextmanager
 
-    @asynccontextmanager
+    @asynccontextmanager  # type: ignore
     async def ws_connect(*args, **kwargs):
         raise NotImplementedError("Subscriptions require 'websockets' package.")
         yield
 
-    ClientConnection = Any
-    Data = Any
-    Origin = Any
+    ClientConnection = Any  # ty: ignore[invalid-assignment]
+    Data = Any  # ty: ignore[invalid-assignment]
+    Origin = Any  # ty: ignore[invalid-assignment]
 
-    def Subprotocol(*args, **kwargs):
+    def Subprotocol(*args, **kwargs):  # type: ignore # noqa: N802, N803
         raise NotImplementedError("Subscriptions require 'websockets' package.")
 
 
@@ -224,6 +232,7 @@ class HttpClient(Protocol):
 
 
 Self = TypeVar("Self", bound="AsyncBaseClient")
+
 GRAPHQL_TRANSPORT_WS = "graphql-transport-ws"
 
 
@@ -254,6 +263,7 @@ class AsyncBaseClient:
         self.http_client = (
             http_client if http_client else httpx.AsyncClient(headers=headers)
         )
+
         self.ws_url = ws_url
         self.ws_headers = ws_headers or {}
         self.ws_origin = Origin(ws_origin) if ws_origin else None
@@ -263,7 +273,10 @@ class AsyncBaseClient:
         return self
 
     async def __aexit__(
-        self, exc_type: object, exc_val: object, exc_tb: object
+        self,
+        exc_type: object,
+        exc_val: object,
+        exc_tb: object,
     ) -> None:
         await self.http_client.aclose()
 
@@ -275,6 +288,7 @@ class AsyncBaseClient:
         **kwargs: Any,
     ) -> Response:
         processed_variables, files, files_map = self._process_variables(variables)
+
         if files and files_map:
             return await self._execute_multipart(
                 query=query,
@@ -284,6 +298,7 @@ class AsyncBaseClient:
                 files_map=files_map,
                 **kwargs,
             )
+
         return await self._execute_json(
             query=query,
             operation_name=operation_name,
@@ -292,24 +307,29 @@ class AsyncBaseClient:
         )
 
     def get_data(self, response: Response) -> dict[str, Any]:
-        if not 200 <= response.status_code <= 299:
+        if not (200 <= response.status_code <= 299):
             raise GraphQLClientHttpError(
                 status_code=response.status_code, response=response
             )
+
         try:
             response_json = response.json()
         except ValueError as exc:
             raise GraphQLClientInvalidResponseError(response=response) from exc
-        if not isinstance(response_json, dict) or (
+
+        if (not isinstance(response_json, dict)) or (
             "data" not in response_json and "errors" not in response_json
         ):
             raise GraphQLClientInvalidResponseError(response=response)
+
         data = response_json.get("data")
         errors = response_json.get("errors")
+
         if errors:
             raise GraphQLClientGraphQLMultiError.from_errors_dicts(
                 errors_dicts=errors, data=data
             )
+
         return cast(dict[str, Any], data)
 
     async def execute_ws(
@@ -321,9 +341,11 @@ class AsyncBaseClient:
     ) -> AsyncIterator[dict[str, Any]]:
         headers = self.ws_headers.copy()
         headers.update(kwargs.pop("additional_headers", {}))
+
         merged_kwargs: dict[str, Any] = {"origin": self.ws_origin}
         merged_kwargs.update(kwargs)
         merged_kwargs["additional_headers"] = headers
+
         operation_id = str(uuid4())
         async with ws_connect(
             self.ws_url,
@@ -331,9 +353,12 @@ class AsyncBaseClient:
             **merged_kwargs,
         ) as websocket:
             await self._send_connection_init(websocket)
+            # Wait for connection_ack; some servers (e.g. Hasura) send ping before
+            # connection_ack, so we loop and handle pings until we get ack.
             try:
                 await asyncio.wait_for(
-                    self._wait_for_connection_ack(websocket), timeout=5.0
+                    self._wait_for_connection_ack(websocket),
+                    timeout=5.0,
                 )
             except asyncio.TimeoutError as exc:
                 raise GraphQLClientError(
@@ -346,6 +371,7 @@ class AsyncBaseClient:
                 operation_name=operation_name,
                 variables=variables,
             )
+
             async for message in websocket:
                 data = await self._handle_ws_message(message, websocket)
                 if data and "connection_ack" not in data:
@@ -357,7 +383,8 @@ class AsyncBaseClient:
         dict[str, Any], dict[str, tuple[str, IO[bytes], str]], dict[str, list[str]]
     ]:
         if not variables:
-            return ({}, {}, {})
+            return {}, {}, {}
+
         serializable_variables = self._convert_dict_to_json_serializable(variables)
         return self._get_files_from_variables(serializable_variables)
 
@@ -392,12 +419,14 @@ class AsyncBaseClient:
                     value = separate_files(f"{path}.{index}", value)
                     nulled_list.append(value)
                 return nulled_list
+
             if isinstance(obj, dict):
                 nulled_dict = {}
                 for key, value in obj.items():
                     value = separate_files(f"{path}.{key}", value)
                     nulled_dict[key] = value
                 return nulled_dict
+
             if isinstance(obj, Upload):
                 if obj in files_list:
                     file_index = files_list.index(obj)
@@ -407,6 +436,7 @@ class AsyncBaseClient:
                     files_list.append(obj)
                     files_map[str(file_index)] = [path]
                 return None
+
             return obj
 
         nulled_variables = separate_files("variables", variables)
@@ -414,7 +444,7 @@ class AsyncBaseClient:
             str(i): (file_.filename, cast(IO[bytes], file_.content), file_.content_type)
             for i, file_ in enumerate(files_list)
         }
-        return (nulled_variables, files, files_map)
+        return nulled_variables, files, files_map
 
     async def _execute_multipart(
         self,
@@ -436,6 +466,7 @@ class AsyncBaseClient:
             ),
             "map": json.dumps(files_map, default=to_jsonable_python),
         }
+
         return await self.http_client.post(
             url=self.url, data=data, files=files, **kwargs
         )
@@ -507,18 +538,23 @@ class AsyncBaseClient:
             message_dict = json.loads(message)
         except json.JSONDecodeError as exc:
             raise GraphQLClientInvalidMessageFormat(message=message) from exc
+
         type_ = message_dict.get("type")
         payload = message_dict.get("payload", {})
+
         if not type_ or type_ not in {t.value for t in GraphQLTransportWSMessageType}:
             raise GraphQLClientInvalidMessageFormat(message=message)
+
         if expected_type and expected_type != type_:
             raise GraphQLClientInvalidMessageFormat(
                 f"Invalid message received. Expected: {expected_type.value}"
             )
+
         if type_ == GraphQLTransportWSMessageType.NEXT:
             if "data" not in payload:
                 raise GraphQLClientInvalidMessageFormat(message=message)
             return cast(dict[str, Any], payload["data"])
+
         if type_ == GraphQLTransportWSMessageType.COMPLETE:
             await websocket.close()
         elif type_ == GraphQLTransportWSMessageType.PING:
@@ -531,6 +567,7 @@ class AsyncBaseClient:
             )
         elif type_ == GraphQLTransportWSMessageType.CONNECTION_ACK:
             return {"connection_ack": True}
+
         return None
 
 
@@ -611,10 +648,10 @@ class Client(AsyncBaseClient):
     ) -> CreateUser:
         query = gql("""
             mutation CreateUser($userData: UserCreateInput!) {
-                          userCreate(userData: $userData) {
-                            id
-                          }
-                        }
+              userCreate(userData: $userData) {
+                id
+              }
+            }
             """)
         variables: dict[str, object] = {"userData": user_data}
         response = await self.execute(
@@ -626,16 +663,16 @@ class Client(AsyncBaseClient):
     async def list_all_users(self, **kwargs: Any) -> ListAllUsers:
         query = gql("""
             query ListAllUsers {
-                          users {
-                            id
-                            firstName
-                            lastName
-                            email
-                            location {
-                              country
-                            }
-                          }
-                        }
+              users {
+                id
+                firstName
+                lastName
+                email
+                location {
+                  country
+                }
+              }
+            }
             """)
         variables: dict[str, object] = {}
         response = await self.execute(
@@ -649,22 +686,22 @@ class Client(AsyncBaseClient):
     ) -> ListUsersByCountry:
         query = gql("""
             query ListUsersByCountry($country: String) {
-                          users(country: $country) {
-                            ...BasicUser
-                            ...UserPersonalData
-                            favouriteColor
-                          }
-                        }
+              users(country: $country) {
+                ...BasicUser
+                ...UserPersonalData
+                favouriteColor
+              }
+            }
 
-                        fragment BasicUser on User {
-                          id
-                          email
-                        }
+            fragment BasicUser on User {
+              id
+              email
+            }
 
-                        fragment UserPersonalData on User {
-                          firstName
-                          lastName
-                        }
+            fragment UserPersonalData on User {
+              firstName
+              lastName
+            }
             """)
         variables: dict[str, object] = {"country": country}
         response = await self.execute(
@@ -679,8 +716,8 @@ class Client(AsyncBaseClient):
     async def get_users_counter(self, **kwargs: Any) -> AsyncIterator[GetUsersCounter]:
         query = gql("""
             subscription GetUsersCounter {
-                          usersCounter
-                        }
+              usersCounter
+            }
             """)
         variables: dict[str, object] = {}
         async for data in self.execute_ws(
@@ -691,8 +728,8 @@ class Client(AsyncBaseClient):
     async def upload_file(self, file: Upload, **kwargs: Any) -> UploadFile:
         query = gql("""
             mutation uploadFile($file: Upload!) {
-                          fileUpload(file: $file)
-                        }
+              fileUpload(file: $file)
+            }
             """)
         variables: dict[str, object] = {"file": file}
         response = await self.execute(

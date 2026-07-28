@@ -5,7 +5,6 @@ import toml
 from graphql import GraphQLSchema
 
 from ariadne_codegen.contrib.single_file_client import (
-    DEFAULT_RENAME_MAP,
     SingleFileClientPlugin,
     merge_files,
 )
@@ -39,9 +38,6 @@ def test_config_parsing(config_dict):
     [tool.ariadne-codegen.single-file-client]
     output_file_name = "my_client.py"
     should_remove_package = false
-    import_rename_map = [
-        {import_from = "module", imported_name = "Class", new_alias = "ModuleClass"}
-    ]
     """
     config_update = toml.loads(config)
 
@@ -51,10 +47,6 @@ def test_config_parsing(config_dict):
 
     assert plugin.module_name == "my_client.py"
     assert plugin.should_remove_package is False
-    assert plugin.rename_map == [
-        ("pydantic", "BaseModel", "PydanticBaseModel"),
-        ("module", "Class", "ModuleClass"),
-    ]
 
 
 BASE_MODEL = """
@@ -171,8 +163,7 @@ def test_merge_files(tmp_path):
     generated_client_path.mkdir()
     files = _generate_package_files(generated_client_path)
 
-    code = merge_files(files, DEFAULT_RENAME_MAP)
-
+    code = merge_files(files)
     assert code == dedent(
         '''from typing import Any
 
@@ -214,11 +205,11 @@ class Client(AsyncBaseClient):
     async def get_authenticated_user(self, **kwargs: Any) -> GetAuthenticatedUser:
         query = gql("""
             query GetAuthenticatedUser {
-                          me {
-                            id
-                            username
-                          }
-                        }
+              me {
+                id
+                username
+              }
+            }
             """)
         variables: dict[str, object] = {}
         response = await self.execute(

@@ -23,7 +23,7 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
 
 - [`ariadne_codegen.contrib.no_reimports.NoReimportsPlugin`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/contrib/no_reimports.py#L6) - This plugin removes content of generated `__init__.py`. This is useful in scenarios where generated modules contain so many Pydantic models that client's eager initialization of entire package on first import is very slow.
 
-- [`ariadne_codegen.contrib.single_file_client.SingleFileClientPlugin`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/contrib/single_file_client.py#L43) - This plugin reads all the generated files, merge them into a single file, and removes the package. This can be useful for small clients with limited number of types and operations. The behavior can be customized as follows; see package file for details:
+- [`ariadne_codegen.contrib.single_file_client.SingleFileClientPlugin`](https://github.com/mirumee/ariadne-codegen/blob/main/ariadne_codegen/contrib/single_file_client.py#L38) - This plugin reads all the generated files, merge them into a single file, and removes the package. This can be useful for small clients with limited number of types and operations. The behavior can be customized as follows; see package file for details:
 
   ```toml
   [tool.ariadne-codegen]
@@ -33,8 +33,5 @@ Ariadne Codegen ships with optional plugins importable from the `ariadne_codegen
   [tool.ariadne-codegen.single-file-client]
   output_file_name = "my_client.py" # default: client.py
   should_remove_package = false     # default: true
-  import_rename_map = [
-      {import_from = "module", imported_name = "Class", new_alias = "ModuleClass"}
-  ]
 
   ```
