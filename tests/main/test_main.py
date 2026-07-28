@@ -899,3 +899,39 @@ def test_main_with_lazy_imports_imports_generated_modules_on_first_use(
         for name in [n for n in list(sys.modules) if n.split(".")[0] == package_name]:
             del sys.modules[name]
         sys.path.remove(str(project_dir))
+
+
+@pytest.mark.parametrize(
+    "project_dir, package_name, single_file_name, expected_file_path",
+    [
+        (
+            (
+                CLIENTS_PATH / "single_file_client" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "single_file_client" / "queries.graphql",
+                    CLIENTS_PATH / "single_file_client" / "schema.graphql",
+                ),
+            ),
+            "example_client",
+            "example_single_file_client.py",
+            CLIENTS_PATH / "single_file_client" / "expected_single_file_client.py",
+        ),
+    ],
+    indirect=["project_dir"],
+)
+def test_main_single_file_client(
+    project_dir, package_name, single_file_name, expected_file_path
+):
+
+    result = CliRunner().invoke(main)
+
+    assert result.exit_code == 0
+    assert result.output_bytes.decode().endswith(
+        f"\nGenerated files:\n  {single_file_name}\n"
+    )
+
+    package_path = project_dir / package_name
+    assert not package_path.is_dir()
+
+    single_file_path = project_dir / single_file_name
+    assert single_file_path.read_text() == expected_file_path.read_text()

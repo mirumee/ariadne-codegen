@@ -151,3 +151,6 @@ class Plugin:
 
     def generate_custom_method(self, method_def: ast.FunctionDef) -> ast.FunctionDef:
         return method_def
+
+    def generate_files(self, generated_files: list[str]) -> list[str]:
+        return generated_files

@@ -219,3 +219,6 @@ class PluginManager:
 
     def generate_custom_method(self, method_def: ast.FunctionDef) -> ast.FunctionDef:
         return self._apply_plugins_on_object("generate_custom_method", method_def)
+
+    def generate_files(self, generated_files: list[str]) -> list[str]:
+        return self._apply_plugins_on_object("generate_files", generated_files)

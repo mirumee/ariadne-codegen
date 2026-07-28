@@ -2,21 +2,186 @@ import asyncio
 import enum
 import json
 from collections.abc import AsyncIterator
-from typing import IO, Any, Optional, Protocol, TypeVar, cast
+from enum import Enum
+from io import IOBase
+from typing import IO, Any, Optional, Protocol, TypeVar, Union, cast
 from uuid import uuid4
 
 import httpx
 from pydantic import BaseModel as PydanticBaseModel
+from pydantic import ConfigDict, Field
 from pydantic_core import to_jsonable_python
 
-from .base_model import UNSET, Upload
-from .exceptions import (
-    GraphQLClientError,
-    GraphQLClientGraphQLMultiError,
-    GraphQLClientHttpError,
-    GraphQLClientInvalidMessageFormat,
-    GraphQLClientInvalidResponseError,
-)
+
+class UnsetType:
+    def __bool__(self) -> bool:
+        return False
+
+
+UNSET = UnsetType()
+
+
+class BaseModel(PydanticBaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        arbitrary_types_allowed=True,
+        protected_namespaces=(),
+    )
+
+
+class Upload:
+    def __init__(self, filename: str, content: IOBase, content_type: str):
+        self.filename = filename
+        self.content = content
+        self.content_type = content_type
+
+
+class Response(Protocol):
+    status_code: int
+
+
+class GraphQLClientError(Exception):
+    """Base exception."""
+
+
+class GraphQLClientHttpError(GraphQLClientError):
+    def __init__(self, status_code: int, response: Response) -> None:
+        self.status_code = status_code
+        self.response = response
+
+    def __str__(self) -> str:
+        return f"HTTP status code: {self.status_code}"
+
+
+class GraphQLClientInvalidResponseError(GraphQLClientError):
+    def __init__(self, response: Response) -> None:
+        self.response = response
+
+    def __str__(self) -> str:
+        return "Invalid response format."
+
+
+class GraphQLClientGraphQLError(GraphQLClientError):
+    def __init__(
+        self,
+        message: str,
+        locations: Optional[list[dict[str, int]]] = None,
+        path: Optional[list[str]] = None,
+        extensions: Optional[dict[str, object]] = None,
+        original: Optional[dict[str, object]] = None,
+    ):
+        self.message = message
+        self.locations = locations
+        self.path = path
+        self.extensions = extensions
+        self.original = original
+
+    def __str__(self) -> str:
+        return self.message
+
+    @classmethod
+    def from_dict(cls, error: dict[str, Any]) -> "GraphQLClientGraphQLError":
+        return cls(
+            message=error["message"],
+            locations=error.get("locations"),
+            path=error.get("path"),
+            extensions=error.get("extensions"),
+            original=error,
+        )
+
+
+class GraphQLClientGraphQLMultiError(GraphQLClientError):
+    def __init__(
+        self,
+        errors: list[GraphQLClientGraphQLError],
+        data: Optional[dict[str, Any]] = None,
+    ):
+        self.errors = errors
+        self.data = data
+
+    def __str__(self) -> str:
+        return "; ".join(str(e) for e in self.errors)
+
+    @classmethod
+    def from_errors_dicts(
+        cls, errors_dicts: list[dict[str, Any]], data: Optional[dict[str, Any]] = None
+    ) -> "GraphQLClientGraphQLMultiError":
+        return cls(
+            errors=[GraphQLClientGraphQLError.from_dict(e) for e in errors_dicts],
+            data=data,
+        )
+
+
+class GraphQLClientInvalidMessageFormat(GraphQLClientError):  # noqa: N818
+    def __init__(self, message: Union[str, bytes]) -> None:
+        self.message = message
+
+    def __str__(self) -> str:
+        return "Invalid message format."
+
+
+class Color(str, Enum):
+    BLACK = "BLACK"
+    WHITE = "WHITE"
+    RED = "RED"
+    GREEN = "GREEN"
+    BLUE = "BLUE"
+    YELLOW = "YELLOW"
+
+
+class CreateUser(BaseModel):
+    user_create: Optional["CreateUserUserCreate"] = Field(alias="userCreate")
+
+
+class CreateUserUserCreate(BaseModel):
+    id: str
+
+
+CreateUser.model_rebuild()
+
+
+class BasicUser(BaseModel):
+    id: str
+    email: str
+
+
+class UserPersonalData(BaseModel):
+    first_name: Optional[str] = Field(alias="firstName")
+    last_name: Optional[str] = Field(alias="lastName")
+
+
+BasicUser.model_rebuild()
+UserPersonalData.model_rebuild()
+
+
+class GetUsersCounter(BaseModel):
+    users_counter: int = Field(alias="usersCounter")
+
+
+class ListAllUsers(BaseModel):
+    users: list["ListAllUsersUsers"]
+
+
+class ListAllUsersUsers(BaseModel):
+    id: str
+    first_name: Optional[str] = Field(alias="firstName")
+    last_name: Optional[str] = Field(alias="lastName")
+    email: str
+    location: Optional["ListAllUsersUsersLocation"]
+
+
+class ListAllUsersUsersLocation(BaseModel):
+    country: Optional[str]
+
+
+ListAllUsers.model_rebuild()
+ListAllUsersUsers.model_rebuild()
+
+
+class UploadFile(BaseModel):
+    file_upload: bool = Field(alias="fileUpload")
+
 
 try:
     from websockets import (  # type: ignore[import-not-found,unused-ignore]
@@ -404,3 +569,171 @@ class AsyncBaseClient:
             return {"connection_ack": True}
 
         return None
+
+
+class UserCreateInput(BaseModel):
+    first_name: Optional[str] = Field(alias="firstName", default=None)
+    last_name: Optional[str] = Field(alias="lastName", default=None)
+    email: str
+    favourite_color: Optional[Color] = Field(alias="favouriteColor", default=None)
+    location: Optional["LocationInput"] = None
+
+
+class LocationInput(BaseModel):
+    city: Optional[str] = None
+    country: Optional[str] = None
+
+
+class UserPreferencesInput(BaseModel):
+    lucky_number: Optional[int] = Field(alias="luckyNumber", default=7)
+    favourite_word: Optional[str] = Field(alias="favouriteWord", default="word")
+    color_opacity: Optional[float] = Field(alias="colorOpacity", default=1.0)
+    excluded_tags: Optional[list[str]] = Field(
+        alias="excludedTags", default_factory=lambda: ["offtop", "tag123"]
+    )
+    notifications_preferences: "NotificationsPreferencesInput" = Field(
+        alias="notificationsPreferences",
+        default_factory=lambda: globals()[
+            "NotificationsPreferencesInput"
+        ].model_validate(
+            {
+                "receiveMails": True,
+                "receivePushNotifications": True,
+                "receiveSms": False,
+                "title": "Mr",
+            }
+        ),
+    )
+
+
+class NotificationsPreferencesInput(BaseModel):
+    receive_mails: bool = Field(alias="receiveMails")
+    receive_push_notifications: bool = Field(alias="receivePushNotifications")
+    receive_sms: bool = Field(alias="receiveSms")
+    title: str
+
+
+class BuiltinsInput(BaseModel):
+    list_: Optional[list[int]] = Field(alias="list", default=None)
+    dict_: Optional[str] = Field(alias="dict", default=None)
+    set_: Optional[bool] = Field(alias="set", default=None)
+    tuple_: Optional[float] = Field(alias="tuple", default=None)
+    int_: Optional[int] = Field(alias="int", default=None)
+    str_: Optional[str] = Field(alias="str", default=None)
+    bool_: Optional[bool] = Field(alias="bool", default=None)
+
+
+UserCreateInput.model_rebuild()
+UserPreferencesInput.model_rebuild()
+
+
+class ListUsersByCountry(BaseModel):
+    users: list["ListUsersByCountryUsers"]
+
+
+class ListUsersByCountryUsers(BasicUser, UserPersonalData):
+    favourite_color: Optional[Color] = Field(alias="favouriteColor")
+
+
+ListUsersByCountry.model_rebuild()
+
+
+def gql(q: str) -> str:
+    return q
+
+
+class Client(AsyncBaseClient):
+    async def create_user(
+        self, user_data: UserCreateInput, **kwargs: Any
+    ) -> CreateUser:
+        query = gql("""
+            mutation CreateUser($userData: UserCreateInput!) {
+              userCreate(userData: $userData) {
+                id
+              }
+            }
+            """)
+        variables: dict[str, object] = {"userData": user_data}
+        response = await self.execute(
+            query=query, operation_name="CreateUser", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return CreateUser.model_validate(data)
+
+    async def list_all_users(self, **kwargs: Any) -> ListAllUsers:
+        query = gql("""
+            query ListAllUsers {
+              users {
+                id
+                firstName
+                lastName
+                email
+                location {
+                  country
+                }
+              }
+            }
+            """)
+        variables: dict[str, object] = {}
+        response = await self.execute(
+            query=query, operation_name="ListAllUsers", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return ListAllUsers.model_validate(data)
+
+    async def list_users_by_country(
+        self, country: Union[Optional[str], UnsetType] = UNSET, **kwargs: Any
+    ) -> ListUsersByCountry:
+        query = gql("""
+            query ListUsersByCountry($country: String) {
+              users(country: $country) {
+                ...BasicUser
+                ...UserPersonalData
+                favouriteColor
+              }
+            }
+
+            fragment BasicUser on User {
+              id
+              email
+            }
+
+            fragment UserPersonalData on User {
+              firstName
+              lastName
+            }
+            """)
+        variables: dict[str, object] = {"country": country}
+        response = await self.execute(
+            query=query,
+            operation_name="ListUsersByCountry",
+            variables=variables,
+            **kwargs,
+        )
+        data = self.get_data(response)
+        return ListUsersByCountry.model_validate(data)
+
+    async def get_users_counter(self, **kwargs: Any) -> AsyncIterator[GetUsersCounter]:
+        query = gql("""
+            subscription GetUsersCounter {
+              usersCounter
+            }
+            """)
+        variables: dict[str, object] = {}
+        async for data in self.execute_ws(
+            query=query, operation_name="GetUsersCounter", variables=variables, **kwargs
+        ):
+            yield GetUsersCounter.model_validate(data)
+
+    async def upload_file(self, file: Upload, **kwargs: Any) -> UploadFile:
+        query = gql("""
+            mutation uploadFile($file: Upload!) {
+              fileUpload(file: $file)
+            }
+            """)
+        variables: dict[str, object] = {"file": file}
+        response = await self.execute(
+            query=query, operation_name="uploadFile", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return UploadFile.model_validate(data)
