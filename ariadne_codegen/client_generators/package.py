@@ -78,10 +78,6 @@ class BasePackageGenerator:
         enums_generator: EnumsGenerator,
         input_types_generator: InputTypesGenerator,
         fragments_generator: FragmentsGenerator,
-        custom_fields_generator: Optional[CustomFieldsGenerator] = None,
-        custom_fields_typing_generator: Optional[CustomFieldsTypingGenerator] = None,
-        custom_query_generator: Optional[CustomOperationGenerator] = None,
-        custom_mutation_generator: Optional[CustomOperationGenerator] = None,
         fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
@@ -91,7 +87,6 @@ class BasePackageGenerator:
         queries_source: str = "",
         schema_source: str = "",
         convert_to_snake_case: bool = True,
-        include_all_inputs: bool = True,
         include_all_enums: bool = True,
         base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
         base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
@@ -120,10 +115,6 @@ class BasePackageGenerator:
         self.enums_generator = enums_generator
         self.input_types_generator = input_types_generator
         self.fragments_generator = fragments_generator
-        self.custom_fields_generator = custom_fields_generator
-        self.custom_query_generator = custom_query_generator
-        self.custom_mutation_generator = custom_mutation_generator
-        self.custom_fields_typing_generator = custom_fields_typing_generator
         self.custom_help_field_module_name = custom_help_field_module_name
 
         self.enums_module_name = enums_module_name
@@ -135,7 +126,6 @@ class BasePackageGenerator:
         self.schema_source = schema_source
 
         self.convert_to_snake_case = convert_to_snake_case
-        self.include_all_inputs = include_all_inputs
         self.include_all_enums = include_all_enums
 
         self.base_model_file_path = Path(base_model_file_path)
@@ -529,10 +519,6 @@ class PackageGenerator(BasePackageGenerator):
             enums_generator,
             input_types_generator,
             fragments_generator,
-            custom_fields_generator,
-            custom_fields_typing_generator,
-            custom_query_generator,
-            custom_mutation_generator,
             fragments_definitions,
             enums_module_name,
             input_types_module_name,
@@ -542,7 +528,6 @@ class PackageGenerator(BasePackageGenerator):
             queries_source,
             schema_source,
             convert_to_snake_case,
-            include_all_inputs,
             include_all_enums,
             base_model_file_path,
             base_schema_root_file_path,
@@ -561,6 +546,8 @@ class PackageGenerator(BasePackageGenerator):
             use_alias_generator,
         )
 
+        self.include_all_inputs = include_all_inputs
+
         self.client_generator = client_generator
         self.client_name = client_name
         self.async_client = async_client
@@ -571,6 +558,11 @@ class PackageGenerator(BasePackageGenerator):
         )
 
         self.client_file_name = client_file_name
+
+        self.custom_fields_generator = custom_fields_generator
+        self.custom_query_generator = custom_query_generator
+        self.custom_mutation_generator = custom_mutation_generator
+        self.custom_fields_typing_generator = custom_fields_typing_generator
 
     def generate(self) -> list[str]:
         """Generate package with graphql client."""
@@ -746,10 +738,6 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
         enums_generator: EnumsGenerator,
         input_types_generator: InputTypesGenerator,
         fragments_generator: FragmentsGenerator,
-        custom_fields_generator: Optional[CustomFieldsGenerator] = None,
-        custom_fields_typing_generator: Optional[CustomFieldsTypingGenerator] = None,
-        custom_query_generator: Optional[CustomOperationGenerator] = None,
-        custom_mutation_generator: Optional[CustomOperationGenerator] = None,
         fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
@@ -759,7 +747,6 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
         queries_source: str = "",
         schema_source: str = "",
         convert_to_snake_case: bool = True,
-        include_all_inputs: bool = True,
         include_all_enums: bool = True,
         base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
         base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
@@ -785,10 +772,6 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
             enums_generator,
             input_types_generator,
             fragments_generator,
-            custom_fields_generator,
-            custom_fields_typing_generator,
-            custom_query_generator,
-            custom_mutation_generator,
             fragments_definitions,
             enums_module_name,
             input_types_module_name,
@@ -798,7 +781,6 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
             queries_source,
             schema_source,
             convert_to_snake_case,
-            include_all_inputs,
             include_all_enums,
             base_model_file_path,
             base_schema_root_file_path,
@@ -916,6 +898,41 @@ def get_package_generator(
         defer_model_build=settings.defer_model_build,
         use_alias_generator=settings.use_alias_generator,
     )
+
+    if isinstance(settings, ModelsOnlySettings):
+        return ModelsOnlyPackageGenerator(
+            package_name=settings.target_package_name,
+            target_path=settings.target_package_path,
+            schema=schema,
+            init_generator=init_generator,
+            enums_generator=enums_generator,
+            input_types_generator=input_types_generator,
+            fragments_generator=fragments_generator,
+            fragments_definitions=fragments_definitions,
+            enums_module_name=settings.enums_module_name,
+            input_types_module_name=settings.input_types_module_name,
+            fragments_module_name=settings.fragments_module_name,
+            comments_strategy=settings.include_comments,
+            queries_source=settings.queries_path,
+            schema_source=settings.schema_source,
+            convert_to_snake_case=settings.convert_to_snake_case,
+            include_all_enums=settings.include_all_enums,
+            base_model_file_path=base_model_path.as_posix(),
+            base_model_import=BASE_MODEL_IMPORT,
+            upload_import=upload_import,
+            unset_import=UNSET_IMPORT,
+            multipart_uploads=settings.multipart_uploads,
+            files_to_include=settings.files_to_include,
+            custom_scalars=settings.scalars,
+            plugin_manager=plugin_manager,
+            enable_custom_operations=settings.enable_custom_operations,
+            default_optional_fields_to_none=settings.default_optional_fields_to_none,
+            include_typename=settings.include_typename,
+            ignore_extra_fields=settings.ignore_extra_fields,
+            defer_model_build=settings.defer_model_build,
+            use_alias_generator=settings.use_alias_generator,
+        )
+
     custom_fields_generator = CustomFieldsGenerator(
         schema=schema,
         custom_scalars=settings.scalars,
@@ -956,45 +973,6 @@ def get_package_generator(
                 custom_scalars=settings.scalars,
                 plugin_manager=plugin_manager,
             ),
-        )
-
-    if isinstance(settings, ModelsOnlySettings):
-        return ModelsOnlyPackageGenerator(
-            package_name=settings.target_package_name,
-            target_path=settings.target_package_path,
-            schema=schema,
-            init_generator=init_generator,
-            enums_generator=enums_generator,
-            input_types_generator=input_types_generator,
-            fragments_generator=fragments_generator,
-            fragments_definitions=fragments_definitions,
-            enums_module_name=settings.enums_module_name,
-            input_types_module_name=settings.input_types_module_name,
-            fragments_module_name=settings.fragments_module_name,
-            custom_fields_generator=custom_fields_generator,
-            custom_fields_typing_generator=custom_fields_typing_generator,
-            custom_query_generator=custom_query_generator,
-            custom_mutation_generator=custom_mutation_generator,
-            comments_strategy=settings.include_comments,
-            queries_source=settings.queries_path,
-            schema_source=settings.schema_source,
-            convert_to_snake_case=settings.convert_to_snake_case,
-            include_all_inputs=settings.include_all_inputs,
-            include_all_enums=settings.include_all_enums,
-            base_model_file_path=base_model_path.as_posix(),
-            base_model_import=BASE_MODEL_IMPORT,
-            upload_import=upload_import,
-            unset_import=UNSET_IMPORT,
-            multipart_uploads=settings.multipart_uploads,
-            files_to_include=settings.files_to_include,
-            custom_scalars=settings.scalars,
-            plugin_manager=plugin_manager,
-            enable_custom_operations=settings.enable_custom_operations,
-            default_optional_fields_to_none=settings.default_optional_fields_to_none,
-            include_typename=settings.include_typename,
-            ignore_extra_fields=settings.ignore_extra_fields,
-            defer_model_build=settings.defer_model_build,
-            use_alias_generator=settings.use_alias_generator,
         )
 
     client_generator = ClientGenerator(

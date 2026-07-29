@@ -167,7 +167,6 @@ class GeneratorSettings(BaseSettings):
     fragments_module_name: str = "fragments"
     include_comments: CommentsStrategy = field(default=CommentsStrategy.STABLE)
     convert_to_snake_case: bool = True
-    include_all_inputs: bool = True
     include_all_enums: bool = True
     skip_validation_rules: list[str] = field(
         default_factory=lambda: [
@@ -238,6 +237,7 @@ class GeneratorSettings(BaseSettings):
 
 @dataclass
 class ClientSettings(GeneratorSettings):
+    include_all_inputs: bool = True
     client_name: str = "Client"
     client_file_name: str = "client"
     base_client_name: str = ""
@@ -246,7 +246,6 @@ class ClientSettings(GeneratorSettings):
     async_client: bool = True
     opentelemetry_client: bool = False
     multipart_uploads: bool = True
-
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
@@ -462,6 +461,7 @@ class ModelsOnlySettings(GeneratorSettings):
             {plugins_msg}
             """
         )
+
 
 @dataclass
 class GraphQLSchemaSettings(BaseSettings):
