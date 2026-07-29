@@ -1,4 +1,4 @@
-from .base_model import BaseModel, Upload
+from .base_model import BaseModel
 from .create_user import CreateUser, CreateUserUserCreate
 from .enums import Color
 from .input_types import UserCreateInput
@@ -11,6 +11,5 @@ __all__ = [
     "CreateUserUserCreate",
     "ListUsers",
     "ListUsersUsers",
-    "Upload",
     "UserCreateInput",
 ]

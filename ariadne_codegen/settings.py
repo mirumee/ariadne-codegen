@@ -390,8 +390,6 @@ class ClientSettings(GeneratorSettings):
 
 
 class ModelsOnlySettings(GeneratorSettings):
-    multipart_uploads: bool = True
-
     def __post_init__(self):
         super().__post_init__()
 

@@ -92,7 +92,6 @@ class BasePackageGenerator:
         base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         unset_import: ast.ImportFrom = UNSET_IMPORT,
-        multipart_uploads: bool = True,
         files_to_include: Optional[list[str]] = None,
         custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
@@ -130,7 +129,6 @@ class BasePackageGenerator:
         self.base_model_file_path = Path(base_model_file_path)
         self.base_model_import = base_model_import
         self.unset_import = unset_import
-        self.multipart_uploads = multipart_uploads
 
         self.base_schema_root_file_path = Path(base_schema_root_file_path)
 
@@ -530,7 +528,6 @@ class PackageGenerator(BasePackageGenerator):
             base_schema_root_file_path,
             base_model_import,
             unset_import,
-            multipart_uploads,
             files_to_include,
             custom_scalars,
             plugin_manager,
@@ -552,6 +549,7 @@ class PackageGenerator(BasePackageGenerator):
         self.base_client_module_name = (
             base_client_module_name or self.base_client_file_path.stem
         )
+        self.multipart_uploads = multipart_uploads
 
         self.client_file_name = client_file_name
 
@@ -748,7 +746,6 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
         base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
         base_model_import: ast.ImportFrom = BASE_MODEL_IMPORT,
         unset_import: ast.ImportFrom = UNSET_IMPORT,
-        multipart_uploads: bool = True,
         files_to_include: Optional[list[str]] = None,
         custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
@@ -781,7 +778,6 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
             base_schema_root_file_path,
             base_model_import,
             unset_import,
-            multipart_uploads,
             files_to_include,
             custom_scalars,
             plugin_manager,
@@ -835,8 +831,6 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
     def _copy_files(self):
         super()._copy_files()
         base_model_names = [BASE_MODEL_CLASS_NAME]
-        if self.multipart_uploads:
-            base_model_names.append(UPLOAD_CLASS_NAME)
         self.init_generator.add_import(
             names=base_model_names,
             from_="base_model",
@@ -856,12 +850,12 @@ def get_package_generator(
     settings: ClientSettings | ModelsOnlySettings,
     plugin_manager: PluginManager,
 ) -> PackageGenerator | ModelsOnlyPackageGenerator:
-    upload_import = UPLOAD_IMPORT if settings.multipart_uploads else None
     base_model_path = (
         BASE_MODEL_FILE_PATH
-        if settings.multipart_uploads
+        if isinstance(settings, ClientSettings) and settings.multipart_uploads
         else BASE_MODEL_NO_UPLOAD_FILE_PATH
     )
+    upload_import = UPLOAD_IMPORT if base_model_path == BASE_MODEL_FILE_PATH else None
 
     init_generator = InitFileGenerator(
         plugin_manager=plugin_manager, lazy_imports=settings.lazy_imports
@@ -914,7 +908,6 @@ def get_package_generator(
             base_model_file_path=base_model_path.as_posix(),
             base_model_import=BASE_MODEL_IMPORT,
             unset_import=UNSET_IMPORT,
-            multipart_uploads=settings.multipart_uploads,
             files_to_include=settings.files_to_include,
             custom_scalars=settings.scalars,
             plugin_manager=plugin_manager,
