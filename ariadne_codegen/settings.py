@@ -51,6 +51,7 @@ def get_validation_rule(rule: str):
 class Strategy(str, enum.Enum):
     CLIENT = "client"
     GRAPHQL_SCHEMA = "graphqlschema"
+    MODELS_ONLY = "models_only"
 
 
 @dataclass
@@ -168,6 +169,11 @@ class GeneratorSettings(BaseSettings):
     convert_to_snake_case: bool = True
     include_all_inputs: bool = True
     include_all_enums: bool = True
+    skip_validation_rules: list[str] = field(
+        default_factory=lambda: [
+            "NoUnusedFragments",
+        ]
+    )
     files_to_include: list[str] = field(default_factory=list)
     scalars: dict[str, ScalarData] = field(default_factory=dict)
     default_optional_fields_to_none: bool = False
@@ -240,11 +246,7 @@ class ClientSettings(GeneratorSettings):
     async_client: bool = True
     opentelemetry_client: bool = False
     multipart_uploads: bool = True
-    skip_validation_rules: list[str] = field(
-        default_factory=lambda: [
-            "NoUnusedFragments",
-        ]
-    )
+
 
     def __post_init__(self):
         if not self.queries_path and not self.enable_custom_operations:
@@ -387,6 +389,79 @@ class ClientSettings(GeneratorSettings):
             """
         )
 
+
+class ModelsOnlySettings(GeneratorSettings):
+    multipart_uploads: bool = True
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self.queries_path:
+            assert_path_exists(self.queries_path)
+
+    @property
+    def used_settings_message(self) -> str:
+        queries_msg = (
+            f"Reading queries from '{self.queries_path}'."
+            if self.queries_path
+            else "No queries path provided, generating models only."
+        )
+
+        snake_case_msg = (
+            "Converting fields and arguments name to snake case."
+            if self.convert_to_snake_case
+            else "Not converting fields and arguments name to snake case."
+        )
+
+        files_to_include_list = ",".join(self.files_to_include)
+        files_to_include_msg = (
+            f"Copying the following files into the package: {files_to_include_list}"
+            if self.files_to_include
+            else "No files to copy."
+        )
+        plugins_list = ",".join(self.plugins)
+        plugins_msg = (
+            f"Plugins to use: {plugins_list}"
+            if self.plugins
+            else "No plugin is being used."
+        )
+
+        defer_model_build_msg = (
+            "Deferring Pydantic model builds to first use "
+            "(faster import of generated package)."
+            if self.defer_model_build
+            else "Building Pydantic models eagerly at import time."
+        )
+        use_alias_generator_msg = self.get_use_alias_generator_msg()
+        lazy_imports_msg = (
+            "Importing generated modules on first use "
+            "(faster import of generated package)."
+            if self.lazy_imports
+            else "Importing every generated module in the package's `__init__`."
+        )
+        introspection_msg = (
+            self._introspection_settings_message() if self.using_remote_schema else ""
+        )
+        return dedent(
+            f"""\
+            Selected strategy: {Strategy.MODELS_ONLY}
+            Using schema from '{self.schema_source}'.
+            {introspection_msg}
+            {queries_msg}
+            Using '{self.target_package_name}' as package name.
+            Generating package into '{self.target_package_path}'.
+            Generating enums into '{self.enums_module_name}.py'.
+            Generating inputs into '{self.input_types_module_name}.py'.
+            Generating fragments into '{self.fragments_module_name}.py'.
+            Comments type: {self.include_comments.value}
+            {snake_case_msg}
+            {defer_model_build_msg}
+            {use_alias_generator_msg}
+            {lazy_imports_msg}
+            {files_to_include_msg}
+            {plugins_msg}
+            """
+        )
 
 @dataclass
 class GraphQLSchemaSettings(BaseSettings):
