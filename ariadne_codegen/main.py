@@ -23,7 +23,7 @@ from .schema import (
     get_graphql_queries,
     get_graphql_schema,
 )
-from .settings import Strategy, get_validation_rule
+from .settings import ClientSettings, ModelsOnlySettings, Strategy, get_validation_rule
 
 
 @click.command()
@@ -40,16 +40,24 @@ def main(strategy=Strategy.CLIENT.value, config=None):
     if strategy == Strategy.CLIENT:
         client(config_dict)
 
-    if strategy == Strategy.GRAPHQL_SCHEMA:
-        graphql_schema(config_dict)
-
     if strategy == Strategy.MODELS_ONLY:
         models_only(config_dict)
+
+    if strategy == Strategy.GRAPHQL_SCHEMA:
+        graphql_schema(config_dict)
 
 
 def client(config_dict):
     settings = get_client_settings(config_dict)
+    _generate_package(config_dict, settings)
 
+
+def models_only(config_dict):
+    settings = get_models_only_settings(config_dict)
+    _generate_package(config_dict, settings)
+
+
+def _generate_package(config_dict, settings: ClientSettings | ModelsOnlySettings):
     schema = get_graphql_schema(settings, config_dict)
 
     plugin_manager = PluginManager(
@@ -114,43 +122,3 @@ def graphql_schema(config_dict):
             schema=schema,
             target_file_path=settings.target_file_path,
         )
-
-
-def models_only(config_dict):
-    settings = get_models_only_settings(config_dict)
-
-    schema = get_graphql_schema(settings, config_dict)
-
-    plugin_manager = PluginManager(
-        schema=schema,
-        config_dict=config_dict,
-        plugins_types=get_plugins_types(settings.plugins),
-    )
-    schema = add_mixin_directive_to_schema(schema)
-    schema = plugin_manager.process_schema(schema)
-    assert_valid_schema(schema)
-
-    fragments = []
-    queries = []
-    if settings.queries_path:
-        definitions = get_graphql_queries(
-            settings.queries_path,
-            schema,
-            [get_validation_rule(e) for e in settings.skip_validation_rules],
-        )
-        queries = filter_operations_definitions(definitions)
-        fragments = filter_fragments_definitions(definitions)
-
-    sys.stdout.write(settings.used_settings_message)
-
-    package_generator = get_package_generator(
-        schema=schema,
-        fragments=fragments,
-        settings=settings,
-        plugin_manager=plugin_manager,
-    )
-    for query in queries:
-        package_generator.add_operation(query)
-    generated_files = package_generator.generate()
-
-    sys.stdout.write("\nGenerated files:\n  " + "\n  ".join(generated_files) + "\n")
