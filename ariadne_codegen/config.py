@@ -1,15 +1,23 @@
 from dataclasses import fields
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TypeVar
 from warnings import simplefilter, warn
 
 import toml
 
 from .client_generators.scalars import ScalarData
 from .exceptions import ConfigFileNotFound, MissingConfiguration
-from .settings import ClientSettings, CommentsStrategy, GraphQLSchemaSettings
+from .settings import (
+    ClientSettings,
+    CommentsStrategy,
+    GeneratorSettings,
+    GraphQLSchemaSettings,
+    ModelsOnlySettings,
+)
 
 simplefilter("default", DeprecationWarning)
+
+GeneratorSettingsType = TypeVar("GeneratorSettingsType", bound=GeneratorSettings)
 
 
 def get_config_file_path(file_name: str = "pyproject.toml") -> Path:
@@ -34,8 +42,19 @@ def get_config_dict(config_file_name: Optional[str] = None) -> dict:
 
 def get_client_settings(config_dict: dict) -> ClientSettings:
     """Parse configuration dict and return ClientSettings instance."""
+    return _get_generator_settings(config_dict, ClientSettings)
+
+
+def get_models_only_settings(config_dict: dict) -> ModelsOnlySettings:
+    """Parse configuration dict and return ModelsOnlySettings instance."""
+    return _get_generator_settings(config_dict, ModelsOnlySettings)
+
+
+def _get_generator_settings(
+    config_dict: dict, settings_class: type[GeneratorSettingsType]
+) -> GeneratorSettingsType:
     section = get_section(config_dict).copy()
-    settings_fields_names = {f.name for f in fields(ClientSettings)}
+    settings_fields_names = {f.name for f in fields(settings_class)}
     try:
         section["scalars"] = {
             name: ScalarData(
@@ -69,7 +88,7 @@ def get_client_settings(config_dict: dict) -> ClientSettings:
                 stacklevel=2,
             )
 
-        return ClientSettings(
+        return settings_class(
             **{
                 key: value
                 for key, value in section.items()

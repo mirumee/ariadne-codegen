@@ -4,7 +4,12 @@ import click
 from graphql import assert_valid_schema
 
 from .client_generators.package import get_package_generator
-from .config import get_client_settings, get_config_dict, get_graphql_schema_settings
+from .config import (
+    get_client_settings,
+    get_config_dict,
+    get_graphql_schema_settings,
+    get_models_only_settings,
+)
 from .graphql_schema_generators.schema import (
     generate_graphql_schema_graphql_file,
     generate_graphql_schema_python_file,
@@ -18,7 +23,7 @@ from .schema import (
     get_graphql_queries,
     get_graphql_schema,
 )
-from .settings import Strategy, get_validation_rule
+from .settings import ClientSettings, ModelsOnlySettings, Strategy, get_validation_rule
 
 
 @click.command()
@@ -35,13 +40,24 @@ def main(strategy=Strategy.CLIENT.value, config=None):
     if strategy == Strategy.CLIENT:
         client(config_dict)
 
+    if strategy == Strategy.MODELS_ONLY:
+        models_only(config_dict)
+
     if strategy == Strategy.GRAPHQL_SCHEMA:
         graphql_schema(config_dict)
 
 
 def client(config_dict):
     settings = get_client_settings(config_dict)
+    _generate_package(config_dict, settings)
 
+
+def models_only(config_dict):
+    settings = get_models_only_settings(config_dict)
+    _generate_package(config_dict, settings)
+
+
+def _generate_package(config_dict, settings: ClientSettings | ModelsOnlySettings):
     schema = get_graphql_schema(settings, config_dict)
 
     plugin_manager = PluginManager(

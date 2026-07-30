@@ -51,6 +51,7 @@ def get_validation_rule(rule: str):
 class Strategy(str, enum.Enum):
     CLIENT = "client"
     GRAPHQL_SCHEMA = "graphqlschema"
+    MODELS_ONLY = "models_only"
 
 
 @dataclass
@@ -157,25 +158,16 @@ class BaseSettings:
 
 
 @dataclass
-class ClientSettings(BaseSettings):
+class GeneratorSettings(BaseSettings):
     queries_path: str = ""
     target_package_name: str = "graphql_client"
     target_package_path: str = field(default_factory=lambda: Path.cwd().as_posix())
-    client_name: str = "Client"
-    client_file_name: str = "client"
-    base_client_name: str = ""
-    base_client_file_path: str = ""
-    base_client_module_name: str = ""
     enums_module_name: str = "enums"
     input_types_module_name: str = "input_types"
     fragments_module_name: str = "fragments"
     include_comments: CommentsStrategy = field(default=CommentsStrategy.STABLE)
     convert_to_snake_case: bool = True
-    include_all_inputs: bool = True
     include_all_enums: bool = True
-    async_client: bool = True
-    opentelemetry_client: bool = False
-    multipart_uploads: bool = True
     skip_validation_rules: list[str] = field(
         default_factory=lambda: [
             "NoUnusedFragments",
@@ -191,8 +183,6 @@ class ClientSettings(BaseSettings):
     lazy_imports: bool = False
 
     def __post_init__(self):
-        if not self.queries_path and not self.enable_custom_operations:
-            raise TypeError("__init__ missing 1 required argument: 'queries_path'")
         super().__post_init__()
 
         # `lazy_imports` needs both halves: the lazy `__init__` stops the package
@@ -212,15 +202,60 @@ class ClientSettings(BaseSettings):
                 f"Valid options are: {valid_options}"
             ) from exc
 
-        self._set_default_base_client_data()
-
         for name, data in self.scalars.items():
             data.graphql_name = name
 
-        assert_path_exists(self.queries_path)
-
         assert_string_is_valid_python_identifier(self.target_package_name)
         assert_path_is_valid_directory(self.target_package_path)
+
+        assert_string_is_valid_python_identifier(self.enums_module_name)
+        assert_string_is_valid_python_identifier(self.input_types_module_name)
+
+        for file_path in self.files_to_include:
+            assert_path_is_valid_file(file_path)
+
+    def get_use_alias_generator_msg(self) -> str:
+        if not self.use_alias_generator:
+            use_alias_generator_msg = (
+                "Spelling out a `Field(alias=...)` for every renamed field."
+            )
+        elif not self.convert_to_snake_case:
+            # Field names already match the schema, so every renamed field keeps
+            # its explicit alias and the generator only adds a per-field call.
+            use_alias_generator_msg = (
+                "Deriving field aliases with `alias_generator=to_camel`, which "
+                "saves nothing with `convert_to_snake_case = false` - every "
+                "renamed field still needs its own `Field(alias=...)`."
+            )
+        else:
+            use_alias_generator_msg = (
+                "Deriving field aliases with `alias_generator=to_camel` "
+                "(faster import of generated models)."
+            )
+        return use_alias_generator_msg
+
+
+@dataclass
+class ClientSettings(GeneratorSettings):
+    include_all_inputs: bool = True
+    client_name: str = "Client"
+    client_file_name: str = "client"
+    base_client_name: str = ""
+    base_client_file_path: str = ""
+    base_client_module_name: str = ""
+    async_client: bool = True
+    opentelemetry_client: bool = False
+    multipart_uploads: bool = True
+
+    def __post_init__(self):
+        if not self.queries_path and not self.enable_custom_operations:
+            raise TypeError("__init__ missing 1 required argument: 'queries_path'")
+
+        super().__post_init__()
+
+        assert_path_exists(self.queries_path)
+
+        self._set_default_base_client_data()
 
         assert_string_is_valid_python_identifier(self.client_name)
         assert_string_is_valid_python_identifier(self.client_file_name)
@@ -230,12 +265,6 @@ class ClientSettings(BaseSettings):
         assert_class_is_defined_in_file(
             Path(self.base_client_file_path), self.base_client_name
         )
-
-        assert_string_is_valid_python_identifier(self.enums_module_name)
-        assert_string_is_valid_python_identifier(self.input_types_module_name)
-
-        for file_path in self.files_to_include:
-            assert_path_is_valid_file(file_path)
 
     def _set_default_base_client_data(self):
         default_clients_map = {
@@ -323,23 +352,7 @@ class ClientSettings(BaseSettings):
             if self.defer_model_build
             else "Building Pydantic models eagerly at import time."
         )
-        if not self.use_alias_generator:
-            use_alias_generator_msg = (
-                "Spelling out a `Field(alias=...)` for every renamed field."
-            )
-        elif not self.convert_to_snake_case:
-            # Field names already match the schema, so every renamed field keeps
-            # its explicit alias and the generator only adds a per-field call.
-            use_alias_generator_msg = (
-                "Deriving field aliases with `alias_generator=to_camel`, which "
-                "saves nothing with `convert_to_snake_case = false` - every "
-                "renamed field still needs its own `Field(alias=...)`."
-            )
-        else:
-            use_alias_generator_msg = (
-                "Deriving field aliases with `alias_generator=to_camel` "
-                "(faster import of generated models)."
-            )
+        use_alias_generator_msg = self.get_use_alias_generator_msg()
         lazy_imports_msg = (
             "Importing generated modules on first use "
             "(faster import of generated package)."
@@ -367,6 +380,79 @@ class ClientSettings(BaseSettings):
             {snake_case_msg}
             {async_client_msg}
             {include_typename_msg}
+            {defer_model_build_msg}
+            {use_alias_generator_msg}
+            {lazy_imports_msg}
+            {files_to_include_msg}
+            {plugins_msg}
+            """
+        )
+
+
+@dataclass
+class ModelsOnlySettings(GeneratorSettings):
+    def __post_init__(self):
+        super().__post_init__()
+
+        if self.queries_path:
+            assert_path_exists(self.queries_path)
+
+    @property
+    def used_settings_message(self) -> str:
+        queries_msg = (
+            f"Reading queries from '{self.queries_path}'."
+            if self.queries_path
+            else "No queries path provided, generating models only."
+        )
+
+        snake_case_msg = (
+            "Converting fields and arguments name to snake case."
+            if self.convert_to_snake_case
+            else "Not converting fields and arguments name to snake case."
+        )
+
+        files_to_include_list = ",".join(self.files_to_include)
+        files_to_include_msg = (
+            f"Copying the following files into the package: {files_to_include_list}"
+            if self.files_to_include
+            else "No files to copy."
+        )
+        plugins_list = ",".join(self.plugins)
+        plugins_msg = (
+            f"Plugins to use: {plugins_list}"
+            if self.plugins
+            else "No plugin is being used."
+        )
+
+        defer_model_build_msg = (
+            "Deferring Pydantic model builds to first use "
+            "(faster import of generated package)."
+            if self.defer_model_build
+            else "Building Pydantic models eagerly at import time."
+        )
+        use_alias_generator_msg = self.get_use_alias_generator_msg()
+        lazy_imports_msg = (
+            "Importing generated modules on first use "
+            "(faster import of generated package)."
+            if self.lazy_imports
+            else "Importing every generated module in the package's `__init__`."
+        )
+        introspection_msg = (
+            self._introspection_settings_message() if self.using_remote_schema else ""
+        )
+        return dedent(
+            f"""\
+            Selected strategy: {Strategy.MODELS_ONLY}
+            Using schema from '{self.schema_source}'.
+            {introspection_msg}
+            {queries_msg}
+            Using '{self.target_package_name}' as package name.
+            Generating package into '{self.target_package_path}'.
+            Generating enums into '{self.enums_module_name}.py'.
+            Generating inputs into '{self.input_types_module_name}.py'.
+            Generating fragments into '{self.fragments_module_name}.py'.
+            Comments type: {self.include_comments.value}
+            {snake_case_msg}
             {defer_model_build_msg}
             {use_alias_generator_msg}
             {lazy_imports_msg}
