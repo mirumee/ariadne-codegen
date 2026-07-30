@@ -389,6 +389,7 @@ class ClientSettings(GeneratorSettings):
         )
 
 
+@dataclass
 class ModelsOnlySettings(GeneratorSettings):
     def __post_init__(self):
         super().__post_init__()
