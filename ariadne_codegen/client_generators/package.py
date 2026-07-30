@@ -211,10 +211,13 @@ class BasePackageGenerator:
                 remove_unused_imports=remove_unused_imports,
             )
             for pending_file, code in zip(group, formatted, strict=True):
-                code = self._add_comments_to_code(code, pending_file.comment_source)
-                if pending_file.plugin_hook:
-                    code = pending_file.plugin_hook(code)
-                pending_file.path.write_text(code)
+                if code:
+                    code = self._add_comments_to_code(code, pending_file.comment_source)
+                    if pending_file.plugin_hook:
+                        code = pending_file.plugin_hook(code)
+                    pending_file.path.write_text(code)
+                else:
+                    self._generated_files.remove(pending_file.path.name)
 
         self._pending_files.clear()
 

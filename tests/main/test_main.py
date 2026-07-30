@@ -290,6 +290,17 @@ def test_main_shows_version():
             "alias_generator_client",
             CLIENTS_PATH / "alias_generator" / "expected_client",
         ),
+        (
+            (
+                CLIENTS_PATH / "no_empty_files_generated" / "pyproject.toml",
+                (
+                    CLIENTS_PATH / "no_empty_files_generated" / "queries.graphql",
+                    CLIENTS_PATH / "no_empty_files_generated" / "schema.graphql",
+                ),
+            ),
+            "example_client",
+            CLIENTS_PATH / "no_empty_files_generated" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
