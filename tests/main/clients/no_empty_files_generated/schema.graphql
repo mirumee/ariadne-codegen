@@ -1,0 +1,85 @@
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+type Query {
+  users(country: String): [User!]!
+}
+
+type Mutation {
+  userCreate(userData: UserCreateInput!): User
+  userPreferences(data: UserPreferencesInput): Boolean!
+  fileUpload(file: Upload!): Boolean!
+}
+
+type Subscription {
+  usersCounter: Int!
+}
+
+scalar Upload
+
+input UserCreateInput {
+  firstName: String
+  lastName: String
+  email: String!
+  location: LocationInput
+}
+
+input LocationInput {
+  city: String
+  country: String
+}
+
+type User {
+  id: ID!
+  firstName: String
+  lastName: String
+  email: String!
+  location: Location
+}
+
+type Location {
+  city: String
+  country: String
+}
+
+enum Color {
+  BLACK
+  WHITE
+  RED
+  GREEN
+  BLUE
+  YELLOW
+}
+
+input UserPreferencesInput {
+  luckyNumber: Int = 7
+  favouriteWord: String = "word"
+  colorOpacity: Float = 1.0
+  excludedTags: [String!] = ["offtop", "tag123"]
+  notificationsPreferences: NotificationsPreferencesInput! = {
+    receiveMails: true
+    receivePushNotifications: true
+    receiveSms: false
+    title: "Mr"
+  }
+}
+
+input NotificationsPreferencesInput {
+  receiveMails: Boolean!
+  receivePushNotifications: Boolean!
+  receiveSms: Boolean!
+  title: String!
+}
+
+input BuiltinsInput {
+  list: [Int!]
+  dict: String
+  set: Boolean
+  tuple: Float
+  int: Int
+  str: String
+  bool: Boolean
+}
