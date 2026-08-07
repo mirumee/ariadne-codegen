@@ -963,6 +963,17 @@ def test_main_single_file_client(
             "example_client",
             MODELS_ONLY_PATH / "example" / "expected_client",
         ),
+        (
+            (
+                MODELS_ONLY_PATH / "only_used_inputs_and_enums" / "pyproject.toml",
+                (
+                    MODELS_ONLY_PATH / "only_used_inputs_and_enums" / "schema.graphql",
+                    MODELS_ONLY_PATH / "only_used_inputs_and_enums" / "queries.graphql",
+                ),
+            ),
+            "example_client",
+            MODELS_ONLY_PATH / "only_used_inputs_and_enums" / "expected_client",
+        ),
     ],
     indirect=["project_dir"],
 )
