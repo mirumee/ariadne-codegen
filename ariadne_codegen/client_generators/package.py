@@ -305,7 +305,14 @@ class BasePackageGenerator:
             self.enums_generator.get_generated_public_names(), self.enums_module_name, 1
         )
 
-    def _generate_input_types_from_module(self, module: ast.Module):
+    def _generate_input_types(self):
+        if self.include_all_inputs:
+            module = self.input_types_generator.generate()
+        else:
+            module = self.input_types_generator.generate(
+                types_to_include=self._get_used_inputs()
+            )
+
         input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
         self._queue_module(
             input_types_file_path,
@@ -319,6 +326,9 @@ class BasePackageGenerator:
             self.input_types_module_name,
             1,
         )
+
+    def _get_used_inputs(self) -> list[str]:
+        return []
 
     def _generate_result_types(self):
         for file_name, module in self._result_types_files.items():
@@ -630,14 +640,8 @@ class PackageGenerator(BasePackageGenerator):
                 level=1,
             )
 
-    def _generate_input_types(self):
-        if self.include_all_inputs:
-            module = self.input_types_generator.generate()
-        else:
-            used_inputs = self.client_generator.arguments_generator.get_used_inputs()
-            module = self.input_types_generator.generate(types_to_include=used_inputs)
-
-        self._generate_input_types_from_module(module)
+    def _get_used_inputs(self) -> list[str]:
+        return self.client_generator.arguments_generator.get_used_inputs()
 
     def _get_generated_file_names(self) -> list[str]:
         return (
@@ -824,14 +828,8 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
         # Generate arguments to register used input types
         self.arguments_generator.generate(definition.variable_definitions)
 
-    def _generate_input_types(self):
-        if self.include_all_inputs:
-            module = self.input_types_generator.generate()
-        else:
-            used_inputs = self.arguments_generator.get_used_inputs()
-            module = self.input_types_generator.generate(types_to_include=used_inputs)
-
-        self._generate_input_types_from_module(module)
+    def _get_used_inputs(self) -> list[str]:
+        return self.arguments_generator.get_used_inputs()
 
     def _get_generated_file_names(self) -> list[str]:
         return (
