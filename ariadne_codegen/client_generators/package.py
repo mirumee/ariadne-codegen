@@ -87,6 +87,7 @@ class BasePackageGenerator:
         queries_source: str = "",
         schema_source: str = "",
         convert_to_snake_case: bool = True,
+        include_all_inputs: bool = True,
         include_all_enums: bool = True,
         base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
         base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
@@ -124,6 +125,7 @@ class BasePackageGenerator:
         self.schema_source = schema_source
 
         self.convert_to_snake_case = convert_to_snake_case
+        self.include_all_inputs = include_all_inputs
         self.include_all_enums = include_all_enums
 
         self.base_model_file_path = Path(base_model_file_path)
@@ -303,7 +305,14 @@ class BasePackageGenerator:
             self.enums_generator.get_generated_public_names(), self.enums_module_name, 1
         )
 
-    def _generate_input_types_from_module(self, module: ast.Module):
+    def _generate_input_types(self):
+        if self.include_all_inputs:
+            module = self.input_types_generator.generate()
+        else:
+            module = self.input_types_generator.generate(
+                types_to_include=self._get_used_inputs()
+            )
+
         input_types_file_path = self.package_path / f"{self.input_types_module_name}.py"
         self._queue_module(
             input_types_file_path,
@@ -317,6 +326,9 @@ class BasePackageGenerator:
             self.input_types_module_name,
             1,
         )
+
+    def _get_used_inputs(self) -> list[str]:
+        return []
 
     def _generate_result_types(self):
         for file_name, module in self._result_types_files.items():
@@ -526,6 +538,7 @@ class PackageGenerator(BasePackageGenerator):
             queries_source,
             schema_source,
             convert_to_snake_case,
+            include_all_inputs,
             include_all_enums,
             base_model_file_path,
             base_schema_root_file_path,
@@ -541,8 +554,6 @@ class PackageGenerator(BasePackageGenerator):
             defer_model_build,
             use_alias_generator,
         )
-
-        self.include_all_inputs = include_all_inputs
 
         self.client_generator = client_generator
         self.client_name = client_name
@@ -629,14 +640,8 @@ class PackageGenerator(BasePackageGenerator):
                 level=1,
             )
 
-    def _generate_input_types(self):
-        if self.include_all_inputs:
-            module = self.input_types_generator.generate()
-        else:
-            used_inputs = self.client_generator.arguments_generator.get_used_inputs()
-            module = self.input_types_generator.generate(types_to_include=used_inputs)
-
-        self._generate_input_types_from_module(module)
+    def _get_used_inputs(self) -> list[str]:
+        return self.client_generator.arguments_generator.get_used_inputs()
 
     def _get_generated_file_names(self) -> list[str]:
         return (
@@ -735,6 +740,7 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
         enums_generator: EnumsGenerator,
         input_types_generator: InputTypesGenerator,
         fragments_generator: FragmentsGenerator,
+        arguments_generator: ArgumentsGenerator,
         fragments_definitions: Optional[dict[str, FragmentDefinitionNode]] = None,
         enums_module_name: str = "enums",
         input_types_module_name: str = "input_types",
@@ -744,6 +750,7 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
         queries_source: str = "",
         schema_source: str = "",
         convert_to_snake_case: bool = True,
+        include_all_inputs: bool = True,
         include_all_enums: bool = True,
         base_model_file_path: str = BASE_MODEL_FILE_PATH.as_posix(),
         base_schema_root_file_path: str = BASE_OPERATION_FILE_PATH.as_posix(),
@@ -776,6 +783,7 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
             queries_source,
             schema_source,
             convert_to_snake_case,
+            include_all_inputs,
             include_all_enums,
             base_model_file_path,
             base_schema_root_file_path,
@@ -791,6 +799,7 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
             defer_model_build,
             use_alias_generator,
         )
+        self.arguments_generator = arguments_generator
 
     def generate(self) -> list[str]:
         """Generate package with graphql client."""
@@ -816,8 +825,11 @@ class ModelsOnlyPackageGenerator(BasePackageGenerator):
     def add_operation(self, definition: OperationDefinitionNode):
         self._add_operation(definition)
 
-    def _generate_input_types(self):
-        self._generate_input_types_from_module(self.input_types_generator.generate())
+        # Generate arguments to register used input types
+        self.arguments_generator.generate(definition.variable_definitions)
+
+    def _get_used_inputs(self) -> list[str]:
+        return self.arguments_generator.get_used_inputs()
 
     def _get_generated_file_names(self) -> list[str]:
         return (
@@ -899,6 +911,12 @@ def get_package_generator(
             enums_generator=enums_generator,
             input_types_generator=input_types_generator,
             fragments_generator=fragments_generator,
+            arguments_generator=ArgumentsGenerator(
+                schema=schema,
+                convert_to_snake_case=settings.convert_to_snake_case,
+                custom_scalars=settings.scalars,
+                plugin_manager=plugin_manager,
+            ),
             fragments_definitions=fragments_definitions,
             enums_module_name=settings.enums_module_name,
             input_types_module_name=settings.input_types_module_name,
@@ -907,6 +925,7 @@ def get_package_generator(
             queries_source=settings.queries_path,
             schema_source=settings.schema_source,
             convert_to_snake_case=settings.convert_to_snake_case,
+            include_all_inputs=settings.include_all_inputs,
             include_all_enums=settings.include_all_enums,
             base_model_file_path=base_model_path.as_posix(),
             base_model_import=BASE_MODEL_IMPORT,

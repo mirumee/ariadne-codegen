@@ -1,0 +1,49 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  users(country: String): [User!]!
+}
+
+type Mutation {
+  userCreate(userData: UserCreateInput!): User
+  addressCreate(addressData: AddressCreateInput!): Address
+}
+
+input UserCreateInput {
+  firstName: String
+  lastName: String
+  email: String!
+  favouriteColor: Color
+}
+
+type User {
+  id: ID!
+  firstName: String
+  lastName: String
+  email: String!
+  favouriteColor: Color
+}
+
+input AddressCreateInput {
+  country: String!
+}
+
+type Address {
+  country: String!
+}
+
+enum Color {
+  BLACK
+  WHITE
+  RED
+  GREEN
+  BLUE
+}
+
+enum AnotherEnum {
+  ONE
+  TWO
+}
