@@ -301,13 +301,7 @@ class ResultTypesGenerator:
             field_name = self._get_field_name(field)
             name = self._process_field_name(field_name, field=field)
             field_definition = self._get_field_from_schema(type_name, field.name.value)
-            if field_definition.deprecation_reason:
-                warn(
-                    f"Field '{field.name.value}' on type '{type_name}' is "
-                    f"deprecated: {field_definition.deprecation_reason}",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
+            self._warn_about_deprecations(field, field_definition, type_name)
             annotation, default_value, field_context = parse_operation_field(
                 schema=self.schema,
                 field=field,
@@ -467,6 +461,30 @@ class ResultTypesGenerator:
             trim_leading_underscore=True,
             handle_pydantic_resrved_field_names=True,
         )
+
+    def _warn_about_deprecations(
+        self, field: FieldNode, field_definition: GraphQLField, type_name: str
+    ) -> None:
+        """Warn about the deprecated parts of the schema this selection uses."""
+        if field_definition.deprecation_reason:
+            warn(
+                f"Field '{field.name.value}' on type '{type_name}' is "
+                f"deprecated: {field_definition.deprecation_reason}",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        # Nodes built in code rather than parsed can carry no arguments at all.
+        for argument in field.arguments or ():
+            definition = field_definition.args.get(argument.name.value)
+            if definition and definition.deprecation_reason:
+                warn(
+                    f"Argument '{argument.name.value}' on field "
+                    f"'{field.name.value}' of type '{type_name}' is "
+                    f"deprecated: {definition.deprecation_reason}",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
     def _get_field_from_schema(self, type_name: str, field_name: str) -> GraphQLField:
         try:

@@ -86,6 +86,7 @@ class BaseSettings:
     introspection_schema_description: bool = False
     introspection_directive_is_repeatable: bool = False
     introspection_input_object_one_of: bool = False
+    show_deprecation_warnings: bool = True
 
     def __post_init__(self):
         provided_sources = [
