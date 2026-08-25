@@ -266,7 +266,10 @@ def convert_to_multiline_string(
         ghi
         \"\"\"
     """
-    joined_source = source.replace("\\n", "\n").replace("'", "")
+    try:
+        joined_source = ast.literal_eval(source)
+    except (SyntaxError, ValueError):
+        joined_source = source.replace("\\n", "\n").replace("'", "")
     if joined_source.endswith("\n"):
         joined_source += '"""'
     else:
@@ -282,13 +285,17 @@ def get_variable_indent_size(source: str) -> int:
     return 0
 
 
+SINGLE_QUOTED_STRING = r"'(?:[^'\\]|\\.)*'"
+
+
 def format_multiline_strings(source: str, offset: int = 4) -> str:
     """Fromats multiline string declarations."""
     formatted_source = source
-    for match in re.finditer(r".*?=.*?('.*?'\s*){2,}", source):
+    concatenated = rf"(?:{SINGLE_QUOTED_STRING}\s*){{2,}}"
+    for match in re.finditer(rf".*?=.*?{concatenated}", source):
         line = match.group()
         variable_indent_size = get_variable_indent_size(line)
-        orginal_str_match = re.search("'.*'", line)
+        orginal_str_match = re.search(concatenated, line)
         if orginal_str_match:
             orginal_str = orginal_str_match.group()
             formatted = convert_to_multiline_string(
