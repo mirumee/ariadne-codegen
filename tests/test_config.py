@@ -1,9 +1,14 @@
+import importlib
+import sys
+import warnings
 from textwrap import dedent
 
 import pytest
 
+from ariadne_codegen import config as config_module
 from ariadne_codegen.client_generators.scalars import ScalarData
 from ariadne_codegen.config import (
+    apply_warning_settings,
     get_client_settings,
     get_config_dict,
     get_config_file_path,
@@ -314,3 +319,100 @@ def test_get_client_settings_without_include_typename_defaults_to_true(tmp_path)
 
     assert isinstance(settings, ClientSettings)
     assert settings.include_typename is True
+
+
+def _deprecation_filters():
+    return [
+        f for f in warnings.filters if f[0] == "default" and f[2] is DeprecationWarning
+    ]
+
+
+def test_import_opts_into_deprecation_warnings_when_user_set_no_filters(monkeypatch):
+    """Python hides them by default, but they are how deprecations are reported."""
+    monkeypatch.setattr(sys, "warnoptions", [])
+
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        importlib.reload(config_module)
+
+        assert _deprecation_filters()
+
+
+def test_import_does_not_override_warning_filters_set_by_user(monkeypatch):
+    """A prepended filter of ours would take precedence over PYTHONWARNINGS and -W."""
+    monkeypatch.setattr(sys, "warnoptions", ["ignore::DeprecationWarning"])
+
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        importlib.reload(config_module)
+
+        assert not _deprecation_filters()
+
+
+def _client_config_dict(tmp_path, **overrides):
+    schema_path = tmp_path / "schema.graphql"
+    schema_path.touch()
+    queries_path = tmp_path / "queries.graphql"
+    queries_path.touch()
+    return {
+        "tool": {
+            "ariadne-codegen": {
+                "schema_path": schema_path.as_posix(),
+                "queries_path": queries_path.as_posix(),
+                **overrides,
+            }
+        }
+    }
+
+
+@pytest.fixture
+def client_settings(tmp_path):
+    # Building settings applies the warning settings, so keep any filter it
+    # installs from leaking into the rest of the session.
+    with warnings.catch_warnings():
+        yield get_client_settings(_client_config_dict(tmp_path))
+
+
+def _deprecation_warning_is_shown():
+    with warnings.catch_warnings(record=True) as recorded:
+        warnings.warn("x", DeprecationWarning, stacklevel=1)
+    return bool(recorded)
+
+
+def test_show_deprecation_warnings_enabled_leaves_filters_alone(
+    client_settings, monkeypatch
+):
+    monkeypatch.setattr(sys, "warnoptions", [])
+
+    with warnings.catch_warnings():
+        warnings.resetwarnings()
+        warnings.simplefilter("default", DeprecationWarning)
+        filters_before = list(warnings.filters)
+        apply_warning_settings(client_settings)
+
+        assert warnings.filters == filters_before
+
+
+def test_show_deprecation_warnings_does_not_override_filters_set_by_user(
+    client_settings, monkeypatch
+):
+    """PYTHONWARNINGS and -W take precedence over the setting."""
+    monkeypatch.setattr(sys, "warnoptions", ["default::DeprecationWarning"])
+    client_settings.show_deprecation_warnings = False
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("default", DeprecationWarning)
+        apply_warning_settings(client_settings)
+
+        assert _deprecation_warning_is_shown()
+
+
+def test_get_client_settings_applies_show_deprecation_warnings(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "warnoptions", [])
+    config_dict = _client_config_dict(tmp_path, show_deprecation_warnings=False)
+
+    with warnings.catch_warnings():
+        settings = get_client_settings(config_dict)
+
+        assert settings.show_deprecation_warnings is False
+        assert not _deprecation_warning_is_shown()

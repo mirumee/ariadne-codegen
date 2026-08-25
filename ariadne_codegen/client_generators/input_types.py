@@ -2,6 +2,7 @@ import ast
 from collections import defaultdict
 from copy import deepcopy
 from typing import Optional, cast
+from warnings import warn
 
 from graphql import (
     GraphQLEnumType,
@@ -72,13 +73,17 @@ class InputTypesGenerator:
         self._dependencies: dict[str, list[str]] = defaultdict(list)
         self._used_enums: dict[str, list[str]] = defaultdict(list)
         self._used_scalars: list[str] = []
-        self._class_defs: list[ast.ClassDef] = [
-            self._parse_input_definition(d) for d in self._filter_input_types()
-        ]
+        self._class_defs: list[ast.ClassDef] = []
+        self._input_definitions: dict[str, GraphQLInputObjectType] = {}
+        for definition in self._filter_input_types():
+            class_def = self._parse_input_definition(definition)
+            self._class_defs.append(class_def)
+            self._input_definitions[class_def.name] = definition
         self._generated_public_names: list[str] = []
 
     def generate(self, types_to_include: Optional[list[str]] = None) -> ast.Module:
         class_defs = self._filter_class_defs(types_to_include=types_to_include)
+        self._warn_about_deprecated_fields(class_defs)
         self._generated_public_names = [class_def.name for class_def in class_defs]
 
         if used_imports := self.get_used_enums():
@@ -113,6 +118,27 @@ class InputTypesGenerator:
         for input_name in self._generated_public_names:
             enums.extend(self._used_enums[input_name])
         return enums
+
+    def _warn_about_deprecated_fields(self, class_defs: list[ast.ClassDef]) -> None:
+        """Warn only about inputs included in the generated module.
+
+        A schema usually defines more inputs than the generated package uses.
+        """
+        for class_def in class_defs:
+            definition = self._input_definitions.get(class_def.name)
+            if not definition:
+                continue
+
+            for field_name, field in definition.fields.items():
+                if field.deprecation_reason:
+                    # stacklevel=2 keeps the warning attributed to this module.
+                    warn(
+                        f"Input field '{field_name}' on input "
+                        f"'{definition.name}' is deprecated: "
+                        f"{field.deprecation_reason}",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
 
     def _filter_input_types(self) -> list[GraphQLInputObjectType]:
         return [

@@ -19,7 +19,7 @@ Python code generator that turns a GraphQL schema and your operations into a ful
 - **[Extensible output](docs/02-guides/07-extending-types.md)** - inject mixins into generated models, copy in your own files, or swap the [base client](docs/03-reference/02-generated-code-dependencies.md) (custom auth, or to drop the `httpx`/`websockets` deps).
 - **[Flexible schema sources](docs/02-guides/02-schema-sources.md)** - a local file, installed Python packages, or remote introspection.
 - **[Plugin system](docs/04-plugins/01-intro.md)** - customize generation through hooks, plus ready-made plugins (shorter results, extracted operation strings, forward refs, …).
-- **More** - [programmatic query building](docs/02-guides/12-custom-operation-builder.md), [OpenTelemetry tracing](docs/02-guides/09-opentelemetry.md), [multiple clients per project](docs/02-guides/08-multiple-clients.md), and a [schema-copy mode](docs/02-guides/11-schema-generation.md).
+- **More** - [programmatic query building](docs/02-guides/12-custom-operation-builder.md), [OpenTelemetry tracing](docs/02-guides/09-opentelemetry.md), [multiple clients per project](docs/02-guides/08-multiple-clients.md), a [schema-copy mode](docs/02-guides/11-schema-generation.md), and [deprecation warnings](docs/02-guides/16-deprecation-warnings.md) for deprecated parts of your schema.
 
 ## Installation
 

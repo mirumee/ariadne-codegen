@@ -27,12 +27,16 @@ class EnumsGenerator:
         self._imports: list[ast.ImportFrom] = [
             generate_import_from([ENUM_CLASS], ENUM_MODULE)
         ]
-        self._class_defs: list[ast.ClassDef] = [
-            self._parse_enum_definition(d) for d in self._filter_enum_types()
-        ]
+        self._class_defs: list[ast.ClassDef] = []
+        self._enum_definitions: dict[str, GraphQLEnumType] = {}
+        for definition in self._filter_enum_types():
+            class_def = self._parse_enum_definition(definition)
+            self._class_defs.append(class_def)
+            self._enum_definitions[class_def.name] = definition
 
     def generate(self, types_to_include: Optional[list[str]] = None) -> ast.Module:
         class_defs = self._filter_class_defs(types_to_include)
+        self._warn_about_deprecated_values(class_defs)
         self._generated_public_names = [class_def.name for class_def in class_defs]
 
         module = generate_module(
@@ -59,13 +63,6 @@ class EnumsGenerator:
         for lineno, (val_name, val_def) in enumerate(
             definition.values.items(), start=1
         ):
-            if val_def.deprecation_reason:
-                warn(
-                    f"Enum value '{val_name}' on enum '{definition.name}' is "
-                    f"deprecated: {val_def.deprecation_reason}",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
             name = process_name(
                 val_name,
                 convert_to_snake_case=False,
@@ -83,6 +80,26 @@ class EnumsGenerator:
         if self.plugin_manager:
             class_def = self.plugin_manager.generate_enum(class_def, definition)
         return class_def
+
+    def _warn_about_deprecated_values(self, class_defs: list[ast.ClassDef]) -> None:
+        """Warn only about enums included in the generated module.
+
+        A schema usually defines more enums than the generated package uses.
+        """
+        for class_def in class_defs:
+            definition = self._enum_definitions.get(class_def.name)
+            if not definition:
+                continue
+
+            for val_name, val_def in definition.values.items():
+                if val_def.deprecation_reason:
+                    # stacklevel=2 keeps the warning attributed to this module.
+                    warn(
+                        f"Enum value '{val_name}' on enum '{definition.name}' is "
+                        f"deprecated: {val_def.deprecation_reason}",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
 
     def _filter_class_defs(
         self, types_to_include: Optional[list[str]] = None
