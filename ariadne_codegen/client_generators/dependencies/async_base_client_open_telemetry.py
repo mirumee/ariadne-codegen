@@ -12,7 +12,10 @@ from typing import (
 )
 from uuid import uuid4
 
-import httpx
+try:
+    import httpx2 as httpx
+except ModuleNotFoundError:
+    import httpx  # type: ignore[no-redef]
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic_core import to_jsonable_python
 
