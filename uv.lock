@@ -98,7 +98,7 @@ requires-dist = [
     { name = "pytest-httpx", marker = "extra == 'test'" },
     { name = "pytest-mock", marker = "extra == 'test'" },
     { name = "requests-toolbelt", marker = "extra == 'test'" },
-    { name = "ruff", specifier = ">=0.15.0,<0.16.0" },
+    { name = "ruff", specifier = ">=0.15.0" },
     { name = "toml", specifier = "~=0.10" },
     { name = "ty", marker = "extra == 'types'", specifier = ">=0.0.20,<0.1.0" },
     { name = "types-toml", marker = "extra == 'test'" },
