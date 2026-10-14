@@ -974,6 +974,21 @@ def test_main_single_file_client(
             "example_client",
             MODELS_ONLY_PATH / "only_used_inputs_and_enums" / "expected_client",
         ),
+        pytest.param(
+            (
+                MODELS_ONLY_PATH / "upload_scalar" / "pyproject.toml",
+                (
+                    MODELS_ONLY_PATH / "upload_scalar" / "schema.graphql",
+                    MODELS_ONLY_PATH / "upload_scalar" / "queries.graphql",
+                ),
+            ),
+            "example_client",
+            MODELS_ONLY_PATH / "upload_scalar" / "expected_client",
+            marks=pytest.mark.xfail(
+                reason="Upload is referenced but not generated in models_only",
+                strict=True,
+            ),
+        ),
     ],
     indirect=["project_dir"],
 )
