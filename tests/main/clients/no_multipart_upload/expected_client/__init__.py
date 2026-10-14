@@ -13,6 +13,7 @@ from .exceptions import (
 )
 from .get_user import GetUser, GetUserUser
 from .input_types import CreateUserInput
+from .upload_avatar import UploadAvatar
 
 __all__ = [
     "AsyncBaseClient",
@@ -28,4 +29,5 @@ __all__ = [
     "GraphQLClientGraphQLMultiError",
     "GraphQLClientHttpError",
     "GraphQLClientInvalidResponseError",
+    "UploadAvatar",
 ]

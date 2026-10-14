@@ -63,6 +63,7 @@ class InputTypesGenerator:
         self.plugin_manager = plugin_manager
         self.defer_model_build = defer_model_build
         self.use_alias_generator = use_alias_generator
+        self.multipart_uploads = upload_import is not None
 
         self._imports = [
             generate_import_from([OPTIONAL, ANY, UNION, ANNOTATED], TYPING_MODULE),
@@ -197,7 +198,9 @@ class InputTypesGenerator:
                 handle_pydantic_resrved_field_names=True,
             )
             annotation, field_type = parse_input_field_type(
-                field.type, custom_scalars=self.custom_scalars
+                field.type,
+                custom_scalars=self.custom_scalars,
+                multipart_uploads=self.multipart_uploads,
             )
             field_implementation = generate_ann_assign(
                 target=generate_name(name),
