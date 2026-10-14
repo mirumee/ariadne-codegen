@@ -42,6 +42,7 @@ from .constants import (
     INPUT_SCALARS_MAP,
     MODEL_VALIDATE_METHOD,
     OPTIONAL,
+    SIMPLE_TYPE_MAP,
 )
 from .scalars import ScalarData, generate_input_scalar_annotation
 from .types import Annotation, CodegenInputFieldType
@@ -51,12 +52,16 @@ def parse_input_field_type(
     type_: CodegenInputFieldType,
     nullable: bool = True,
     custom_scalars: Optional[dict[str, ScalarData]] = None,
+    multipart_uploads: bool = True,
 ) -> tuple[Annotation, str]:
     if isinstance(type_, GraphQLScalarType):
-        if type_.name in INPUT_SCALARS_MAP:
+        # Without multipart uploads there is no `Upload` class to annotate with,
+        # so `Upload` is treated like any other scalar.
+        scalars_map = INPUT_SCALARS_MAP if multipart_uploads else SIMPLE_TYPE_MAP
+        if type_.name in scalars_map:
             return (
                 generate_annotation_name(
-                    name=INPUT_SCALARS_MAP[type_.name], nullable=nullable
+                    name=scalars_map[type_.name], nullable=nullable
                 ),
                 "",
             )
@@ -83,13 +88,19 @@ def parse_input_field_type(
 
     if isinstance(type_, GraphQLList):
         slice_, type_name = parse_input_field_type(
-            type_=type_.of_type, nullable=True, custom_scalars=custom_scalars
+            type_=type_.of_type,
+            nullable=True,
+            custom_scalars=custom_scalars,
+            multipart_uploads=multipart_uploads,
         )
         return generate_list_annotation(slice_=slice_, nullable=nullable), type_name
 
     if isinstance(type_, GraphQLNonNull):
         return parse_input_field_type(
-            type_=type_.of_type, nullable=False, custom_scalars=custom_scalars
+            type_=type_.of_type,
+            nullable=False,
+            custom_scalars=custom_scalars,
+            multipart_uploads=multipart_uploads,
         )
 
     raise ParsingError("Invalid input field type.")
