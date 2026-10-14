@@ -1,0 +1,10 @@
+mutation CreateUser($input: CreateUserInput!) {
+  createUser(input: $input) {
+    id
+    name
+  }
+}
+
+mutation UploadAvatar($file: Upload!) {
+  uploadAvatar(file: $file)
+}

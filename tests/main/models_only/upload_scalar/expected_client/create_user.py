@@ -1,0 +1,15 @@
+from pydantic import Field
+
+from .base_model import BaseModel
+
+
+class CreateUser(BaseModel):
+    create_user: "CreateUserCreateUser" = Field(alias="createUser")
+
+
+class CreateUserCreateUser(BaseModel):
+    id: str
+    name: str
+
+
+CreateUser.model_rebuild()
