@@ -50,7 +50,8 @@ test = [
   "websockets>=14.2",
   "opentelemetry-api",
 ]
-types = ["ty>=0.0.20,<0.1.0"]
+# exact pin: ty adds diagnostics in patch releases, which turns CI red on its own
+types = ["ty==0.0.88"]
 subscriptions = ["websockets>=15"]
 opentelemetry = ["opentelemetry-api"]
 
@@ -154,6 +155,8 @@ include = ["ariadne_codegen", "tests"]
 [tool.ty.rules]
 # Dependency files contain # type: ignore comments for mypy/pyright compat
 unused-type-ignore-comment = "ignore"
+# dependency files keep # ty: ignore comments that older ty releases need
+unused-ignore-comment = "ignore"
 # Some casts improve readability even when technically redundant for ty
 redundant-cast = "ignore"
 
@@ -178,6 +181,9 @@ include = [
 ]
 [tool.ty.overrides.analysis]
 allowed-unresolved-imports = ["**"]
+[tool.ty.overrides.rules]
+# generated models narrow typename__ to a Literal when subclassing a fragment
+invalid-mutable-override = "ignore"
 
 ## Coverage configuration
 
