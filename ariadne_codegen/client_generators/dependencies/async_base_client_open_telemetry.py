@@ -44,9 +44,9 @@ except ImportError:
         raise NotImplementedError("Subscriptions require 'websockets' package.")
         yield
 
-    ClientConnection = Any  # ty: ignore[invalid-assignment]
-    Data = Any  # ty: ignore[invalid-assignment]
-    Origin = str  # ty: ignore[invalid-assignment]
+    ClientConnection = Any  # type: ignore[misc,assignment,unused-ignore]
+    Data = Any  # type: ignore[misc,assignment,unused-ignore]
+    Origin = str  # type: ignore[misc,assignment,unused-ignore]
 
     def Subprotocol(*args, **kwargs):  # type: ignore # noqa: N802, N803
         raise NotImplementedError("Subscriptions require 'websockets' package.")
@@ -63,9 +63,9 @@ try:
         set_span_in_context,
     )
 except ImportError:
-    Context = Any  # ty: ignore[invalid-assignment]
-    Span = Any  # ty: ignore[invalid-assignment]
-    Tracer = Any  # ty: ignore[invalid-assignment]
+    Context = Any  # type: ignore[misc,assignment,unused-ignore]
+    Span = Any  # type: ignore[misc,assignment,unused-ignore]
+    Tracer = Any  # type: ignore[misc,assignment,unused-ignore]
 
     def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
@@ -84,11 +84,11 @@ class HttpClient(Protocol):
     async def post(
         self,
         url: Any | str,
+        *,
         json: Any | None = None,
         data: Any | None = None,
         files: Any | None = None,
         headers: Any | None = None,
-        **kwargs: Any,
     ) -> Response: ...
 
     async def aclose(self) -> None: ...

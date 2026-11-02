@@ -138,11 +138,11 @@ class HttpClient(Protocol):
     async def post(
         self,
         url: Any | str,
+        *,
         json: Any | None = None,
         data: Any | None = None,
         files: Any | None = None,
         headers: Any | None = None,
-        **kwargs: Any,
     ) -> Response: ...
 
     async def aclose(self) -> None: ...
@@ -161,11 +161,11 @@ class HttpClient(Protocol):
     def post(
         self,
         url: Any | str,
+        *,
         json: Any | None = None,
         data: Any | None = None,
         files: Any | None = None,
         headers: Any | None = None,
-        **kwargs: Any,
     ) -> Response: ...
 
     def close(self) -> None: ...
