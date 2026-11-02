@@ -33,7 +33,7 @@ dependencies = [
   # use_alias_generator relies on pydantic.alias_generators.to_camel, whose
   # case handling was fixed in 2.8 (https://github.com/pydantic/pydantic/pull/9561)
   "pydantic>=2.8.0,<3.0.0",
-  "ruff>=0.15.0,<0.16.0",
+  "ruff>=0.15.0",
 ]
 
 [project.optional-dependencies]
