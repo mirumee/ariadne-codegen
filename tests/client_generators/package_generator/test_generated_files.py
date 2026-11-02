@@ -362,7 +362,7 @@ def test_generate_with_conflicting_query_name_raises_parsing_error(
     """
     generator.add_operation(parse(query_str).definitions[0])
 
-    with pytest.raises(ParsingError):
+    with pytest.raises(ParsingError, match=r"^Duplicated file names: input_types\.py$"):
         generator.generate()
 
 
@@ -397,7 +397,9 @@ def test_generate_validates_generated_base_client_name_not_source_file_name(
         client_file_name="custom_base_client",
     )
 
-    with pytest.raises(ParsingError):
+    with pytest.raises(
+        ParsingError, match=r"^Duplicated file names: custom_base_client\.py$"
+    ):
         generator.generate()
 
 

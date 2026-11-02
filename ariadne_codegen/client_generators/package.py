@@ -1,4 +1,5 @@
 import ast
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -269,9 +270,8 @@ class BasePackageGenerator:
     def _validate_unique_file_names(self):
         file_names = self._get_generated_file_names()
 
-        if len(file_names) != len(set(file_names)):
-            seen = set()
-            duplicated_files = {n for n in file_names if n in seen or seen.add(n)}
+        duplicated_files = [n for n, c in Counter(file_names).items() if c > 1]
+        if duplicated_files:
             raise ParsingError(f"Duplicated file names: {','.join(duplicated_files)}")
 
     def _get_generated_file_names(self) -> list[str]:
