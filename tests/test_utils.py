@@ -280,6 +280,39 @@ def test_format_multiline_strings_keeps_embedded_triple_quotes_escaped():
     assert '"""' in namespace["QUERY"]
 
 
+def test_format_multiline_strings_handles_escaped_single_quotes():
+    source = (
+        "GQL = 'query GetViews {\\n'"
+        "'  q(query: \"WHERE type = \\'Product\\'\")\\n'"
+        "'}\\n'"
+    )
+    expected = (
+        'GQL = """\nquery GetViews {\n  q(query: "WHERE type = \'Product\'")\n}\n"""'
+    )
+
+    assert format_multiline_strings(source, offset=0) == expected
+
+
+def test_format_multiline_strings_keeps_backslashes_escaped():
+    # Inside a non-raw python triple-quoted block "\\p" would turn into "\p",
+    # which is an invalid GraphQL escape, so the concatenated form is kept.
+    source = "QUERY = 'query Q {\\n''  f(a: \"C:\\\\\\\\path\")\\n''}\\n'"
+
+    result = format_multiline_strings(source, offset=0)
+
+    assert result == source
+    namespace: dict = {}
+    exec(result, namespace)
+    assert '"C:\\\\path"' in namespace["QUERY"]
+
+
+def test_format_multiline_strings_keeps_separate_assignments_on_own_lines():
+    source = "A = 'query A {\\n''  a\\n''}\\n'\n\nB = 'query B {\\n''  b\\n''}\\n'\n"
+    expected = 'A = """\nquery A {\n  a\n}\n"""\n\nB = """\nquery B {\n  b\n}\n"""\n'
+
+    assert format_multiline_strings(source, offset=0) == expected
+
+
 def test_process_name_triggers_plugin_manager_process_name(mocked_plugin_manager):
     process_name("", convert_to_snake_case=False, plugin_manager=mocked_plugin_manager)
 
