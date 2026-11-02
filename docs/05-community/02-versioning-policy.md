@@ -14,7 +14,6 @@ until version 1.0.0. Once the API stabilizes, the project will adopt
 
 ## Release history
 
-Per-version changes are published on the
-[Releases](https://github.com/mirumee/ariadne-codegen/releases) page, and
-unreleased changes (including any breaking changes) are tracked in
-[CHANGELOG.md](https://github.com/mirumee/ariadne-codegen/blob/main/CHANGELOG.md).
+Per-version changes, including any breaking changes, are published on the
+[Releases](https://github.com/mirumee/ariadne-codegen/releases) page. Release
+notes are generated from the titles and labels of merged pull requests.
