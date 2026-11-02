@@ -11,3 +11,7 @@ mutation CreateUser($input: CreateUserInput!) {
     name
   }
 }
+
+mutation UploadAvatar($file: Upload!) {
+  uploadAvatar(file: $file)
+}

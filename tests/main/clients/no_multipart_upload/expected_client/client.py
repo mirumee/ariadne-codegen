@@ -7,6 +7,7 @@ from .async_base_client import AsyncBaseClient
 from .create_user import CreateUser
 from .get_user import GetUser
 from .input_types import CreateUserInput
+from .upload_avatar import UploadAvatar
 
 
 def gql(q: str) -> str:
@@ -45,3 +46,16 @@ class Client(AsyncBaseClient):
         )
         data = self.get_data(response)
         return CreateUser.model_validate(data)
+
+    async def upload_avatar(self, file: Any, **kwargs: Any) -> UploadAvatar:
+        query = gql("""
+            mutation UploadAvatar($file: Upload!) {
+              uploadAvatar(file: $file)
+            }
+            """)
+        variables: dict[str, object] = {"file": file}
+        response = await self.execute(
+            query=query, operation_name="UploadAvatar", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return UploadAvatar.model_validate(data)

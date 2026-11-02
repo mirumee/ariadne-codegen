@@ -32,6 +32,7 @@ from .constants import (
     INPUT_SCALARS_MAP,
     KWARGS_NAMES,
     OPTIONAL,
+    SIMPLE_TYPE_MAP,
     UNSET_NAME,
     UNSET_TYPE_NAME,
 )
@@ -45,11 +46,13 @@ class ArgumentsGenerator:
         convert_to_snake_case: bool = True,
         custom_scalars: Optional[dict[str, ScalarData]] = None,
         plugin_manager: Optional[PluginManager] = None,
+        multipart_uploads: bool = True,
     ) -> None:
         self.schema = schema
         self.convert_to_snake_case = convert_to_snake_case
         self.custom_scalars = custom_scalars if custom_scalars else {}
         self.plugin_manager = plugin_manager
+        self.scalars_map = INPUT_SCALARS_MAP if multipart_uploads else SIMPLE_TYPE_MAP
 
         self.used_types: list[str] = []
         self._used_enums: list[str] = []
@@ -148,7 +151,7 @@ class ArgumentsGenerator:
             self._used_enums.append(name)
         elif isinstance(type_, GraphQLScalarType):
             if name not in self.custom_scalars:
-                name = INPUT_SCALARS_MAP.get(name, ANY)
+                name = self.scalars_map.get(name, ANY)
             else:
                 used_custom_scalar = name
                 name = self.custom_scalars[name].type_name

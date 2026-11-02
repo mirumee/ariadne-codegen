@@ -916,6 +916,7 @@ def get_package_generator(
                 convert_to_snake_case=settings.convert_to_snake_case,
                 custom_scalars=settings.scalars,
                 plugin_manager=plugin_manager,
+                multipart_uploads=upload_import is not None,
             ),
             fragments_definitions=fragments_definitions,
             enums_module_name=settings.enums_module_name,
@@ -963,6 +964,7 @@ def get_package_generator(
                 convert_to_snake_case=settings.convert_to_snake_case,
                 custom_scalars=settings.scalars,
                 plugin_manager=plugin_manager,
+                multipart_uploads=upload_import is not None,
             ),
         )
     custom_mutation_generator = None
@@ -980,6 +982,7 @@ def get_package_generator(
                 convert_to_snake_case=settings.convert_to_snake_case,
                 custom_scalars=settings.scalars,
                 plugin_manager=plugin_manager,
+                multipart_uploads=upload_import is not None,
             ),
         )
 
@@ -997,6 +1000,7 @@ def get_package_generator(
             convert_to_snake_case=settings.convert_to_snake_case,
             custom_scalars=settings.scalars,
             plugin_manager=plugin_manager,
+            multipart_uploads=upload_import is not None,
         ),
         name=settings.client_name,
         base_client=settings.base_client_name,
