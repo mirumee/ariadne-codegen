@@ -1,0 +1,27 @@
+# Categories for GitHub's automatically generated release notes.
+# PRs are grouped by their labels, in this order; unlabelled PRs go to "Other changes".
+changelog:
+  exclude:
+    labels:
+      - duplicate
+      - invalid
+      - wontfix
+  categories:
+    - title: ⚠️ Breaking changes
+      labels:
+        - breaking
+    - title: 🚀 Features
+      labels:
+        - enhancement
+    - title: 🐛 Bug fixes
+      labels:
+        - bug
+    - title: 📚 Documentation
+      labels:
+        - documentation
+    - title: 📦 Dependencies
+      labels:
+        - dependencies
+    - title: Other changes
+      labels:
+        - "*"
