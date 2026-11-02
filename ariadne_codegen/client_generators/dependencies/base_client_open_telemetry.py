@@ -23,9 +23,9 @@ try:
         set_span_in_context,
     )
 except ImportError:
-    Context = Any  # ty: ignore[invalid-assignment]
-    Span = Any  # ty: ignore[invalid-assignment]
-    Tracer = Any  # ty: ignore[invalid-assignment]
+    Context = Any  # type: ignore[misc,assignment,unused-ignore]
+    Span = Any  # type: ignore[misc,assignment,unused-ignore]
+    Tracer = Any  # type: ignore[misc,assignment,unused-ignore]
 
     def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
         raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
@@ -44,11 +44,11 @@ class HttpClient(Protocol):
     def post(
         self,
         url: Any | str,
+        *,
         json: Any | None = None,
         data: Any | None = None,
         files: Any | None = None,
         headers: Any | None = None,
-        **kwargs: Any,
     ) -> Response: ...
 
     def close(self) -> None: ...
