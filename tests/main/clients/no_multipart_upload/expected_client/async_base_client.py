@@ -7,7 +7,10 @@ from collections.abc import AsyncIterator
 from typing import Any, Optional, Protocol, TypeVar, cast
 from uuid import uuid4
 
-import httpx
+try:
+    import httpx2 as httpx
+except ModuleNotFoundError:
+    import httpx  # type: ignore[no-redef]
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic_core import to_jsonable_python
 
