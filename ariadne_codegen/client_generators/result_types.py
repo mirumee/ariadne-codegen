@@ -1,5 +1,5 @@
 import ast
-from copy import deepcopy
+from copy import copy, deepcopy
 from typing import Any, Optional, Union, cast
 from warnings import warn
 
@@ -119,6 +119,12 @@ class ResultTypesGenerator:
         self._used_scalars: list[str] = []
         self._fragments_used_as_mixins: set[str] = set()
         self._unpacked_fragments: set[str] = set()
+        # Selection sets created by merging sub-selections of the same field,
+        # mapped by id to (merged selection set, original selection set from
+        # the operation). Keeping the merged set as a value keeps its id stable.
+        self._merged_selection_sets: dict[
+            int, tuple[SelectionSetNode, SelectionSetNode]
+        ] = {}
 
         if isinstance(
             self.operation_definition, FragmentDefinitionNode
@@ -391,14 +397,48 @@ class ResultTypesGenerator:
             set(fragments)
         )
 
-        seen_names: set[str] = set()
-        deduplicated: list[FieldNode] = []
+        return self._merge_fields(fields), fragments
+
+    def _merge_fields(self, fields: list[FieldNode]) -> list[FieldNode]:
+        """Merge fields with the same response name, like GraphQL does.
+
+        Fields can be selected more than once, e.g. by inline fragments on
+        different interfaces implemented by the same type. Only one model field
+        is generated for them, so their sub-selections are merged into it.
+        """
+        merged: dict[str, FieldNode] = {}
         for field in fields:
-            name = field.alias.value if field.alias else field.name.value
-            if name not in seen_names:
-                seen_names.add(name)
-                deduplicated.append(field)
-        return deduplicated, fragments
+            name = self._get_field_name(field)
+            existing = merged.get(name)
+            if existing is None:
+                merged[name] = field
+            elif existing.selection_set and field.selection_set:
+                merged[name] = self._merge_field_selection_sets(existing, field)
+        return list(merged.values())
+
+    def _merge_field_selection_sets(
+        self, field: FieldNode, other: FieldNode
+    ) -> FieldNode:
+        selection_set = cast(SelectionSetNode, field.selection_set)
+        other_selection_set = cast(SelectionSetNode, other.selection_set)
+        merged_selection_set = SelectionSetNode(
+            selections=(*selection_set.selections, *other_selection_set.selections)
+        )
+        self._merged_selection_sets[id(merged_selection_set)] = (
+            merged_selection_set,
+            self._get_original_selection_set(selection_set),
+        )
+        merged_field = copy(field)
+        merged_field.selection_set = merged_selection_set
+        return merged_field
+
+    def _get_original_selection_set(
+        self, selection_set: SelectionSetNode
+    ) -> SelectionSetNode:
+        _, original = self._merged_selection_sets.get(
+            id(selection_set), (selection_set, selection_set)
+        )
+        return original
 
     def _get_inline_fragment_root_type(
         self, selection_value: str, root_type: str
@@ -447,6 +487,14 @@ class ResultTypesGenerator:
         field_names = {f.name.value for f in resolved_fields}
         if TYPENAME_FIELD_NAME not in field_names:
             typename_field = FieldNode(name=NameNode(value=TYPENAME_FIELD_NAME))
+            original_selection_set = self._get_original_selection_set(selection_set)
+            if original_selection_set is not selection_set:
+                # Merged selection set isn't part of the operation, so request
+                # __typename in the selection set it was created from.
+                original_selection_set.selections = (
+                    typename_field,
+                    *original_selection_set.selections,
+                )
             return [typename_field, *resolved_fields], (
                 typename_field,
                 *selection_set.selections,
