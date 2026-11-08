@@ -573,7 +573,7 @@ class ResultTypesGenerator:
 
     def _parse_mixin_arguments(self, directive: DirectiveNode) -> dict[str, str]:
         arguments = {}
-        for arg in directive.arguments:
+        for arg in directive.arguments or ():
             if not (
                 isinstance(arg.name, NameNode)
                 and isinstance(arg.value, StringValueNode)
