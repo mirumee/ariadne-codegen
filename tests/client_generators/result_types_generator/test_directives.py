@@ -2,7 +2,16 @@ import ast
 from typing import cast
 
 import pytest
-from graphql import OperationDefinitionNode, build_ast_schema, parse
+from graphql import (
+    DirectiveNode,
+    FieldNode,
+    NameNode,
+    OperationDefinitionNode,
+    OperationType,
+    SelectionSetNode,
+    build_ast_schema,
+    parse,
+)
 
 from ariadne_codegen.client_generators.constants import (
     BASE_MODEL_CLASS_NAME,
@@ -162,6 +171,28 @@ def test_generator_with_incorrect_data_passed_to_mixin_raises_parsing_error(
             operation_definition=cast(
                 OperationDefinitionNode, parse(query_str).definitions[0]
             ),
+            enums_module_name="enums",
+        )
+
+
+def test_generator_with_mixin_without_arguments_raises_parsing_error():
+    field = FieldNode(
+        name=NameNode(value="camelCaseQuery"),
+        directives=(DirectiveNode(name=NameNode(value=MIXIN_NAME), arguments=None),),
+        selection_set=SelectionSetNode(
+            selections=(FieldNode(name=NameNode(value="id")),)
+        ),
+    )
+    operation_definition = OperationDefinitionNode(
+        operation=OperationType.QUERY,
+        name=NameNode(value="CustomQuery"),
+        selection_set=SelectionSetNode(selections=(field,)),
+    )
+
+    with pytest.raises(ParsingError, match="Required arguments"):
+        ResultTypesGenerator(
+            schema=build_ast_schema(parse(SCHEMA_STR)),
+            operation_definition=operation_definition,
             enums_module_name="enums",
         )
 

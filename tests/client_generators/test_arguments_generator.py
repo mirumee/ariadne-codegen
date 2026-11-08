@@ -1,5 +1,6 @@
 import ast
 
+import pytest
 from graphql import GraphQLSchema, OperationDefinitionNode, build_schema, parse
 
 from ariadne_codegen.client_generators.arguments import ArgumentsGenerator
@@ -158,9 +159,19 @@ def test_generate_returns_arguments_with_default_value_for_optional_args():
     assert compare_ast(arguments, expected_arguments)
 
 
-def test_generate_returns_arguments_with_only_self_and_kwargs_arguments():
+@pytest.mark.parametrize(
+    "variable_definitions",
+    [
+        pytest.param(
+            _get_variable_definitions_from_query_str("query q {r}"), id="parsed"
+        ),
+        pytest.param(None, id="none"),
+    ],
+)
+def test_generate_returns_arguments_with_only_self_and_kwargs_arguments(
+    variable_definitions,
+):
     generator = ArgumentsGenerator(schema=GraphQLSchema())
-    variable_definitions = _get_variable_definitions_from_query_str("query q {r}")
     expected_arguments = ast.arguments(
         posonlyargs=[],
         args=[ast.arg(arg="self")],

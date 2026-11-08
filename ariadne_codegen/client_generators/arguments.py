@@ -60,9 +60,11 @@ class ArgumentsGenerator:
         self._used_custom_scalars: list[str] = []
 
     def generate(
-        self, variable_definitions: tuple[VariableDefinitionNode, ...]
+        self, variable_definitions: Optional[tuple[VariableDefinitionNode, ...]]
     ) -> tuple[ast.arguments, ast.Dict]:
         """Generate arguments from given variable definitions."""
+        # OperationDefinitionNode.variable_definitions can be None
+        variable_definitions = variable_definitions or ()
         required_args: list[ast.arg] = [generate_arg("self")]
         optional_args: list[ast.arg] = []
         dict_ = generate_dict()
