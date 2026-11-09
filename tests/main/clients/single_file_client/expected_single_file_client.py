@@ -4,7 +4,7 @@ import json
 from collections.abc import AsyncIterator
 from enum import Enum
 from io import IOBase
-from typing import IO, Any, Optional, Protocol, TypeVar, Union, cast
+from typing import IO, TYPE_CHECKING, Any, Optional, Protocol, TypeVar, Union, cast
 from uuid import uuid4
 
 import httpx
@@ -183,7 +183,7 @@ class UploadFile(BaseModel):
     file_upload: bool = Field(alias="fileUpload")
 
 
-try:
+if TYPE_CHECKING:
     from websockets import (  # type: ignore[import-not-found,unused-ignore]
         ClientConnection,
     )
@@ -195,20 +195,33 @@ try:
         Origin,
         Subprotocol,
     )
-except ImportError:
-    from contextlib import asynccontextmanager
+else:
+    try:
+        from websockets import (  # type: ignore[import-not-found,unused-ignore]
+            ClientConnection,
+        )
+        from websockets import (  # type: ignore[import-not-found,unused-ignore]
+            connect as ws_connect,
+        )
+        from websockets.typing import (  # type: ignore[import-not-found,unused-ignore]
+            Data,
+            Origin,
+            Subprotocol,
+        )
+    except ImportError:
+        from contextlib import asynccontextmanager
 
-    @asynccontextmanager  # type: ignore
-    async def ws_connect(*args, **kwargs):
-        raise NotImplementedError("Subscriptions require 'websockets' package.")
-        yield
+        @asynccontextmanager  # type: ignore
+        async def ws_connect(*args, **kwargs):
+            raise NotImplementedError("Subscriptions require 'websockets' package.")
+            yield
 
-    ClientConnection = Any  # type: ignore[misc,assignment,unused-ignore]
-    Data = Any  # type: ignore[misc,assignment,unused-ignore]
-    Origin = str  # type: ignore[misc,assignment,unused-ignore]
+        ClientConnection = Any  # type: ignore[misc,assignment,unused-ignore]
+        Data = Any  # type: ignore[misc,assignment,unused-ignore]
+        Origin = str  # type: ignore[misc,assignment,unused-ignore]
 
-    def Subprotocol(*args, **kwargs):  # type: ignore # noqa: N802, N803
-        raise NotImplementedError("Subscriptions require 'websockets' package.")
+        def Subprotocol(*args, **kwargs):  # type: ignore # noqa: N802, N803
+            raise NotImplementedError("Subscriptions require 'websockets' package.")
 
 
 class Response(Protocol):

@@ -3,6 +3,7 @@ import json
 from collections.abc import AsyncIterator
 from typing import (
     IO,
+    TYPE_CHECKING,
     Any,
     Optional,
     Protocol,
@@ -24,7 +25,7 @@ from .exceptions import (
     GraphQLClientInvalidResponseError,
 )
 
-try:
+if TYPE_CHECKING:
     from websockets import (  # type: ignore[import-not-found,unused-ignore]
         ClientConnection,
     )
@@ -36,23 +37,36 @@ try:
         Origin,
         Subprotocol,
     )
-except ImportError:
-    from contextlib import asynccontextmanager
+else:
+    try:
+        from websockets import (  # type: ignore[import-not-found,unused-ignore]
+            ClientConnection,
+        )
+        from websockets import (  # type: ignore[import-not-found,unused-ignore]
+            connect as ws_connect,
+        )
+        from websockets.typing import (  # type: ignore[import-not-found,unused-ignore]
+            Data,
+            Origin,
+            Subprotocol,
+        )
+    except ImportError:
+        from contextlib import asynccontextmanager
 
-    @asynccontextmanager  # type: ignore
-    async def ws_connect(*args, **kwargs):
-        raise NotImplementedError("Subscriptions require 'websockets' package.")
-        yield
+        @asynccontextmanager  # type: ignore
+        async def ws_connect(*args, **kwargs):
+            raise NotImplementedError("Subscriptions require 'websockets' package.")
+            yield
 
-    ClientConnection = Any  # type: ignore[misc,assignment,unused-ignore]
-    Data = Any  # type: ignore[misc,assignment,unused-ignore]
-    Origin = str  # type: ignore[misc,assignment,unused-ignore]
+        ClientConnection = Any  # type: ignore[misc,assignment,unused-ignore]
+        Data = Any  # type: ignore[misc,assignment,unused-ignore]
+        Origin = str  # type: ignore[misc,assignment,unused-ignore]
 
-    def Subprotocol(*args, **kwargs):  # type: ignore # noqa: N802, N803
-        raise NotImplementedError("Subscriptions require 'websockets' package.")
+        def Subprotocol(*args, **kwargs):  # type: ignore # noqa: N802, N803
+            raise NotImplementedError("Subscriptions require 'websockets' package.")
 
 
-try:
+if TYPE_CHECKING:
     from opentelemetry.context import (  # type: ignore[import-not-found,unused-ignore]
         Context,
     )
@@ -62,16 +76,27 @@ try:
         get_tracer,
         set_span_in_context,
     )
-except ImportError:
-    Context = Any  # type: ignore[misc,assignment,unused-ignore]
-    Span = Any  # type: ignore[misc,assignment,unused-ignore]
-    Tracer = Any  # type: ignore[misc,assignment,unused-ignore]
+else:
+    try:
+        from opentelemetry.context import (  # type: ignore[import-not-found,unused-ignore]
+            Context,
+        )
+        from opentelemetry.trace import (  # type: ignore[import-not-found,unused-ignore]
+            Span,
+            Tracer,
+            get_tracer,
+            set_span_in_context,
+        )
+    except ImportError:
+        Context = Any  # type: ignore[misc,assignment,unused-ignore]
+        Span = Any  # type: ignore[misc,assignment,unused-ignore]
+        Tracer = Any  # type: ignore[misc,assignment,unused-ignore]
 
-    def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
-        raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
+        def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
+            raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
-    def set_span_in_context(*args, **kwargs):  # type: ignore
-        raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
+        def set_span_in_context(*args, **kwargs):  # type: ignore
+            raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
 
 class Response(Protocol):

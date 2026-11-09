@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional, Protocol, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Optional, Protocol, TypeVar, Union, cast
 
 import httpx
 from pydantic import BaseModel as PydanticBaseModel
@@ -12,7 +12,7 @@ from .exceptions import (
     GraphQLClientInvalidResponseError,
 )
 
-try:
+if TYPE_CHECKING:
     from opentelemetry.context import (  # type: ignore[import-not-found,unused-ignore]
         Context,
     )
@@ -22,16 +22,27 @@ try:
         get_tracer,
         set_span_in_context,
     )
-except ImportError:
-    Context = Any  # type: ignore[misc,assignment,unused-ignore]
-    Span = Any  # type: ignore[misc,assignment,unused-ignore]
-    Tracer = Any  # type: ignore[misc,assignment,unused-ignore]
+else:
+    try:
+        from opentelemetry.context import (  # type: ignore[import-not-found,unused-ignore]
+            Context,
+        )
+        from opentelemetry.trace import (  # type: ignore[import-not-found,unused-ignore]
+            Span,
+            Tracer,
+            get_tracer,
+            set_span_in_context,
+        )
+    except ImportError:
+        Context = Any  # type: ignore[misc,assignment,unused-ignore]
+        Span = Any  # type: ignore[misc,assignment,unused-ignore]
+        Tracer = Any  # type: ignore[misc,assignment,unused-ignore]
 
-    def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
-        raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
+        def get_tracer(*args, **kwargs) -> Tracer:  # type: ignore
+            raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
-    def set_span_in_context(*args, **kwargs):  # type: ignore
-        raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
+        def set_span_in_context(*args, **kwargs):  # type: ignore
+            raise NotImplementedError("Telemetry requires 'opentelemetry-api' package.")
 
 
 class Response(Protocol):
