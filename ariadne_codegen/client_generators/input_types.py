@@ -206,7 +206,7 @@ class InputTypesGenerator:
                 target=generate_name(name),
                 annotation=annotation,
                 value=parse_input_field_default_value(
-                    node=field.ast_node, annotation=annotation, field_type=field_type
+                    field=field, annotation=annotation, field_type=field_type
                 ),
                 lineno=lineno,
             )

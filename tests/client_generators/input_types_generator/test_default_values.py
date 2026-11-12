@@ -1,7 +1,13 @@
 import ast
 
 import pytest
-from graphql import build_ast_schema, parse
+from graphql import (
+    GraphQLInputObjectType,
+    build_ast_schema,
+    build_client_schema,
+    introspection_from_schema,
+    parse,
+)
 
 from ariadne_codegen.client_generators.constants import (
     BASE_MODEL_CLASS_NAME,
@@ -263,3 +269,30 @@ def test_generate_returns_module_with_parsed_nested_object_as_default_value():
     assert isinstance(field_def, ast.AnnAssign)
     assert field_def.value
     assert compare_ast(field_def.value, expected_field_value)
+
+
+def test_generate_preserves_zero_default_from_introspected_schema():
+    schema_str = """
+    type Query {
+        unused: Boolean
+    }
+
+    input TestInput {
+        field: Int! = 0
+    }
+    """
+    schema = build_client_schema(
+        introspection_from_schema(build_ast_schema(parse(schema_str)))
+    )
+    input_type = schema.get_type("TestInput")
+    assert isinstance(input_type, GraphQLInputObjectType)
+    assert input_type.fields["field"].ast_node is None
+
+    generator = InputTypesGenerator(schema=schema)
+    module = generator.generate()
+
+    class_def = get_class_def(module)
+    assert isinstance(class_def, ast.ClassDef)
+    field_def = class_def.body[0]
+    assert isinstance(field_def, ast.AnnAssign)
+    assert compare_ast(field_def.value, ast.Constant(value=0))

@@ -7,17 +7,19 @@ from graphql import (
     EnumValueNode,
     FloatValueNode,
     GraphQLEnumType,
+    GraphQLInputField,
     GraphQLInputObjectType,
     GraphQLList,
     GraphQLNonNull,
     GraphQLScalarType,
-    InputValueDefinitionNode,
     IntValueNode,
     ListValueNode,
-    NonNullTypeNode,
     NullValueNode,
     ObjectValueNode,
     StringValueNode,
+    Undefined,
+    ast_from_value,
+    is_non_null_type,
 )
 
 from ..codegen import (
@@ -41,7 +43,6 @@ from .constants import (
     FIELD_CLASS,
     INPUT_SCALARS_MAP,
     MODEL_VALIDATE_METHOD,
-    OPTIONAL,
     SIMPLE_TYPE_MAP,
 )
 from .scalars import ScalarData, generate_input_scalar_annotation
@@ -107,20 +108,26 @@ def parse_input_field_type(
 
 
 def parse_input_field_default_value(
-    node: Optional[InputValueDefinitionNode],
+    field: GraphQLInputField,
     annotation: Annotation,
     field_type: str = "",
 ) -> Optional[ast.expr]:
-    if node and node.default_value:
-        return parse_input_const_value_node(
-            node=node.default_value, field_type=field_type
+    default_node: Optional[ConstValueNode] = None
+    if field.ast_node:
+        default_node = field.ast_node.default_value
+
+    # `0`, `False`, and `""` are valid defaults, so this cannot use truthiness.
+    # Introspected fields have no SDL node; their default lives on `default_value`.
+    if default_node is None and field.default_value is not Undefined:
+        default_node = cast(
+            Optional[ConstValueNode],
+            ast_from_value(field.default_value, field.type),
         )
 
-    if (node and not isinstance(node.type, NonNullTypeNode)) or (
-        isinstance(annotation, ast.Subscript)
-        and isinstance(annotation.value, ast.Name)
-        and annotation.value.id == OPTIONAL
-    ):
+    if default_node is not None:
+        return parse_input_const_value_node(default_node, field_type)
+
+    if not is_non_null_type(field.type):
         return generate_constant(None)
 
     return None
