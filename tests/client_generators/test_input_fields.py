@@ -11,6 +11,7 @@ from graphql import (
     GraphQLEnumValueMap,
     GraphQLFloat,
     GraphQLID,
+    GraphQLInputField,
     GraphQLInputObjectType,
     GraphQLInt,
     GraphQLList,
@@ -465,10 +466,11 @@ def test_parse_input_const_value_node_given_object_returns_correct_method_call(
 
 def test_parse_input_field_default_value_returns_none_constant_for_optional_field():
     node = parse("input TestInput { fieldA: String }").definitions[0].fields[0]
+    field = GraphQLInputField(GraphQLString, ast_node=node)
 
     assert compare_ast(
         parse_input_field_default_value(
-            node,
+            field,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
             "",
         ),
@@ -477,9 +479,11 @@ def test_parse_input_field_default_value_returns_none_constant_for_optional_fiel
 
 
 def test_parse_input_field_default_value_returns_none_constant_without_node():
+    field = GraphQLInputField(GraphQLString, ast_node=None)
+
     assert compare_ast(
         parse_input_field_default_value(
-            None,
+            field,
             ast.Subscript(value=ast.Name(id=OPTIONAL), slice=ast.Name(id="str")),
             "",
         ),
@@ -489,9 +493,39 @@ def test_parse_input_field_default_value_returns_none_constant_without_node():
 
 def test_parse_input_field_default_value_returns_none_for_non_nullable_node():
     node = parse("input TestInput { fieldA: String! }").definitions[0].fields[0]
+    field = GraphQLInputField(GraphQLNonNull(GraphQLString), ast_node=node)
 
-    assert parse_input_field_default_value(node, ast.Name(id="str"), "") is None
+    assert parse_input_field_default_value(field, ast.Name(id="str"), "") is None
 
 
 def test_parse_input_field_default_value_returns_none_for_non_optional_annotation():
-    assert parse_input_field_default_value(None, ast.Name(id="str"), "") is None
+    field = GraphQLInputField(GraphQLNonNull(GraphQLString), ast_node=None)
+
+    assert parse_input_field_default_value(field, ast.Name(id="str"), "") is None
+
+
+@pytest.mark.parametrize(
+    "graphql_type, default_value, annotation, expected_value",
+    [
+        (GraphQLNonNull(GraphQLInt), 0, ast.Name(id="int"), ast.Constant(value=0)),
+        (
+            GraphQLNonNull(GraphQLBoolean),
+            False,
+            ast.Name(id="bool"),
+            ast.Constant(value=False),
+        ),
+    ],
+)
+def test_parse_input_field_default_value_reads_falsy_introspected_default(
+    graphql_type, default_value, annotation, expected_value
+):
+    field = GraphQLInputField(
+        graphql_type,
+        default_value=default_value,
+        ast_node=None,
+    )
+
+    assert compare_ast(
+        parse_input_field_default_value(field, annotation, ""),
+        expected_value,
+    )
